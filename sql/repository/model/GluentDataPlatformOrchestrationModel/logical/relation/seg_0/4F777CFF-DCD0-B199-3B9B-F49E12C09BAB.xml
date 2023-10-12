@@ -1,0 +1,19 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Relation class="oracle.dbtools.crest.model.design.logical.Relation" name="Offload Metadata FK6" directorySegmentName="seg_0" id="4F777CFF-DCD0-B199-3B9B-F49E12C09BAB">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-08 20:32:18 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<sourcePk>BE13D0FF-9420-45FF-DC35-43D5A25BCD50</sourcePk>
+<identifying>false</identifying>
+<optionalSource>true</optionalSource>
+<optionalTarget>true</optionalTarget>
+<sourceCardinality>1</sourceCardinality>
+<sourceEntity>44C5BF01-12DF-967D-E68A-A441ED701163</sourceEntity>
+<targetCardinalityString>*</targetCardinalityString>
+<targetEntity>588A427A-BC49-4219-7D4D-DEB017EB05CA</targetEntity>
+<transferable>true</transferable>
+<deleteRule>NO ACTION</deleteRule>
+</Relation>

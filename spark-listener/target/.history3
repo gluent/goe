@@ -1,0 +1,6 @@
+1639589553367:show sparkVersion
+1639589567137:show {{ sparkVersion }}
+1639589583566:sparkVersion
+1639589596526:sLog.value.log.info("an info message")
+1639589906169:quit
+1639589909086:exit

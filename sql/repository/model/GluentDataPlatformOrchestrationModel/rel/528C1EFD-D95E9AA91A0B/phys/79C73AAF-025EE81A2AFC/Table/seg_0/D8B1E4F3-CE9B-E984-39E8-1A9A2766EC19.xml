@@ -1,0 +1,61 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<TableProxyOraclev12c class="oracle.dbtools.crest.model.design.storage.oracle.v12c.TableProxyOraclev12c" name="VERSION" directorySegmentName="seg_0" id="D8B1E4F3-CE9B-E984-39E8-1A9A2766EC19">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<logging>YES</logging>
+<partitionedRowMovement>DISABLE</partitionedRowMovement>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+<temporaryChanged>false</temporaryChanged>
+<accessDriverType>oracle_loader</accessDriverType>
+<rejectLimit></rejectLimit>
+<columnProxies itemClass="oracle.dbtools.crest.model.design.storage.oracle.v12c.ColumnProxyOraclev12c">
+<ColumnProxy name="GDP_BUILD" id="3DBB17D0-F85A-B432-ABDC-9CFB43E735BA">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="GDP_VERSION" id="456022FB-FE28-18E6-5BCC-E42FD1C93F57">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="LATEST_YN" id="52C208B3-90CD-AA77-BE71-C53AB3FF5EC1">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="CREATE_TIME" id="D3B8D938-6031-2790-4E2E-7701F32F46A1">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="COMMENTS" id="D98CF8A9-8056-0BF8-26B4-5A755BC88DFF">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+</columnProxies>
+<indexProxies>
+<IndexProxy class="oracle.dbtools.crest.model.design.storage.oracle.v10g.IndexProxyOraclev10g" name="VERSION_UKI" id="4D0AFC0A-5E65-1136-2906-B535A3390459">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+</IndexProxy>
+<IndexProxy class="oracle.dbtools.crest.model.design.storage.oracle.v10g.IndexProxyOraclev10g" name="VERSION_PKI" id="907E66C0-D2D8-0B96-FF2E-FD70BA7F6428">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+</IndexProxy>
+</indexProxies>
+<primaryKeys>
+<PrimaryKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.PKProxyOraclev10g" name="VERSION_PKv3" id="058CCFC4-C45A-5D23-CCBB-B04232D750A2">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:40:53 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexSort>SORTED</indexSort>
+</PrimaryKey>
+</primaryKeys>
+</TableProxyOraclev12c>

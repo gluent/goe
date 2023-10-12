@@ -1,0 +1,61 @@
+#!/usr/bin/env python 
+# Copyright 2015 Gluent Inc. All rights reserved
+
+import random
+from datetime import datetime
+
+try:
+  from gluent import get_options, hs2_connection, init, log, version
+except ImportError, exc:
+  if not os.environ.get('OFFLOAD_HOME'):
+    print 'OFFLOAD_HOME environment variable missing'
+    print 'You should source environment variables first, eg: . ../conf/offload.env'
+    sys.exit(1)
+  else:
+    raise
+except SyntaxError, e: 
+  print 'Syntax error while importing Gluent offload library code'
+  print 'This can be caused by an old version of Python'
+  print 'Have you sourced ../conf/offload.env?'
+  print
+  raise
+ 
+def purge_sh_demo ():
+  hadoop_conn = hs2_connection()
+  hadoop_cursor = hadoop_conn.cursor()
+  q = 'SHOW DATABASES LIKE \'sh_demo*\''
+  hadoop_cursor.execute(q)
+  for r in hadoop_cursor.fetchall()[:]:
+    db = r[0]
+    q = 'SHOW TABLES IN `%s`' % r[0]
+    hadoop_cursor.execute(q)
+    for r in hadoop_cursor.fetchall()[:]:
+      t = r[0]
+      log('Dropping %s.%s' % (db, t))
+      q = 'DROP TABLE IF EXISTS `%s`.`%s`' % (db, t)
+      hadoop_cursor.execute(q)
+      q = 'DROP VIEW IF EXISTS `%s`.`%s`' % (db, t)
+      hadoop_cursor.execute(q)
+    log('Dropping %s' % db)
+    q = 'DROP DATABASE `%s`' % db
+    hadoop_cursor.execute(q)
+
+if __name__ == '__main__':
+  try:
+    opt = get_options()
+    opt.add_option('--rc-retention-hours', dest='rc_ret_hours', default=24)
+    options, args = opt.parse_args()
+    options.rc_ret_hours = int(options.rc_ret_hours)
+
+    # select hadoop_host from (potentially) comma-separated list
+    options.hadoop_host = random.choice(options.hadoop_host.split(','))
+
+    init(options, init_log=True, log_name='sh_demo_purge')
+
+    log('sh_demo_purge v%s' % version())
+
+    purge_sh_demo()
+
+  except Exception, exc:
+    print exc, '\n'
+    raise

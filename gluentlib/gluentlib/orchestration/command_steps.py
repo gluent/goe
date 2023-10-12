@@ -1,0 +1,231 @@
+""" Constants and functions used to define orchestration command steps.
+    Steps are executed by OffloadMessages.offload_step(), this may change in time.
+    LICENSE_TEXT
+"""
+
+class CommandStepsException(Exception):
+    pass
+
+
+###############################################################################
+# CONSTANTS
+###############################################################################
+
+# Step codes, list matches up with GLUENT_REPO.COMMAND_STEP table.
+STEP_ALTER_TABLE = 'ALTER_TABLE'
+STEP_ANALYZE_DATA_TYPES = 'ANALYZE_DATA_TYPES'
+STEP_BACKEND_CONFIG = 'BACKEND_CONFIG'
+STEP_BACKEND_LOGS = 'BACKEND_LOGS'
+STEP_BACKEND_QUERY_LOGS = 'BACKEND_QUERY_LOGS'
+STEP_COMPUTE_STATS = 'COMPUTE_STATS'
+STEP_COPY_STATS_TO_BACKEND = 'COPY_STATS_TO_BACKEND'
+STEP_CREATE_CONV_VIEW = 'CREATE_CONV_VIEW'
+STEP_CREATE_DB = 'CREATE_DB'
+STEP_CREATE_EXTERNAL_TABLE = 'CREATE_EXTERNAL_TABLE'
+STEP_CREATE_HYBRID_VIEW = 'CREATE_HYBRID_VIEW'
+STEP_CREATE_JOIN_VIEW = 'CREATE_JOIN_VIEW'
+STEP_CREATE_REWRITE_RULES = 'CREATE_REWRITE_RULES'
+STEP_CREATE_TABLE = 'CREATE_TABLE'
+STEP_DROP_EXTERNAL_TABLE = 'DROP_EXTERNAL_TABLE'
+STEP_DROP_OBSOLETE_METADATA = 'DROP_OBSOLETE_METADATA'
+STEP_DROP_SYNONYM = 'DROP_SYNONYM'
+STEP_DROP_TABLE = 'DROP_TABLE'
+STEP_EXT_STATS_COPY = 'COPY_EXTERNAL_STATS'
+STEP_EXT_STATS_LOCK = 'LOCK_EXTERNAL_STATS'
+STEP_EXT_STATS_SET = 'SET_EXTERNAL_STATS'
+STEP_EXT_STATS_SET_COL = 'SET_EXTERNAL_COLUMN_STATS'
+STEP_FINAL_LOAD = 'FINAL_LOAD'
+STEP_FINAL_MERGE = 'FINAL_MERGE'
+STEP_FIND_OFFLOAD_DATA = 'FIND_OFFLOAD_DATA'
+STEP_FIND_MJOIN_DATA = 'FIND_MJOIN_DATA'
+STEP_FIND_JOIN_DATA = 'FIND_JOIN_DATA'
+STEP_OSR_DEMO_DATA = 'OSR_DEMO_DATA'
+STEP_OSR_FETCH_DATA = 'OSR_FETCH_DATA'
+STEP_OSR_FIND_TABLES = 'OSR_FIND_TABLES'
+STEP_OSR_GENERATE_REPORT = 'OSR_GENERATE_REPORT'
+STEP_OSR_PROCESS_DATA = 'OSR_PROCESS_DATA'
+STEP_GRANT_ADMIN = 'GRANT_ADMIN'
+STEP_GRANT_HYBRID_OBJECTS = 'GRANT_HYBRID_OBJECTS'
+STEP_GDP_LOGS = 'GDP_LOGS'
+STEP_GDP_PERMISSIONS = 'GDP_PERMISSIONS'
+STEP_GDP_PROCESSES = 'GDP_PROCESSES'
+STEP_GDP_TABLE_METADATA = 'INCLUDE_TABLE_METADATA'
+STEP_IU_COMPACT_ADD_DELTA_PARTITION = 'COMPACTION_ADD_DELTA_PARTITION'
+STEP_IU_COMPACT_BACKUP_TABLE = 'COMPACTION_BACKUP_TABLE'
+STEP_IU_COMPACT_BACKUP_PARTITION = 'COMPACTION_BACKUP_PARTITION'
+STEP_IU_COMPACT_COMPUTE_BASE_STATS = 'COMPUTE_BASE_STATS'
+STEP_IU_COMPACT_COMPUTE_PART_STATS = 'COMPUTE_PART_STATS'
+STEP_IU_COMPACT_CREATE_BASE_TABLE = 'CREATE_BASE_TABLE'
+STEP_IU_COMPACT_CREATE_INTL_VIEW = 'CREATE_INTERNAL_VIEW'
+STEP_IU_COMPACT_CREATE_USER_VIEW = 'CREATE_USER_VIEW'
+STEP_IU_COMPACT_DELTA_COUNT = 'DELTA_COUNT'
+STEP_IU_COMPACT_DROP_USER_VIEW = 'DROP_USER_VIEW'
+STEP_IU_COMPACT_HDFS_SNAPSHOT = 'CREATE_HDFS_SNAPSHOT'
+STEP_IU_COMPACT_ID_PARTITIONS = 'FIND_MODIFIED_PARTITIONS'
+STEP_IU_COMPACT_INSERT_PARTITION = 'INSERT_PARTITION'
+STEP_IU_COMPACT_INSERT_TABLE = 'INSERT_TABLE'
+STEP_IU_COMPACT_PURGE_ARTIFACTS = 'PURGE_ARTIFACTS'
+STEP_IU_COMPACT_OVERWRITE_PARTITION = 'OVERWRITE_PARTITION'
+STEP_IU_COMPACT_SAVE_PARTITIONS = 'SAVE_PARTITIONS'
+STEP_IU_COMPACT_UPDATE_USER_VIEW = 'UPDATE_USER_VIEW'
+STEP_IU_CREATE_DELTA_TABLE = 'CREATE_DELTA_TABLE'
+STEP_IU_DROP_BACKEND = 'DROP_BACKEND_OBJECTS'
+STEP_IU_EXTRACT_CHANGES = 'EXTRACT_CHANGES'
+STEP_IU_EXTRACT_DELTA_COUNT1 = 'DELTA_COUNT1'
+STEP_IU_EXTRACT_DELTA_COUNT2 = 'DELTA_COUNT2'
+STEP_IU_EXTRACT_DELTA_STATS = 'DELTA_STATS'
+STEP_IU_EXTRACT_DROP_RDBMS_LOG = 'DROP_CHANGELOG'
+STEP_IU_EXTRACT_FETCH_SCN = 'FETCH_SCN'
+STEP_IU_EXTRACT_HDFS_SHIP = 'SHIP_TO_HDFS'
+STEP_IU_EXTRACT_PURGE_CHANGELOG = 'PURGE_CHANGELOG'
+STEP_IU_EXTRACT_TMP_DIR = 'CREATE_EXTRACTION_TMP_DIR'
+STEP_IU_PERSIST_CONFIG = 'PERSIST_IU_CONFIG'
+STEP_IU_RENAME_INITIAL = 'RENAME_INITIAL'
+STEP_IU_RENAME_RESET = 'RENAME_RESET'
+STEP_IU_SETUP_CHANGELOG = 'SETUP_CHANGELOG'
+STEP_MATERIALIZE_JOIN = 'MATERIALIZE_JOIN'
+STEP_MESSAGES = 'MESSAGES'
+STEP_NORMALIZE_INCLUDES = 'NORMALIZE_INCLUDES'
+STEP_PROCESS_TABLE_CHANGES = 'PROCESS_TABLE_CHANGES'
+STEP_REGISTER_DATA_GOV = 'REGISTER_DATA_GOV'
+STEP_REPORT_EXCEPTIONS = 'REPORT_EXCEPTIONS'
+STEP_RESULT_CACHE_SETUP = 'RESULT_CACHE_SETUP'
+STEP_SAVE_METADATA = 'SAVE_METADATA'
+STEP_STAGING_CLEANUP = 'STAGING_CLEANUP'
+STEP_STAGING_MINI_CLEANUP = 'STAGING_MINI_CLEANUP'
+STEP_STAGING_SETUP = 'STAGING_SETUP'
+STEP_STAGING_TRANSPORT = 'STAGING_TRANSPORT'
+STEP_VALIDATE_DATA = 'VALIDATE_DATA'
+STEP_VALIDATE_CASTS = 'VALIDATE_CASTS'
+STEP_DEPENDENT_HYBRID_OBJECTS = 'DEPENDENT_HYBRID_OBJECTS'
+STEP_DEPENDENT_HYBRID_VIEWS = 'DEPENDENT_HYBRID_VIEWS'
+STEP_DEPENDENT_SCHEMA_OBJECTS = 'DEPENDENT_SCHEMA_OBJECTS'
+STEP_VERIFY_EXPORTED_DATA = 'VERIFY_EXPORTED_DATA'
+STEP_GENERAL_AAPD = 'GENERAL_AAPD'
+STEP_COUNT_AAPD = 'COUNT_AAPD'
+STEP_GET_BACKEND_STATS = 'GET_BACKEND_STATS'
+STEP_ESTIMATING_STATS = 'ESTIMATING_STATS_SAMPLE'
+STEP_ESTIMATING_STATS_FULL = 'ESTIMATING_STATS_FULL'
+
+# Unit test step constants
+STEP_UNITTEST_SKIP = 'UNITTEST_SKIP'
+STEP_UNITTEST_ERROR_BEFORE = 'UNITTEST_ERROR_BEFORE'
+STEP_UNITTEST_ERROR_AFTER = 'UNITTEST_ERROR_AFTER'
+
+STEP_TITLES = {
+    STEP_ALTER_TABLE: 'Alter backend table',
+    STEP_ANALYZE_DATA_TYPES: 'Analyzing data types',
+    STEP_BACKEND_CONFIG: 'Backend configuration',
+    STEP_BACKEND_LOGS: 'Backend system logs',
+    STEP_BACKEND_QUERY_LOGS: 'Backend query logs',
+    STEP_COMPUTE_STATS: 'Compute backend statistics',
+    STEP_COPY_STATS_TO_BACKEND: 'Copy RDBMS stats to Backend',
+    STEP_COUNT_AAPD: 'Create count star aggregation rule',
+    STEP_CREATE_CONV_VIEW: 'Create data-conversion view',
+    STEP_CREATE_DB: 'Create backend database',
+    STEP_CREATE_EXTERNAL_TABLE: 'Create external table',
+    STEP_CREATE_HYBRID_VIEW: 'Create hybrid view',
+    STEP_CREATE_JOIN_VIEW: 'Create join view',
+    STEP_CREATE_REWRITE_RULES: 'Create query rewrite rules',
+    STEP_CREATE_TABLE: 'Create backend table',
+    STEP_REGISTER_DATA_GOV: 'Register data governance metadata',
+    STEP_DEPENDENT_HYBRID_OBJECTS: 'Processing dependent hybrid objects',
+    STEP_DEPENDENT_HYBRID_VIEWS: 'Generating dependent views in hybrid schema',
+    STEP_DEPENDENT_SCHEMA_OBJECTS: 'Schemas with dependent stored objects',
+    STEP_DROP_EXTERNAL_TABLE: 'Remove existing external table',
+    STEP_DROP_OBSOLETE_METADATA: 'Delete metadata for obsolete hybrid views',
+    STEP_DROP_SYNONYM: 'Drop existing hybrid synonym',
+    STEP_DROP_TABLE: 'Drop backend table',
+    STEP_ESTIMATING_STATS: 'Estimating stats by sampling',
+    STEP_ESTIMATING_STATS_FULL: 'Generating stats by FULL scan',
+    STEP_EXT_STATS_COPY: 'Copy stats to external table',
+    STEP_EXT_STATS_LOCK: 'Lock external table stats',
+    STEP_EXT_STATS_SET: 'Set external table stats',
+    STEP_EXT_STATS_SET_COL: 'Set external table column stats',
+    STEP_FINAL_LOAD: 'Load staged data',
+    STEP_FINAL_MERGE: 'Merge staged data',
+    STEP_FIND_OFFLOAD_DATA: 'Find data to offload',
+    STEP_FIND_MJOIN_DATA: 'Find partitions to materialize',
+    STEP_FIND_JOIN_DATA: 'Find partitions to present',
+    STEP_OSR_DEMO_DATA: 'Prepare demo data',
+    STEP_OSR_FETCH_DATA: 'Fetch RDBMS and offload data',
+    STEP_OSR_FIND_TABLES: 'Find tables for report',
+    STEP_OSR_GENERATE_REPORT: 'Generate report',
+    STEP_OSR_PROCESS_DATA: 'Process report data',
+    STEP_GDP_LOGS: 'Logs',
+    STEP_GDP_PERMISSIONS: 'Permissions',
+    STEP_GDP_PROCESSES: 'Processes',
+    STEP_GDP_TABLE_METADATA: 'Table Metadata',
+    STEP_GENERAL_AAPD: 'Create general aggregation rule',
+    STEP_GET_BACKEND_STATS: 'Fetching backend stats',
+    STEP_GRANT_ADMIN: 'Create grant with grant option',
+    STEP_GRANT_HYBRID_OBJECTS: 'Grant hybrid objects',
+    STEP_IU_COMPACT_ADD_DELTA_PARTITION: 'Add partition to delta table',
+    STEP_IU_COMPACT_BACKUP_TABLE: 'Create pre-compaction backup table',
+    STEP_IU_COMPACT_BACKUP_PARTITION: 'Backup pre-compaction partition',
+    STEP_IU_COMPACT_COMPUTE_BASE_STATS: 'Compute stats for new base table',
+    STEP_IU_COMPACT_COMPUTE_PART_STATS: 'Compute stats for compacted partitions',
+    STEP_IU_COMPACT_CREATE_BASE_TABLE: 'Create new base table',
+    STEP_IU_COMPACT_CREATE_INTL_VIEW: 'Create internal user view',
+    STEP_IU_COMPACT_CREATE_USER_VIEW: 'Create external user view',
+    STEP_IU_COMPACT_DELTA_COUNT: 'Check delta table row count before compaction',
+    STEP_IU_COMPACT_DROP_USER_VIEW: 'Drop user view',
+    STEP_IU_COMPACT_HDFS_SNAPSHOT: 'Create HDFS Snapshot',
+    STEP_IU_COMPACT_ID_PARTITIONS: 'Identify modified partitions',
+    STEP_IU_COMPACT_INSERT_PARTITION: 'Populate partition in new base table from user view',
+    STEP_IU_COMPACT_INSERT_TABLE: 'Populate new base table from user view',
+    STEP_IU_COMPACT_PURGE_ARTIFACTS: 'Purge previous artifacts after compaction',
+    STEP_IU_COMPACT_OVERWRITE_PARTITION: 'Compact partition in base table from user view',
+    STEP_IU_COMPACT_SAVE_PARTITIONS: 'Save partition list',
+    STEP_IU_COMPACT_UPDATE_USER_VIEW: 'Update external user view',
+    STEP_IU_CREATE_DELTA_TABLE: 'Create delta table',
+    STEP_IU_DROP_BACKEND: 'Drop Backend Incremental Update objects',
+    STEP_IU_EXTRACT_CHANGES: 'Extract changes',
+    STEP_IU_EXTRACT_DELTA_COUNT1: 'Fetch delta table row count before change extraction',
+    STEP_IU_EXTRACT_DELTA_COUNT2: 'Fetch delta table row count after change extraction',
+    STEP_IU_EXTRACT_DELTA_STATS: 'Compute delta table stats',
+    STEP_IU_EXTRACT_DROP_RDBMS_LOG: 'Drop extraction log for base table',
+    STEP_IU_EXTRACT_FETCH_SCN: 'Fetch extractor statistics',
+    STEP_IU_EXTRACT_HDFS_SHIP: 'Ship incremental changes to HDFS',
+    STEP_IU_EXTRACT_PURGE_CHANGELOG: 'Purge changelog',
+    STEP_IU_EXTRACT_TMP_DIR: 'Create temporary staging directory',
+    STEP_IU_RENAME_INITIAL: 'Rename initial base table',
+    STEP_IU_PERSIST_CONFIG: 'Persist incremental update config metadata to tblproperties',
+    STEP_IU_RENAME_RESET: 'Rename base table',
+    STEP_IU_SETUP_CHANGELOG: 'Setup changelog',
+    STEP_MATERIALIZE_JOIN: 'Materialize staged data',
+    STEP_MESSAGES: 'Messages',
+    STEP_NORMALIZE_INCLUDES: 'Normalize includes',
+    STEP_PROCESS_TABLE_CHANGES: 'Process changes',
+    STEP_REPORT_EXCEPTIONS: 'Report exceptions',
+    STEP_RESULT_CACHE_SETUP: 'Setup result cache area',
+    STEP_SAVE_METADATA: 'Save offload metadata',
+    STEP_STAGING_CLEANUP: 'Cleanup staging area',
+    STEP_STAGING_MINI_CLEANUP: 'Empty staging area',
+    STEP_STAGING_SETUP: 'Setup staging area',
+    STEP_STAGING_TRANSPORT: 'Transport data to staging',
+    STEP_VALIDATE_DATA: 'Validate staged data',
+    STEP_VALIDATE_CASTS: 'Validate type conversions',
+    STEP_VERIFY_EXPORTED_DATA: 'Verify exported data',
+    # Unittest step constants
+    STEP_UNITTEST_SKIP: 'Unittest skip',
+    STEP_UNITTEST_ERROR_BEFORE: 'Unittest error before',
+    STEP_UNITTEST_ERROR_AFTER: 'Unittest error after',
+}
+
+CTX_ERROR_MESSAGE = 'error_message'
+CTX_EXCEPTION_STACK = 'exception_stack'
+
+
+###########################################################################
+# GLOBAL FUNCTIONS
+###########################################################################
+
+def step_title(step_id):
+    """
+    Returns human facing title for step_id.
+    Simple wrapper but hides the implementation a small amount allowing for title source to be changed.
+    """
+    if step_id not in STEP_TITLES:
+        raise CommandStepsException(f'Unknown step id: {step_id}')
+    return STEP_TITLES[step_id]

@@ -1,0 +1,48 @@
+create table gl_wide_row
+( id number
+, vc01 varchar2(4000)
+, vc02 varchar2(4000)
+, vc03 varchar2(4000)
+, vc04 varchar2(4000)
+, vc05 varchar2(4000)
+, vc06 varchar2(4000)
+, vc07 varchar2(4000)
+, vc08 varchar2(4000)
+, vc09 varchar2(4000)
+, vc10 varchar2(4000)
+, vc11 varchar2(4000)
+, vc12 varchar2(4000)
+, vc13 varchar2(4000)
+, vc14 varchar2(4000)
+, vc15 varchar2(4000)
+, vc16 varchar2(4000)
+, vc17 varchar2(4000)
+, vc18 varchar2(4000)
+, vc19 varchar2(4000)
+, vc20 varchar2(4000)
+);
+
+insert into gl_wide_row
+select rownum as id
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+, rpad(to_char(rownum),4000,'_')
+from dual
+connect by rownum <= 5;

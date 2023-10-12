@@ -1,0 +1,8 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<relationalModel class="oracle.dbtools.crest.model.design.relational.RelationalDesign" name="Orchestration Relational Model" id="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" mainViewID="47870605-C8E6-333F-58C1-E77F7DA5259D">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:08:22 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<shouldBeOpen>false</shouldBeOpen>
+<selectedRDBMSSite>79C73AAF-E1A7-E669-7DF0-025EE81A2AFC</selectedRDBMSSite>
+</relationalModel>

@@ -1,0 +1,247 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="529BBCC9-8544-CFD7-F0B7-FE4D6B4FE5B4" name="COMMAND_EXECUTION">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>23E3EAA6-0700-0662-B7E4-681977550F43</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<parsed>true</parsed>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ID" id="E390A3DC-DEAF-4EDB-EDD3-1EEA7D7AB08E">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>3BA1DF91-5C96-CDF1-B2E1-200515176DC5</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="UUID" id="1370C0B2-02D7-22E1-5C90-E89FA08D9A63">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>403B9FCF-5625-4BB7-719C-F7799FB7DE9E</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT033</logicalDatatype>
+<domain>169CED6C-9FFC-9E98-E0B8-D17BEB907ACE</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="START_TIME" id="DBD40615-8D46-987D-91CD-593065D15931">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>24FF97E8-B278-7970-4B53-DB231BE9FA4A</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="END_TIME" id="DA930075-BA2E-32C7-E841-231F8260F870">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>DF603499-4D9A-50F0-49AD-DD98E6EF9DFA</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="STATUS_ID" id="2A8EE08C-24FD-22D0-DDE6-A675F832A7AB">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:46:07 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="547DDBDF-BED3-6BF5-FCE3-76450E1D5052" referredColumn="F27FA426-1D9C-73C6-5D83-1191C1A91C2F"/>
+</associations>
+</Column>
+<Column name="COMMAND_LOG_PATH" id="57394A26-8CAC-C8E9-BEA6-A86F952285DE">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>AA1E9713-5A3E-25E8-70B9-F18E79712170</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>4000 CHAR</dataTypeSize>
+<domain>DOM3000005</domain>
+<ownDataTypeParameters>4000 CHAR,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="COMMAND_INPUT" id="48ABE270-4948-1017-C96B-E87FD313BFEC">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>429B6EBF-C204-3752-71EC-408931DB1CA1</generatorID>
+<notes>Should it be JSON??</notes>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT028</logicalDatatype>
+<dataTypeSize>4000 CHAR</dataTypeSize>
+<domain>DOM10009</domain>
+<ownDataTypeParameters>4000 CHAR,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="COMMAND_PARAMETERS" id="DB0DB8C2-8F0C-3648-AD59-9CC5E681917E">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>3972E9E6-8417-7364-18CC-3DE7D0E6CEFB</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT028</logicalDatatype>
+<domain>D7FD2AD5-0C91-6BD9-76CE-43C2AF4F1311</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="COMMAND_TYPE_ID" id="D3DCB439-6E29-5748-8967-9A19C1748510">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>56DF68FB-BB74-251A-7EBC-CF3089CA3273</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<previousColumn>false</previousColumn>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="A40B928C-8EE2-D9F5-DE2B-79C6A2DF51C5" referredColumn="1C052810-9633-1D34-DC39-216AFB6DF759"/>
+</associations>
+</Column>
+<Column name="GDP_VERSION_ID" id="F01BB852-2F04-B951-3CA4-5ED37CBD8C58">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>1AC4B29A-D2D1-53BE-A98D-DA6767770951</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<previousColumn>false</previousColumn>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="3E5F1006-F6AD-30D4-F3BE-1936DB5A9C04" referredColumn="27144F36-5F3A-E5B6-B01B-85844556E2C7"/>
+</associations>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="06333E8B-9B58-BD8F-6EAC-EEA7A4E4EC4F" name="COMMAND_EXECUTION_PK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>C50BD72C-B05E-AFE3-F6B5-CA4D3C693531</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="E390A3DC-DEAF-4EDB-EDD3-1EEA7D7AB08E"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="2B587D79-73B6-0678-31AA-2074F4AB26F4" name="COMMAND_EXECUTION_UK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>5440705D-5CF2-52B2-0E12-70421762B74C</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="1370C0B2-02D7-22E1-5C90-E89FA08D9A63"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="C3AE1D20-84C7-4921-0C2D-51176F99AC88" name="COMMAND_EXECUTION_PKI">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-11 17:28:06 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Plain Index</indexState>
+<supportedConstraintID>06333E8B-9B58-BD8F-6EAC-EEA7A4E4EC4F</supportedConstraintID>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="E390A3DC-DEAF-4EDB-EDD3-1EEA7D7AB08E"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="90A256A0-06EA-BED7-187E-0D3D2FF8237E" name="COMMAND_EXECUTION_UKI">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-11 17:28:06 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Plain Index</indexState>
+<supportedConstraintID>2B587D79-73B6-0678-31AA-2074F4AB26F4</supportedConstraintID>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="1370C0B2-02D7-22E1-5C90-E89FA08D9A63"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="27C58EEF-6AC5-35F1-1382-E73E740A3831" name="COMMAND_EXECUTION_FK1I">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:19:37 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="D3DCB439-6E29-5748-8967-9A19C1748510"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="E674DFF8-2EF8-3820-A7BC-10509CA7A61D" name="COMMAND_EXECUTION_FK2I">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:19:37 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="F01BB852-2F04-B951-3CA4-5ED37CBD8C58"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="11AF290E-22BB-CABD-0E84-C007481B4EDD" name="COMMAND_EXECUTION_FK3I">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:53:20 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="2A8EE08C-24FD-22D0-DDE6-A675F832A7AB"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="4B6F5EA8-6E18-AEA5-0815-ECDA748ED0D4" name="COMMAND_EXECUTION_FK2">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>A0250F3D-97E3-AC2E-2939-126064A9BD7C</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="F01BB852-2F04-B951-3CA4-5ED37CBD8C58"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="2CBD7C1D-4C56-A88F-323B-D99688846F26" name="COMMAND_EXECUTION_FK1">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 17:39:43 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="D3DCB439-6E29-5748-8967-9A19C1748510"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="34E26C3E-5032-CE1C-F2FB-C263C1065030" name="COMMAND_EXECUTION_FK3">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:38:50 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="2A8EE08C-24FD-22D0-DDE6-A675F832A7AB"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+</Table>

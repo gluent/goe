@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# Script to manage the contents of $OFFLOAD_HOME/log
+#
+# Schedule execution via cron with an entry of the form:
+#
+#   0 * * * * . ${HOME}/offload/conf/offload.env && ${OFFLOAD_HOME}/bin/logmgr
+#
+# LICENSE_TEXT
+#
+
+if [ -z $OFFLOAD_HOME ]; then
+  echo "OFFLOAD_HOME is not set - Exiting!"
+  exit 1
+fi
+
+LOG_MV_MINS=${LOG_MV_MINS:-60}
+ARCHIVE_DIR=$OFFLOAD_HOME/log/archive/$(date +%Y.%m.%d)
+FIND_CMD="find $OFFLOAD_HOME/log -maxdepth 1 -type f -mmin +${LOG_MV_MINS}"
+
+mkdir -p $ARCHIVE_DIR
+
+if [ $(${FIND_CMD} | wc -l) -gt 0 ]; then
+  ${FIND_CMD} | /usr/bin/xargs /bin/mv -t $ARCHIVE_DIR
+fi
+
+exit 0

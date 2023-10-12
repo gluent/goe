@@ -1,0 +1,19 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Relation class="oracle.dbtools.crest.model.design.logical.Relation" name="Offload Chunk FK4" directorySegmentName="seg_0" id="7D91B17A-1F06-2796-B8B4-9EB3EF54D6C6">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:30:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<sourcePk>32292631-3F4C-55BA-723D-A225EC5A2858</sourcePk>
+<identifying>false</identifying>
+<optionalSource>true</optionalSource>
+<optionalTarget>false</optionalTarget>
+<sourceCardinality>1</sourceCardinality>
+<sourceEntity>15EC9D19-13D1-9ED4-0C87-2BBD5729EA95</sourceEntity>
+<targetCardinalityString>*</targetCardinalityString>
+<targetEntity>D101961D-9EEF-ED0A-F39A-3E0AA4F0B2CE</targetEntity>
+<transferable>true</transferable>
+<deleteRule>NO ACTION</deleteRule>
+</Relation>

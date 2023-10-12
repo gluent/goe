@@ -1,0 +1,6 @@
+#! /usr/bin/env python3
+# LICENSE_TEXT
+
+from gluentlib.scripts.exec_in_hadoop_db import main
+
+main()

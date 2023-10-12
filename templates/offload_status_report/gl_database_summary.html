@@ -1,0 +1,218 @@
+{% import "offload_status_report/macros.jinja" as macros %}
+
+<div class="section">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-11">
+                <h1 class="text-default">Database Summary</h1><br>
+            </div>
+            <div class="col-md-1 margin-top-20">
+                <button class="btn bucket-schema-button pull-right" data-toggle="modal" data-target="#offload_summary_help">
+                    <span class="fa-stack fa-lg">
+                        <i class="fa fa-circle-thin fa-stack-2x"></i>
+                        <i class="fa fa-question fa-stack-1x"></i>
+                    </span>
+                </button>
+            </div>
+
+            <!-- Start Database Summary Help MODAL -->
+            <div class="modal fade" id="offload_summary_help" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-custom" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title text-gluent">Database Summary</h4>
+                        </div>
+                        <div class="modal-body-help">
+                            <div class="panel help-panel">
+                                <div class="modal-body-panel-body-help">
+
+                                    <p>This section of the Offload Status Report displays database-level summary statistics for all offloaded tables in the report. <sup>1</sup></p>
+                                    <h3>Data Distribution</h3>
+                                    <p>The Data Distribution chart displays the total distributed size (in GB) of all offloaded tables in the report <sup>1</sup> and breaks this down into three metrics:
+                                        <ul>
+                                            <li><strong>Retained</strong>: the amount of RDBMS space that must be retained in the source RDBMS.</li>
+                                            <li><strong>Reclaimable</strong>: the amount of RDBMS space that can be reclaimed from the source RDBMS after offloading.</li>
+                                            <li><strong>Offloaded</strong>: the amount of space that has been offloaded (as reported by the offloaded database).</li>
+                                        </ul>
+                                    </p>
+                                    <p>See <em>Metrics And Dimensions Explained</em> for more details.</p>
+
+                                    <h3>RDBMS Breakdown</h3>
+                                    <p>The RDBMS Breakdown chart displays a summary of the Retained and Reclaimable metrics in the source RDBMS for all offloaded tables in the report <sup>1</sup>, across three dimensions:</p>
+                                        <ul>
+                                            <li><strong>Size</strong>: the size in GB of all table segments remaining in the source RDBMS after offload, by metric.</li>
+                                            <li><strong>Segments</strong>: the number of table segments remaining in the source RDBMS after offload, by metric.</li>
+                                            <li><strong>Rows</strong>: the number of table rows remaining in the source RDBMS after offload, by metric.</li>
+                                        </ul>
+                                    </p>
+                                    <p>See <em>Metrics And Dimensions Explained</em> for more details.</p>
+
+                                    <h3>Metrics And Dimensions Explained</h3>
+                                    <table class="table table-condensed help-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Metric/Dimension</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Retained</td>
+                                            <td>The data size, segments and rows that must be retained in the source RDBMS, either because the data has not been offloaded or has been offloaded with Incremental Updates enabled or as a "100/10" Incremental Partition Append offload <sup>2</sup>. Retained segments/data cannot be dropped/deleted.</th>
+                                        </tr>
+                                        <tr>
+                                            <td>Reclaimable</td>
+                                            <td>The data size, segments and rows that can be reclaimed (dropped/deleted) from the source RDBMS after offloading. Note that not all data that has been offloaded can be reclaimed. For example, data or partitions cannot be removed from Incremental Update-enabled tables after offload, if they are likely to be subject to further updates. Offloaded partitions that are still queried from the source RDBMS when using the 100/10 Hybrid View pattern <sup>2</sup> cannot be dropped until they fall below the threshold for querying offloaded data. Tables that are partially offloaded by predicate are not considered to be candidates for space reclamation because the space used by deleted rows cannot easily be calculated and is otherwise retained by the source RDBMS table unless it is reorganized.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Offloaded</td>
+                                            <td>The data size, segments and rows that have been offloaded to a distributed backend cluster or cloud database. All offloaded metrics are as reported by the backend system, not by the source RDBMS.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Size</td>
+                                            <td>Size statistics are reported in GB and are the sum of all space-consuming objects related to source and offloaded tables. Retained and reclaimable sizes are calculated from the source RDBMS and offloaded sizes are calculated from the offloaded backend database. The compression schemes and options used in the source RDBMS and offloaded database are likely to differ and as such, the size statistics between the two are not directly comparable (e.g. for ratio calculations). Note that size statistics do not include redundant copies made by the source or backend systems.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Segments</td>
+                                            <td>Segment statistics refer to the number of tables and/or table partition segments in the source RDBMS or offloaded database. In most cases, the partitioning schemes between the source RDBMS and offloaded database will differ and so are not directly comparable. All tables that are offloaded by Gluent will be partitioned in the offloaded database, regardless of their physical state in the source RDBMS.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rows</td>
+                                            <td>Rows statistics are approximate. They are calculated from source RDBMS and offloaded database statistics and are therefore for ancillary information only.</td>
+                                        </tr>
+                                    </tbody>
+                                    </table>
+
+                                    <p><br /><sup>1</sup> In-scope schemas and tables are determined by the <code>--schema</code> and <code>--table</code> report options. If no options are provided, the report will include all tables offloaded from the source RDBMS, else only offloaded tables matching either the requested schema, table or both will be reported.</p>
+                                    <p><sup>2</sup> When using the "100/10" Incremental Partition Append offload pattern, an entire partitioned table is offloaded, but a configurable number of partitions are still queried from the source RDBMS. Partitions below this threshold are queried from the offloaded database.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Database Summary Help MODAL -->
+
+        </div>
+    </div>
+</div>
+
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="panel panel-default min-height-300">
+                    <div class="panel-heading">
+                        <h2 class="panel-title text-center">Data Distribution</h2>
+                    </div>
+                    <div class="panel-body text-center">
+
+                        <div id="osr_gauge_loading" class="center-block">
+                            <i class="fa fa-spinner fa-spin"></i> Loading...
+                        </div>
+
+                        <div id="osr_gauge_container" class="center-block invisible">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <table class="table-condensed width-100-pct no-padding">
+                                        <tr>
+                                            <td><span class="label background-retain">RETAINED</span></td>
+                                            <td class="text-center"><span class="label background-reclaim">RECLAIMABLE</span></td>
+                                            <td class="text-right"><span class="label background-offload">OFFLOADED</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="gauge-row-2">{{ "{:,.2f} GB".format(macros.gb(data['_RETAINED_BYTES'])|float) }}</div>
+                                                <div>
+                                                    <small class="text-grey">{{ macros.percentage_display(data['_RETAINED_BYTES'], data['_OFFLOADED_BYTES'], data['_RECLAIMABLE_BYTES'], 'retained') }}</small>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="gauge-row-2">{{ "{:,.2f} GB".format(macros.gb(data['_RECLAIMABLE_BYTES'])|float) }}</div>
+                                                <div>
+                                                    <small class="text-grey">{{ macros.percentage_display(data['_RETAINED_BYTES'], data['_OFFLOADED_BYTES'], data['_RECLAIMABLE_BYTES'], 'reclaimable') }}</small>
+                                                </div>
+                                            </td>
+                                            <td class="text-right">
+                                                <div class="gauge-row-2">{{ "{:,.2f} GB".format(macros.gb(data['_OFFLOADED_BYTES'])|float) }}</div>
+                                                <div>
+                                                    <small class="text-grey">{{ macros.percentage_display(data['_RETAINED_BYTES'], data['_OFFLOADED_BYTES'], data['_RECLAIMABLE_BYTES'], 'offloaded') }}</small>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3">
+                                                <div class="gauge-row-3">&nbsp;</div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div id="osr_gauge" class="top-minus-30"></div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="progress progress-big candidate-volume-progress">
+                                        <div class="progress-bar background-default progress-bar-big width-100-pct">Combined: {{ "{:,.2f} GB".format(macros.gb(data['_OFFLOADED_BYTES'])|float + macros.gb(data['_RETAINED_BYTES'])|float + macros.gb(data['_RECLAIMABLE_BYTES'])|float)}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="panel panel-default min-height-300">
+                    <div class="panel-heading">
+                        <h2 class="panel-title text-center">RDBMS Breakdown</h2>
+                    </div>
+                    <div class="panel-body text-center">
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div id="reclaim_size_loading" class="center-block">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                                <div id="reclaim_size_chart" class="invisible"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <div id="reclaim_partitions_loading" class="center-block">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                                <div id="reclaim_partitions_chart" class="invisible"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <div id="reclaim_rows_loading" class="center-block">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                                <div id="reclaim_rows_chart" class="invisible"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <hr>
+            </div>
+        </div>
+
+    </div>
+</div>

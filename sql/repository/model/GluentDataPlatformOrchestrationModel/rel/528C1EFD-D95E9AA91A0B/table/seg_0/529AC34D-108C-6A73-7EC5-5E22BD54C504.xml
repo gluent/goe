@@ -1,0 +1,288 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="529AC34D-108C-6A73-7EC5-5E22BD54C504" name="OFFLOAD_CHUNK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>D101961D-9EEF-ED0A-F39A-3E0AA4F0B2CE</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<parsed>true</parsed>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ID" id="1C77C250-082E-E41F-5821-F45680F6FDF3">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>69302088-2115-A4AA-BE1D-71B4E6490CC3</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CHUNK_NUMBER" id="AF07B5D1-5B30-3547-ABE1-7D257444873C">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 17:57:07 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>0A8789A6-9B6A-D654-4067-80175AA183B5</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="STATUS_ID" id="F2C7891F-EE2D-845B-4BA4-5B0F3EF9160C">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:47:05 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="DB1B22AA-8D14-3524-9EE3-304228171923" referredColumn="F27FA426-1D9C-73C6-5D83-1191C1A91C2F"/>
+</associations>
+</Column>
+<Column name="START_TIME" id="8AFBC4BA-2341-0D1F-72EC-A42EADC47D3C">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>5AFBAB2C-D123-6CF3-D028-D287DC2F8137</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="END_TIME" id="FA86D39F-6AC4-9029-3B81-936AD3671650">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>02ECE4F7-C64B-ACE8-AD69-87080F6F4888</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CHUNK_ROWS" id="1007B558-C85C-BD9A-439E-5891375A311F">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>93F40E29-E9A0-39DF-622B-BF03A4A5E4A8</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>0A8789A6-9B6A-D654-4067-80175AA183B5</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="FRONTEND_BYTES" id="F369BB69-0E3E-2CF5-B170-A4CB168B6818">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>DDAC83D7-B3A9-F298-5678-16BEC445B28E</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>0A8789A6-9B6A-D654-4067-80175AA183B5</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="TRANSPORT_BYTES" id="9CB43FE2-5C0C-F229-88AC-567892D475F9">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-24 11:14:41 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>0A8789A6-9B6A-D654-4067-80175AA183B5</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="BACKEND_BYTES" id="84708087-67D8-907A-6037-657C918032EC">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>F0CF5A14-51F1-B3D5-CBCF-8F1D9E8BC771</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>0A8789A6-9B6A-D654-4067-80175AA183B5</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="COMMAND_EXECUTION_ID" id="5A633CE2-033A-F789-2820-3565C5B35A41">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>A1F69B5F-6781-B93A-9AA9-DC99DE057B43</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<previousColumn>false</previousColumn>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="E4A48F52-484B-273F-7E93-716EEE4DA075" referredColumn="E390A3DC-DEAF-4EDB-EDD3-1EEA7D7AB08E"/>
+</associations>
+</Column>
+<Column name="FRONTEND_OBJECT_ID" id="C747A20A-934D-0060-30AE-83FA79CF09F5">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>A41A2E97-6DD3-B6FA-4529-F605CF0B4B40</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<previousColumn>false</previousColumn>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="0DE67B9C-F3A7-2E16-A5C5-3A78C3AF1DBE" referredColumn="8DFCE355-63AE-B428-533F-EC096EADC410"/>
+</associations>
+</Column>
+<Column name="BACKEND_OBJECT_ID" id="67FDEEFF-A4DA-B3CF-3364-B6BF2FB3B93F">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>69D515F0-92BD-1A9D-7582-D22F6971FBD4</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<previousColumn>false</previousColumn>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="3F2DA30E-1A0C-C385-9F2E-D3AD3A564E94" referredColumn="2C88D395-A529-605A-8B4F-125C398B8D96"/>
+</associations>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="5F9E00F6-9EC5-C5B4-AF7D-250B669EFB1B" name="OFFLOAD_CHUNK_PK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>AAF6002A-77EB-1291-0B7E-C64627C30984</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="1C77C250-082E-E41F-5821-F45680F6FDF3"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="849C6A0C-26D7-9319-6873-BB1B170181E6" name="OFFLOAD_CHUNK_UK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 17:58:00 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="5A633CE2-033A-F789-2820-3565C5B35A41"/>
+<colUsage columnID="AF07B5D1-5B30-3547-ABE1-7D257444873C"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="DF028DD4-01A9-8215-57E5-52904999115A" name="OFFLOAD_CHUNK_PKI">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-11 17:28:31 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Plain Index</indexState>
+<supportedConstraintID>5F9E00F6-9EC5-C5B4-AF7D-250B669EFB1B</supportedConstraintID>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="1C77C250-082E-E41F-5821-F45680F6FDF3"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="5740B060-1CAC-D2D4-BA52-24B8FD508671" name="OFFLOAD_CHUNK_UKI">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-11 17:28:54 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Plain Index</indexState>
+<supportedConstraintID>849C6A0C-26D7-9319-6873-BB1B170181E6</supportedConstraintID>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="5A633CE2-033A-F789-2820-3565C5B35A41"/>
+<colUsage columnID="AF07B5D1-5B30-3547-ABE1-7D257444873C"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="C7B48C21-858D-3894-F6BF-01EA42051C46" name="OFFLOAD_CHUNK_FK1I">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:19:37 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="67FDEEFF-A4DA-B3CF-3364-B6BF2FB3B93F"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="842CB85F-1CE9-E4C3-F397-751A72FB43C0" name="OFFLOAD_CHUNK_FK2I">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:19:37 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="C747A20A-934D-0060-30AE-83FA79CF09F5"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="0AF170E2-A7C6-8AC9-683D-84D4F818CF16" name="OFFLOAD_CHUNK_FK3I">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:19:37 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="5A633CE2-033A-F789-2820-3565C5B35A41"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="8AED2E8E-F7B5-EA9A-17DA-1232E0AC2AC1" name="OFFLOAD_CHUNK_FK4I">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:53:33 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="F2C7891F-EE2D-845B-4BA4-5B0F3EF9160C"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="7BC91814-8E4E-FFE3-D081-B409020B3866" name="OFFLOAD_CHUNK_FK1">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>64ABC4A1-E711-9435-B03F-E9D2E5102726</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="67FDEEFF-A4DA-B3CF-3364-B6BF2FB3B93F"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="1AD144B0-74CE-F91C-AB64-E6965BFF4C65" name="OFFLOAD_CHUNK_FK2">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>3C0879C7-DF8E-F24A-E7AA-D919AC3026A3</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="C747A20A-934D-0060-30AE-83FA79CF09F5"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="C07FD04B-A9A4-BD08-2692-2ACD83748340" name="OFFLOAD_CHUNK_FK3">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>9CF2EF9D-7ED4-842A-314E-E69B4A10769A</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="5A633CE2-033A-F789-2820-3565C5B35A41"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="006FDDAC-161D-9A0F-D72E-EF60668539C5" name="OFFLOAD_CHUNK_FK4">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:41:31 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="F2C7891F-EE2D-845B-4BA4-5B0F3EF9160C"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+</Table>

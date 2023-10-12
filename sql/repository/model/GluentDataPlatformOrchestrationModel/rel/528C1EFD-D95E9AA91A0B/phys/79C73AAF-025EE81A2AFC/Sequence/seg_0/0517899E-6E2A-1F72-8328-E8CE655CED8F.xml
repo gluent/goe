@@ -1,0 +1,7 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<SequenceOraclev10g class="oracle.dbtools.crest.model.design.storage.oracle.v10g.SequenceOraclev10g" name="STATUS_SEQ" directorySegmentName="seg_0" id="0517899E-6E2A-1F72-8328-E8CE655CED8F">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:48:52 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<noCache>YES</noCache>
+</SequenceOraclev10g>

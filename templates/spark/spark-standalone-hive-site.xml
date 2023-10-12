@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<configuration>
+  <property>
+    <name>hive.exec.scratchdir</name>
+    <value>/tmp/spark_hive</value>
+    <description>Scratch space for Spark Hive jobs</description>
+  </property>
+  <property>
+    <name>hive.server2.thrift.port</name>
+    <value>10016</value>
+  </property>
+</configuration>

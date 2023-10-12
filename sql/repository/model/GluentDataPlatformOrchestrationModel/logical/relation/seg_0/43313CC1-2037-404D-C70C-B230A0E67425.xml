@@ -1,0 +1,19 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Relation class="oracle.dbtools.crest.model.design.logical.Relation" name="Offload Partition FK1" directorySegmentName="seg_0" id="43313CC1-2037-404D-C70C-B230A0E67425">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-08 20:30:02 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<sourcePk>AAF6002A-77EB-1291-0B7E-C64627C30984</sourcePk>
+<identifying>false</identifying>
+<optionalSource>true</optionalSource>
+<optionalTarget>false</optionalTarget>
+<sourceCardinality>1</sourceCardinality>
+<sourceEntity>D101961D-9EEF-ED0A-F39A-3E0AA4F0B2CE</sourceEntity>
+<targetCardinalityString>*</targetCardinalityString>
+<targetEntity>533DB965-BDEE-BD78-DD69-83733177C66F</targetEntity>
+<transferable>true</transferable>
+<deleteRule>NO ACTION</deleteRule>
+</Relation>

@@ -1,0 +1,105 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="52825E21-B818-67C6-C9FE-DC8DE1109FC7" name="COMMAND_TYPE">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>4888A027-85CF-0FFC-6031-11627C419AEB</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<parsed>true</parsed>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ID" id="1C052810-9633-1D34-DC39-216AFB6DF759">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>D32782A2-4DFD-575D-4A06-371135ECBA58</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CODE" id="B3B8814B-2926-B5D7-9388-2F06D1DDB082">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>E13637F0-20DC-B3C1-71A1-2B02DD434E7C</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>30 CHAR</dataTypeSize>
+<domain>D39CE4A8-1DB5-EC0D-92F1-16788E4A8641</domain>
+<ownDataTypeParameters>30 CHAR,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="NAME" id="A5B6FAF6-D5ED-2933-BBCC-D42D023ABF3D">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>ACF9972B-B01E-3244-7215-98DC9BB6E1D7</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>200 CHAR</dataTypeSize>
+<domain>3F8CDDDA-B266-BE26-65EC-976D2E3F4C8E</domain>
+<ownDataTypeParameters>200 CHAR,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CREATE_TIME" id="C981A348-6CFA-3E49-A857-ECB5B4891E3F">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 17:27:17 UTC</createdTime>
+<generatorID>40D86C66-EDC0-E28D-6F80-F979BD35D014</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<domain>DOM10003</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="B55C7614-DF0F-2F3E-0F09-0A451BF07183" name="COMMAND_TYPE_PK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<indexColumnUsage>
+<colUsage columnID="1C052810-9633-1D34-DC39-216AFB6DF759"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="C0C81470-99FB-6499-62CD-B45E96223E51" name="COMMAND_TYPE_UK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>E4200EC2-8B8A-6723-7C1E-8C955FA44E38</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="B3B8814B-2926-B5D7-9388-2F06D1DDB082"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="D0A4AEF1-EDF4-6F5A-ECA9-7BFA247979BB" name="COMMAND_TYPE_PKI">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-11 17:24:50 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Plain Index</indexState>
+<supportedConstraintID>B55C7614-DF0F-2F3E-0F09-0A451BF07183</supportedConstraintID>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="1C052810-9633-1D34-DC39-216AFB6DF759"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="5B6E8AF2-3AC9-30E1-6B8D-69FFE082A422" name="COMMAND_TYPE_UKI">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-11 17:24:50 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Plain Index</indexState>
+<supportedConstraintID>C0C81470-99FB-6499-62CD-B45E96223E51</supportedConstraintID>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="B3B8814B-2926-B5D7-9388-2F06D1DDB082"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+</Table>

@@ -1,0 +1,17 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<FKIndexAssociation class="oracle.dbtools.crest.model.design.relational.FKIndexAssociation" directorySegmentName="seg_0" id="58CF8F61-5520-2C0A-94A4-9C834C286012" containerWithKeyObject="DD1A8754-7F62-2B61-BEF4-94402267460B" localFKIndex="0BF5E3C3-8A39-C042-74BB-BE8530B20404" name="OFFLOAD_PARTITION_FK1">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>43313CC1-2037-404D-C70C-B230A0E67425</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<referredTableLongName>OFFLOAD_CHUNK</referredTableLongName>
+<deleteRule>NO ACTION</deleteRule>
+<referredTableID>529AC34D-108C-6A73-7EC5-5E22BD54C504</referredTableID>
+<keyObject>5F9E00F6-9EC5-C5B4-AF7D-250B669EFB1B</keyObject>
+<referredKeyID>5F9E00F6-9EC5-C5B4-AF7D-250B669EFB1B</referredKeyID>
+<mandatory>true</mandatory>
+<refColNames>ID</refColNames>
+<transferable>true</transferable>
+<rely>false</rely>
+<columnDependencyConstraintGenerateInDDL>true</columnDependencyConstraintGenerateInDDL>
+</FKIndexAssociation>

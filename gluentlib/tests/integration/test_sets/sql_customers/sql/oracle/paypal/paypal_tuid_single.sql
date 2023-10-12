@@ -1,0 +1,10 @@
+gluent_binds = {"timed_uuid_key": "11E1-ABE7-8DA4AC00-8080-808080808080", "account_number": 1859350807428529}
+gluent_pred_push_tokens = [{"token": ".PAYPAL_TUID_TO_INT64", "occurs": true}, {"token": "TIMED_UUID_KEY", "occurs": true}, {"token": "ACCOUNT_NUMBER", "occurs": 1}]
+
+SELECT /*+ monitor &_pq &_qre &_test_name gluent_query_monitor */ TRANSACTION_FACT_TUID.TRANSACTION_ID AS TRANSACTION_ID
+,      TRANSACTION_FACT_TUID.ENCRYPTED_TRANSACTION_ID AS ENCRYPTED_TRANSACTION_ID 
+FROM   TRANSACTION_FACT_TUID
+WHERE  TIMED_UUID_KEY = :timed_uuid_key
+AND    ACCOUNT_NUMBER = :account_number 
+AND    (   (TRANSACTION_TYPE_CODE='U' AND TRANSACTION_SUBTYPE_CODE IN ('L','O') AND DEBIT_CREDIT_CODE='CR') 
+        OR (TRANSACTION_TYPE_CODE='U' AND TRANSACTION_SUBTYPE_CODE='X' AND DEBIT_CREDIT_CODE='DR'))

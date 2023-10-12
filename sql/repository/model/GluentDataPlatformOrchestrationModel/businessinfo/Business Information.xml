@@ -1,0 +1,7 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<BusinessInfoDesign class="oracle.dbtools.crest.model.businessinfo.BusinessInfoDesign" name="Business Information" id="72BBD05B-13FD-F326-28D3-DBF0A870CFBA">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-22 16:59:08 UTC</createdTime>
+<ownerDesignName>gluent-erd-202203</ownerDesignName>
+<shouldBeOpen>false</shouldBeOpen>
+</BusinessInfoDesign>

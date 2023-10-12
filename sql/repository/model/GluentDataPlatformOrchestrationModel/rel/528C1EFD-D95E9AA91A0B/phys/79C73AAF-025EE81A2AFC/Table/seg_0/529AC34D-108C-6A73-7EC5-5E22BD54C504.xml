@@ -1,0 +1,150 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<TableProxyOraclev12c class="oracle.dbtools.crest.model.design.storage.oracle.v12c.TableProxyOraclev12c" name="OFFLOAD_CHUNK" directorySegmentName="seg_0" id="529AC34D-108C-6A73-7EC5-5E22BD54C504">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<logging>YES</logging>
+<partitionedRowMovement>DISABLE</partitionedRowMovement>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+<temporaryChanged>false</temporaryChanged>
+<accessDriverType>oracle_loader</accessDriverType>
+<rejectLimit></rejectLimit>
+<columnProxies itemClass="oracle.dbtools.crest.model.design.storage.oracle.v12c.ColumnProxyOraclev12c">
+<ColumnProxy name="CHUNK_ROWS" id="1007B558-C85C-BD9A-439E-5891375A311F">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="ID" id="1C77C250-082E-E41F-5821-F45680F6FDF3">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="COMMAND_EXECUTION_ID" id="5A633CE2-033A-F789-2820-3565C5B35A41">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="BACKEND_OBJECT_ID" id="67FDEEFF-A4DA-B3CF-3364-B6BF2FB3B93F">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="BACKEND_BYTES" id="84708087-67D8-907A-6037-657C918032EC">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="START_TIME" id="8AFBC4BA-2341-0D1F-72EC-A42EADC47D3C">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="CHUNK_NUMBER" id="AF07B5D1-5B30-3547-ABE1-7D257444873C">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="STATUS_TIME" id="BD7FF447-B233-452C-49FB-9178ABF33275">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="FRONTEND_OBJECT_ID" id="C747A20A-934D-0060-30AE-83FA79CF09F5">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="STATUS_ID" id="F2C7891F-EE2D-845B-4BA4-5B0F3EF9160C">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:47:05 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="FRONTEND_BYTES" id="F369BB69-0E3E-2CF5-B170-A4CB168B6818">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="END_TIME" id="FA86D39F-6AC4-9029-3B81-936AD3671650">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ColumnProxy>
+</columnProxies>
+<indexProxies>
+<IndexProxy class="oracle.dbtools.crest.model.design.storage.oracle.v10g.IndexProxyOraclev10g" name="OFFLOAD_CHUNK_FK3I" id="0AF170E2-A7C6-8AC9-683D-84D4F818CF16">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+</IndexProxy>
+<IndexProxy class="oracle.dbtools.crest.model.design.storage.oracle.v10g.IndexProxyOraclev10g" name="OFFLOAD_CHUNK_UKI" id="5740B060-1CAC-D2D4-BA52-24B8FD508671">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-14 11:45:36 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+</IndexProxy>
+<IndexProxy class="oracle.dbtools.crest.model.design.storage.oracle.v10g.IndexProxyOraclev10g" name="OFFLOAD_CHUNK_FK2I" id="842CB85F-1CE9-E4C3-F397-751A72FB43C0">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+</IndexProxy>
+<IndexProxy class="oracle.dbtools.crest.model.design.storage.oracle.v10g.IndexProxyOraclev10g" name="OFFLOAD_CHUNK_FK4I" id="8AED2E8E-F7B5-EA9A-17DA-1232E0AC2AC1">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:53:33 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+</IndexProxy>
+<IndexProxy class="oracle.dbtools.crest.model.design.storage.oracle.v10g.IndexProxyOraclev10g" name="OFFLOAD_CHUNK_FK1I" id="C7B48C21-858D-3894-F6BF-01EA42051C46">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+</IndexProxy>
+<IndexProxy class="oracle.dbtools.crest.model.design.storage.oracle.v10g.IndexProxyOraclev10g" name="OFFLOAD_CHUNK_PKI" id="DF028DD4-01A9-8215-57E5-52904999115A">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-14 11:45:36 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<tableSpace>&amp;_gluent_repo_tablespace</tableSpace>
+</IndexProxy>
+</indexProxies>
+<foreignKeys>
+<ForeignKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.FKProxyOraclev10g" name="OFFLOAD_CHUNK_FK4" id="006FDDAC-161D-9A0F-D72E-EF60668539C5">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:41:31 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ForeignKey>
+<ForeignKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.FKProxyOraclev10g" name="OFFLOAD_CHUNK_FK2" id="1AD144B0-74CE-F91C-AB64-E6965BFF4C65">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ForeignKey>
+<ForeignKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.FKProxyOraclev10g" name="OFFLOAD_CHUNK_FK1" id="7BC91814-8E4E-FFE3-D081-B409020B3866">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ForeignKey>
+<ForeignKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.FKProxyOraclev10g" name="OFFLOAD_CHUNK_FK3" id="C07FD04B-A9A4-BD08-2692-2ACD83748340">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</ForeignKey>
+</foreignKeys>
+<primaryKeys>
+<PrimaryKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.PKProxyOraclev10g" name="OFFLOAD_CHUNK_PK" id="5F9E00F6-9EC5-C5B4-AF7D-250B669EFB1B">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexSort>SORTED</indexSort>
+</PrimaryKey>
+</primaryKeys>
+<uniqueKeys>
+<UniqueKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.UniqueOraclev10g" name="OFFLOAD_CHUNK_UK" id="849C6A0C-26D7-9319-6873-BB1B170181E6">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-10 10:57:46 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexSort>SORTED</indexSort>
+</UniqueKey>
+</uniqueKeys>
+</TableProxyOraclev12c>

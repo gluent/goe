@@ -1,0 +1,6 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<SequenceOraclev10g class="oracle.dbtools.crest.model.design.storage.oracle.v10g.SequenceOraclev10g" name="BACKEND_OBJECT_SEQ" directorySegmentName="seg_0" id="54B0E371-FC9F-1F93-87FB-E516008D951D">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 11:17:50 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</SequenceOraclev10g>

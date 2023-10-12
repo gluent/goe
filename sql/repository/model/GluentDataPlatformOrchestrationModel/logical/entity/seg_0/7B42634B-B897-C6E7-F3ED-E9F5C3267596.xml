@@ -1,0 +1,99 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" directorySegmentName="seg_0" id="7B42634B-B897-C6E7-F3ED-E9F5C3267596" name="Command Step">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:00:38 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<adequatelyNormalized>NO</adequatelyNormalized>
+<expectedVolumes>0</expectedVolumes>
+<fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+<growthPercent>0</growthPercent>
+<growthType>Year</growthType>
+<maxVolumes>9999999</maxVolumes>
+<minVolumes>0</minVolumes>
+<normalForm>Third</normalForm>
+<attributes itemClass="oracle.dbtools.crest.model.design.logical.Attribute">
+<Attribute name="ID" id="85F44431-C5BB-840F-31B2-B5CD7EEE30E4">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:16:00 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Code" id="6760F7BE-C30B-888A-5729-05319DA01902">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:04:57 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>30 CHAR</dataTypeSize>
+<domain>D39CE4A8-1DB5-EC0D-92F1-16788E4A8641</domain>
+<ownDataTypeParameters>30 CHAR,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Title" id="BE23D6DD-4A1A-41BC-F5D5-6EDA85EDD8A6">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 17:54:55 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>5EFFA32F-630C-1114-E5BA-BA7550238631</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Create Time" id="1DCC91EC-9FB6-5AF3-D564-6974D9AD62B6">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 15:46:52 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<use>0</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<domain>DOM10003</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+</attributes>
+<identifiers itemClass="oracle.dbtools.crest.model.design.logical.CandidateKey">
+<identifier id="24D9569E-AFD5-B558-A1CC-C6840945E298" name="Command Step PK">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:16:39 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<shouldEngineer>false</shouldEngineer>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="false"/>
+</engineerTo>
+<pk>true</pk>
+<newElementsIDs>85F44431-C5BB-840F-31B2-B5CD7EEE30E4</newElementsIDs>
+<usedAttributes>
+<attributeRef>85F44431-C5BB-840F-31B2-B5CD7EEE30E4</attributeRef>
+</usedAttributes>
+</identifier>
+<identifier id="22EF0D0E-A7DF-AC5D-F244-EB4343A48AA1" name="Command Step UK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-08 18:25:02 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<shouldEngineer>false</shouldEngineer>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="false"/>
+</engineerTo>
+<newElementsIDs>6760F7BE-C30B-888A-5729-05319DA01902</newElementsIDs>
+<usedAttributes>
+<attributeRef>6760F7BE-C30B-888A-5729-05319DA01902</attributeRef>
+</usedAttributes>
+</identifier>
+</identifiers>
+</Entity>

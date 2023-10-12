@@ -1,0 +1,61 @@
+#! /usr/bin/env python3
+""" Setup test objects. Required before running any tests.
+    LICENSE_TEXT
+"""
+
+import random
+import re
+
+from gluent import get_common_options, get_log_fh, init, init_log
+from gluentlib.config.orchestration_config import OrchestrationConfig
+from gluentlib.offload.offload_messages import OffloadMessages
+
+from testlib.setup.test_setup_client import TestSetupClient
+from testlib.test_framework.test_functions import add_common_test_options, normalise_test_pass_options
+
+
+def get_test_options():
+    opt = get_common_options()
+    add_common_test_options(opt)
+
+    # Strip away the options we don't need
+    for option in ['--skip-steps']:
+        opt.remove_option(option)
+
+    return opt
+
+
+if __name__ == '__main__':
+
+    opt = get_test_options()
+    options, _ = opt.parse_args()
+    init(options)
+    init_log('test')
+
+    normalise_test_pass_options(options)
+
+    table_name_re = re.compile(options.filter, flags=re.I)
+
+    config = OrchestrationConfig.from_dict({
+            'execute': options.execute,
+            'verbose': options.verbose,
+            'vverbose': options.vverbose,
+        })
+    messages = OffloadMessages.from_options(options, get_log_fh())
+
+    setup_client = TestSetupClient(options.test_user, options.test_pass, messages, config,
+                                   table_name_re=table_name_re, dry_run=bool(not options.execute),
+                                   teamcity=options.teamcity)
+
+    setup_client.create_sql_offload_tables()
+    setup_client.create_generated_tables()
+
+    # Generating test data sets a specific state in order to get the same data on all VMs.
+    # Here we re-seed the generator to restore randomness.
+    random.seed()
+
+    setup_client.create_partition_functions()
+
+    setup_client.offload_generated_tables()
+
+    # TODO If this client moves beyond Teradata support we need to add create and present of backend only tables.

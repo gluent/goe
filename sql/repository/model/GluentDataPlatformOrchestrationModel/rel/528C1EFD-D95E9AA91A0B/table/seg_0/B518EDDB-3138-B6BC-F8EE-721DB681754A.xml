@@ -1,0 +1,110 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="B518EDDB-3138-B6BC-F8EE-721DB681754A" name="BACKEND_OBJECT">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>EADBD69D-ACAB-45BA-B259-452152E008B9</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<parsed>true</parsed>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ID" id="2C88D395-A529-605A-8B4F-125C398B8D96">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>E6FE4304-9294-EF88-B3A6-CF61C1AC2C3D</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="DATABASE_NAME" id="365D4AE0-FA54-54AF-E82B-447188670A32">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>96EBA991-DDDB-B20C-B5A4-FAA2C8245949</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>128 CHAR</dataTypeSize>
+<domain>4C3ACC2B-63F1-EAD2-13C2-E71FE6CC5492</domain>
+<ownDataTypeParameters>128 CHAR,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="OBJECT_NAME" id="5D6ABF3C-4FBB-6032-84E3-61A49C2F9DD1">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>AA4AB8C8-B00E-6E39-4E0B-FE05DA73AAC1</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>128 CHAR</dataTypeSize>
+<domain>4C3ACC2B-63F1-EAD2-13C2-E71FE6CC5492</domain>
+<ownDataTypeParameters>128 CHAR,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CREATE_TIME" id="EB094B84-D43A-4C78-5CB5-29F0DB3AF4B8">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 17:27:17 UTC</createdTime>
+<generatorID>12436226-B957-8E8D-13ED-1EE3A5C5D157</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<domain>DOM10003</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="939A43A6-0808-0E56-04EA-D9E764EF7B54" name="BACKEND_OBJECT_PK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>31493435-D1A7-5F60-FB3B-D224B91FEF90</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="2C88D395-A529-605A-8B4F-125C398B8D96"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="98E2C2D0-ABD3-7534-921F-8D2B85D64D39" name="BACKEND_OBJECT_UK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 12:17:33 UTC</createdTime>
+<generatorID>C8A1D66A-1601-F650-A4AF-60BDF4483D6B</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="365D4AE0-FA54-54AF-E82B-447188670A32"/>
+<colUsage columnID="5D6ABF3C-4FBB-6032-84E3-61A49C2F9DD1"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="7E6B7BA4-1A12-7813-46FD-F9C9E8593D4C" name="BACKEND_OBJECT_PKI">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-11 17:24:16 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Plain Index</indexState>
+<supportedConstraintID>939A43A6-0808-0E56-04EA-D9E764EF7B54</supportedConstraintID>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="2C88D395-A529-605A-8B4F-125C398B8D96"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="879C0EF3-0D38-DB29-6352-BDCDDA86FE5D" name="BACKEND_OBJECT_UKI">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-11 17:23:52 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<indexState>Unique Plain Index</indexState>
+<supportedConstraintID>98E2C2D0-ABD3-7534-921F-8D2B85D64D39</supportedConstraintID>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="365D4AE0-FA54-54AF-E82B-447188670A32"/>
+<colUsage columnID="5D6ABF3C-4FBB-6032-84E3-61A49C2F9DD1"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+</Table>

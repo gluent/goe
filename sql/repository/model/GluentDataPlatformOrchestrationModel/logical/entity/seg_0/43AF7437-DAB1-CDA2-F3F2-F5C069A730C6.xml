@@ -1,0 +1,110 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" directorySegmentName="seg_0" id="43AF7437-DAB1-CDA2-F3F2-F5C069A730C6" name="Version">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:31:04 UTC</createdTime>
+<generatorID>C2B7ED0F-0C4A-E206-6E36-326434E2465E</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<adequatelyNormalized>NO</adequatelyNormalized>
+<expectedVolumes>0</expectedVolumes>
+<fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+<growthPercent>0</growthPercent>
+<growthType>Year</growthType>
+<maxVolumes>9999999</maxVolumes>
+<minVolumes>0</minVolumes>
+<normalForm>Third</normalForm>
+<attributes itemClass="oracle.dbtools.crest.model.design.logical.Attribute">
+<Attribute name="GDP Version" id="76A16318-C23B-8E8D-D785-DB21AA0E561F">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:31:04 UTC</createdTime>
+<generatorID>D81ACF3B-D046-5040-3A50-03CF0872E355</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>9841252C-0152-7B33-204E-0A20C646C957</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="GDP Build" id="47AE19FE-14B8-0715-4303-5ED09BCFA2B7">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:31:04 UTC</createdTime>
+<generatorID>D08C1028-9138-21FE-1AC0-5A327EDE0E30</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>D39CE4A8-1DB5-EC0D-92F1-16788E4A8641</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Create Time" id="341C40D5-8F27-41B4-5EFA-F5AA87F72687">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:31:04 UTC</createdTime>
+<generatorID>C8BED378-7DFC-3A87-DA2F-206D94E1F4CA</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<domain>DOM10003</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Latest YN" id="37079F9E-6EB0-A5CD-0CF4-CD241912F23B">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:31:04 UTC</createdTime>
+<generatorID>DDD0E064-6D66-1754-4D7D-644DE7648804</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>8F1EFED4-2966-90CE-E1DC-38E697CEB433</domain>
+<listOfValues>
+<valueDef value="&apos;N&apos;" description=""/>
+<valueDef value="&apos;Y&apos;" description=""/>
+</listOfValues>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Comments" id="7F168465-A236-E1A0-C0B4-81AC845305A6">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:31:04 UTC</createdTime>
+<generatorID>56E82CCD-9331-8138-C876-ACCF871F6A50</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>CA69DCA7-5491-8ADE-B4CC-1623FD95B7C4</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+</attributes>
+<identifiers itemClass="oracle.dbtools.crest.model.design.logical.CandidateKey">
+<identifier id="320FB014-8799-C27E-B498-D41D9826B15C" name="Version UK">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 14:31:04 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<pk>true</pk>
+<newElementsIDs>76A16318-C23B-8E8D-D785-DB21AA0E561F</newElementsIDs>
+<usedAttributes>
+<attributeRef>76A16318-C23B-8E8D-D785-DB21AA0E561F</attributeRef>
+</usedAttributes>
+</identifier>
+</identifiers>
+</Entity>

@@ -1,0 +1,6 @@
+#! /usr/bin/env python3
+# LICENSE_TEXT
+
+from gluentlib.scripts.table_ddl import main
+
+main()

@@ -1,0 +1,16 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<FKIndexAssociation class="oracle.dbtools.crest.model.design.relational.FKIndexAssociation" directorySegmentName="seg_0" id="547DDBDF-BED3-6BF5-FCE3-76450E1D5052" containerWithKeyObject="529BBCC9-8544-CFD7-F0B7-FE4D6B4FE5B4" localFKIndex="34E26C3E-5032-CE1C-F2FB-C263C1065030" name="COMMAND_EXECUTION_FK3">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:38:50 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<referredTableLongName>STATUS</referredTableLongName>
+<deleteRule>NO ACTION</deleteRule>
+<referredTableID>CA0FB614-5C7F-7048-1EAC-DC2CD0AD2341</referredTableID>
+<keyObject>8FFA394F-1739-DAD4-0968-C2EE759D0EF7</keyObject>
+<referredKeyID>8FFA394F-1739-DAD4-0968-C2EE759D0EF7</referredKeyID>
+<mandatory>true</mandatory>
+<refColNames>ID</refColNames>
+<transferable>true</transferable>
+<rely>false</rely>
+<columnDependencyConstraintGenerateInDDL>true</columnDependencyConstraintGenerateInDDL>
+</FKIndexAssociation>

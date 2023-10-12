@@ -1,0 +1,469 @@
+#! /usr/bin/env python3
+
+##########################################################################
+# test_results: Scan and summarize Gluent test results
+#
+# Gluent Inc (c - 2016)
+##########################################################################
+
+import argparse
+import datetime
+import dateutil.parser
+import glob
+import logging
+import itertools
+import os
+import os.path
+import re
+import sys
+
+from termcolor import cprint
+
+from gluentlib.offload.offload_constants import BACKEND_DISTRO_HDP
+from gluentlib.util.slack_msg import SlackMessenger
+from testlib.test_framework.system_environment import system_environment
+from testlib.test_framework.test_results import TestResults, normalize_state, allowed_states, \
+    STATE_PASS, STATE_FAIL, STATE_ERROR, END_OF_RC_MARKER
+
+# End of test run 'marker' - shows that the test run has been completed
+# It is the same marker as defined in 'test' tool
+END_OF_TEST_RUN_MARKER="[END OF TEST RUN]"
+
+# -----------------------------------------------------------------------
+# EXCEPTIONS
+# -----------------------------------------------------------------------
+class TestResultsToolException(Exception): pass
+
+# -----------------------------------------------------------------------
+# CONSTANTS
+# -----------------------------------------------------------------------
+
+PROG_BANNER = "test_results: Scan and summarize Gluent test results"
+COPYRIGHT_MSG = "Gluent Inc (c - 2016)"
+
+# Default logging level
+DEFAULT_LOGGING = "ERROR"
+
+# Default log directory
+DEFAULT_LOG_DIR = "%s/log" % os.environ['OFFLOAD_HOME']
+# Default prefix for 'test result' logs
+DEFAULT_LOG_PREFIX = "test"
+
+# Default configuration file with 'root causes'
+DEFAULT_RC_CONFIG='test_root_causes.yaml'
+
+# Default db type (may include additional 'db specific' root causes)
+DEFAULT_DB_TYPE='impala'
+
+# Default 'slack' destination
+DEFAULT_SLACK_DEST='#integration-tests'
+# Default slack user
+DEFAULT_SLACK_USER='testbot'
+# Default slack emoji
+DEFAULT_SLACK_ICON='robot_face'
+# Default slack header message
+DEFAULT_SLACK_HEADER='DAILY INTEGRATION TEST RUN'
+
+# Default "dev" software root (to determine software version)
+DEFAULT_DEV_ROOT='~/dev/offload'
+
+# -----------------------------------------------------------------------
+# GLOBAL variables (bad!)
+# -----------------------------------------------------------------------
+global g_test_completed # Whether test run has been completed
+g_test_completed = False
+
+
+# -----------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------
+logger = logging.getLogger("test_results")
+
+
+# -----------------------------------------------------------------------
+# UTILITY CLASSES
+# -----------------------------------------------------------------------
+
+class ActiveTest:
+    """ Represents 'active' test result to be yielded """
+
+    def __init__(self, name, state, body, active):
+        self.name = name
+        self.state = state
+        self.body = body
+        self.active = active
+
+
+# -----------------------------------------------------------------------
+# SCRIPT ROUTINES
+# -----------------------------------------------------------------------
+
+def find_logs(log_dir, log_pattern):
+    """ GENERATOR: Find the LATEST log matching 'log pattern'
+    """
+    pattern = os.path.join(log_dir, log_pattern)
+    if not pattern.endswith('*'):
+        pattern += '*'
+
+    eligible_logs = glob.glob(pattern)
+
+    if eligible_logs:
+        newest_log = max(eligible_logs, key=os.path.getmtime)
+        logger.debug("Found newest log: %s for pattern: %s in directory: %s" % (newest_log, log_pattern, log_dir))
+        cprint("Analyzing log file: %s" % newest_log, color='green')
+        yield newest_log
+    else:
+        raise TestResultsToolException("Unable to find logs matching: %s pattern in directory: %s" % \
+            (log_pattern, log_dir))
+
+
+def open_logs(log_files):
+    """ GENERATOR: file names -> file descriptors
+    """
+
+    for log in log_files:
+        yield open(log)
+
+
+def get_lines(log_handles):
+    """ GENERATOR: (multicat) file handles -> log lines
+    """
+
+    for handle in log_handles:
+        for line in handle:
+            yield line.strip()
+
+
+def chunk_by_test(log_lines, requisite_rc_lines, look_for_endrc_message):
+    """ GENERATOR: Log lines -> specific test 'chunks'
+
+        Parse log lines, and chunk 'individual test results' out
+
+        'requisite_rc_lines': Treat N lines after each 'failure' or 'error' as RC
+        'look_for_endrc_message': Look for special marker that ends the RC
+
+        Yields 'ActiveTest' named tuple
+    """
+    global g_test_completed
+
+    if requisite_rc_lines:
+        cprint("Treating: %d lines at the end of each fail/error message as 'root cause'" % \
+            requisite_rc_lines, color='green')
+    else:
+        cprint("Looking for: %s to mark the end of 'root cause' following each fail/error message" % \
+            END_OF_RC_MARKER, color='green')
+
+    regex_test = re.compile(r'^(.*) .*(Pass|Fail|Database Exception <.*>)')
+    regex_name = re.compile(r'^(\S+).*$')
+    regex_endrc = re.compile('^%s$' % re.escape(END_OF_RC_MARKER))
+    regex_endtest = re.compile('^%s$' % re.escape(END_OF_TEST_RUN_MARKER))
+
+    # Declare and initialize 'active test' container
+    active_test = ActiveTest(name=None, state=None, body=[], active=False)
+
+    for line in log_lines:
+        match_test = regex_test.search(line)
+        if match_test:
+            # This is a 'test result'
+
+            # Do we have an 'active test' that was not yielded yet ?
+            if active_test.name:
+                logger.debug("Yielding test result: %s" % [active_test.name, active_test.state])
+                yield active_test
+
+            # Initialize new test that we just found
+            match_name = regex_name.match(match_test.group(1))
+            name = match_name.group(1) if match_name else match_test.group(1)
+            active_test = ActiveTest(name=name, state=match_test.group(2), \
+                body=[], active=True)
+            logger.debug("Identified %s test: %s" % (active_test.name, active_test.state))
+        else:
+            # Not a 'test result', could be a relevant 'test body' though
+
+            if active_test.active:
+                # This is a relevant 'test body'
+                active_test.body.append(line)
+
+                if requisite_rc_lines and len(active_test.body) > requisite_rc_lines or \
+                        look_for_endrc_message and regex_endrc.match(line):
+                    # END of relevant 'test body'
+                    active_test.active = False
+
+        if regex_endtest.match(line):
+            g_test_completed = True
+            break
+
+    # Report run status
+    if g_test_completed:
+        cprint("This test run has finished", color='green')
+    else:
+        if active_test.name:
+            cprint("This test run has NOT finished. Last processed test: %s" % [active_test.name, active_test.state], color='yellow')
+        else:
+            cprint("This test run has NOT finished. No tests have been detected as of yet", color='yellow')
+
+    # Do it one more time for the last test
+    if active_test.name:
+        logger.debug("Yielding test result: %s" % [active_test.name, active_test.state])
+        yield active_test
+
+
+def aggregate_tests(test_chunks, config_file, db_type):
+    """ Aggregate results and return TestResults object
+    """
+    results = TestResults(config_file, db_type)
+
+    # Add tests to 'results'
+    for test in test_chunks:
+        test_msg = "\n".join(test.body) if test.body else ""
+        results.add_test(test.name, normalize_state(test.state), test_msg)
+
+    # And then, aggregate them
+    results.aggregate()
+
+    return results
+
+
+def extract_runtime(log_file):
+    """ Extract run times fro yesy log file
+
+        Start time: from log file name
+        End time: from log file mtime
+
+        Returns: start_time, end_time
+    """
+    start_time, end_time = None, None
+
+    match_start_time = re.search(r'test_(20\d{2,2}\-\d{2,2}\-\d{2,2}T\d{2,2}:\d{2,2}:\d{2,2}\.\d+)\.log$', log_file)
+    if not match_start_time:
+        logger.warn("Unable to parse start time out of log: %s" % log_file)
+    else:    
+        log_date = match_start_time.group(1)
+        try:
+            start_time = dateutil.parser.parse(log_date)
+            logger.debug("Successfully parsed start time: %s for log: %s" % (start_time, log_file))
+        except ValueError as e:
+            logger.warn("Unable to parse start time for log: %s" % log_file)
+
+    # Parse end time
+    end_time = datetime.datetime.fromtimestamp(os.path.getmtime(log_file))
+    logger.debug("End time for log file: %s is: %s" % (log_file, end_time))
+
+    return start_time, end_time
+
+
+def report_runtime(log_files):
+    """ Report test start and stop time and duration
+    """
+    min_start, max_stop = None, None
+
+    # Calculate max/min start/end times for ALL logs
+    for log_file in log_files:
+        start_time, stop_time = extract_runtime(log_file)
+        if start_time:
+            min_start = min(start_time, min_start) if min_start else start_time
+        if stop_time:
+            max_stop = max(stop_time, max_stop) if max_stop else stop_time
+
+    if not min_start or not max_stop:
+        logger.warn("Unable to find proper start/finish times for a collection of test logs")
+        return ""
+
+    report_body = "\n***** TEST RUN TIMING *****\n\n"
+    report_body += "\tStart:\t\t%s\n" % min_start.isoformat()
+    report_body += "\tEnd:\t\t%s\n" % max_stop.isoformat()
+
+    # Calculate elapsed time (why is this not a part of timedelta ?)
+    elapsed = max_stop - min_start
+    hours, remainder = divmod(elapsed.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    report_body += "\tDuration:\t%s%02d:%02d:%02d" % \
+                (str(elapsed.days) if elapsed.days > 0 else "", hours, minutes, seconds)
+
+    return report_body
+
+
+def report_environment(env_type, env_root):
+    """ Report system environment for specific environment 'type' and 'root'
+    """
+    environment = system_environment(env_type, env_root)
+    return environment.report()
+
+
+def stdout_results(results, timing, environment):
+    """ Print test results to stdout
+    """
+
+    report = '\n' + environment if environment else ""
+    report += results
+    if timing:
+        report += '\n' + timing
+
+    print(report)
+
+
+def send_to_slack(channel, results, timing, environment, user, icon_emoji, message_header):
+    """ Send 'test results' to team's slack channel
+    """ 
+    message = ''
+
+    # Prettyfying slack 'test results' message
+    if message_header:
+        message += '*' + message_header + '*\n'
+        message += '*' + '-' * len(message_header) + '*\n\n'
+    message += '*Test Environment:*\n```\n' + environment + '\n```\n' if environment else ""
+    message += '*Test Results:* ```\n' + results + '\n```\n'
+    if timing:
+        message += '*TestTiming:*\n```' + timing + '\n```\n'
+
+    slack = SlackMessenger()
+    if slack.send(channel, message, user, icon_emoji):
+        cprint("Slack message away", color='green')
+    else:
+        cprint("Error while sending slack: %s" % slack.error, color='red')
+
+
+# -----------------------------------------------------------------------
+# MAIN PROGRAM
+# -----------------------------------------------------------------------
+
+if __name__ == "__main__":
+
+    def set_logging(log_level):
+        """ Set "global" logging parameters
+        """
+
+        logging.basicConfig(
+            level=logging.getLevelName(log_level),
+            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+
+
+    def print_title():
+        """ Print utility title """
+
+        print("%s\n%s\n" % (PROG_BANNER, COPYRIGHT_MSG))
+
+
+    def parse_args():
+        """
+          Parse arguments and return "options" object
+        """
+
+        parser = argparse.ArgumentParser(
+            description=PROG_BANNER,
+            formatter_class=argparse.RawTextHelpFormatter
+        )
+
+        parser.add_argument('-d', '--log-dir', required=False, default=DEFAULT_LOG_DIR, \
+            help="Directory with test results. Default: %s" % DEFAULT_LOG_DIR)
+        parser.add_argument('-p', '--log-prefix', required=False, default=DEFAULT_LOG_PREFIX, \
+            help="Test results log file prefix. Default: %s" % DEFAULT_LOG_PREFIX)
+
+        analyze_mode = parser.add_mutually_exclusive_group(required=False)
+        analyze_mode.add_argument('-e', '--error-lines', type=int, \
+            help="Treat N lines after each Fail/Exception as 'Error cause'")
+        analyze_mode.add_argument('-m', '--error-message', action='store_true', \
+            help="Look for %s markers to identify the 'end of root cause'" % END_OF_RC_MARKER)
+
+        parser.add_argument('-r', '--report-level', required=False, type=int, choices=[0, 1, 2, 3], default=0, \
+            help="""Report level:
+    0 - Basic summary (default)
+    1 - Summary + breakdown by category
+    2 - Summary + breakdown by category + test names
+    3 - Summary + breakdown by category + test names + 'error lines'
+""")
+
+        parser.add_argument('--config', required=False, default=DEFAULT_RC_CONFIG, \
+            help="(YAML) configuration file with definition of 'root causes'. Default: %s" % DEFAULT_RC_CONFIG)
+        parser.add_argument('--db-type', required=False, \
+            help="Database type for processing tests (will include relevant 'db specific' config. Default: %s" % DEFAULT_DB_TYPE)
+
+        parser.add_argument('-c', '--test-root-cause', required=False, help="Filter by specific root cause")
+        parser.add_argument('-n', '--test-name', required=False, help="Filter by specific test name")
+        parser.add_argument('-s', '--test-status', required=False, nargs='+', default=[STATE_FAIL, STATE_ERROR], \
+            help="Filter by specific test status. Choises: %s" % [STATE_PASS, STATE_FAIL, STATE_ERROR])
+
+        parser.add_argument('--runtime', required=False, action='store_true', \
+            help="Print test runtime information")
+        parser.add_argument('--environment', required=False, choices=['dev', 'prod'], \
+            help="Print test environment (be sure to specify environment 'type' corrrectly)")
+        parser.add_argument('--environment-root', required=False, default=DEFAULT_DEV_ROOT, \
+            help="Environment root to determine software version used. Default: %s" % DEFAULT_DEV_ROOT)
+
+        parser.add_argument('-l', '--log-level', required=False, default=DEFAULT_LOGGING, \
+            help="Logging level. Default: %s" % DEFAULT_LOGGING)
+
+        parser.add_argument('-S', '--send-to-slack', required=False, action='store_true', \
+            help="Send results to slack")
+        parser.add_argument('--slack-channel', required=False, default=DEFAULT_SLACK_DEST, \
+            help="Slack channel. Default: %s" % DEFAULT_SLACK_DEST)
+        parser.add_argument('--slack-header', required=False, default=DEFAULT_SLACK_HEADER, \
+            help="Slack header. Default: %s" % DEFAULT_SLACK_HEADER)
+        parser.add_argument('--slack-user', required=False, default=DEFAULT_SLACK_USER, \
+            help="Slack user. Default: %s" % DEFAULT_SLACK_USER)
+        parser.add_argument('--slack-user-icon', required=False, default=DEFAULT_SLACK_ICON, \
+            help="Slack user 'icon'. Default: %s" % DEFAULT_SLACK_ICON)
+
+        args = parser.parse_args()
+
+        # Basic argument post-processing
+        if not args.error_lines and not args.error_message:
+            args.error_message = True
+        for _ in args.test_status:
+            if _.upper() not in allowed_states():
+                raise TestResultsToolException("Unsupported test state: %s" % _)
+
+        # Hortonworks only supports hive, migth as well auto set it if 'target' was not supplied
+        if not args.db_type:
+            if BACKEND_DISTRO_HDP == system_environment('prod').hadoop_distro:
+                args.db_type = "hive"
+            else:
+                args.db_type = DEFAULT_DB_TYPE
+
+        return args
+
+
+    def main():
+        """
+          MAIN ROUTINE
+        """
+        args = parse_args()
+
+        print_title()
+        cprint("Recognized db type: %s" % args.db_type, "green")
+
+        # Set up logging
+        set_logging(args.log_level)
+
+        # Tee iterator as we may use it again
+        log_files, log_files2 = itertools.tee(find_logs(args.log_dir, args.log_prefix))
+        log_handles = open_logs(log_files)
+        log_lines = get_lines(log_handles)
+        test_chunks = chunk_by_test(log_lines, args.error_lines, args.error_message)
+        agg_results = aggregate_tests(test_chunks, args.config, args.db_type)
+
+        # Extract test results
+        results = agg_results.report_summary()
+        if results:
+            results += agg_results.report_details(args.test_status, args.report_level, \
+                args.test_root_cause, args.test_name)
+
+        # Extract test runtime
+        runtime = report_runtime(log_files2) if args.runtime else None
+        # Extract test environment
+        environment = report_environment(args.environment, args.environment_root) if args.environment else None
+
+        # Output results
+        stdout_results(results, runtime, environment)
+        if args.send_to_slack:
+            send_to_slack(args.slack_channel, results, runtime, environment, \
+                args.slack_user, args.slack_user_icon, args.slack_header)
+
+        sys.exit(0)
+            
+
+    #### MAIN PROGRAM BEGINS HERE
+    main()

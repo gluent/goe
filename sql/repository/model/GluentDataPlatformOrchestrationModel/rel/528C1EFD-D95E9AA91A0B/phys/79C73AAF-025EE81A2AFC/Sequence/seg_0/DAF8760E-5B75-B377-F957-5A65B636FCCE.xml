@@ -1,0 +1,6 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<SequenceOraclev10g class="oracle.dbtools.crest.model.design.storage.oracle.v10g.SequenceOraclev10g" name="OFFLOAD_PARTITION_SEQ" directorySegmentName="seg_0" id="DAF8760E-5B75-B377-F957-5A65B636FCCE">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 11:17:14 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</SequenceOraclev10g>

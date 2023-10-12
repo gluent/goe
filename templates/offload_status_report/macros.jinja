@@ -1,0 +1,62 @@
+{% macro gb(value) -%}
+    {{ (value*1.0 / 1024 / 1024 / 1024)|round(2) }}
+{%- endmacro %}
+
+{% macro percentage_display(retained, offloaded, reclaimable, required) -%}
+    {% set retained_pct = (100*(retained|float/(retained|float + reclaimable|float + offloaded|float)))|round(2, 'ceil') %}
+    {% set offloaded_pct = (100*(offloaded|float/(retained|float + reclaimable|float + offloaded|float)))|round(2, 'ceil') %}
+    {% set reclaimable_pct = 100 - retained_pct - offloaded_pct %}
+    {%-if required == 'retained' -%}
+        {{ "{:,.2f}%".format(retained_pct|float) }}
+    {%- elif required == 'reclaimable' -%}
+        {{ "{:,.2f}%".format(reclaimable_pct|float) }}
+    {%- elif required == 'offloaded' -%}
+        {{ "{:,.2f}%".format(offloaded_pct|float) }}
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro pct(value1, value2, remainder) -%}
+    {%-if value1 > 0 and value2 > 0 -%}
+        {%- if remainder == 'no' -%}
+            {{ ((value1/(value1 + value2))*100)|round(2, 'ceil') }}
+        {%- elif remainder == 'abs' -%}
+            {{ ((value1/value2)*100)|round(2, 'floor') }}
+        {%- else -%}
+            {{ 100-((value1/(value1 + value2))*100)|round(2, 'ceil') }}
+        {%- endif -%}
+    {%- elif value1 == 0 and value2 > 0 -%}
+        {%- if remainder == 'no' -%}
+            {{ 0 }}
+        {%- elif remainder == 'yes' -%}
+            {{ 100 }}
+        {%- endif -%}
+    {%- elif value1 > 0 and value2 == 0-%}
+        {%- if remainder == 'no' -%}
+            {{ 100 }}
+        {%- elif remainder == 'yes' -%}
+            {{ 0 }}
+        {%- endif -%}
+    {%- else -%}
+        {{ 0 }}
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro js_safe(value) -%}
+    {{ (value*1.0 / 1024 / 1024 / 1024)|round(2) }}
+{%- endmacro %}
+
+{% macro progress_widths(retained_bytes, reclaimable_bytes, category, min_or_max) -%}
+    {%- if category == 'reclaimed' -%}
+        {%- if min_or_max == 'min' -%}
+            {{ (("{:,.2f} GB".format(gb(reclaimable_bytes)|float)|string|length) * 1.6)|round(0, 'ceil') }}
+        {%- else -%}
+            {{ 100 - (("{:,.2f} GB".format(gb(retained_bytes)|float)|string|length) * 1.6)|round(0, 'ceil') }}
+        {%- endif -%}
+    {%- else -%}
+        {%- if min_or_max == 'min' -%}
+            {{ (("{:,.2f} GB".format(gb(retained_bytes)|float)|string|length) * 1.6)|round(0, 'ceil') }}
+        {%- else -%}
+            {{ 100 - (("{:,.2f} GB".format(gb(reclaimable_bytes)|float)|string|length) * 1.6)|round(0, 'ceil') }}
+        {%- endif -%}
+    {%- endif -%}
+{%- endmacro %}

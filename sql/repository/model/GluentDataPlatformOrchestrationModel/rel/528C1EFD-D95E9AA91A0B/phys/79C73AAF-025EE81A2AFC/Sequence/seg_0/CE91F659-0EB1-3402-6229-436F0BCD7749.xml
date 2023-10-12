@@ -1,0 +1,6 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<SequenceOraclev10g class="oracle.dbtools.crest.model.design.storage.oracle.v10g.SequenceOraclev10g" name="FRONTEND_OBJECT_SEQ" directorySegmentName="seg_0" id="CE91F659-0EB1-3402-6229-436F0BCD7749">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 11:18:08 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+</SequenceOraclev10g>

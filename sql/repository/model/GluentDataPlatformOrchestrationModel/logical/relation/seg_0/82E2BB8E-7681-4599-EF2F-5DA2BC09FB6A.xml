@@ -1,0 +1,20 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Relation class="oracle.dbtools.crest.model.design.logical.Relation" name="Command Execution Step FK1" directorySegmentName="seg_0" id="82E2BB8E-7681-4599-EF2F-5DA2BC09FB6A">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-08 20:21:44 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<sourcePk>24D9569E-AFD5-B558-A1CC-C6840945E298</sourcePk>
+<targetPk>1F1D4ECD-F71B-B5F4-0BC0-ACD361157603</targetPk>
+<identifying>false</identifying>
+<optionalSource>true</optionalSource>
+<optionalTarget>false</optionalTarget>
+<sourceCardinality>1</sourceCardinality>
+<sourceEntity>7B42634B-B897-C6E7-F3ED-E9F5C3267596</sourceEntity>
+<targetCardinalityString>*</targetCardinalityString>
+<targetEntity>F67B2FE8-DDF8-72C6-171A-67C4FCB2C176</targetEntity>
+<transferable>true</transferable>
+<deleteRule>NO ACTION</deleteRule>
+</Relation>

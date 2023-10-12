@@ -1,0 +1,140 @@
+{
+  "type" : "record",
+  "name" : "story_nossh",
+  "namespace" : "GluentOffload.nossh_sh_test",
+  "doc" : "Sqoop import of SH_TEST.STORY_NOSSH",
+  "fields" : [ {
+    "name" : "PROD_ID",
+    "type" : [ "null", "int" ],
+    "default" : null,
+    "columnName" : "PROD_ID",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_NAME",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_NAME",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_DESC",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_DESC",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_SUBCATEGORY",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_SUBCATEGORY",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_SUBCATEGORY_ID",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_SUBCATEGORY_ID",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_SUBCATEGORY_DESC",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_SUBCATEGORY_DESC",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_CATEGORY",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_CATEGORY",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_CATEGORY_ID",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_CATEGORY_ID",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_CATEGORY_DESC",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_CATEGORY_DESC",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_WEIGHT_CLASS",
+    "type" : [ "null", "int" ],
+    "default" : null,
+    "columnName" : "PROD_WEIGHT_CLASS",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_UNIT_OF_MEASURE",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_UNIT_OF_MEASURE",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_PACK_SIZE",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_PACK_SIZE",
+    "sqlType" : "12"
+  }, {
+    "name" : "SUPPLIER_ID",
+    "type" : [ "null", "int" ],
+    "default" : null,
+    "columnName" : "SUPPLIER_ID",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_STATUS",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_STATUS",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_LIST_PRICE",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_LIST_PRICE",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_MIN_PRICE",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_MIN_PRICE",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_TOTAL",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_TOTAL",
+    "sqlType" : "12"
+  }, {
+    "name" : "PROD_TOTAL_ID",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_TOTAL_ID",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_SRC_ID",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_SRC_ID",
+    "sqlType" : "2"
+  }, {
+    "name" : "PROD_EFF_FROM",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_EFF_FROM",
+    "sqlType" : "93"
+  }, {
+    "name" : "PROD_EFF_TO",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_EFF_TO",
+    "sqlType" : "93"
+  }, {
+    "name" : "PROD_VALID",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "PROD_VALID",
+    "sqlType" : "12"
+  } ],
+  "tableName" : "SH_TEST.STORY_NOSSH"
+}

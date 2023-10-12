@@ -1,0 +1,145 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" directorySegmentName="seg_0" id="F67B2FE8-DDF8-72C6-171A-67C4FCB2C176" name="Command Execution Step">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 11:48:28 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<adequatelyNormalized>NO</adequatelyNormalized>
+<expectedVolumes>0</expectedVolumes>
+<fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+<growthPercent>0</growthPercent>
+<growthType>Year</growthType>
+<maxVolumes>9999999</maxVolumes>
+<minVolumes>0</minVolumes>
+<normalForm>Third</normalForm>
+<attributes itemClass="oracle.dbtools.crest.model.design.logical.Attribute">
+<Attribute name="ID" id="420F517D-677C-62BF-DBE4-054763CF9164">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:18:00 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Start Time" id="DB8A938E-F5FC-A476-312E-CC58F7A09AC7">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:13:58 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<domain>DOM10003</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="End Time" id="B66AF55B-54BA-C76C-B410-BD0CE1DE6797">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:14:11 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<domain>DOM10003</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Step Details" id="9D0CB327-9196-9D5B-11FB-7A52D96F6237">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:18:43 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>0</use>
+<logicalDatatype>LOGDT028</logicalDatatype>
+<domain>D7FD2AD5-0C91-6BD9-76CE-43C2AF4F1311</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Command Step ID" id="3F681A1E-A237-14B2-AB59-091A97B34406">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-08 20:22:14 UTC</createdTime>
+<generatorID>82E2BB8E-7681-4599-EF2F-5DA2BC09FB6A</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<referedAttribute>85F44431-C5BB-840F-31B2-B5CD7EEE30E4</referedAttribute>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Command Type ID" id="4B501E4D-E57C-AB63-AD73-BCE2FC6A33FE">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-08 20:25:08 UTC</createdTime>
+<generatorID>513D36B5-16D1-0E95-8B95-B53351B4974C</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<referedAttribute>D32782A2-4DFD-575D-4A06-371135ECBA58</referedAttribute>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Command Execution ID" id="F3165432-B620-FF37-DF65-763222C5E46D">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-09 17:36:52 UTC</createdTime>
+<generatorID>E6F5FA62-67B4-62B5-59CD-C91D001C3955</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<referedAttribute>3BA1DF91-5C96-CDF1-B2E1-200515176DC5</referedAttribute>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="Status ID" id="9A1D3C6E-6E82-1DF9-7684-4DE545F67E4E">
+<createdBy>adrian</createdBy>
+<createdTime>2022-03-15 19:29:29 UTC</createdTime>
+<generatorID>1D575306-54A5-2355-DBC7-BC105F8DDBA0</generatorID>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="true"/>
+</engineerTo>
+<referedAttribute>7CC784F9-FB08-B601-F463-9080259ACF0C</referedAttribute>
+<use>0</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<domain>352CEF85-6FDF-DB8A-CCB3-D1F122640134</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+</attributes>
+<identifiers itemClass="oracle.dbtools.crest.model.design.logical.CandidateKey">
+<identifier id="1F1D4ECD-F71B-B5F4-0BC0-ACD361157603" name="Command Execution Step PK">
+<createdBy>pelbow</createdBy>
+<createdTime>2022-02-23 12:19:33 UTC</createdTime>
+<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
+<shouldEngineer>false</shouldEngineer>
+<engineerTo>
+<item key="528C1EFD-609B-927A-4A7F-D95E9AA91A0B" value="false"/>
+</engineerTo>
+<pk>true</pk>
+<newElementsIDs>420F517D-677C-62BF-DBE4-054763CF9164</newElementsIDs>
+<usedAttributes>
+<attributeRef>420F517D-677C-62BF-DBE4-054763CF9164</attributeRef>
+</usedAttributes>
+</identifier>
+</identifiers>
+</Entity>

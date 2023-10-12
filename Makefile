@@ -1,23 +1,16 @@
 
 TARGET_DIR=target/offload
-THIRDPARTY_DIR=$(realpath thirdparty)
 
 
 OFFLOAD_VERSION=$(shell cat version)
 LICENSE_YEAR=$(shell date +"%Y")
 LICENSE_TEXT=Copyright 2015-$(LICENSE_YEAR) Gluent Inc. All rights reserved.
 
-GIT_ENABLED=$(shell git status 2>&1 > /dev/null && echo true || echo false)
-
-ifeq ($(GIT_ENABLED),true)
 BUILD=$(strip $(shell git rev-parse --short HEAD))
-else
-BUILD=$(strip $(shell hg id -i))
-endif
 
-.PHONY: target package unit-test thirdparty offload-env package-spark-standalone
+.PHONY: target package unit-test offload-env package-spark-standalone
 
-package: target package-integration
+package: target
 	cd target && make package
 
 install: target integration-target
@@ -34,11 +27,7 @@ integration-target:
 	cd testing && make target
 
 
-package-integration:
-	cd testing && make package
-
-
-target: thirdparty python-gluentlib license-txt offload-env spark-listener
+target: python-gluentlib license-txt offload-env
 	@echo -e "=> \e[92m Building target in $(TARGET_DIR)...\e[0m"
 	cp scripts/{offload,connect,logmgr,display_gluent_env,clean_gluent_env,schema_sync,diagnose,offload_status_report,listener} scripts/{gluent,connect,schema_sync,diagnose,offload_status_report}.py $(TARGET_DIR)/bin
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/connect $(TARGET_DIR)/bin/schema_sync
@@ -95,6 +84,9 @@ package-spark-standalone: spark-basic-auth spark-listener license-txt
 	cd thirdparty && make spark-standalone
 	cd target && make package-spark-standalone
 
+python-gluentlib:
+	cd gluentlib && make install
+
 offload-env:
 	cd templates/conf && make
 
@@ -102,16 +94,8 @@ license-txt:
 	echo "$(LICENSE_TEXT)" > LICENSE.txt
 
 
-### Dependencies ###
-thirdparty: | $(THIRDPARTY_DIR)/target
-
-$(THIRDPARTY_DIR)/target:
-	cd thirdparty && make unpack
-
-
 ### CLEANUP ###
 clean:
-	cd thirdparty && make clean
 	cd templates/conf && make clean
 	cd target && make clean
 

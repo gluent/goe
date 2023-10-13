@@ -11,23 +11,27 @@ from gluentlib.connect.connect_constants import (
     CONNECT_DETAIL,
     CONNECT_STATUS,
     CONNECT_TEST,
+    TEST_HDFS_DIRS_SERVICE_HDFS,
+    TEST_HDFS_DIRS_SERVICE_WEBHDFS,
 )
 from gluentlib.connect.connect_functions import (
     debug,
     detail,
     failure,
+    get_hdfs_dirs,
     log,
     success,
     test_header,
     warning,
 )
-from gluentlib.connect.connect_transport import (
-    get_cli_hdfs,
-    get_hdfs_dirs,
-    test_hdfs_dirs,
+from gluentlib.filesystem.cli_hdfs import CliHdfs
+from gluentlib.filesystem.gluent_dfs import (
+    OFFLOAD_NON_HDFS_FS_SCHEMES,
+    get_scheme_from_location_uri,
+    uri_component_split,
 )
-from gluentlib.filesystem.gluent_dfs import uri_component_split
 from gluentlib.filesystem.gluent_dfs_factory import get_dfs_from_options
+from gluentlib.filesystem.web_hdfs import WebHdfs
 from gluentlib.offload.backend_api import BackendApiConnectionException
 from gluentlib.offload.offload_messages import OffloadMessages, VVERBOSE
 from gluentlib.offload.factory.backend_api_factory import backend_api_factory
@@ -103,6 +107,139 @@ def test_raw_conn(hadoop_host, hadoop_port):
         failure(test_name)
         sys.exit(2)
     success(test_name)
+
+
+def get_cli_hdfs(orchestration_config, host, messages):
+    return CliHdfs(
+        host,
+        orchestration_config.hadoop_ssh_user,
+        dry_run=(not orchestration_config.execute),
+        messages=messages,
+        db_path_suffix=orchestration_config.hdfs_db_path_suffix,
+        hdfs_data=orchestration_config.hdfs_data,
+    )
+
+
+def check_dir_with_msgs(hdfs_client, chk_dir, hdfs_data, msgs):
+    passed = True
+    dir_scheme = get_scheme_from_location_uri(chk_dir).upper()
+    file_stat = hdfs_client.stat(chk_dir)
+    if file_stat:
+        msgs.append("%s found in %s" % (chk_dir, dir_scheme))
+        if chk_dir == hdfs_data:
+            if "permission" not in file_stat:
+                msgs.append("Unable to read path permissions for %s" % chk_dir)
+                passed = False
+            elif file_stat["permission"] and file_stat["permission"][1] in (
+                "3",
+                "6",
+                "7",
+            ):
+                msgs.append("%s is group writable" % chk_dir)
+            else:
+                msgs.append("%s is NOT group writable" % chk_dir)
+                passed = False
+    else:
+        msgs.append("%s is NOT present in %s" % (chk_dir, dir_scheme))
+        passed = False
+    return passed
+
+
+def test_hdfs_dirs(
+    orchestration_config,
+    messages,
+    hdfs=None,
+    test_host=None,
+    service_name=TEST_HDFS_DIRS_SERVICE_HDFS,
+):
+    test_host = (
+        test_host or orchestration_config.hdfs_host or orchestration_config.hadoop_host
+    )
+    test_name = "%s: %s directory" % (test_host, service_name)
+    test_header(test_name)
+
+    # Setting this up for each host to prove directories visible regardless of WebHDFS usage.
+    # WebHDFS will only test namenode knows of them, not test each node is configured correctly.
+    use_hdfs = hdfs or get_cli_hdfs(orchestration_config, test_host, messages)
+    passed = True
+    msgs = []
+    test_hdfs_home = (
+        False
+        if (
+            orchestration_config.offload_fs_scheme
+            and orchestration_config.offload_fs_scheme in OFFLOAD_NON_HDFS_FS_SCHEMES
+        )
+        else True
+    )
+
+    for chk_dir in get_hdfs_dirs(
+        orchestration_config, use_hdfs, service_name, include_hdfs_home=test_hdfs_home
+    ):
+        try:
+            if not check_dir_with_msgs(
+                use_hdfs, chk_dir, orchestration_config.hdfs_data, msgs
+            ):
+                passed = False
+        except Exception as exc:
+            detail("%s: %s" % (chk_dir, exc))
+            detail(traceback.format_exc())
+            passed = False
+
+    for line in msgs:
+        detail(line)
+
+    if passed:
+        success(test_name)
+    else:
+        failure(test_name)
+
+
+def test_webhdfs_config(orchestration_config, messages):
+    test_name = "WebHDFS configuration"
+    test_header(test_name)
+    if not orchestration_config.webhdfs_host:
+        detail(
+            "WebHDFS host/port not supplied, using shell commands for HDFS operations (hdfs dfs, scp, etc)"
+        )
+        detail("Utilizing WebHDFS will reduce latency of Offload operations")
+        warning(test_name)
+    else:
+        webhdfs_security = (
+            ["Kerberos"] if orchestration_config.kerberos_service else []
+        ) + ([] if orchestration_config.webhdfs_verify_ssl is None else ["SSL"])
+        webhdfs_security = (
+            ("using " + " and ".join(webhdfs_security))
+            if webhdfs_security
+            else "unsecured"
+        )
+        detail(
+            "HDFS operations will use WebHDFS (%s:%s) %s"
+            % (
+                orchestration_config.webhdfs_host,
+                orchestration_config.webhdfs_port,
+                webhdfs_security,
+            )
+        )
+        success(test_name)
+
+        hdfs = WebHdfs(
+            orchestration_config.webhdfs_host,
+            orchestration_config.webhdfs_port,
+            orchestration_config.hadoop_ssh_user,
+            True if orchestration_config.kerberos_service else False,
+            orchestration_config.webhdfs_verify_ssl,
+            dry_run=not orchestration_config.execute,
+            messages=messages,
+            db_path_suffix=orchestration_config.hdfs_db_path_suffix,
+            hdfs_data=orchestration_config.hdfs_data,
+        )
+        test_hdfs_dirs(
+            orchestration_config,
+            messages,
+            hdfs=hdfs,
+            test_host=orchestration_config.webhdfs_host,
+            service_name=TEST_HDFS_DIRS_SERVICE_WEBHDFS,
+        )
 
 
 def test_sentry_privs(orchestration_config, backend_api, messages):

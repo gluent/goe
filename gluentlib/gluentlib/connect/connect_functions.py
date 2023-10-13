@@ -3,7 +3,13 @@ LICENSE_TEXT
 """
 import random
 
+from gluentlib.connect.connect_constants import (
+    TEST_HDFS_DIRS_SERVICE_HDFS,
+)
 from gluentlib.offload.offload_messages import VVERBOSE
+from gluentlib.filesystem.gluent_dfs import (
+    OFFLOAD_WEBHDFS_COMPATIBLE_FS_SCHEMES,
+)
 from gluent import ansi, log as offload_log, normal
 
 
@@ -65,3 +71,31 @@ def get_one_host_from_option(option_host_value):
     standardising here
     """
     return random.choice(option_host_value.split(",")) if option_host_value else None
+
+
+def get_hdfs_dirs(
+    orchestration_config,
+    dfs_client,
+    service_name=TEST_HDFS_DIRS_SERVICE_HDFS,
+    include_hdfs_home=True,
+):
+    """return a list of HDFS directories but NOT as a set(), we want to retain the order so
+    using an "if" to ensure no duplicate output
+    """
+    dirs = []
+    if include_hdfs_home:
+        dirs.append(orchestration_config.hdfs_home)
+    dirs.append(orchestration_config.hdfs_load)
+    offload_data_uri = dfs_client.gen_uri(
+        orchestration_config.offload_fs_scheme,
+        orchestration_config.offload_fs_container,
+        orchestration_config.offload_fs_prefix,
+    )
+    if offload_data_uri not in dirs:
+        if (
+            service_name == TEST_HDFS_DIRS_SERVICE_HDFS
+            or orchestration_config.offload_fs_scheme
+            in OFFLOAD_WEBHDFS_COMPATIBLE_FS_SCHEMES
+        ):
+            dirs.append(offload_data_uri)
+    return dirs

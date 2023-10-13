@@ -1,42 +1,41 @@
 """
 LICENSE_TEXT
 """
-
 import copy
 import socket
 import sys
 import traceback
 
-from gluentlib.offload.backend_api import BackendApiConnectionException
+from gluentlib.config import orchestration_defaults
 from gluentlib.connect.connect_constants import (
     CONNECT_DETAIL,
     CONNECT_STATUS,
     CONNECT_TEST,
 )
 from gluentlib.connect.connect_functions import (
-    FatalTestFailure,
     debug,
     detail,
     failure,
-    get_cli_hdfs,
-    get_hdfs_dirs,
     log,
     success,
     test_header,
     warning,
 )
+from gluentlib.connect.connect_transport import (
+    get_cli_hdfs,
+    get_hdfs_dirs,
+    test_hdfs_dirs,
+)
 from gluentlib.filesystem.gluent_dfs import uri_component_split
 from gluentlib.filesystem.gluent_dfs_factory import get_dfs_from_options
+from gluentlib.offload.backend_api import BackendApiConnectionException
 from gluentlib.offload.offload_messages import OffloadMessages, VVERBOSE
 from gluentlib.offload.factory.backend_api_factory import backend_api_factory
 from gluentlib.offload.offload_constants import (
-    DBTYPE_IMPALA,
-    DBTYPE_SPARK,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
     BACKEND_DISTRO_GCP,
 )
 from gluentlib.util.better_impyla import BetterImpylaException
-
 from gluent import get_log_fh, verbose
 
 

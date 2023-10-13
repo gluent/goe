@@ -1,7 +1,6 @@
 """
 LICENSE_TEXT
 """
-
 import os
 import sys
 import traceback

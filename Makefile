@@ -29,6 +29,7 @@ integration-target:
 
 target: python-gluentlib license-txt offload-env
 	@echo -e "=> \e[92m Building target in $(TARGET_DIR)...\e[0m"
+	mkdir -p $(TARGET_DIR)/bin
 	cp scripts/{offload,connect,logmgr,display_gluent_env,clean_gluent_env,schema_sync,diagnose,offload_status_report,listener} scripts/{gluent,connect,schema_sync,diagnose,offload_status_report}.py $(TARGET_DIR)/bin
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/connect $(TARGET_DIR)/bin/schema_sync
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/offload
@@ -68,8 +69,8 @@ target: python-gluentlib license-txt offload-env
 	mkdir -p $(TARGET_DIR)/templates
 	cp -r templates/gl_base.html templates/offload_status_report $(TARGET_DIR)/templates/
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/templates/gl_base.html
-	mkdir -p $(TARGET_DIR)/run
-	chmod 2775 $(TARGET_DIR)/run $(TARGET_DIR)/log
+	mkdir -p $(TARGET_DIR)/run $(TARGET_DIR)/log
+	chmod 775 $(TARGET_DIR)/run $(TARGET_DIR)/log
 	chmod 640 $(TARGET_DIR)/conf/*offload.env.template
 
 .PHONY: spark-basic-auth

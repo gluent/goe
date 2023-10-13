@@ -26,13 +26,16 @@ $(TARGET_JAR_FOR_SPARK_312):
 $(TARGET_JAR_FOR_SPARK_301):
 	sbt -DsparkVersion=3.0.1 package
 
-install: spark-listener
+install: $(INSTALL_DIR) spark-listener
 	cp $(TARGET_JAR_FOR_SPARK_330) $(INSTALL_DIR)/gluent-$(JAR_FOR_SPARK_330)
 	cp $(TARGET_JAR_FOR_SPARK_320) $(INSTALL_DIR)/gluent-$(JAR_FOR_SPARK_320)
 	cp $(TARGET_JAR_FOR_SPARK_312) $(INSTALL_DIR)/gluent-$(JAR_FOR_SPARK_312)
 	cp $(TARGET_JAR_FOR_SPARK_301) $(INSTALL_DIR)/gluent-$(JAR_FOR_SPARK_301)
 	# Default to Spark 3.2.0 compatible Spark Listener because that is the current bundled version.
 	cp $(TARGET_JAR_FOR_SPARK_320) $(INSTALL_JAR)
+
+$(INSTALL_DIR):
+	mkdir -p $(INSTALL_DIR)
 
 .PHONY: clean
 clean:

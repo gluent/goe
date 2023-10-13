@@ -28,7 +28,6 @@ from gluentlib.filesystem.web_hdfs import WebHdfs
 from gluentlib.filesystem.gluent_dfs import get_scheme_from_location_uri, \
     OFFLOAD_WEBHDFS_COMPATIBLE_FS_SCHEMES, OFFLOAD_NON_HDFS_FS_SCHEMES, uri_component_split
 from gluentlib.filesystem.gluent_dfs_factory import get_dfs_from_options
-from gluentlib.listener.utils.ping import ping as ping_listener
 from gluentlib.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_SPARK, DBTYPE_MSSQL, DBTYPE_ORACLE,\
     HADOOP_BASED_BACKEND_DISTRIBUTIONS, BACKEND_DISTRO_GCP, LOG_LEVEL_DEBUG
 from gluentlib.offload.backend_api import BackendApiConnectionException
@@ -815,7 +814,9 @@ def test_listener(orchestration_config):
         return
 
     try:
-        # Check Listener is up
+        # Avoid importing Listener modules if the listener is not configured.
+        from gluentlib.listener.utils.ping import ping as ping_listener
+        # Check Listener is up.
         if ping_listener(orchestration_config):
             detail('Listener ping successful: {}:{}'.format(orchestration_config.listener_host,
                                                             orchestration_config.listener_port))

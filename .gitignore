@@ -69,3 +69,9 @@ pylintrc.test
 # GOE custom entries
 
 .venv/
+LICENSE.txt
+target/
+target/transport/
+*.tmp
+spark-listener/target
+spark-listener/project/target

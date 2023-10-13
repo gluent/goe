@@ -1,0 +1,105 @@
+"""
+LICENSE_TEXT
+"""
+
+from gluentlib.connect.connect_constants import TEST_HDFS_DIRS_SERVICE_HDFS
+from gluentlib.filesystem.gluent_dfs import (
+    OFFLOAD_WEBHDFS_COMPATIBLE_FS_SCHEMES,
+    OFFLOAD_NON_HDFS_FS_SCHEMES,
+    uri_component_split,
+)
+from gluentlib.filesystem.cli_hdfs import CliHdfs
+from gluentlib.offload.offload_messages import VVERBOSE
+from gluent import ansi, log as offload_log, normal
+
+
+class FatalTestFailure(Exception):
+    # Use this instead of sys.exit(1)
+    pass
+
+
+def log(line: str, detail: int = normal, ansi_code=None):
+    """Write log entry but without Redis interaction."""
+    offload_log(line, detail=detail, ansi_code=ansi_code, redis_publish=False)
+
+
+def section_header(h):
+    log("\n%s" % h, ansi_code="underline")
+
+
+def test_header(h):
+    log("\n%s" % h)
+
+
+def detail(d):
+    log(str(d), ansi_code="grey")
+
+
+def success(t):
+    log("%s %s" % (t, ansi("Passed", "green")))
+
+
+def failure(t, hint=None):
+    log("%s %s" % (t, ansi("Failed", "red")))
+    global failures
+    failures = True
+    if hint:
+        log(hint, ansi_code="magenta")
+
+
+def skipped(t):
+    log("%s %s" % (t, ansi("Skipped", "yellow")))
+
+
+def warning(t, hint=None):
+    log("%s %s" % (t, ansi("Warning", "yellow")))
+    global warnings
+    warnings = True
+    if hint:
+        log(hint, ansi_code="magenta")
+
+
+def debug(d):
+    if not isinstance(d, str):
+        log(str(d), detail=VVERBOSE)
+    else:
+        log(d, detail=VVERBOSE)
+
+
+def get_hdfs_dirs(
+    orchestration_config,
+    dfs_client,
+    service_name=TEST_HDFS_DIRS_SERVICE_HDFS,
+    include_hdfs_home=True,
+):
+    """return a list of HDFS directories but NOT as a set(), we want to retain the order so
+    using an "if" to ensure no duplicate output
+    """
+    dirs = []
+    if include_hdfs_home:
+        dirs.append(orchestration_config.hdfs_home)
+    dirs.append(orchestration_config.hdfs_load)
+    offload_data_uri = dfs_client.gen_uri(
+        orchestration_config.offload_fs_scheme,
+        orchestration_config.offload_fs_container,
+        orchestration_config.offload_fs_prefix,
+    )
+    if offload_data_uri not in dirs:
+        if (
+            service_name == TEST_HDFS_DIRS_SERVICE_HDFS
+            or orchestration_config.offload_fs_scheme
+            in OFFLOAD_WEBHDFS_COMPATIBLE_FS_SCHEMES
+        ):
+            dirs.append(offload_data_uri)
+    return dirs
+
+
+def get_cli_hdfs(orchestration_config, host, messages):
+    return CliHdfs(
+        host,
+        orchestration_config.hadoop_ssh_user,
+        dry_run=(not orchestration_config.execute),
+        messages=messages,
+        db_path_suffix=orchestration_config.hdfs_db_path_suffix,
+        hdfs_data=orchestration_config.hdfs_data,
+    )

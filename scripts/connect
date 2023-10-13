@@ -12,7 +12,7 @@ elif os.path.split(sys.exec_prefix)[-1] != 'offload':
     print('Python path is unexpected, have you sourced ../conf/offload.env?')
     print()
 
-from connect import connect
+from gluentlib.connect.connect import connect
 
 if __name__ == '__main__':
     connect()

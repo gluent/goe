@@ -1,9 +1,11 @@
 """ TestOrchestrationConfig: Unit test library to test TestOrchestrationConfig class
 """
-from unittest import TestCase, main
+import os
+from unittest import TestCase, main, mock
 
 from gluentlib.config.orchestration_config import OrchestrationConfig, EXPECTED_CONFIG_ARGS
 from gluentlib.config.config_validation_functions import OrchestrationConfigException, verify_json_option
+from tests.unit.test_functions import FAKE_ORACLE_BQ_ENV
 
 
 class TestOrchestrationConfig(TestCase):
@@ -21,16 +23,24 @@ class TestOrchestrationConfig(TestCase):
                               lambda: verify_json_option('TEST_JSON', bad_json))
 
     def test_as_defaults(self):
+        k = mock.patch.dict(os.environ, FAKE_ORACLE_BQ_ENV)
+        k.start()
         config = OrchestrationConfig.as_defaults()
+        k.stop()
         # Check that every expected attribute is represented
         self.assertFalse(bool(set(EXPECTED_CONFIG_ARGS) - vars(config).keys()),
                          set(EXPECTED_CONFIG_ARGS) - vars(config).keys())
 
     def test_from_dict(self):
+        k = mock.patch.dict(os.environ, FAKE_ORACLE_BQ_ENV)
+        k.start()
         config = OrchestrationConfig.from_dict({})
+        k.stop()
         self.assertFalse(bool(set(EXPECTED_CONFIG_ARGS) - vars(config).keys()),
                          set(EXPECTED_CONFIG_ARGS) - vars(config).keys())
+        k.start()
         config = OrchestrationConfig.from_dict({'vverbose': True})
+        k.stop()
         self.assertFalse(bool(set(EXPECTED_CONFIG_ARGS) - vars(config).keys()),
                          set(EXPECTED_CONFIG_ARGS) - vars(config).keys())
         self.assertTrue(config.vverbose)

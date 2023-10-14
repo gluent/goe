@@ -4,16 +4,14 @@
 """
 
 import os
+from unittest import mock
 
-from gluent import OffloadOperation, OffloadMessages
+from gluent import OffloadOperation
 from gluentlib.config.orchestration_config import OrchestrationConfig
 from gluentlib.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_NETEZZA, DBTYPE_ORACLE, DBTYPE_TERADATA
+from gluentlib.offload.offload_messages import OffloadMessages
 from gluentlib.persistence.orchestration_metadata import OrchestrationMetadata
-
-
-def build_current_options():
-    return OrchestrationConfig.from_dict({'verbose': False,
-                                          'execute': False})
+from tests.unittest_functions import build_current_options, FAKE_ORACLE_BQ_ENV
 
 
 def build_non_connecting_options(db_type):

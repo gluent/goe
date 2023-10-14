@@ -3,7 +3,8 @@
 
 import os
 from unittest import TestCase, main
-from tests.offload.unittest_functions import build_current_options, get_default_test_user, build_offload_operation
+from tests.unit.offload.unittest_functions import get_default_test_user, build_offload_operation
+from tests.integration.test_functions import build_current_options
 from gluentlib.offload.offload_messages import OffloadMessages
 from gluentlib.offload.offload_metadata_functions import gen_offload_metadata_from_base
 from gluentlib.offload.predicate_offload import GenericPredicate

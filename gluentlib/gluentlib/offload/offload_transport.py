@@ -18,15 +18,24 @@ from typing import Union
 
 from gluentlib.config import orchestration_defaults
 from gluentlib.offload.column_metadata import match_table_column
+from gluentlib.offload.offload_constants import LIVY_MAX_SESSIONS
 from gluentlib.offload.factory.backend_api_factory import backend_api_factory
 from gluentlib.offload.factory.query_import_factory import query_import_factory
 from gluentlib.offload.factory.offload_transport_rdbms_api_factory import offload_transport_rdbms_api_factory
 from gluentlib.offload.factory.staging_file_factory import staging_file_factory
 from gluentlib.offload.frontend_api import FRONTEND_TRACE_MODULE
-from gluentlib.offload.offload_constants import BACKEND_DISTRO_GCP, \
-    DBTYPE_MSSQL, DBTYPE_ORACLE, DBTYPE_NETEZZA, DBTYPE_SPARK,\
-    DBTYPE_SYNAPSE, DBTYPE_TERADATA, FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET, \
-    HADOOP_BASED_BACKEND_DISTRIBUTIONS, OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED
+from gluentlib.offload.offload_constants import (
+    BACKEND_DISTRO_GCP,
+    DBTYPE_MSSQL, DBTYPE_ORACLE, DBTYPE_NETEZZA, DBTYPE_SPARK,
+    DBTYPE_SYNAPSE, DBTYPE_TERADATA,
+    FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET,
+    HADOOP_BASED_BACKEND_DISTRIBUTIONS,
+    OFFLOAD_TRANSPORT_AUTO,
+    OFFLOAD_TRANSPORT_GLUENT,
+    OFFLOAD_TRANSPORT_GCP,
+    OFFLOAD_TRANSPORT_SQOOP,
+    OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
+)
 from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
 from gluentlib.offload.oracle.oracle_column import (
     ORACLE_TYPE_TIMESTAMP_TZ,
@@ -83,10 +92,7 @@ OFFLOAD_TRANSPORT_SPARK_METHODS = [
 ]
 
 # The rules that contain specific transport methods
-OFFLOAD_TRANSPORT_AUTO = 'AUTO'
-OFFLOAD_TRANSPORT_GLUENT = 'GLUENT'
-OFFLOAD_TRANSPORT_GCP = 'GCP'
-OFFLOAD_TRANSPORT_SQOOP = 'SQOOP'
+
 VALID_OFFLOAD_TRANSPORTS = [
     OFFLOAD_TRANSPORT_AUTO,
     OFFLOAD_TRANSPORT_GLUENT,
@@ -132,8 +138,6 @@ OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE = 'gcloud'
 GCLOUD_PROPERTY_SEPARATOR = ',GSEP,'
 
 URL_SEP = '/'
-LIVY_MAX_SESSIONS = 10
-LIVY_IDLE_SESSION_TIMEOUT = 600
 LIVY_SESSIONS_SUBURL = 'sessions'
 LIVY_LOG_QUEUE_PATTERN = r'^\s*queue:\s*%s$'
 # Seconds between looped checks when creating a session

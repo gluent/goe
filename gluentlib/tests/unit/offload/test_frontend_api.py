@@ -12,7 +12,7 @@ from unittest import TestCase, main
 
 from numpy import datetime64
 
-from tests.offload.unittest_functions import build_current_options, build_non_connecting_options,\
+from tests.unit.offload.unittest_functions import build_current_options, build_non_connecting_options,\
     get_real_frontend_schema_and_table
 
 from gluentlib.offload.column_metadata import ColumnMetadataInterface

@@ -17,8 +17,9 @@ import traceback
 from argparse import Namespace
 from datetime import datetime
 
-from gluentlib.offload.offload_messages import OffloadMessages, NORMAL, VERBOSE, VVERBOSE
-from gluentlib.util.misc_functions import get_option, set_option
+from gluentlib.offload.offload_messages import OffloadMessages, NORMAL, VERBOSE, VVERBOSE, VERBOSENESS
+from gluentlib.util.misc_functions import get_option
+
 
 ###############################################################################
 # LOGGING
@@ -30,6 +31,23 @@ logger.addHandler(logging.NullHandler())  # Disabling logging by default
 # GLOBALS
 ###############################################################################
 global_log_fh = None
+
+
+def set_option(options, opt, val):
+    """ Set 'opt' attribute in 'options' object
+        with special processing for 'verbose' options
+    """
+    assert options and opt
+
+    setattr(options, opt, val)
+
+    # If verboseness 'level' is supplied and is set to True
+    # make all other 'levels' False
+    opt = opt.lower()
+    if opt in VERBOSENESS and val:
+        minus_opts = tuple(VERBOSENESS - set((opt,)))
+        for m_opt in minus_opts:
+            setattr(options, m_opt, False)
 
 
 def get_default_options(addons=None):

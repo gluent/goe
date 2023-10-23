@@ -21,7 +21,7 @@ from gluentlib.offload.synthetic_partition_literal import SyntheticPartitionLite
 from gluentlib.orchestration import orchestration_constants
 from gluentlib.orchestration.execution_id import ExecutionId
 from gluentlib.persistence.orchestration_metadata import OrchestrationMetadata
-from testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
+from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
 from tests.unit.offload.unittest_functions import build_current_options, get_default_test_user
 
 

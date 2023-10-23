@@ -24,8 +24,8 @@ from gluentlib.offload.microsoft import synapse_predicate
 from gluentlib.offload.oracle import oracle_predicate
 from gluentlib.offload.snowflake import snowflake_predicate
 from gluentlib.offload.teradata import teradata_predicate
-from testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
-from testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
+from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
+from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
 
 
 class TestIdaPredicateRenderToSQL(TestCase):

@@ -19,20 +19,77 @@ FAKE_ORACLE_ENV = {
 }
 
 FAKE_ORACLE_BQ_ENV = dict(FAKE_ORACLE_ENV)
+FAKE_ORACLE_BQ_ENV.update(
+    {
+        "BACKEND_DISTRIBUTION": "GCP",
+    }
+)
 
 FAKE_ORACLE_HIVE_ENV = dict(FAKE_ORACLE_ENV)
 FAKE_ORACLE_HIVE_ENV.update(
     {
         "HADOOP_SSH_USER": "a",
+        "HDFS_DATA": "/tmp/a",
         "HDFS_HOME": "/tmp/a",
+        "HDFS_LOAD": "/tmp/a_load",
+        "HIVE_SERVER_HOST": "h",
         "HIVE_SERVER_USER": "x",
         "QUERY_ENGINE": "HIVE",
     }
 )
 
+FAKE_ORACLE_IMPALA_ENV = dict(FAKE_ORACLE_ENV)
+FAKE_ORACLE_IMPALA_ENV.update(
+    {
+        "HADOOP_SSH_USER": "a",
+        "HDFS_DATA": "/tmp/a",
+        "HDFS_HOME": "/tmp/a",
+        "HDFS_LOAD": "/tmp/a_load",
+        "HIVE_SERVER_HOST": "h",
+        "QUERY_ENGINE": "IMPALA",
+    }
+)
 
-def build_mock_options():
-    k = mock.patch.dict(os.environ, FAKE_ORACLE_BQ_ENV)
+FAKE_ORACLE_SNOWFLAKE_ENV = dict(FAKE_ORACLE_ENV)
+FAKE_ORACLE_SNOWFLAKE_ENV.update(
+    {
+        "BACKEND_DISTRIBUTION": "SNOWFLAKE",
+        "QUERY_ENGINE": "SNOWFLAKE",
+        "SNOWFLAKE_USER": "u",
+        "SNOWFLAKE_PASS": "p",
+        "SNOWFLAKE_ACCOUNT": "a",
+        "SNOWFLAKE_DATABASE": "d",
+        "SNOWFLAKE_ROLE": "r",
+        "SNOWFLAKE_FILE_FORMAT_PREFIX": "GLUENT_OFFLOAD_FILE_FORMAT",
+        "SNOWFLAKE_INTEGRATION": "i",
+        "SNOWFLAKE_STAGE": "s",
+        "SNOWFLAKE_WAREHOUSE": "w",
+    }
+)
+
+
+FAKE_ORACLE_SYNAPSE_ENV = dict(FAKE_ORACLE_ENV)
+FAKE_ORACLE_SYNAPSE_ENV.update(
+    {
+        "BACKEND_DISTRIBUTION": "MSAZURE",
+        "QUERY_ENGINE": "SYNAPSE",
+        "SYNAPSE_DATABASE": "d",
+        "SYNAPSE_SERVER": "p",
+        "SYNAPSE_PORT": "123",
+        "SYNAPSE_ROLE": "r",
+        "SYNAPSE_AUTH_MECHANISM": "SqlPassword",
+        "SYNAPSE_USER": "u",
+        "SYNAPSE_PASS": "p",
+        "SYNAPSE_DATA_SOURCE": "d",
+        "SYNAPSE_FILE_FORMAT": "f",
+        "BACKEND_ODBC_DRIVER_NAME": "ms",
+    }
+)
+
+
+def build_mock_options(mock_env: dict):
+    assert mock_env
+    k = mock.patch.dict(os.environ, mock_env)
     k.start()
     c = OrchestrationConfig.from_dict({"verbose": False, "execute": False})
     k.stop()

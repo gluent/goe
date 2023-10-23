@@ -20,7 +20,7 @@ from gluentlib.offload.factory.frontend_api_factory import frontend_api_factory
 from gluentlib.offload.frontend_api import QueryParameter
 from gluentlib.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_NETEZZA, DBTYPE_ORACLE, DBTYPE_TERADATA
 from gluentlib.offload.offload_messages import OffloadMessages
-from testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
+from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
 
 
 class TestFrontendApi(TestCase):

@@ -21,7 +21,7 @@ from gluentlib.offload.netezza.netezza_column import NETEZZA_TYPE_BIGINT, NETEZZ
 from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_DATE, ORACLE_TYPE_NUMBER,\
     ORACLE_TYPE_TIMESTAMP, ORACLE_TYPE_VARCHAR2
 from gluentlib.util.ora_query import get_oracle_connection
-from testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
+from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
 
 
 class TestOffloadSourceTable(TestCase):

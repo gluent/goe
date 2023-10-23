@@ -9,7 +9,7 @@ from gluentlib.offload.oracle.oracle_column import OracleColumn, ORACLE_TYPE_VAR
 from gluentlib.util.parquet_encoder import ParquetEncoder, PARQUET_TYPE_STRING
 from gluentlib.util.misc_functions import get_temp_path
 
-from tests.util.test_avro_encoder import FakeDb, ROW_COUNT
+from tests.unit.util.test_avro_encoder import FakeDb, ROW_COUNT
 
 
 class TestParquetEncoder(TestCase):

@@ -7,7 +7,6 @@ from gluentlib.util.simple_timer import SimpleTimer
 
 
 class TestSimpleTimer(TestCase):
-
     def test_simple_timer(self):
         t = SimpleTimer()
         time.sleep(1)
@@ -23,10 +22,10 @@ class TestSimpleTimer(TestCase):
         self.assertEqual(t.elapsed, t1)
 
         # Named timer
-        t = SimpleTimer('test_timer')
+        t = SimpleTimer("test_timer")
         self.assertIsInstance(t.show(), str)
-        self.assertIn('test_timer', t.show())
+        self.assertIn("test_timer", t.show())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

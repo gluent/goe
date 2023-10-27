@@ -12,7 +12,7 @@ from .key_value_store import KeyValueStore
 #       somewhere in the neighborhood of 255 bytes (though this will
 #       vary by deployment)
 class HdfsFilepathKeyValueStore(KeyValueStore):
-  def __init__(self, hdfs_data_directory, hdfs_client_factory, dry_run):
+  def __init__(self, hdfs_data_directory, hdfs_client_factory, dry_run=False):
     self.hdfs_data_directory = hdfs_data_directory
     self.hdfs_client_factory = hdfs_client_factory
     self._dry_run = dry_run

@@ -27,8 +27,6 @@ from copy import copy
 from dateutil import parser
 from hashlib import md5
 
-from gluentlib.offload.offload_messages import VERBOSENESS
-
 
 ###############################################################################
 #  CONSTANTS
@@ -396,23 +394,6 @@ def get_option(options, name, repl=None):
         Similar behavior to: dict.get()
     """
     return getattr(options, name) if (options and hasattr(options, name)) else repl
-
-
-def set_option(options, opt, val):
-    """ Set 'opt' attribute in 'options' object
-        with special processing for 'verbose' options
-    """
-    assert options and opt
-
-    setattr(options, opt, val)
-
-    # If verboseness 'level' is supplied and is set to True
-    # make all other 'levels' False
-    opt = opt.lower()
-    if opt in VERBOSENESS and val:
-        minus_opts = tuple(VERBOSENESS - set((opt,)))
-        for m_opt in minus_opts:
-            setattr(options, m_opt, False)
 
 
 def load_yaml_in_order(yaml_file):

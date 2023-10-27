@@ -93,6 +93,14 @@ NOT_NULL_PROPAGATION_NONE = 'NONE'
 # This parameter value is documented so do not change without reviewing config template and documentation
 OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED = -1
 
+# Offload transport constants
+LIVY_IDLE_SESSION_TIMEOUT = 600
+LIVY_MAX_SESSIONS = 10
+OFFLOAD_TRANSPORT_AUTO = 'AUTO'
+OFFLOAD_TRANSPORT_GLUENT = 'GLUENT'
+OFFLOAD_TRANSPORT_GCP = 'GCP'
+OFFLOAD_TRANSPORT_SQOOP = 'SQOOP'
+
 # Offload capabilities we can switch on/off by backend db type
 # Any capabilities that are version specific will have extra code in the BackendApi method
 # You must add an explanation as to what the capability does so that developers know what

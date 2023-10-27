@@ -12,6 +12,7 @@ import math
 from numpy import datetime64
 import re
 
+from gluentlib.config.orchestration_defaults import get_load_db_pattern
 from gluentlib.offload import offload_constants
 from gluentlib.offload.column_metadata import ColumnMetadataInterface,\
     get_column_names, valid_column_list, invalid_column_list_message
@@ -52,10 +53,6 @@ def data_db_name(owner, opts):
     """
     new_db_name = substitute_in_same_case(opts.db_name_pattern, owner)
     return new_db_name
-
-
-def get_load_db_pattern():
-    return '%s_load'
 
 
 def load_db_name(target_owner, offload_options=None):

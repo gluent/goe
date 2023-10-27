@@ -30,7 +30,7 @@ from tests.testlib.setup import gen_test_data
 from tests.testlib.test_framework.test_constants import TEST_GEN_DATA_ASCII7_NONULL, UNICODE_NAME_TOKEN
 from tests.testlib.test_framework.frontend_testing_api import FrontendTestingApiInterface
 from tests.testlib.test_framework.test_value_generators import TestDecimal
-from test_sets.stories.story_setup_functions import SALES_BASED_FACT_PRE_HV, SALES_BASED_FACT_HV_1, \
+from tests.integration.test_sets.stories.story_setup_functions import SALES_BASED_FACT_PRE_HV, SALES_BASED_FACT_HV_1, \
     SALES_BASED_FACT_HV_2, SALES_BASED_FACT_HV_3, SALES_BASED_FACT_HV_4, SALES_BASED_FACT_HV_5, \
     SALES_BASED_FACT_HV_6, SALES_BASED_FACT_HV_7, \
     SALES_BASED_FACT_PRE_HV_NUM, SALES_BASED_FACT_HV_1_NUM, SALES_BASED_FACT_HV_2_NUM, SALES_BASED_FACT_HV_3_NUM, \

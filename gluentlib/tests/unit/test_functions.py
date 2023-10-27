@@ -4,12 +4,35 @@ from unittest import mock
 from gluentlib.config.orchestration_config import OrchestrationConfig
 
 
-FAKE_ORACLE_ENV = {
-    # Common config
+FAKE_COMMON_ENV = {
     "DB_NAME_PREFIX": "x",
     "OFFLOAD_LOG": "/tmp",
     "OFFLOAD_TRANSPORT_USER": "a",
-    # Oracle specific config
+    "OFFLOAD_TRANSPORT_CMD_HOST": "localhost",
+}
+
+#
+# Frontend mock environment variables.
+#
+FAKE_MSSQL_ENV = {
+    "FRONTEND_DISTRIBUTION": "MSSQL",
+    "MSSQL_CONN": "c",
+    "MSSQL_APP_USER": "a",
+    "MSSQL_APP_PASS": "b",
+    "FRONTEND_ODBC_DRIVER_NAME": "o",
+}
+FAKE_MSSQL_ENV.update(FAKE_COMMON_ENV)
+
+FAKE_NETEZZA_ENV = {
+    "FRONTEND_DISTRIBUTION": "NETEZZA",
+    "NETEZZA_CONN": "c",
+    "NETEZZA_APP_USER": "a",
+    "NETEZZA_APP_PASS": "b",
+}
+FAKE_NETEZZA_ENV.update(FAKE_COMMON_ENV)
+
+FAKE_ORACLE_ENV = {
+    "FRONTEND_DISTRIBUTION": "ORACLE",
     "ORA_CONN": "hostname:1521/service",
     "ORA_ADM_USER": "a",
     "ORA_ADM_PASS": "b",
@@ -17,7 +40,23 @@ FAKE_ORACLE_ENV = {
     "ORA_APP_PASS": "b",
     "ORA_REPO_USER": "a",
 }
+FAKE_ORACLE_ENV.update(FAKE_COMMON_ENV)
 
+FAKE_TERADATA_ENV = {
+    "FRONTEND_DISTRIBUTION": "TERADATA",
+    "TERADATA_SERVER": "s",
+    "TERADATA_ADM_USER": "a",
+    "TERADATA_ADM_PASS": "b",
+    "TERADATA_APP_USER": "a",
+    "TERADATA_APP_PASS": "b",
+    "TERADATA_REPO_USER": "a",
+    "FRONTEND_ODBC_DRIVER_NAME": "o",
+}
+FAKE_TERADATA_ENV.update(FAKE_COMMON_ENV)
+
+#
+# Full mock environment variable combinations.
+#
 FAKE_ORACLE_BQ_ENV = dict(FAKE_ORACLE_ENV)
 FAKE_ORACLE_BQ_ENV.update(
     {

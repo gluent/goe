@@ -65,7 +65,7 @@ from gluentlib.offload.teradata.teradata_frontend_api import (
     teradata_get_primary_partition_expression,
 )
 from pyodbc import SQL_WVARCHAR
-from test_sets.stories.story_setup_functions import (
+from tests.integration.test_sets.stories.story_setup_functions import (
     SALES_BASED_FACT_HV_1,
     SALES_BASED_FACT_HV_2,
     SALES_BASED_FACT_HV_3,

@@ -22,7 +22,7 @@ from schema_sync import get_schema_sync_opts
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
-from test_sets.stories.story_globals import STORY_SET_ALL
+from tests.integration.test_sets.stories.story_globals import STORY_SET_ALL
 
 
 _QUOTE = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", '[': '|[', ']': '|]', '\x1b': '|0x001B'}

@@ -85,10 +85,6 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
                                                           TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
                                                           TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD,
                                                           TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE]
-        # GOE-1375
-        ora_conn = self._get_adm_connection()
-        if oracle_version_supports_exadata(ora_conn.version):
-            self._fixed_gluent_parameters = {'CELL_OFFLOAD_PROCESSING': 'FALSE'}
 
     ###########################################################################
     # PRIVATE METHODS
@@ -119,6 +115,16 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
         if self._rdbms_app_conn:
             self._rdbms_app_conn.close()
         self._rdbms_app_conn = None
+
+    def _get_fixed_gluent_parameters(self):
+        if self._fixed_gluent_parameters is None:
+            # GOE-1375
+            ora_conn = self._get_adm_connection()
+            if oracle_version_supports_exadata(ora_conn.version):
+                self._fixed_gluent_parameters = {'CELL_OFFLOAD_PROCESSING': 'FALSE'}
+            else:
+                self._fixed_gluent_parameters = {}
+        return self._fixed_gluent_parameters
 
     def _get_fixed_sqoop_parameters(self, max_ts_scale):
         # These are defined to match parameters set by Sqoop/Oraoop
@@ -309,7 +315,7 @@ FROM  (
             commands.extend(self._oracle_alter_session_statements(fixed_sqoop_parameters, for_plsql=for_plsql,
                                                                   include_semi_colons=include_semi_colons,
                                                                   escape_semi_colons=escape_semi_colons))
-        commands.extend(self._oracle_alter_session_statements(self._fixed_gluent_parameters, for_plsql=for_plsql,
+        commands.extend(self._oracle_alter_session_statements(self._get_fixed_gluent_parameters(), for_plsql=for_plsql,
                                                               include_semi_colons=include_semi_colons,
                                                               escape_semi_colons=escape_semi_colons))
         commands.extend(self._oracle_alter_session_statements(custom_session_parameters, for_plsql=for_plsql,
@@ -342,7 +348,7 @@ FROM  (
 
         assert type(custom_session_parameters) is dict
         opt_param_hints = (to_opt_param(self._get_fixed_sqoop_parameters(max_ts_scale)) + ' ' +
-                           to_opt_param(self._fixed_gluent_parameters) + ' ' +
+                           to_opt_param(self._get_fixed_gluent_parameters()) + ' ' +
                            to_opt_param(custom_session_parameters)).strip()
         return f'/*+ NO_PARALLEL {opt_param_hints} */'
 

@@ -1,10 +1,7 @@
 """ TestFrontendApi: Unit test library to test API for all supported RDBMSs
-    This is split into two categories
     1) For all possible frontends test API calls that do not need to connect to the system
        Because there is no connection we can fake any frontend and test functionality
        These classes have the system in the name, e.g.: TestOracleFrontendApi, TestMSSQLFrontendApi, etc
-    2) For the current frontend test API calls that need to connect to the system
-       This class has Current in the name: TestCurrentFrontendApi
 """
 
 from datetime import datetime
@@ -12,19 +9,29 @@ from unittest import TestCase, main
 
 from numpy import datetime64
 
-from tests.unit.offload.unittest_functions import build_current_options, build_non_connecting_options,\
-    get_real_frontend_schema_and_table
+from tests.unit.offload.unittest_functions import get_real_frontend_schema_and_table
 
 from gluentlib.offload.column_metadata import ColumnMetadataInterface
 from gluentlib.offload.factory.frontend_api_factory import frontend_api_factory
 from gluentlib.offload.frontend_api import QueryParameter
-from gluentlib.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_NETEZZA, DBTYPE_ORACLE, DBTYPE_TERADATA
+from gluentlib.offload.offload_constants import (
+    DBTYPE_MSSQL,
+    DBTYPE_ORACLE,
+    DBTYPE_TERADATA,
+)
 from gluentlib.offload.offload_messages import OffloadMessages
-from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
+from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
+    frontend_testing_api_factory,
+)
+from tests.unit.test_functions import (
+    build_mock_options,
+    FAKE_MSSQL_ENV,
+    FAKE_ORACLE_ENV,
+    FAKE_TERADATA_ENV,
+)
 
 
 class TestFrontendApi(TestCase):
-
     def __init__(self, *args, **kwargs):
         super(TestFrontendApi, self).__init__(*args, **kwargs)
         self.api = None
@@ -38,22 +45,41 @@ class TestFrontendApi(TestCase):
 
     def setUp(self):
         messages = OffloadMessages()
-        self.api = frontend_api_factory(self.db_type, self.config, messages, dry_run=True,
-                                        do_not_connect=bool(not self.connect_to_frontend),
-                                        trace_action='TestFrontendApi')
+        self.api = frontend_api_factory(
+            self.db_type,
+            self.config,
+            messages,
+            dry_run=True,
+            do_not_connect=bool(not self.connect_to_frontend),
+            trace_action="TestFrontendApi",
+        )
         if self.connect_to_frontend:
-            self.db, self.table = get_real_frontend_schema_and_table('GL_TYPES', self.config, messages=messages)
+            self.db, self.table = get_real_frontend_schema_and_table(
+                "GL_TYPES", self.config, messages=messages
+            )
             if not self.table:
-                print('Falling back to connect_to_frontend=False because there are no test tables')
+                print(
+                    "Falling back to connect_to_frontend=False because there are no test tables"
+                )
                 self.connect_to_frontend = False
-                self.db = 'any_db'
-                self.table = 'some_table'
-            _, self.part_table = get_real_frontend_schema_and_table('SALES', self.config, messages=messages)
+                self.db = "any_db"
+                self.table = "some_table"
+            _, self.part_table = get_real_frontend_schema_and_table(
+                "SALES", self.config, messages=messages
+            )
         else:
-            self.db = 'any_db'
-            self.table = 'some_table'
-        self.test_api = frontend_testing_api_factory(self.db_type, self.config, messages, dry_run=True,
-                                                     do_not_connect=bool(not self.connect_to_frontend))
+            self.db = "any_db"
+            self.table = "some_table"
+        self.test_api = frontend_testing_api_factory(
+            self.db_type,
+            self.config,
+            messages,
+            dry_run=True,
+            do_not_connect=bool(not self.connect_to_frontend),
+        )
+
+    def _get_mock_config(self, mock_env: dict):
+        return build_mock_options(mock_env)
 
     def _test_capabilities(self):
         self.assertIsInstance(self.api.canonical_date_supported(), bool)
@@ -67,57 +93,87 @@ class TestFrontendApi(TestCase):
         self.assertIsInstance(self.api.parameterized_queries_supported(), bool)
 
     def _test_create_table(self):
-        column_list = [self.api.gen_column_object('col1', data_type=self.test_api.test_type_canonical_int_8()),
-                       self.api.gen_column_object('col2', data_type=self.test_api.test_type_canonical_date()),
-                       self.api.gen_column_object('col3', data_type=self.api.generic_string_data_type())]
-        self.api.create_table(self.db, 'new_table', column_list)
+        column_list = [
+            self.api.gen_column_object(
+                "col1", data_type=self.test_api.test_type_canonical_int_8()
+            ),
+            self.api.gen_column_object(
+                "col2", data_type=self.test_api.test_type_canonical_date()
+            ),
+            self.api.gen_column_object(
+                "col3", data_type=self.api.generic_string_data_type()
+            ),
+        ]
+        self.api.create_table(self.db, "new_table", column_list)
 
     def _test_enclose_identifier(self):
         self.api.enclose_identifier(self.db)
 
     def _test_enclose_query_hints(self):
         try:
-            self.api.enclose_query_hints('some_hint(123)')
-            self.api.enclose_query_hints(['some_hint(123)', 'another_hint(456)'])
+            self.api.enclose_query_hints("some_hint(123)")
+            self.api.enclose_query_hints(["some_hint(123)", "another_hint(456)"])
         except NotImplementedError:
             pass
 
     def _test_execute_ddl(self):
         # Make a call without executing just to shake down Python logic
-        self.assertIsInstance(self.api.execute_ddl('DDL ON A TABLE',
-                                                   query_options=self.test_api.unit_test_query_options()), list)
+        self.assertIsInstance(
+            self.api.execute_ddl(
+                "DDL ON A TABLE", query_options=self.test_api.unit_test_query_options()
+            ),
+            list,
+        )
 
     def _test_execute_dml(self):
         # Make a call without executing just to shake down Python logic
-        self.assertIsInstance(self.api.execute_dml('DML ON A TABLE',
-                                                   query_options=self.test_api.unit_test_query_options()), list)
+        self.assertIsInstance(
+            self.api.execute_dml(
+                "DML ON A TABLE", query_options=self.test_api.unit_test_query_options()
+            ),
+            list,
+        )
 
     def _test_execute_query_fetch_all(self):
         if self.connect_to_frontend:
-            sql = 'SELECT COUNT(*) C FROM %s.%s' % (self.db, self.table)
+            sql = "SELECT COUNT(*) C FROM %s.%s" % (self.db, self.table)
             rows = self.api.execute_query_fetch_all(sql)
             self.assertIsInstance(rows, list)
             self.assertIsInstance(rows[0], (list, tuple))
             rows = self.api.execute_query_fetch_all(sql, as_dict=True)
             self.assertIsInstance(rows, list)
             self.assertIsInstance(rows[0], dict)
-            self.assertIsInstance(self.api.execute_query_fetch_all(sql, time_sql=True), list)
+            self.assertIsInstance(
+                self.api.execute_query_fetch_all(sql, time_sql=True), list
+            )
 
     def _test_execute_query_fetch_one(self):
         if self.connect_to_frontend:
-            sql = 'SELECT COUNT(*) C FROM %s.%s' % (self.db, self.table)
+            sql = "SELECT COUNT(*) C FROM %s.%s" % (self.db, self.table)
             self.assertIsInstance(self.api.execute_query_fetch_one(sql), (list, tuple))
-            self.assertIsInstance(self.api.execute_query_fetch_one(sql, as_dict=True), (dict))
+            self.assertIsInstance(
+                self.api.execute_query_fetch_one(sql, as_dict=True), (dict)
+            )
             if self.api.parameterized_queries_supported():
-                num_columns = [_ for _ in self.api.get_columns(self.db, self.table) if _.is_number_based()]
+                num_columns = [
+                    _
+                    for _ in self.api.get_columns(self.db, self.table)
+                    if _.is_number_based()
+                ]
                 self.assertTrue(bool(num_columns))
                 column_name = num_columns[0].name
-                params = [QueryParameter('num_value', 42)]
+                params = [QueryParameter("num_value", 42)]
                 self.assertIsInstance(
-                    self.api.execute_query_fetch_one('SELECT COUNT(*) FROM %s.%s WHERE %s > %s'
-                                                     % (self.db, self.table, column_name,
-                                                        self.api.format_query_parameter('num_value')),
-                                                     query_params=params),
+                    self.api.execute_query_fetch_one(
+                        "SELECT COUNT(*) FROM %s.%s WHERE %s > %s"
+                        % (
+                            self.db,
+                            self.table,
+                            column_name,
+                            self.api.format_query_parameter("num_value"),
+                        ),
+                        query_params=params,
+                    ),
                     (list, tuple),
                 )
 
@@ -158,16 +214,22 @@ class TestFrontendApi(TestCase):
     def _test_get_distinct_column_values(self):
         if self.connect_to_frontend:
             column_list = self.api.get_columns(self.db, self.table)
-            rows = self.api.get_distinct_column_values(self.db, self.table, column_list[0].name, order_results=False)
+            rows = self.api.get_distinct_column_values(
+                self.db, self.table, column_list[0].name, order_results=False
+            )
             self.assertIsInstance(rows, list)
             self.assertGreater(len(rows), 0)
-            rows = self.api.get_distinct_column_values(self.db, self.table, column_list[0].name, order_results=True)
+            rows = self.api.get_distinct_column_values(
+                self.db, self.table, column_list[0].name, order_results=True
+            )
             self.assertIsInstance(rows, list)
             self.assertGreater(len(rows), 0)
 
     def _test_get_hybrid_objects_for_offloaded_table(self):
         if self.connect_to_frontend and self.api.hybrid_schema_supported():
-            objects = self.api.get_hybrid_objects_for_offloaded_table(self.db, self.table)
+            objects = self.api.get_hybrid_objects_for_offloaded_table(
+                self.db, self.table
+            )
             self.assertIsInstance(objects, list)
             self.assertGreater(len(objects), 0)
 
@@ -195,7 +257,9 @@ class TestFrontendApi(TestCase):
     def _test_get_table_ddl(self):
         if self.connect_to_frontend:
             self.assertIsInstance(self.api.get_table_ddl(self.db, self.table), str)
-            self.assertIsInstance(self.api.get_table_ddl(self.db, self.table, as_list=True), list)
+            self.assertIsInstance(
+                self.api.get_table_ddl(self.db, self.table, as_list=True), list
+            )
 
     def _test_get_table_row_count(self):
         if self.connect_to_frontend:
@@ -211,7 +275,7 @@ class TestFrontendApi(TestCase):
 
     def _test_schema_exists(self):
         if self.connect_to_frontend:
-            self.assertFalse(self.api.schema_exists('not-a-user'))
+            self.assertFalse(self.api.schema_exists("not-a-user"))
 
     def _test_table_exists(self):
         if self.connect_to_frontend:
@@ -222,23 +286,38 @@ class TestFrontendApi(TestCase):
             self.assertIsNotNone(literal)
             if self.connect_to_frontend:
                 if self.db_type == DBTYPE_ORACLE:
-                    self.assertIsNotNone(self.api.execute_query_fetch_one('SELECT %s FROM dual' % literal))
+                    self.assertIsNotNone(
+                        self.api.execute_query_fetch_one(
+                            "SELECT %s FROM dual" % literal
+                        )
+                    )
                 else:
-                    self.assertIsNotNone(self.api.execute_query_fetch_one('SELECT %s' % literal))
+                    self.assertIsNotNone(
+                        self.api.execute_query_fetch_one("SELECT %s" % literal)
+                    )
 
-        literal = self.api.to_frontend_literal(int(123456), self.test_api.test_type_canonical_int_8())
-        self.assertIn('123456', str(literal))
+        literal = self.api.to_frontend_literal(
+            int(123456), self.test_api.test_type_canonical_int_8()
+        )
+        self.assertIn("123456", str(literal))
         test_by_select(literal)
-        literal = self.api.to_frontend_literal(float(1.23), self.test_api.test_type_canonical_decimal())
-        self.assertIn('1.23', str(literal))
+        literal = self.api.to_frontend_literal(
+            float(1.23), self.test_api.test_type_canonical_decimal()
+        )
+        self.assertIn("1.23", str(literal))
         test_by_select(literal)
-        literal = self.api.to_frontend_literal(int(12345678901234567), self.test_api.test_type_canonical_decimal())
-        self.assertIn('12345678901234567', str(literal))
+        literal = self.api.to_frontend_literal(
+            int(12345678901234567), self.test_api.test_type_canonical_decimal()
+        )
+        self.assertIn("12345678901234567", str(literal))
         test_by_select(literal)
-        literal = self.api.to_frontend_literal(datetime.now(), self.test_api.test_type_canonical_timestamp())
+        literal = self.api.to_frontend_literal(
+            datetime.now(), self.test_api.test_type_canonical_timestamp()
+        )
         test_by_select(literal)
-        literal = self.api.to_frontend_literal(datetime64(datetime.now()),
-                                              self.test_api.test_type_canonical_timestamp())
+        literal = self.api.to_frontend_literal(
+            datetime64(datetime.now()), self.test_api.test_type_canonical_timestamp()
+        )
         test_by_select(literal)
 
     def _test_view_exists(self):
@@ -276,11 +355,10 @@ class TestFrontendApi(TestCase):
 
 
 class TestMSSQLFrontendApi(TestFrontendApi):
-
     def setUp(self):
         self.connect_to_frontend = False
         self.db_type = DBTYPE_MSSQL
-        self.config = build_non_connecting_options(DBTYPE_MSSQL)
+        self.config = self._get_mock_config(FAKE_MSSQL_ENV)
         super().setUp()
 
     def test_all_non_connecting_mssql_tests(self):
@@ -292,7 +370,7 @@ class TestMSSQLFrontendApi(TestFrontendApi):
 #     def setUp(self):
 #         self.connect_to_frontend = False
 #         self.db_type = DBTYPE_NETEZZA
-#         self.config = build_non_connecting_options(DBTYPE_NETEZZA)
+#         self.config = self._get_mock_config(FAKE_NETEZZA_ENV)
 #         super().setUp()
 #
 #     def test_all_non_connecting_netezza_tests(self):
@@ -300,11 +378,10 @@ class TestMSSQLFrontendApi(TestFrontendApi):
 
 
 class TestOracleFrontendApi(TestFrontendApi):
-
     def setUp(self):
         self.connect_to_frontend = False
         self.db_type = DBTYPE_ORACLE
-        self.config = build_non_connecting_options(DBTYPE_ORACLE)
+        self.config = self._get_mock_config(FAKE_ORACLE_ENV)
         super().setUp()
 
     def test_all_non_connecting_oracle_tests(self):
@@ -312,32 +389,15 @@ class TestOracleFrontendApi(TestFrontendApi):
 
 
 class TestTeradataFrontendApi(TestFrontendApi):
-
     def setUp(self):
         self.connect_to_frontend = False
         self.db_type = DBTYPE_TERADATA
-        self.config = build_non_connecting_options(DBTYPE_TERADATA)
+        self.config = self._get_mock_config(FAKE_TERADATA_ENV)
         super().setUp()
 
     def test_all_non_connecting_teradata_tests(self):
         self._run_all_tests()
 
 
-class TestCurrentFrontendApi(TestFrontendApi):
-
-    def setUp(self):
-        self.connect_to_frontend = True
-        self.config = self._build_current_options()
-        super().setUp()
-
-    def _build_current_options(self):
-        orchestration_options = build_current_options()
-        self.db_type = orchestration_options.db_type
-        return orchestration_options
-
-    def test_full_api_on_current_frontend(self):
-        self._run_all_tests()
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

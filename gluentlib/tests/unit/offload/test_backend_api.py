@@ -6,15 +6,13 @@
 """
 
 from datetime import datetime
-import os
-from unittest import TestCase, main, mock
+from unittest import TestCase, main
 import re
 
 from numpy import datetime64
 
 from tests.unit.offload.unittest_functions import get_default_test_user
 
-from gluentlib.config.orchestration_config import OrchestrationConfig
 from gluentlib.connect.connect_constants import (
     CONNECT_DETAIL,
     CONNECT_STATUS,

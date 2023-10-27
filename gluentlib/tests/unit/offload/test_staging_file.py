@@ -1,93 +1,144 @@
 import os
 from unittest import TestCase, main
 
-from gluentlib.offload.column_metadata import CanonicalColumn, \
-    GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, \
-    GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, \
-    GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8, \
-    GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE, \
-    GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, \
-    GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_BOOLEAN
+from gluentlib.offload.column_metadata import (
+    CanonicalColumn,
+    GLUENT_TYPE_FIXED_STRING,
+    GLUENT_TYPE_LARGE_STRING,
+    GLUENT_TYPE_VARIABLE_STRING,
+    GLUENT_TYPE_BINARY,
+    GLUENT_TYPE_LARGE_BINARY,
+    GLUENT_TYPE_INTEGER_1,
+    GLUENT_TYPE_INTEGER_2,
+    GLUENT_TYPE_INTEGER_4,
+    GLUENT_TYPE_INTEGER_8,
+    GLUENT_TYPE_INTEGER_38,
+    GLUENT_TYPE_DECIMAL,
+    GLUENT_TYPE_FLOAT,
+    GLUENT_TYPE_DOUBLE,
+    GLUENT_TYPE_DATE,
+    GLUENT_TYPE_TIME,
+    GLUENT_TYPE_TIMESTAMP,
+    GLUENT_TYPE_TIMESTAMP_TZ,
+    GLUENT_TYPE_INTERVAL_DS,
+    GLUENT_TYPE_INTERVAL_YM,
+    GLUENT_TYPE_BOOLEAN,
+)
 from gluentlib.offload.factory.staging_file_factory import staging_file_factory
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_ORACLE,\
-    DBTYPE_SNOWFLAKE, DBTYPE_SYNAPSE, FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET
+from gluentlib.offload.offload_constants import (
+    DBTYPE_BIGQUERY,
+    DBTYPE_HIVE,
+    DBTYPE_IMPALA,
+    DBTYPE_ORACLE,
+    DBTYPE_SNOWFLAKE,
+    DBTYPE_SYNAPSE,
+    FILE_STORAGE_FORMAT_AVRO,
+    FILE_STORAGE_FORMAT_PARQUET,
+)
 from gluentlib.offload.offload_messages import OffloadMessages
 from gluentlib.offload.staging.avro.avro_column import StagingAvroColumn
 from gluentlib.offload.staging.parquet.parquet_column import StagingParquetColumn
 
 
-STAGING_TYPES = {FILE_STORAGE_FORMAT_AVRO: StagingAvroColumn,
-                 FILE_STORAGE_FORMAT_PARQUET: StagingParquetColumn}
+STAGING_TYPES = {
+    FILE_STORAGE_FORMAT_AVRO: StagingAvroColumn,
+    FILE_STORAGE_FORMAT_PARQUET: StagingParquetColumn,
+}
 
 
 class FakeOpts(object):
     def __init__(self, db_type, target=None):
         self.db_type = db_type
-        self.rdbms_dsn = 'blah:blah;blah=blah'
+        self.rdbms_dsn = "blah:blah;blah=blah"
         self.ora_adm_user = None
         self.ora_adm_pass = None
         self.rdbms_app_user = None
         self.rdbms_app_pass = None
-        self.target = target or os.environ.get('QUERY_ENGINE', '').lower()
+        self.target = target or os.environ.get("QUERY_ENGINE", "").lower()
         self.backend_session_parameters = None
         self.use_oracle_wallet = None
 
 
 class TestStagingFile(TestCase):
-
     def _canonical_columns(self):
         return [
-            CanonicalColumn('COL_FIXED_STR', GLUENT_TYPE_FIXED_STRING, data_length=10),
-            CanonicalColumn('COL_LARGE_STR', GLUENT_TYPE_LARGE_STRING),
-            CanonicalColumn('COL_VARIABLE_STR', GLUENT_TYPE_VARIABLE_STRING),
-            CanonicalColumn('COL_BINARY', GLUENT_TYPE_BINARY),
-            CanonicalColumn('COL_LARGE_BINARY', GLUENT_TYPE_LARGE_BINARY),
-            CanonicalColumn('COL_INT_1', GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn('COL_INT_2', GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn('COL_INT_4', GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn('COL_INT_8', GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn('COL_INT_38', GLUENT_TYPE_INTEGER_38),
-            CanonicalColumn('COL_DEC_NO_P_S', GLUENT_TYPE_DECIMAL),
-            CanonicalColumn('COL_DEC_10_2', GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2),
-            CanonicalColumn('COL_FLOAT', GLUENT_TYPE_FLOAT),
-            CanonicalColumn('COL_DOUBLE', GLUENT_TYPE_DOUBLE),
-            CanonicalColumn('COL_DATE', GLUENT_TYPE_DATE),
-            CanonicalColumn('COL_TIME', GLUENT_TYPE_TIME),
-            CanonicalColumn('COL_TIMESTAMP', GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn('COL_TIMESTAMP_TZ', GLUENT_TYPE_TIMESTAMP_TZ),
-            CanonicalColumn('COL_INTERVAL_DS', GLUENT_TYPE_INTERVAL_DS),
-            CanonicalColumn('COL_INTERVAL_YM', GLUENT_TYPE_INTERVAL_YM),
-            CanonicalColumn('COL_BOOLEAN', GLUENT_TYPE_BOOLEAN),
+            CanonicalColumn("COL_FIXED_STR", GLUENT_TYPE_FIXED_STRING, data_length=10),
+            CanonicalColumn("COL_LARGE_STR", GLUENT_TYPE_LARGE_STRING),
+            CanonicalColumn("COL_VARIABLE_STR", GLUENT_TYPE_VARIABLE_STRING),
+            CanonicalColumn("COL_BINARY", GLUENT_TYPE_BINARY),
+            CanonicalColumn("COL_LARGE_BINARY", GLUENT_TYPE_LARGE_BINARY),
+            CanonicalColumn("COL_INT_1", GLUENT_TYPE_INTEGER_1),
+            CanonicalColumn("COL_INT_2", GLUENT_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT_4", GLUENT_TYPE_INTEGER_4),
+            CanonicalColumn("COL_INT_8", GLUENT_TYPE_INTEGER_8),
+            CanonicalColumn("COL_INT_38", GLUENT_TYPE_INTEGER_38),
+            CanonicalColumn("COL_DEC_NO_P_S", GLUENT_TYPE_DECIMAL),
+            CanonicalColumn(
+                "COL_DEC_10_2", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2
+            ),
+            CanonicalColumn("COL_FLOAT", GLUENT_TYPE_FLOAT),
+            CanonicalColumn("COL_DOUBLE", GLUENT_TYPE_DOUBLE),
+            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
+            CanonicalColumn("COL_TIME", GLUENT_TYPE_TIME),
+            CanonicalColumn("COL_TIMESTAMP", GLUENT_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_TIMESTAMP_TZ", GLUENT_TYPE_TIMESTAMP_TZ),
+            CanonicalColumn("COL_INTERVAL_DS", GLUENT_TYPE_INTERVAL_DS),
+            CanonicalColumn("COL_INTERVAL_YM", GLUENT_TYPE_INTERVAL_YM),
+            CanonicalColumn("COL_BOOLEAN", GLUENT_TYPE_BOOLEAN),
         ]
 
     def _test_staging_file_columns(self, staging_file):
         file_columns = staging_file.get_staging_columns()
         self.assertIsInstance(file_columns, list)
-        self.assertIsInstance(file_columns[0], STAGING_TYPES[staging_file.file_format],
-                              '{} != {}'.format(type(file_columns[0]), STAGING_TYPES[staging_file.file_format]))
+        self.assertIsInstance(
+            file_columns[0],
+            STAGING_TYPES[staging_file.file_format],
+            "{} != {}".format(
+                type(file_columns[0]), STAGING_TYPES[staging_file.file_format]
+            ),
+        )
         canonical_columns = staging_file.get_canonical_staging_columns()
         self.assertIsInstance(canonical_columns, list)
         self.assertIsInstance(canonical_columns[0], CanonicalColumn)
         for col in file_columns:
-            self.assertIsInstance(staging_file.get_java_primitive(col), (str, type(None)))
+            self.assertIsInstance(
+                staging_file.get_java_primitive(col), (str, type(None))
+            )
 
     def _test_staging_file(self, source_db_type, target_db_type, staging_format):
         messages = OffloadMessages()
         offload_options = FakeOpts(source_db_type, target=target_db_type)
-        staging_file = staging_file_factory('no_db', 'no_table', staging_format, self._canonical_columns(),
-                                            offload_options, False, messages, dry_run=True)
-        self.assertIn(staging_file.file_format, [FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET])
+        staging_file = staging_file_factory(
+            "no_db",
+            "no_table",
+            staging_format,
+            self._canonical_columns(),
+            offload_options,
+            False,
+            messages,
+            dry_run=True,
+        )
+        self.assertIn(
+            staging_file.file_format,
+            [FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET],
+        )
         self.assertEqual(staging_file.file_format, staging_format)
         self._test_staging_file_columns(staging_file)
         self.assertIsInstance(staging_file.get_file_schema_json(as_string=True), str)
-        self.assertIsInstance(staging_file.get_file_schema_json(as_string=False),
-                              dict if staging_file.file_format == FILE_STORAGE_FORMAT_AVRO else list)
+        self.assertIsInstance(
+            staging_file.get_file_schema_json(as_string=False),
+            dict if staging_file.file_format == FILE_STORAGE_FORMAT_AVRO else list,
+        )
 
     def test_oracle_bigquery_avro(self):
-        self._test_staging_file(DBTYPE_ORACLE, DBTYPE_BIGQUERY, FILE_STORAGE_FORMAT_AVRO)
+        self._test_staging_file(
+            DBTYPE_ORACLE, DBTYPE_BIGQUERY, FILE_STORAGE_FORMAT_AVRO
+        )
 
     def test_oracle_bigquery_parquet(self):
-        self._test_staging_file(DBTYPE_ORACLE, DBTYPE_BIGQUERY, FILE_STORAGE_FORMAT_PARQUET)
+        self._test_staging_file(
+            DBTYPE_ORACLE, DBTYPE_BIGQUERY, FILE_STORAGE_FORMAT_PARQUET
+        )
 
     def test_oracle_hive_avro(self):
         self._test_staging_file(DBTYPE_ORACLE, DBTYPE_HIVE, FILE_STORAGE_FORMAT_AVRO)
@@ -96,10 +147,16 @@ class TestStagingFile(TestCase):
         self._test_staging_file(DBTYPE_ORACLE, DBTYPE_IMPALA, FILE_STORAGE_FORMAT_AVRO)
 
     def test_oracle_snowflake_avro(self):
-        self._test_staging_file(DBTYPE_ORACLE, DBTYPE_SNOWFLAKE, FILE_STORAGE_FORMAT_AVRO)
+        self._test_staging_file(
+            DBTYPE_ORACLE, DBTYPE_SNOWFLAKE, FILE_STORAGE_FORMAT_AVRO
+        )
 
     def test_oracle_snowflake_parquet(self):
-        self._test_staging_file(DBTYPE_ORACLE, DBTYPE_SNOWFLAKE, FILE_STORAGE_FORMAT_PARQUET)
+        self._test_staging_file(
+            DBTYPE_ORACLE, DBTYPE_SNOWFLAKE, FILE_STORAGE_FORMAT_PARQUET
+        )
 
     def test_oracle_synapse_parquet(self):
-        self._test_staging_file(DBTYPE_ORACLE, DBTYPE_SYNAPSE, FILE_STORAGE_FORMAT_PARQUET)
+        self._test_staging_file(
+            DBTYPE_ORACLE, DBTYPE_SYNAPSE, FILE_STORAGE_FORMAT_PARQUET
+        )

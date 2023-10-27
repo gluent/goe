@@ -26,7 +26,7 @@ $(TARGET_JAR_FOR_SPARK_312):
 $(TARGET_JAR_FOR_SPARK_301):
 	sbt -DsparkVersion=3.0.1 package
 
-install: $(INSTALL_DIR) spark-listener
+target: $(INSTALL_DIR) spark-listener
 	cp $(TARGET_JAR_FOR_SPARK_330) $(INSTALL_DIR)/gluent-$(JAR_FOR_SPARK_330)
 	cp $(TARGET_JAR_FOR_SPARK_320) $(INSTALL_DIR)/gluent-$(JAR_FOR_SPARK_320)
 	cp $(TARGET_JAR_FOR_SPARK_312) $(INSTALL_DIR)/gluent-$(JAR_FOR_SPARK_312)

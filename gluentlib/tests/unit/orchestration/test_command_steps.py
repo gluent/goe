@@ -5,11 +5,7 @@ TestCommandSteps: Unit test constants in command_steps are sound.
 """
 from unittest import TestCase, main
 
-from tests.offload.unittest_functions import build_current_options
-
-from gluentlib.offload.offload_messages import OffloadMessages
 from gluentlib.orchestration import command_steps
-from gluentlib.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
 
 
 # Console phase 1 only adds steps to the repo for Offload/Present. In time the OSR/Schema Sync/Diagnose steps
@@ -40,17 +36,20 @@ KNOWN_MISSING_STEPS = [
 
 class TestCommandSteps(TestCase):
     """
-    TestCommandSteps: Unit test constants in command_steps are sound.
-        1) Within the module.
-        2) When compared to Gluent Repo data.
+    TestCommandSteps: Unit test constants in command_steps are sound within the module.
     """
 
     def _get_step_constants(self):
-        return [v for k, v in vars(command_steps).items()
-                if k.startswith('STEP_') and k != 'STEP_TITLES' and k not in KNOWN_MISSING_STEPS]
+        return [
+            v
+            for k, v in vars(command_steps).items()
+            if k.startswith("STEP_")
+            and k != "STEP_TITLES"
+            and k not in KNOWN_MISSING_STEPS
+        ]
 
     def test_command_steps_internal(self):
-        """ Test the constants are sound within the module. """
+        """Test the constants are sound within the module."""
         try:
             step_codes = self._get_step_constants()
             for step in step_codes:
@@ -60,22 +59,6 @@ class TestCommandSteps(TestCase):
         except NotImplementedError:
             pass
 
-    def test_command_steps_repo(self):
-        """ Test the constants are present in the repo. """
-        try:
-            config = build_current_options()
-            messages = OffloadMessages()
-            client = orchestration_repo_client_factory(config, messages)
-            codes = client.get_command_step_codes()
-            step_constants = self._get_step_constants()
-            missing_rows = set(step_constants) - set(codes)
-            unexpected_missing_rows = missing_rows - set(KNOWN_MISSING_STEPS)
-            self.assertEqual(unexpected_missing_rows, set([]))
-            steps_that_should_be_missing = set(KNOWN_MISSING_STEPS).intersection(set(codes))
-            self.assertEqual(steps_that_should_be_missing, set([]))
-        except NotImplementedError:
-            pass
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

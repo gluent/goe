@@ -73,9 +73,10 @@ spark-basic-auth:
 spark-listener:
 	cd spark-listener && make target
 
-package-spark-standalone: spark-basic-auth spark-listener license-txt
-	cd thirdparty && make spark-standalone
-	cd target && make package-spark-standalone
+#package-spark-standalone: spark-basic-auth spark-listener license-txt
+package-spark-standalone: spark-listener
+	cd transport && make spark-target
+	cd target && make package-spark
 
 python-gluentlib:
 	cd gluentlib && make target

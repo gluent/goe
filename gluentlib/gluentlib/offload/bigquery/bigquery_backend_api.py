@@ -1830,13 +1830,14 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
         """ Translate an internal Gluent column to a BigQuery column.
         """
 
-        def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, safe_mapping=None):
+        def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, char_length=None,
+                       safe_mapping=None):
             """ Wrapper that carries name, nullable & data_default forward from RDBMS
             """
             safe_mapping = is_safe_mapping(col.safe_mapping, safe_mapping)
-            return BigQueryColumn(col.name, data_type=data_type, data_length=data_length, data_precision=data_precision,
-                                  data_scale=data_scale, nullable=col.nullable, data_default=col.data_default,
-                                  safe_mapping=safe_mapping)
+            return BigQueryColumn(col.name, data_type=data_type, data_length=data_length, char_length=char_length,
+                                  data_precision=data_precision, data_scale=data_scale, nullable=col.nullable,
+                                  data_default=col.data_default, safe_mapping=safe_mapping)
 
         assert column
         assert isinstance(column, CanonicalColumn), '%s is not instance of CanonicalColumn' % type(column)
@@ -1844,9 +1845,19 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
         if column.data_type == GLUENT_TYPE_BOOLEAN:
             return new_column(column, BIGQUERY_TYPE_BOOLEAN, safe_mapping=True)
         elif column.data_type in (GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING):
-            return new_column(column, BIGQUERY_TYPE_STRING, safe_mapping=True)
+            return new_column(
+                column,
+                BIGQUERY_TYPE_STRING,
+                char_length=column.char_length or column.data_length,
+                safe_mapping=True
+            )
         elif column.data_type in (GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY):
-            return new_column(column, BIGQUERY_TYPE_BYTES, safe_mapping=True)
+            return new_column(
+                column,
+                BIGQUERY_TYPE_BYTES,
+                data_length=column.data_length,
+                safe_mapping=True
+            )
         elif column.data_type in (GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2,
                                   GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8):
             # On BigQuery all 4 native integer types map to BIGINT
@@ -1858,7 +1869,6 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             else:
                 return new_column(column, BIGQUERY_TYPE_BIGNUMERIC, safe_mapping=True)
         elif column.data_type == GLUENT_TYPE_DECIMAL:
-            # We cannot control precision and scale so all DECIMAL mappings are unsafe to NUMERIC
             if column.data_precision is not None:
                 integral_magnitude = column.data_precision - (column.data_scale or 0)
             else:
@@ -1867,7 +1877,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
                 self._debug('Integral magnitude/scale is valid for NUMERIC: %s/%s'
                             % (integral_magnitude, column.data_scale))
                 return new_column(column, BIGQUERY_TYPE_NUMERIC, data_precision=None, data_scale=None,
-                                  safe_mapping=False)
+                                  safe_mapping=True)
             else:
                 return new_column(column, BIGQUERY_TYPE_BIGNUMERIC, data_precision=None, data_scale=None,
                                   safe_mapping=False)

@@ -1864,10 +1864,11 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             return new_column(column, BIGQUERY_TYPE_INT64, safe_mapping=True)
         elif column.data_type == GLUENT_TYPE_INTEGER_38:
             # On BigQuery there is no integral type > INT64 but BIGNUMERIC can hold 38 integral digits
+            print("NJNJ GLUENT_TYPE_INTEGER_38 column.data_precision", column.data_precision)
             if column.data_precision and column.data_precision <= 29:
-                return new_column(column, BIGQUERY_TYPE_NUMERIC, safe_mapping=True)
+                return new_column(column, BIGQUERY_TYPE_NUMERIC, data_precision=column.data_precision, data_scale=0, safe_mapping=True)
             else:
-                return new_column(column, BIGQUERY_TYPE_BIGNUMERIC, safe_mapping=True)
+                return new_column(column, BIGQUERY_TYPE_BIGNUMERIC, data_precision=38, data_scale=0, safe_mapping=True)
         elif column.data_type == GLUENT_TYPE_DECIMAL:
             if column.data_precision is not None:
                 integral_magnitude = column.data_precision - (column.data_scale or 0)
@@ -1876,11 +1877,21 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             if integral_magnitude and integral_magnitude <= 29 and (column.data_scale or 0) <= 9:
                 self._debug('Integral magnitude/scale is valid for NUMERIC: %s/%s'
                             % (integral_magnitude, column.data_scale))
-                return new_column(column, BIGQUERY_TYPE_NUMERIC, data_precision=None, data_scale=None,
-                                  safe_mapping=True)
+                return new_column(
+                    column,
+                    BIGQUERY_TYPE_NUMERIC,
+                    data_precision=column.data_precision,
+                    data_scale=column.data_scale,
+                    safe_mapping=True
+                )
             else:
-                return new_column(column, BIGQUERY_TYPE_BIGNUMERIC, data_precision=None, data_scale=None,
-                                  safe_mapping=False)
+                return new_column(
+                    column,
+                    BIGQUERY_TYPE_BIGNUMERIC,
+                    data_precision=column.data_precision,
+                    data_scale=column.data_scale,
+                    safe_mapping=False
+                )
         elif column.data_type in (GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE):
             return new_column(column, BIGQUERY_TYPE_FLOAT64, safe_mapping=True)
         elif column.data_type == GLUENT_TYPE_DATE and not self.canonical_date_supported():

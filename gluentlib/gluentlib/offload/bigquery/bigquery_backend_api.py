@@ -1864,7 +1864,6 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             return new_column(column, BIGQUERY_TYPE_INT64, safe_mapping=True)
         elif column.data_type == GLUENT_TYPE_INTEGER_38:
             # On BigQuery there is no integral type > INT64 but BIGNUMERIC can hold 38 integral digits
-            print("NJNJ GLUENT_TYPE_INTEGER_38 column.data_precision", column.data_precision)
             if column.data_precision and column.data_precision <= 29:
                 return new_column(column, BIGQUERY_TYPE_NUMERIC, data_precision=column.data_precision, data_scale=0, safe_mapping=True)
             else:

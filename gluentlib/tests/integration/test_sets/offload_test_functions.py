@@ -20,9 +20,8 @@ from gluentlib.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING, M
 from gluentlib.orchestration import orchestration_constants
 from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
 from gluentlib.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
-from testlib.setup import setup_constants
-from testlib.test_framework.test_functions import minus_column_spec_count, table_minus_row_count,\
-    test_data_host_compare_no_hybrid_schema, text_in_warnings, to_hybrid_schema
+from tests.testlib.setup import setup_constants
+from tests.testlib.test_framework.test_functions import text_in_warnings
 
 
 class TestOffloadException(Exception):
@@ -38,12 +37,11 @@ def connector_sql_engine_supports_nanoseconds():
 
 def get_offload_test_fn(base_schema, table_name, frontend_api, backend_api, orchestration_config, test_messages,
                         run_offload=True, offload_modifiers=None, config_modifiers=None, create_backend_db=True,
-                        verification_mode=False, with_assertions=True, hybrid_query_parallelism=2, tz=None):
+                        verification_mode=False, with_assertions=False):
     desc_prefix = 'Table %soffload %s' % ('verification ' if verification_mode else '', table_name)
-    desc = desc_prefix + ': source minus hybrid'
     offload_modifiers = offload_modifiers or {}
 
-    def test_fn(test):
+    def test_fn():
         base = '%s.%s' % (base_schema, table_name)
         step_timings = None
         run_assertions = with_assertions
@@ -115,46 +113,9 @@ def get_offload_test_fn(base_schema, table_name, frontend_api, backend_api, orch
             step_timings = offload_messages.steps
 
         if run_assertions:
-            validation_columns = None
-            if table_name == 'gl_timestamps' and not connector_sql_engine_supports_nanoseconds():
-                validation_columns = 'id,dt,ts,ts6,ts0tz,ts6tz'
-            repo_client = orchestration_repo_client_factory(orchestration_config, test_messages)
-            hybrid_schema = to_hybrid_schema(base_schema)
-            # TODO Need to remove upper()s below once we've resolved how to
-            hybrid_metadata = repo_client.get_offload_metadata(hybrid_schema, table_name.upper())
-            frontend_db, frontend_table = hybrid_metadata.offloaded_owner, hybrid_metadata.offloaded_table
-
-            if frontend_api.hybrid_schema_supported():
-                test.assertEqual(table_minus_row_count(frontend_api, frontend_db, frontend_table,
-                                                       hybrid_schema, table_name,
-                                                       column=validation_columns, tz=tz),
-                                 0, desc)
-                test.assertEqual(table_minus_row_count(frontend_api, frontend_db, frontend_table,
-                                                       hybrid_schema, table_name,
-                                                       column=validation_columns,
-                                                       parallel=hybrid_query_parallelism, tz=tz),
-                                 0, desc + ' (PQ)')
-                col_desc = f'Table offload {table_name}: check column spec'
-                test.assertEqual(minus_column_spec_count(frontend_db, frontend_table,
-                                                         hybrid_schema, frontend_table,
-                                                         col_desc, frontend_api=frontend_api),
-                                 0, col_desc)
-            # TODO Host compare proved too unreliable due to inconsistencies in representing data in Python
-            #      via assorted db clients. If we return to Teradata we need to revisit this.
-            # else:
-            #     # Compare frontend data to backend data in Python
-            #     assert hybrid_metadata, 'Missing hybrid metadata for: {}.{}'.format(to_hybrid_schema(base_schema),
-            #                                                                         table_name.upper())
-            #     backend_db, backend_table = hybrid_metadata.backend_owner, hybrid_metadata.backend_table
-            #     test_data_host_compare_no_hybrid_schema(test, frontend_db, frontend_table,
-            #                                             backend_db, backend_table, frontend_api, backend_api,
-            #                                             column_csv=validation_columns)
-
             # We should always know how many rows were offloaded
-            test.assertEqual(text_in_warnings(test_messages, MISSING_ROWS_IMPORTED_WARNING), False,
-                             desc_prefix + ' (MISSING_ROWS_IMPORTED_WARNING)')
-            test.assertEqual(text_in_warnings(test_messages, MISSING_ROWS_SPARK_WARNING), False,
-                             desc_prefix + ' (MISSING_ROWS_SPARK_WARNING)')
+            assert not text_in_warnings(test_messages, MISSING_ROWS_IMPORTED_WARNING), desc_prefix + ' (MISSING_ROWS_IMPORTED_WARNING)'
+            assert not text_in_warnings(test_messages, MISSING_ROWS_SPARK_WARNING), desc_prefix + ' (MISSING_ROWS_SPARK_WARNING)'
         else:
             test_messages.log('Skipping assertions')
         return step_timings

@@ -739,7 +739,6 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
         sql = 'INSERT INTO %s (%s) VALUES (%s);' % (self._db_api.enclose_object_reference(schema, table_name),
                                                    ','.join(_.name for _ in column_list),
                                                    ','.join('?' for _ in column_list))
-        self._seed_randomness_for_generated_tables()
         data = [[self._gen_column_data(col['column'], ri,
                                        from_list=col.get('literals'),
                                        ascii_only=col.get('ascii_only'),

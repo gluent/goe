@@ -11,7 +11,7 @@ import re
 
 from numpy import datetime64
 
-from tests.unit.offload.unittest_functions import get_default_test_user
+from tests.integration.test_functions import get_default_test_user
 
 from gluentlib.connect.connect_constants import (
     CONNECT_DETAIL,

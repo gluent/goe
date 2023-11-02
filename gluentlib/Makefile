@@ -1,32 +1,29 @@
-.PHONY: cx_Oracle lint license-placement
+.PHONY: license-placement
 
 TARGET_DIR=../target/offload
-INTEGRATION_DIR=../target/integration
 
-ifneq ($(filter '$(MAKECMDGOALS)', 'install' 'test' 'lint' 'clean'),)
+ifneq ($(filter '$(MAKECMDGOALS)', 'install' 'clean' 'target'),)
   $(info "Target Directory not supplied to make. Using default: $(TARGET_DIR)")
 else
   TARGET_DIR=$(filter-out $@,$(MAKECMDGOALS))
   $(info "Install Directory: $(TARGET_DIR)")
 endif
 
-PYTHONPATH=$(TARGET_DIR)/bin
 PYTHON=python3
-INTEGRATION_PYTHON=$(INTEGRATION_DIR)/bin/python3
 EASY_INSTALL=-m easy_install
-PIP=$(PYTHON) -m pip
+OFFLOAD_VERSION=$(shell cat ../version)
 LICENSE_YEAR=$(shell date +"%Y")
 LICENSE_TEXT=Copyright 2015-$(LICENSE_YEAR) Gluent Inc. All rights reserved.
 BUILD_SOURCE=build/src
 
-test:
-	echo "##teamcity[testSuiteStarted name='gluentlib']"
-	$(PYTHON) -m pytest tests
-	echo "##teamcity[testSuiteFinished name='gluentlib']"
-
 install: license-placement
+	# I (NJ) don't think we need this recipe.
+	#	$(PYTHON) setup.py bdist_egg --exclude-source-files
+	#	$(PYTHON) $(EASY_INSTALL) --no-deps --exclude-scripts dist/*egg
+
+target: license-placement
 	$(PYTHON) setup.py bdist_egg --exclude-source-files
-	$(PYTHON) $(EASY_INSTALL) --no-deps --exclude-scripts dist/*egg
+	mkdir -p $(TARGET_DIR)/lib/ && cp dist/*egg $(TARGET_DIR)/lib/gluentlib_$(OFFLOAD_VERSION).egg
 
 license-placement: copy-gluentlib-to-src
 	find $(BUILD_SOURCE)/gluentlib -type f -not -path '*/\.*' -exec sed -i 's/LICENSE_TEXT/$(LICENSE_TEXT)/g' {} +
@@ -39,7 +36,6 @@ copy-gluentlib-to-src:
 
 clean:
 	rm -fr build gluentlib.egg-info dist $(LIB_TARGET_DIR)/gluentlib*.egg
-	find .. -name "gluentlib*.egg" | xargs rm -fr
 
 python-integrity:
 	# Ensure Python is correctly built

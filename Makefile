@@ -27,23 +27,15 @@ integration-target:
 	cd testing && make target
 
 
-target: python-gluentlib license-txt offload-env
+target: python-gluentlib spark-listener license-txt offload-env
 	@echo -e "=> \e[92m Building target in $(TARGET_DIR)...\e[0m"
 	mkdir -p $(TARGET_DIR)/bin
-	cp scripts/{offload,connect,logmgr,display_gluent_env,clean_gluent_env,schema_sync,diagnose,offload_status_report,listener} scripts/{gluent,connect,schema_sync,diagnose,offload_status_report}.py $(TARGET_DIR)/bin
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/connect $(TARGET_DIR)/bin/schema_sync
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/offload
+	cp scripts/{offload,connect,logmgr,display_gluent_env,clean_gluent_env,listener} $(TARGET_DIR)/bin
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/connect
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/offload
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/logmgr
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/display_gluent_env
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/clean_gluent_env
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/schema_sync
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/diagnose
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/offload_status_report
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/connect.py
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/schema_sync.py
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/diagnose.py
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/offload_status_report.py
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/listener
 	mkdir -p $(TARGET_DIR)/scripts
 	cp scripts/gluent-shell-functions.sh $(TARGET_DIR)/scripts
@@ -79,14 +71,15 @@ spark-basic-auth:
 
 .PHONY: spark-listener
 spark-listener:
-	cd spark-listener && make install
+	cd spark-listener && make target
 
-package-spark-standalone: spark-basic-auth spark-listener license-txt
-	cd thirdparty && make spark-standalone
-	cd target && make package-spark-standalone
+#package-spark-standalone: spark-basic-auth spark-listener license-txt
+package-spark-standalone: spark-listener
+	cd transport && make spark-target
+	cd target && make package-spark
 
 python-gluentlib:
-	cd gluentlib && make install
+	cd gluentlib && make target
 
 offload-env:
 	cd templates/conf && make
@@ -98,6 +91,8 @@ license-txt:
 ### CLEANUP ###
 clean:
 	cd templates/conf && make clean
+	cd gluentlib && make clean
+	cd spark-listener && make clean
 	cd target && make clean
 
 

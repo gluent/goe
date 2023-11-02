@@ -107,25 +107,3 @@ function source_oracle_env {
     fi
 }
 
-# ------------------------------------------------------------------------------
-# DESC: Check Java version and compare against required version
-# ARGS: $1  Java version to check against. Must be an integer
-# OUTS: None
-# ------------------------------------------------------------------------------
-function check_java_version() {
-    if is_executable java; then
-        GLUENT_JAVA=java
-    elif [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]]; then
-        GLUENT_JAVA="$JAVA_HOME/bin/java"
-    else
-        raise_and_exit ${FUNCNAME[0]} 2 "Unable to locate java executable"
-    fi
-    java_version=$("$GLUENT_JAVA" -version 2>&1 | grep 'version' 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')
-    RETVAL=$?
-    if [[ $RETVAL -gt 0 ]]; then
-        raise_and_exit ${FUNCNAME[0]} $RETVAL "Unable to determine Java version"
-    fi
-    if [[ "$java_version" < $1 ]]; then
-        raise_and_exit ${FUNCNAME[0]} 1 "Java version of $java_version is less than the required version of $1"
-    fi
-}

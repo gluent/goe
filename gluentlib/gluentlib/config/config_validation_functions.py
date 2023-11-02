@@ -207,7 +207,8 @@ def normalise_offload_transport_config(options, exc_cls=OrchestrationConfigExcep
                       % options.offload_transport_spark_submit_executable)
     if options.offload_transport_spark_submit_master_url and not (
             options.offload_transport_spark_submit_master_url == SPARK_SUBMIT_SPARK_YARN_MASTER
-            or re.match('^(spark|mesos|k8s|local)://.+$', options.offload_transport_spark_submit_master_url)):
+            or re.match('^local(\[[0-9]\])?$', options.offload_transport_spark_submit_master_url)
+            or re.match('^(spark|mesos|k8s)://.+$', options.offload_transport_spark_submit_master_url)):
         raise exc_cls('Invalid value for OFFLOAD_TRANSPORT_SPARK_SUBMIT_MASTER_URL: %s'
                       % options.offload_transport_spark_submit_master_url)
 

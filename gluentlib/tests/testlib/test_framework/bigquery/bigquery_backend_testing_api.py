@@ -602,19 +602,25 @@ FROM %(db_table)s""" % {'db_table': self._db_api.enclose_object_reference(db_nam
         return 'PERCENTILE_DISC(%s, 0.5) OVER ()' % self.enclose_identifier(column_name)
 
     def story_test_offload_nums_expected_backend_types(self, sampling_enabled=True):
+        def numeric(p, s):
+            return '%s(%s,%s)' % (BIGQUERY_TYPE_NUMERIC, p, s)
+
+        def bignumeric(p, s):
+            return '%s(%s,%s)' % (BIGQUERY_TYPE_BIGNUMERIC, p, s)
+
         non_sampled_type = self.gen_default_numeric_column('x').format_data_type()
         return {STORY_TEST_OFFLOAD_NUMS_BARE_NUM: BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type,
                 STORY_TEST_OFFLOAD_NUMS_BARE_FLT: BIGQUERY_TYPE_INT64 if sampling_enabled else non_sampled_type,
                 STORY_TEST_OFFLOAD_NUMS_NUM_4: BIGQUERY_TYPE_INT64,
                 STORY_TEST_OFFLOAD_NUMS_NUM_18: BIGQUERY_TYPE_INT64,
-                STORY_TEST_OFFLOAD_NUMS_NUM_19: BIGQUERY_TYPE_NUMERIC,
-                STORY_TEST_OFFLOAD_NUMS_NUM_3_2: BIGQUERY_TYPE_NUMERIC,
+                STORY_TEST_OFFLOAD_NUMS_NUM_19: numeric(19,0),
+                STORY_TEST_OFFLOAD_NUMS_NUM_3_2: numeric(3,2),
                 STORY_TEST_OFFLOAD_NUMS_NUM_STAR_4: BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type,
-                STORY_TEST_OFFLOAD_NUMS_NUM_3_5: BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type,
+                STORY_TEST_OFFLOAD_NUMS_NUM_3_5: bignumeric(5,5) if sampling_enabled else non_sampled_type,
                 STORY_TEST_OFFLOAD_NUMS_NUM_10_M5: BIGQUERY_TYPE_INT64,
-                STORY_TEST_OFFLOAD_NUMS_DEC_10_0: BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type,
-                STORY_TEST_OFFLOAD_NUMS_DEC_13_9: BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type,
-                STORY_TEST_OFFLOAD_NUMS_DEC_38_3: BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type}
+                STORY_TEST_OFFLOAD_NUMS_DEC_10_0: numeric(10,0) if sampling_enabled else non_sampled_type,
+                STORY_TEST_OFFLOAD_NUMS_DEC_13_9: numeric(13,9) if sampling_enabled else non_sampled_type,
+                STORY_TEST_OFFLOAD_NUMS_DEC_38_3: bignumeric(38,3) if sampling_enabled else non_sampled_type}
 
     def story_test_table_extra_col_info(self):
         """ Return a dict describing extra columns we can tag onto a present test table in order to test

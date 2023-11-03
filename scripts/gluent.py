@@ -66,8 +66,12 @@ from gluentlib.offload.offload_transport import choose_offload_transport_method,
     validate_offload_transport_method, \
     VALID_OFFLOAD_TRANSPORT_METHODS
 from gluentlib.offload.offload_transport_functions import transport_and_load_offload_chunk
-from gluentlib.offload.operation.data_type_controls import canonical_columns_from_columns_csv,\
+from gluentlib.offload.operation.data_type_controls import (
+    BACKEND_DATA_TYPE_CONTROL_OPTIONS,
+    DECIMAL_COL_TYPE_SYNTAX_TEMPLATE,
+    canonical_columns_from_columns_csv,
     char_semantics_override_map
+)
 from gluentlib.offload.operation.not_null_columns import apply_not_null_columns_csv
 from gluentlib.offload.operation.partition_controls import derive_partition_digits, offload_options_to_partition_info,\
     validate_offload_partition_columns, validate_offload_partition_functions, validate_offload_partition_granularity
@@ -102,16 +106,6 @@ class OffloadException(Exception):
 dev_logger = logging.getLogger('gluent')
 
 lob_null_special_value = 'X\'00\''
-
-BACKEND_DATA_TYPE_CONTROL_OPTIONS = {GLUENT_TYPE_INTEGER_1: '--integer-1-columns',
-                                     GLUENT_TYPE_INTEGER_2: '--integer-2-columns',
-                                     GLUENT_TYPE_INTEGER_4: '--integer-4-columns',
-                                     GLUENT_TYPE_INTEGER_8: '--integer-8-columns',
-                                     GLUENT_TYPE_INTEGER_38: '--integer-38-columns',
-                                     GLUENT_TYPE_DOUBLE: '--double-columns',
-                                     GLUENT_TYPE_VARIABLE_STRING: '--variable-string-columns'}
-DECIMAL_COL_TYPE_SYNTAX_TEMPLATE =\
-    'must be of format "precision,scale" where 1<=precision<={p} and 0<=scale<={s} and scale<=precision'
 
 AAPD_VALID_NUMERIC_FNS = ['AVG', 'MIN', 'MAX', 'COUNT', 'SUM']
 AAPD_VALID_STRING_FNS = ['MIN', 'MAX', 'COUNT']

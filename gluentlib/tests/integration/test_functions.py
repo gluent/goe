@@ -1,3 +1,4 @@
+from functools import lru_cache
 import os
 
 from gluent import OffloadOperation
@@ -7,6 +8,11 @@ from gluentlib.offload.offload_messages import OffloadMessages
 
 def build_current_options():
     return OrchestrationConfig.from_dict({"verbose": False, "execute": False})
+
+
+@lru_cache(maxsize=None)
+def cached_current_options():
+    return build_current_options()
 
 
 def build_offload_operation(operation_dict=None, options=None, messages=None):
@@ -28,6 +34,11 @@ def build_offload_operation(operation_dict=None, options=None, messages=None):
 
 def get_default_test_user():
     return os.environ.get("GOE_TEST_USER", "GOE_TEST")
+
+
+@lru_cache(maxsize=None)
+def cached_default_test_user():
+    return get_default_test_user()
 
 
 def get_default_test_user_pass():

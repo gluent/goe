@@ -3,7 +3,11 @@
     LICENSE_TEXT
 """
 
-from gluentlib.offload.column_metadata import ColumnMetadataInterface, CANONICAL_CHAR_SEMANTICS_CHAR
+from gluentlib.offload.column_metadata import (
+    ColumnMetadataInterface,
+    CANONICAL_CHAR_SEMANTICS_CHAR,
+    CANONICAL_CHAR_SEMANTICS_UNICODE,
+)
 
 ###############################################################################
 # CONSTANTS
@@ -35,8 +39,9 @@ class BigQueryColumn(ColumnMetadataInterface):
         Table objects hold a list of objects of this class
     """
     def __init__(self, name, data_type, data_length=None, data_precision=None, data_scale=None, nullable=None,
-                 data_default=None, safe_mapping=True, partition_info=None, bucket_info=None):
-        char_length = None
+                 data_default=None, safe_mapping=True, partition_info=None, bucket_info=None, char_length=None):
+        if data_length and char_length is None:
+            char_length = data_length
         # Confusingly the API uses BIGQUERY_TYPE_FLOAT/BIGQUERY_TYPE_INTEGER but SQL uses the *64 names.
         # We have standardised on the SQL names.
         if data_type == BIGQUERY_TYPE_FLOAT:
@@ -52,7 +57,25 @@ class BigQueryColumn(ColumnMetadataInterface):
                                              char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR)
 
     def format_data_type(self):
-        return self.data_type
+        if self.data_type in [BIGQUERY_TYPE_BIGNUMERIC, BIGQUERY_TYPE_NUMERIC]:
+            if self.data_precision and self.data_scale is not None:
+                return '%s(%s,%s)' % (self.data_type, self.data_precision, self.data_scale)
+            elif self.data_precision:
+                return '%s(%s)' % (self.data_type, self.data_precision)
+            else:
+                return self.data_type
+        elif self.data_type == BIGQUERY_TYPE_STRING:
+            if self.char_length:
+                return '%s(%s)' % (self.data_type, self.char_length)
+            else:
+                return self.data_type
+        elif self.data_type == BIGQUERY_TYPE_BYTES:
+            if self.data_length:
+                return '%s(%s)' % (self.data_type, self.data_length)
+            else:
+                return self.data_type
+        else:
+            return self.data_type
 
     def has_time_element(self):
         """ Does the column data contain a time """

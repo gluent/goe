@@ -233,6 +233,9 @@ class OffloadMessages(object):
         if self._log_fh:
             self._log_fh.close()
 
+    def get_log_fh(self):
+        return self._log_fh
+
     ########################################################################################
     #   Use of log function vs info/detail/debug functions
     ########################################################################################

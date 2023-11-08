@@ -10,8 +10,8 @@ from gluent import get_common_options, get_log_fh, init, init_log
 from gluentlib.config.orchestration_config import OrchestrationConfig
 from gluentlib.offload.offload_messages import OffloadMessages
 
-from testlib.setup.test_setup_client import TestSetupClient
-from testlib.test_framework.test_functions import add_common_test_options, normalise_test_pass_options
+from tests.testlib.setup.test_setup_client import TestSetupClient
+from tests.testlib.test_framework.test_functions import add_common_test_options, normalise_test_pass_options
 
 
 def get_test_options():
@@ -44,18 +44,11 @@ if __name__ == '__main__':
     messages = OffloadMessages.from_options(options, get_log_fh())
 
     setup_client = TestSetupClient(options.test_user, options.test_pass, messages, config,
-                                   table_name_re=table_name_re, dry_run=bool(not options.execute),
-                                   teamcity=options.teamcity)
+                                   table_name_re=table_name_re, dry_run=bool(not options.execute))
 
-    setup_client.create_sql_offload_tables()
+    #setup_client.create_sql_offload_tables()
     setup_client.create_generated_tables()
+    #setup_client.create_partition_functions()
 
-    # Generating test data sets a specific state in order to get the same data on all VMs.
-    # Here we re-seed the generator to restore randomness.
-    random.seed()
+    #setup_client.offload_generated_tables()
 
-    setup_client.create_partition_functions()
-
-    setup_client.offload_generated_tables()
-
-    # TODO If this client moves beyond Teradata support we need to add create and present of backend only tables.

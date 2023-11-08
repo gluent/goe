@@ -66,13 +66,6 @@ def build_non_connecting_options(db_type):
     return OrchestrationConfig.from_dict(base_dict)
 
 
-def get_default_test_user(hybrid=False):
-    test_user = os.environ.get("TEST_USER", "SH_TEST")
-    if hybrid:
-        test_user = (test_user + "_H").upper()
-    return test_user
-
-
 def get_real_frontend_schema_and_table(
     hybrid_view, orchestration_config, messages=None
 ):

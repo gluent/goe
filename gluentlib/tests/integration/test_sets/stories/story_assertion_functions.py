@@ -8,7 +8,7 @@ from gluent import verbose, vverbose, \
 from gluentlib.offload.factory.backend_table_factory import backend_table_factory
 from gluentlib.offload.column_metadata import SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE
 from gluentlib.offload.frontend_api import QueryParameter
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH
+from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_ORACLE, PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH
 from gluentlib.offload.offload_functions import convert_backend_identifier_case, data_db_name, prefix_column_with_alias
 from gluentlib.offload.offload_metadata_functions import incremental_hv_list_from_csv, incremental_hv_csv_from_list, \
     flatten_lpa_individual_high_values, split_metadata_incremental_high_values, \
@@ -23,11 +23,11 @@ from gluentlib.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_T
     INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE, INCREMENTAL_PREDICATE_TYPE_RANGE
 from gluentlib.util.misc_functions import add_suffix_in_same_case, get_temp_path, remove_chars, \
     trunc_with_hash
-from testlib.test_framework import test_functions
-from testlib.test_framework.oracle.oracle_frontend_testing_api import lob_to_hash
-from testlib.test_framework.test_functions import log
+from tests.testlib.test_framework import test_functions
+from tests.testlib.test_framework.oracle.oracle_frontend_testing_api import lob_to_hash
+from tests.testlib.test_framework.test_functions import log
 
-from test_sets.stories.story_globals import OFFLOAD_PATTERN_100_0, OFFLOAD_PATTERN_100_10, OFFLOAD_PATTERN_90_10
+from tests.integration.test_sets.stories.story_globals import OFFLOAD_PATTERN_100_0, OFFLOAD_PATTERN_100_10, OFFLOAD_PATTERN_90_10
 
 
 # helper functions
@@ -41,6 +41,14 @@ def get_backend_testing_api(options, list_only=False, no_caching=False):
         return test_functions.get_backend_testing_api(options, no_caching=no_caching)
     else:
         return None
+
+
+def hint_text_in_log(messages, config, parallelism, search_from_text):
+    if config.db_type == DBTYPE_ORACLE:
+        hint = 'NO_PARALLEL' if parallelism in (0, 1) else 'PARALLEL({})'.format(str(parallelism))
+        return bool(messages.get_line_from_log(hint, search_from_text))
+    else:
+        return False
 
 
 def get_date_offload_granularity(backend_api, preferred_value=None):

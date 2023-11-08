@@ -618,7 +618,6 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                                                                  col.data_precision, col.data_scale)
                                  for col in column_list])
 
-        self._seed_randomness_for_generated_tables()
         d = [[self._gen_column_data(col['column'], ri,
                                     from_list=col.get('literals'),
                                     ascii_only=col.get('ascii_only'),

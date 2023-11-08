@@ -16,13 +16,12 @@ from gluentlib.offload.column_metadata import match_table_column
 from gluentlib.offload.offload_constants import DBTYPE_ORACLE
 from gluentlib.offload.offload_functions import convert_backend_identifier_case, data_db_name
 from gluentlib.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
-from gluentlib.schema_sync.schema_sync_constants import SCHEMA_SYNC_OP_NAME
 from gluentlib.util.misc_functions import substitute_in_same_case
-from schema_sync import get_schema_sync_opts
+from tests.integration.test_functions import get_default_test_user, get_default_test_user_pass
+from tests.integration.test_sets.stories.story_globals import STORY_SET_ALL
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
-from tests.integration.test_sets.stories.story_globals import STORY_SET_ALL
 
 
 _QUOTE = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", '[': '|[', ']': '|]', '\x1b': '|0x001B'}
@@ -33,20 +32,8 @@ def add_common_test_options(opt_object):
         Trivial but keeps help text/defaults consistent between old 'test' script and new scripts.
     """
     opt_object.add_option('--filter', dest='filter', default='.*')
-    opt_object.add_option('--teamcity', dest='teamcity', action='store_true',
-                          help='Emit TeamCity integration messages')
-    opt_object.add_option('--test-user', dest='test_user', default='SH_TEST', help='Defaults to SH_TEST')
-    opt_object.add_option('--test-pass', dest='test_pass', default=None)
-    opt_object.add_option('--test-hybrid-pass', dest='test_hybrid_pass', default=None)
-
-
-def add_common_test_run_options(opt_object):
-    """ Options shared by new and old scripts used when running tests (not setup).
-        Trivial but keeps help text/defaults consistent between old 'test' script and new scripts.
-    """
-    opt_object.add_option('--run-blacklist-only', dest='run_blacklist_only', action='store_true', default=False,
-                          help='Only run blacklisted tests, which are skipped by default.')
-    opt_object.add_option('--test-pq-degree', dest='test_pq_degree', help='Number of PQ slaves used for parallel tests')
+    opt_object.add_option('--test-user', dest='test_user', default=get_default_test_user(), help=f'Defaults to {get_default_test_user()}')
+    opt_object.add_option('--test-pass', dest='test_pass', default=get_default_test_user_pass())
 
 
 def add_story_test_options(opt_object):
@@ -137,8 +124,6 @@ def get_orchestration_options_object(operation_name=OFFLOAD_OP_NAME, log_path=No
     if operation_name == OFFLOAD_OP_NAME:
         tmp_opt = get_options(operation_name=OFFLOAD_OP_NAME)
         get_offload_options(tmp_opt)
-    elif operation_name == SCHEMA_SYNC_OP_NAME:
-        tmp_opt = get_schema_sync_opts()
     else:
         raise NotImplementedError('Unknown operation_name: %s' % operation_name)
 
@@ -151,10 +136,6 @@ def get_orchestration_options_object(operation_name=OFFLOAD_OP_NAME, log_path=No
     orchestration_options.execute = execute
     orchestration_options.force = force
     return orchestration_options
-
-
-def get_naughty_state():
-    return (3, (867845712, 2517630297, 4113802262, 3832845409, 4274770220, 2933308597, 2069026353, 1608262008, 1175025829, 136239185, 798549531, 799836310, 4173874443, 1888131572, 3266689661, 2463967463, 674146465, 973130765, 1381478306, 2635451420, 277223063, 1325833064, 1790687856, 3477140222, 3694711644, 1564747662, 1131939538, 2825326370, 558708389, 2867676132, 2582166872, 2550524937, 801968977, 1630264611, 680646674, 646558933, 851633012, 2334560710, 2637115945, 2836788286, 106618271, 537576597, 553682966, 1865745650, 985546814, 417742147, 3935217365, 1876403660, 1145810952, 1966366701, 72448140, 1500580031, 404317749, 3140213456, 3718998014, 1828714325, 3709526722, 2459673971, 257159296, 3508218124, 628274885, 1964138653, 958781628, 436073236, 760899514, 1422568901, 563228272, 1418861625, 412185357, 2882090829, 2201732512, 2556467958, 1316275486, 2839203926, 1975328693, 1194327448, 2230151648, 1600088209, 3031722755, 281337523, 2263837204, 2293027541, 844461942, 658259102, 2938541840, 3008125606, 461811676, 3729916019, 2489755419, 506669042, 2213465887, 2964919587, 3129397207, 1049334739, 3970972215, 34231123, 246758470, 1994433461, 2684585420, 3551745102, 1626305063, 3648707488, 4087674575, 709904385, 3194471281, 2711728285, 3698303124, 3321213222, 3704269131, 2025616447, 94606515, 4160638393, 2525505954, 1888703187, 2402356367, 621906962, 516357590, 641639996, 845805447, 2600931881, 3407746736, 2625477482, 3557993654, 871095334, 2470007987, 1600156948, 4014611419, 3983250958, 3062432192, 1477504699, 453985769, 845714079, 2051146265, 2525994769, 3733456017, 3351165442, 4021399604, 1039281293, 3592658998, 1334280807, 482095312, 1074806973, 273656125, 1542182508, 1898829808, 1950386529, 3718513403, 2968151679, 4272287909, 1710800990, 944066947, 3197950669, 1325389986, 2285662539, 1604791535, 1179777838, 251612605, 3453556951, 1571710058, 2254737125, 1266347288, 4075037033, 3618268330, 1765800347, 1967899063, 4012907389, 3408585750, 3710417972, 1471979419, 611196154, 2081194827, 1243592498, 684749033, 504939024, 140625192, 67259772, 3103057314, 522275695, 950709687, 2436555421, 523104326, 2780840987, 1191823720, 2474933086, 3583259878, 2726262959, 358580988, 1915897166, 1560424919, 2403855019, 3028549311, 2724864766, 834109916, 2961881794, 2256966212, 1745188437, 1403172930, 101687620, 1228268092, 1700171642, 2471990687, 236747376, 1008774658, 1001399747, 1639997664, 851793658, 1305688034, 1750160113, 2213228726, 2521282511, 1025749479, 161610440, 1787640269, 1345975292, 1604416100, 4033852757, 1478180602, 2831416122, 1617479633, 2304956108, 3444285339, 4072618094, 2607610481, 1084763637, 2541000430, 111976412, 3277031890, 3010677146, 2849013551, 1831550725, 4089826671, 2777532896, 2213133531, 3260258821, 2034522965, 2768416512, 2198110185, 1618205915, 1969914833, 2229204032, 3107012390, 12479816, 1076898461, 4014351018, 2085925954, 486007476, 799994390, 2772397475, 4146368929, 258888957, 774024782, 2168401371, 1762065518, 723092825, 4272381005, 3604992564, 1862294247, 2862765010, 1342331596, 996729396, 1486084589, 2926276278, 3219674574, 2182046214, 24801156, 3247922264, 284101738, 3993771661, 3359441069, 3164315499, 2373256634, 3884058381, 3002779750, 2873439052, 3942266218, 1906246142, 470294221, 3104678, 2067885068, 2783495220, 864310994, 3663713963, 1553535597, 1612542150, 3269722244, 4077077579, 2143950209, 2136980988, 39275533, 2639542437, 1240863445, 27400231, 1352265642, 3169145259, 634182554, 1099328374, 4192861085, 3876573856, 663399466, 1544641673, 1437593215, 973955375, 998675277, 975543114, 3292653426, 3808027706, 3825143159, 2430661847, 2095305586, 3145503544, 4045925779, 289339989, 86767268, 1504443491, 2572483361, 1846156476, 3998893737, 2233308997, 1387972879, 2316828218, 3879698180, 1761908971, 1529853927, 2163182841, 2622418498, 1326230478, 3371233799, 3058952273, 787280406, 2421273622, 1474623708, 2136366755, 3343818265, 685201427, 2282631397, 1312260307, 1860727510, 137922540, 617529964, 3895421419, 50199918, 4181747118, 2598360587, 3660544849, 3666723637, 3745297546, 2666585758, 1821565744, 3141603121, 2296553478, 231358109, 1225469573, 2719633821, 1243621809, 558509393, 156481005, 2675150406, 3638543391, 2228675064, 1710151815, 1521545672, 2101907547, 2322574617, 68034341, 3970994572, 1891499154, 2013559193, 111879487, 390851650, 3256563599, 4060604333, 1841085631, 3705718601, 1347323727, 3354455793, 3198154258, 3554602100, 322796215, 3368952942, 2810722212, 1497892661, 1357781957, 2826144083, 279283552, 1004488882, 871079641, 832819745, 2874449640, 392000592, 3826685324, 1505910016, 3136767072, 1109999932, 3329515559, 2172438906, 2036391645, 1262285744, 1287667181, 2384752652, 2727927604, 247248187, 1663269740, 3436920447, 3801264021, 1254490679, 648537, 3931381728, 1416682836, 1026114187, 349891101, 3849072714, 4023156033, 2868451396, 408905070, 291752388, 2862965334, 1607471637, 4062471209, 2863484936, 3256743224, 2904675794, 3037069795, 2882302520, 3307447809, 181090370, 369786122, 3084894688, 2394141865, 692852986, 2500636331, 2671349644, 93635900, 4067995909, 855928688, 894783667, 1945268540, 2416204753, 2608131587, 2358733700, 2796706253, 3256513933, 139196365, 1256373013, 3015986987, 3324606915, 2341050130, 1600795530, 2251673703, 1293254668, 917411905, 1064865981, 2096092418, 1507513897, 2095308604, 1467666505, 2765964705, 3750108478, 2424289826, 727428252, 3678420042, 1069923987, 1621861499, 3192679748, 3576706212, 4103768584, 1372497050, 1220969076, 1732928666, 2465183388, 3168907521, 1940216664, 2674080485, 3131920502, 3528994384, 60221386, 2688206247, 3849792559, 2571580402, 2071813402, 2929330341, 2153687177, 1579838105, 2859199406, 1186152099, 550683397, 1081454457, 2865037624, 2023952057, 3589401384, 4040422173, 2005820836, 1388604986, 2447678626, 3295910072, 3711365716, 3423770177, 3436211278, 3388508992, 2193288553, 157807187, 764801110, 1548239363, 2218406803, 3638358814, 3274868648, 4199746182, 3194120663, 486702372, 1380096852, 2439814883, 1017302012, 1060079655, 2415047258, 2674741902, 2280775487, 3129449610, 2365931261, 750960713, 1716136290, 250046033, 3778587405, 3247458837, 2310884448, 1569696318, 2584974173, 1124598445, 3301495125, 2690742740, 2888108148, 813145934, 327452719, 1407137901, 805690238, 1232445752, 3496432878, 419556645, 1947653945, 1106430028, 3525392820, 153785155, 2924344747, 60347495, 550581327, 2378361772, 499578897, 3972679580, 1764356628, 3845257083, 2782636942, 1852647679, 2309904063, 806810160, 2741079007, 1228544742, 1121060175, 1429512239, 2549463029, 456464930, 1056500197, 2752635718, 694065055, 501584551, 1889173034, 2548543245, 889931711, 1815270013, 2645882345, 3733784286, 2202078988, 1741443779, 1191384522, 1279042822, 1532839753, 2216194177, 2514361287, 2680602395, 3875954945, 2191821407, 1756113807, 2995448234, 4254531833, 3974082506, 1229392016, 4118553104, 2146435944, 2009255117, 3232525182, 1891491060, 532837646, 55609364, 298360391, 3157174730, 3314062378, 759100213, 2172677533, 80683600, 3901514421, 1240287807, 3593747686, 2524317, 1990126099, 751029187, 826202304, 1393362968, 2779343187, 1379981549, 250551051, 3226733064, 928054329, 3514772522, 1618187221, 484648122, 1030802313, 3542834498, 3879290959, 1962368240, 2790093067, 1716519541, 3898880103, 84012799, 1331058819, 1588431061, 1401978573, 316788888, 298), None)
 
 
 def get_test_set_sql_path(directory_name, db_type=None):
@@ -213,20 +194,9 @@ def minus_column_spec_count(owner_a, table_name_a, owner_b, table_name_b, desc, 
 
 def normalise_test_pass_options(opt_object):
     """ Hardcode default passwords if not supplied
-        Not interfering with case of passwords to honour settings defined in TeamCity
     """
     if not opt_object.test_pass:
         opt_object.test_pass = opt_object.test_user
-    if hasattr(opt_object, 'test_hybrid_pass') and not opt_object.test_hybrid_pass:
-        opt_object.test_hybrid_pass = to_hybrid_schema(opt_object.test_user)
-
-
-def response_time_bench(test, desc, bench_key, fn):
-    before = time.time()
-    try:
-        return fn()
-    finally:
-        test.response_time(bench_key, max(time.time() - before, 0.001))
 
 
 def test_passes_filter(test_name, test_name_re, test_options, known_failure_blacklist):
@@ -240,8 +210,7 @@ def test_passes_filter(test_name, test_name_re, test_options, known_failure_blac
         if m is not None:
             test_name = m.group(1)
         if test_name.lower() in [_.lower() for _ in known_failure_blacklist]:
-            if not test_options.teamcity:
-                log(test_name + ': skipping blacklisted test')
+            log(test_name + ': skipping blacklisted test')
             return False
         return True
     return False
@@ -349,114 +318,6 @@ def to_hybrid_schema(base_schema):
         return base_schema
     else:
         return substitute_in_same_case('%s_H', base_schema if base_schema else '')
-
-
-def teamcity_escape(s):
-    return "".join(_QUOTE.get(x, x) for x in s)
-
-
-def test_teamcity_starttestsuite(options, name):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        # teamcity_starttestsuite(name)
-        print("##teamcity[testSuiteStarted name='%s']" % name, flush=True)
-
-
-def test_teamcity_starttestsuite_pq(options, name, flow_id=None):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        if not flow_id:
-            flow_id = name
-        print("##teamcity[flowStarted flowId='%s']" % flow_id)
-        print("##teamcity[testSuiteStarted name='%s' flowId='%s']" % (name, flow_id))
-        return flow_id
-
-
-def test_teamcity_endtestsuite(options, name):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        # teamcity_endtestsuite(name)
-        print("##teamcity[testSuiteFinished name='%s']" % name, flush=True)
-
-
-def test_teamcity_endtestsuite_pq(options, name, flow_id):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        print("##teamcity[testSuiteFinished name='%s' flowId='%s']" % (name, flow_id))
-        print("##teamcity[flowFinished flowId='%s']" % flow_id)
-
-
-def test_teamcity_starttestblock(options, name):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        # teamcity_starttestblock(name)
-        print("##teamcity[blockOpened name='%s']" % name, flush=True)
-
-
-def test_teamcity_endtestblock(options, name):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        # teamcity_endtestblock(name)
-        print("##teamcity[blockClosed name='%s']" % name, flush=True)
-
-
-def test_teamcity_starttest(options, test_name):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        # teamcity_starttest(test_name)
-        print("##teamcity[testStarted name='%s' captureStandardOutput='true']" % test_name, flush=True)
-
-
-def test_teamcity_starttest_pq(options, test_name, parent_flow_id):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        flow_id = threading.current_thread().native_id
-        print("##teamcity[flowStarted name='%s' flowId='%s' parent='%s']" % (test_name, flow_id, parent_flow_id))
-        print("##teamcity[testStarted name='%s' flowId='%s' captureStandardOutput='true']" % (test_name, flow_id))
-
-
-def test_teamcity_stdout(options, test_name, message):
-    if options.teamcity:
-        print("##teamcity[testStdOut name='%s' out='%s']" % (test_name, teamcity_escape(message)), flush=True)
-
-
-def test_teamcity_stdout_pq(options, test_name, message, flow_id=None):
-    if options.teamcity:
-        if not flow_id:
-            flow_id = threading.current_thread().native_id
-        print("##teamcity[testStdOut name='%s' flowId='%s' out='%s']" % (test_name, flow_id, teamcity_escape(message)))
-
-
-def test_teamcity_endtest(options, test_name):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        # teamcity_endtest(test_name)
-        print("##teamcity[testFinished name='%s']" % test_name, flush=True)
-
-
-def test_teamcity_endtest_pq(options, test_name, parent_flow_id):
-    """ Wrapper over teamcity function to only execute the call when in teamcity """
-    if options.teamcity:
-        flow_id = threading.current_thread().native_id
-        print("##teamcity[testFinished name='%s' flowId='%s']" % (test_name, flow_id))
-        print("##teamcity[flowFinished name='%s' flowId='%s' parent='%s']" % (test_name, flow_id, parent_flow_id))
-
-
-def test_teamcity_failtest(options, test_name, message):
-    """ Wrapper over teamcity function to only execute the call when in teamcity
-    """
-    if options.teamcity:
-        # teamcity_failtest(test_name, message)
-        print("##teamcity[testFailed name='%s' message='%s']" % (test_name, teamcity_escape(message)), flush=True)
-
-
-def test_teamcity_failtest_pq(options, test_name, message, flow_id=None):
-    """ Wrapper over teamcity function to only execute the call when in teamcity
-    """
-    if options.teamcity:
-        if not flow_id:
-            flow_id = threading.current_thread().native_id
-        print("##teamcity[testFailed name='%s' flowId='%s' message='%s']" % (test_name, flow_id, teamcity_escape(message)))
 
 
 def text_in_events(messages, message_token):

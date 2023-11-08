@@ -24,7 +24,6 @@ from gluentlib.offload.frontend_api import GET_DDL_TYPE_VIEW
 from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
 from gluentlib.util.simple_timer import SimpleTimer
 from tests.testlib.test_framework import test_constants
-from tests.testlib.test_framework.test_functions import get_naughty_state
 
 
 class FrontendTestingApiException(Exception):
@@ -131,11 +130,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
             return 100
         else:
             raise NotImplementedError(f'Missing _generated_table_row_count entry for: {table_name}')
-
-    def _seed_randomness_for_generated_tables(self):
-        naughty_state = get_naughty_state()
-        self._log('Seeding random state using get_naughty_state()', detail=VVERBOSE)
-        random.setstate(naughty_state)
 
     # Enforced methods/properties
 

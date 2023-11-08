@@ -10,14 +10,13 @@ from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
 from gluentlib.orchestration import command_steps
 from gluentlib.orchestration.command_steps import step_title
 from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
-from testlib.setup import setup_constants
+from tests.testlib.setup import setup_constants
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
-from tests.testlib.test_framework.test_functions import get_data_db_for_schema, get_orchestration_options_object,\
-    test_teamcity_endtestblock, test_teamcity_starttestblock, test_teamcity_starttest, test_teamcity_endtest
-from test_sets.offload_test_functions import get_suitable_offload_granularity_options
-from test_sets.sql_offload.sql_offload_tests import sql_offload_test_table_scripts, sql_offload_tpt_scripts
+from tests.testlib.test_framework.test_functions import get_data_db_for_schema, get_orchestration_options_object
+from tests.integration.test_sets.offload_test_functions import get_suitable_offload_granularity_options
+#from tests.integration.test_sets.sql_offload.sql_offload_tests import sql_offload_test_table_scripts, sql_offload_tpt_scripts
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +43,7 @@ def create_partition_functions(backend_api, udf_db, messages, table_name_re):
 
 class TestSetupClient:
     def __init__(self, sh_test_user, sh_test_password, messages, config,
-                 table_name_re=None, dry_run=False, teamcity=False):
+                 table_name_re=None, dry_run=False):
         self._sh_test_user = sh_test_user
         self._messages = messages
         self._config = config
@@ -53,9 +52,6 @@ class TestSetupClient:
         self._backend_api = backend_testing_api_factory(config.target, config, messages, dry_run=self._dry_run)
         self._frontend_api = frontend_testing_api_factory(config.db_type, config, messages, dry_run=self._dry_run)
         self._sh_test_api = self._frontend_api.create_new_connection(sh_test_user, sh_test_password)
-
-        # Kept public to comply with test_teamcity_ and other legacy test functions
-        self.teamcity = teamcity
 
         self._log(f'Running setup for: {sh_test_user}')
         self._log(f'Frontend connection: {config.db_type} {self._frontend_api.frontend_version()}')
@@ -132,16 +128,12 @@ class TestSetupClient:
     ###########################################################################
 
     def create_generated_tables(self):
-        test_teamcity_starttestblock(self, 'create_generated_tables')
-        if self._passes_filter(test_constants.GL_CHARS):
-            test_teamcity_starttest(self, f'create_{test_constants.GL_CHARS}')
-            self._sh_test_api.create_generated_table(
-                self._sh_test_user, test_constants.GL_CHARS, ascii_only=self._ascii_only,
-                all_chars_notnull=self._all_chars_notnull
-            )
-            test_teamcity_endtest(self, f'create_{test_constants.GL_CHARS}')
+        #if self._passes_filter(test_constants.GL_CHARS):
+        #    self._sh_test_api.create_generated_table(
+        #        self._sh_test_user, test_constants.GL_CHARS, ascii_only=self._ascii_only,
+        #        all_chars_notnull=self._all_chars_notnull
+        #    )
         if self._passes_filter(test_constants.GL_TYPE_MAPPING):
-            test_teamcity_starttest(self, f'create_{test_constants.GL_TYPE_MAPPING}')
             self._sh_test_api.create_gl_type_mapping(
                 self._sh_test_user, ascii_only=self._ascii_only,
                 max_backend_precision=self._backend_api.max_decimal_precision(),
@@ -150,42 +142,31 @@ class TestSetupClient:
                 all_chars_notnull=self._all_chars_notnull,
                 supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys())
             )
-            test_teamcity_endtest(self, f'create_{test_constants.GL_TYPE_MAPPING}')
-        if self._passes_filter(test_constants.GL_TYPES):
-            test_teamcity_starttest(self, f'create_{test_constants.GL_TYPES}')
-            self._sh_test_api.create_generated_table(
-                self._sh_test_user, test_constants.GL_TYPES, ascii_only=self._ascii_only,
-                all_chars_notnull=self._all_chars_notnull,
-                supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys())
-            )
-            test_teamcity_endtest(self, f'create_{test_constants.GL_TYPES}')
-        if self._passes_filter(test_constants.GL_TYPES_QI):
-            test_teamcity_starttest(self, f'create_{test_constants.GL_TYPES_QI}')
-            self._sh_test_api.create_generated_table(
-                self._sh_test_user, test_constants.GL_TYPES_QI, ascii_only=self._ascii_only,
-                all_chars_notnull=self._all_chars_notnull,
-                supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys())
-            )
-            test_teamcity_endtest(self, f'create_{test_constants.GL_TYPES_QI}')
-        if self._passes_filter(test_constants.GL_WIDE):
-            test_teamcity_starttest(self, f'create_{test_constants.GL_WIDE}')
-            self._sh_test_api.create_generated_table(
-                self._sh_test_user, test_constants.GL_WIDE, ascii_only=self._ascii_only,
-                all_chars_notnull=self._all_chars_notnull,
-                supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys()),
-                backend_max_test_column_count=self._backend_api.gl_wide_max_test_column_count()
-            )
-            test_teamcity_endtest(self, f'create_{test_constants.GL_WIDE}')
-        test_teamcity_endtestblock(self, 'create_generated_tables')
+        #if self._passes_filter(test_constants.GL_TYPES):
+        #    self._sh_test_api.create_generated_table(
+        #        self._sh_test_user, test_constants.GL_TYPES, ascii_only=self._ascii_only,
+        #        all_chars_notnull=self._all_chars_notnull,
+        #        supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys())
+        #    )
+        #if self._passes_filter(test_constants.GL_TYPES_QI):
+        #    self._sh_test_api.create_generated_table(
+        #        self._sh_test_user, test_constants.GL_TYPES_QI, ascii_only=self._ascii_only,
+        #        all_chars_notnull=self._all_chars_notnull,
+        #        supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys())
+        #    )
+        #if self._passes_filter(test_constants.GL_WIDE):
+        #    self._sh_test_api.create_generated_table(
+        #        self._sh_test_user, test_constants.GL_WIDE, ascii_only=self._ascii_only,
+        #        all_chars_notnull=self._all_chars_notnull,
+        #        supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys()),
+        #        backend_max_test_column_count=self._backend_api.gl_wide_max_test_column_count()
+        #    )
 
     def create_partition_functions(self):
-        test_teamcity_starttestblock(self, 'create_partition_functions')
         udf_data_db = get_data_db_for_schema(self._sh_test_user, self._config)
         create_partition_functions(self._backend_api, udf_data_db, self._messages, self._table_name_re)
-        test_teamcity_endtestblock(self, 'create_partition_functions')
 
     def create_sql_offload_tables(self):
-        test_teamcity_starttestblock(self, 'create_sql_offload_tables')
         for table_name, script_path in sql_offload_test_table_scripts(self._config):
             if not self._passes_filter(table_name):
                 self._debug(f'Rejecting {table_name}')
@@ -196,15 +177,11 @@ class TestSetupClient:
             if not self._passes_filter(table_name):
                 continue
             self._sh_test_api.run_tpt_file(script_path, self._sh_test_user)
-        test_teamcity_endtestblock(self, 'create_sql_offload_tables')
 
     def offload_generated_tables(self):
-        test_teamcity_starttestblock(self, 'offload_generated_tables')
-        for table_name in (test_constants.GL_CHARS, test_constants.GL_TYPE_MAPPING, test_constants.GL_TYPES,
-                           test_constants.GL_TYPES_QI, test_constants.GL_WIDE):
+        #for table_name in (test_constants.GL_CHARS, test_constants.GL_TYPE_MAPPING, test_constants.GL_TYPES,
+        #                   test_constants.GL_TYPES_QI, test_constants.GL_WIDE):
+        for table_name in (test_constants.GL_TYPE_MAPPING, ):
             if not self._passes_filter(table_name):
                 continue
-            test_teamcity_starttest(self, f'offload_{table_name}')
             self._offload_generated_table(table_name)
-            test_teamcity_endtest(self, f'offload_{table_name}')
-        test_teamcity_endtestblock(self, 'offload_generated_tables')

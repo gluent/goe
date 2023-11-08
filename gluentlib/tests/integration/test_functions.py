@@ -1,12 +1,18 @@
+from functools import lru_cache
+import os
+
 from gluent import OffloadOperation
 from gluentlib.config.orchestration_config import OrchestrationConfig
 from gluentlib.offload.offload_messages import OffloadMessages
 
-from tests.unit.test_functions import build_current_options, FAKE_ORACLE_BQ_ENV
-
 
 def build_current_options():
     return OrchestrationConfig.from_dict({"verbose": False, "execute": False})
+
+
+@lru_cache(maxsize=None)
+def cached_current_options():
+    return build_current_options()
 
 
 def build_offload_operation(operation_dict=None, options=None, messages=None):
@@ -24,3 +30,16 @@ def build_offload_operation(operation_dict=None, options=None, messages=None):
         operation_dict, offload_options, offload_messages
     )
     return offload_operation
+
+
+def get_default_test_user():
+    return os.environ.get("GOE_TEST_USER", "GOE_TEST")
+
+
+@lru_cache(maxsize=None)
+def cached_default_test_user():
+    return get_default_test_user()
+
+
+def get_default_test_user_pass():
+    return os.environ.get("GOE_TEST_USER_PASS", "GOE_TEST")

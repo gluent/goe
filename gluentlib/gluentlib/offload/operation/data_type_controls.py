@@ -3,54 +3,114 @@
     LICENSE_TEXT
 """
 
-from gluentlib.offload.column_metadata import CanonicalColumn, CANONICAL_TYPE_OPTION_NAMES, \
-    CANONICAL_CHAR_SEMANTICS_UNICODE, match_table_column
+from gluentlib.offload.column_metadata import (
+    CanonicalColumn,
+    CANONICAL_TYPE_OPTION_NAMES,
+    CANONICAL_CHAR_SEMANTICS_UNICODE,
+    GLUENT_TYPE_DOUBLE,
+    GLUENT_TYPE_INTEGER_1,
+    GLUENT_TYPE_INTEGER_2,
+    GLUENT_TYPE_INTEGER_4,
+    GLUENT_TYPE_INTEGER_8,
+    GLUENT_TYPE_INTEGER_38,
+    GLUENT_TYPE_VARIABLE_STRING,
+    match_table_column,
+)
 from gluentlib.offload.offload_functions import expand_columns_csv
-from gluentlib.offload.offload_constants import INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT
+from gluentlib.offload.offload_constants import (
+    INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+)
 
-class OffloadDataTypeControlsException(Exception): pass
+
+class OffloadDataTypeControlsException(Exception):
+    pass
 
 
 ###############################################################################
 # CONSTANTS
 ###############################################################################
 
-CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT = 'Data type conflict for columns'
+BACKEND_DATA_TYPE_CONTROL_OPTIONS = {
+    GLUENT_TYPE_INTEGER_1: "--integer-1-columns",
+    GLUENT_TYPE_INTEGER_2: "--integer-2-columns",
+    GLUENT_TYPE_INTEGER_4: "--integer-4-columns",
+    GLUENT_TYPE_INTEGER_8: "--integer-8-columns",
+    GLUENT_TYPE_INTEGER_38: "--integer-38-columns",
+    GLUENT_TYPE_DOUBLE: "--double-columns",
+    GLUENT_TYPE_VARIABLE_STRING: "--variable-string-columns",
+}
 
+CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT = "Data type conflict for columns"
+
+DECIMAL_COL_TYPE_SYNTAX_TEMPLATE = 'must be of format "precision,scale" where 1<=precision<={p} and 0<=scale<={s} and scale<=precision'
 
 ###############################################################################
 # GLOBAL FUNCTIONS
 ###############################################################################
 
-def canonical_columns_from_columns_csv(data_type, column_list_csv, existing_canonical_list, reference_columns,
-                                       precision=None, scale=None):
-    """ Return a list of CanonicalColumn objects based on an incoming data type and CSV of column names """
+
+def canonical_columns_from_columns_csv(
+    data_type,
+    column_list_csv,
+    existing_canonical_list,
+    reference_columns,
+    precision=None,
+    scale=None,
+):
+    """Return a list of CanonicalColumn objects based on an incoming data type and CSV of column names"""
     if not column_list_csv:
         return []
     column_list = expand_columns_csv(column_list_csv, reference_columns)
-    conflicting_columns = [_.name for _ in existing_canonical_list if _.name in column_list]
+    conflicting_columns = [
+        _.name for _ in existing_canonical_list if _.name in column_list
+    ]
     if conflicting_columns:
-        raise OffloadDataTypeControlsException('%s %s when assigning type with %s'
-                               % (CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT, conflicting_columns,
-                                  CANONICAL_TYPE_OPTION_NAMES[data_type]))
-    canonical_list = [CanonicalColumn(_, data_type, data_precision=precision, data_scale=scale, from_override=True)
-                      for _ in column_list]
-    if '*' in column_list_csv and not canonical_list:
-        raise OffloadDataTypeControlsException(f'No columns match pattern: {column_list_csv}')
+        raise OffloadDataTypeControlsException(
+            "%s %s when assigning type with %s"
+            % (
+                CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT,
+                conflicting_columns,
+                CANONICAL_TYPE_OPTION_NAMES[data_type],
+            )
+        )
+    canonical_list = [
+        CanonicalColumn(
+            _, data_type, data_precision=precision, data_scale=scale, from_override=True
+        )
+        for _ in column_list
+    ]
+    if "*" in column_list_csv and not canonical_list:
+        raise OffloadDataTypeControlsException(
+            f"No columns match pattern: {column_list_csv}"
+        )
     return canonical_list
 
 
 def char_semantics_override_map(unicode_string_columns_csv, reference_columns):
-    """ Return a dictionary map of char semantics overrides """
+    """Return a dictionary map of char semantics overrides"""
     if not unicode_string_columns_csv:
         return {}
-    unicode_string_columns_list = expand_columns_csv(unicode_string_columns_csv, reference_columns)
-    if '*' in unicode_string_columns_csv and not unicode_string_columns_list:
-        raise OffloadDataTypeControlsException(f'No columns match pattern: {unicode_string_columns_csv}')
+    unicode_string_columns_list = expand_columns_csv(
+        unicode_string_columns_csv, reference_columns
+    )
+    if "*" in unicode_string_columns_csv and not unicode_string_columns_list:
+        raise OffloadDataTypeControlsException(
+            f"No columns match pattern: {unicode_string_columns_csv}"
+        )
     for col in unicode_string_columns_list:
         rdbms_column = match_table_column(col, reference_columns)
         if not rdbms_column.is_string_based():
-            raise OffloadDataTypeControlsException('%s %s: %s is not string based'
-                                                   % (INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT, rdbms_column.name,
-                                                      rdbms_column.data_type))
-    return dict(zip(unicode_string_columns_list, [CANONICAL_CHAR_SEMANTICS_UNICODE] * len(unicode_string_columns_list)))
+            raise OffloadDataTypeControlsException(
+                "%s %s: %s is not string based"
+                % (
+                    INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+                    rdbms_column.name,
+                    rdbms_column.data_type,
+                )
+            )
+    return dict(
+        zip(
+            unicode_string_columns_list,
+            [CANONICAL_CHAR_SEMANTICS_UNICODE] * len(unicode_string_columns_list),
+        )
+    )

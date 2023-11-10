@@ -1,10 +1,10 @@
 import inspect
+import os
 import time
 import traceback
 
-from gluent import vverbose
 from gluentlib.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
-from gluentlib.offload.offload_messages import OffloadMessages
+from gluentlib.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from gluentlib.orchestration import orchestration_constants
 from gluentlib.orchestration.execution_id import ExecutionId
 from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
@@ -12,12 +12,8 @@ from tests.integration.test_functions import (
     get_default_test_user,
     get_default_test_user_pass,
 )
-from tests.testlib.test_framework.test_functions import (
-    get_backend_testing_api,
-    get_frontend_testing_api,
-    get_orchestration_options_object,
-    log,
-)
+from tests.testlib.test_framework.backend_testing_api import subproc_cmd
+from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
 
 
 class ScenarioRunnerException(Exception):
@@ -34,6 +30,12 @@ def get_config_overrides(config_dict: dict, orchestration_config):
     if config_dict:
         base_config.update(config_dict)
     return base_config
+
+
+def get_conf_path():
+    offload_home = os.environ.get('OFFLOAD_HOME')
+    assert offload_home, 'OFFLOAD_HOME must be set in order to run tests'
+    return os.path.join(offload_home, 'conf')
 
 
 def run_offload(
@@ -85,7 +87,7 @@ def run_offload(
 
 
 def run_setup(
-    frontend_api, backend_api, config_options, frontend_sqls=None, python_fns=None
+    frontend_api, backend_api, config, test_messages: OffloadTestMessages, frontend_sqls=None, python_fns=None
 ):
     try:
         if frontend_sqls:
@@ -96,7 +98,7 @@ def run_setup(
                 test_schema_pass,
                 trace_action_override="FrontendTestingApi(StorySetup)",
             ) as sh_test_api:
-                if config_options.db_type == DBTYPE_MSSQL:
+                if config.db_type == DBTYPE_MSSQL:
                     sh_test_api.execute_ddl("BEGIN TRAN")
                 for sql in frontend_sqls:
                     try:
@@ -105,11 +107,11 @@ def run_setup(
                         if "does not exist" in str(exc) and sql.upper().startswith(
                             "DROP"
                         ):
-                            log("Ignoring: " + str(exc), vverbose)
+                            test_messages.log("Ignoring: " + str(exc), detail=VVERBOSE)
                         else:
-                            log(str(exc))
+                            test_messages.log(str(exc))
                             raise
-                if config_options.db_type != DBTYPE_TERADATA:
+                if config.db_type != DBTYPE_TERADATA:
                     # We have autocommit enabled on Teradata:
                     #   COMMIT WORK not allowed for a DBC/SQL session. (-3706)
                     sh_test_api.execute_ddl("COMMIT")
@@ -132,9 +134,39 @@ def run_setup(
                     fn()
                 except Exception as exc:
                     if " exist" in str(exc):
-                        log("Ignoring: " + str(exc), vverbose)
+                        test_messages.log("Ignoring: " + str(exc), detail=VVERBOSE)
                     else:
                         raise
     except Exception:
-        log(traceback.format_exc())
+        test_messages.log(traceback.format_exc())
         raise
+
+
+def run_shell_cmd(
+    orchestration_config,
+    messages: OffloadTestMessages,
+    shell_command: list,
+    cwd: str = None,
+    acceptable_return_codes: list = None,
+    expected_exception_string: str = None,
+):
+    try:
+        messages.log('Running subproc_cmd: %s' % shell_command, detail=VERBOSE)
+        conf_dir = get_conf_path()
+        conf_file = os.path.join(conf_dir, 'offload.env')
+        cmd = ['.', conf_file, '&&'] + shell_command
+        print("cmd", cmd)
+        returncode, output = subproc_cmd(cmd, orchestration_config, messages, cwd=cwd)
+        messages.log('subproc_cmd return code: %s' % returncode, detail=VVERBOSE)
+        messages.log('subproc_cmd output: %s' % output, detail=VVERBOSE)
+        acceptable_return_codes = acceptable_return_codes or [0]
+        if returncode not in acceptable_return_codes:
+            raise ScenarioRunnerException('Tested shell_command return %s not in %s: %s'
+                                       % (returncode, acceptable_return_codes, shell_command[0]))
+    except Exception as exc:
+        if expected_exception_string and expected_exception_string.lower() in str(exc).lower():
+            messages.log('Test caught expected exception:\n%s' % str(exc))
+            messages.log('Ignoring exception containing "%s"' % expected_exception_string)
+        else:
+            messages.log(traceback.format_exc())
+            raise

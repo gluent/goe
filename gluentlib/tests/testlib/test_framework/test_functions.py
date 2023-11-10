@@ -22,6 +22,7 @@ from tests.integration.test_sets.stories.story_globals import STORY_SET_ALL
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
+from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
 
 
 _QUOTE = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", '[': '|[', ']': '|]', '\x1b': '|0x001B'}
@@ -67,24 +68,22 @@ def get_backend_columns_for_hybrid_view(hybrid_schema, hybrid_view, backend_api,
     return backend_columns
 
 
-def get_backend_testing_api(options, config=None, do_not_connect: bool=False, no_caching=False):
-    messages = OffloadMessages.from_options(options, get_log_fh())
-    if not config:
-        config = OrchestrationConfig.from_dict({'verbose': options.verbose,
-                                                'vverbose': options.vverbose,
-                                                'execute': options.execute})
-    return backend_testing_api_factory(config.target, config, messages, dry_run=bool(not options.execute),
-                                       no_caching=no_caching, do_not_connect=do_not_connect)
+def get_backend_testing_api(config, messages, no_caching=True):
+    return backend_testing_api_factory(
+        config.target, config, messages, dry_run=False, no_caching=no_caching
+    )
 
 
-def get_frontend_testing_api(options, config=None, do_not_connect: bool=False, trace_action=None):
-    messages = OffloadMessages.from_options(options, log_fh=get_log_fh())
-    if not config:
-        config = OrchestrationConfig.from_dict({'verbose': options.verbose,
-                                                'vverbose': options.vverbose,
-                                                'execute': options.execute})
-    return frontend_testing_api_factory(config.db_type, config, messages, dry_run=bool(not options.execute),
-                                        do_not_connect=do_not_connect, trace_action=trace_action)
+def get_frontend_testing_api(config, messages, trace_action=None):
+    return frontend_testing_api_factory(
+        config.db_type, config, messages, dry_run=False, trace_action=trace_action
+    )
+
+
+def get_test_messages(config, test_id):
+    messages = OffloadMessages()
+    messages.init_log(config.log_path, test_id)
+    return OffloadTestMessages(messages)
 
 
 def get_data_db_for_schema(schema, config):

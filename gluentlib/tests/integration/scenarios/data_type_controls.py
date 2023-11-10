@@ -31,7 +31,7 @@ from gluentlib.offload.offload_functions import (
     data_db_name,
     load_db_name,
 )
-from gluentlib.offload.offload_messages import OffloadMessages, VVERBOSE
+from gluentlib.offload.offload_messages import VVERBOSE
 from gluentlib.offload.offload_source_table import (
     DATA_SAMPLE_SIZE_AUTO,
     DATETIME_STATS_SAMPLING_OPT_ACTION_TEXT,
@@ -60,7 +60,6 @@ from tests.integration.test_sets.stories.story_assertion_functions import (
 from tests.integration.test_sets.stories.story_setup_functions import (
     drop_backend_test_table,
     drop_backend_test_load_table,
-    gen_rdbms_dim_create_ddl,
     no_query_import_transport_method,
 )
 from tests.testlib.test_framework.backend_testing_api import (
@@ -83,17 +82,11 @@ from tests.testlib.test_framework.backend_testing_api import (
     STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
     STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
 )
-from tests.testlib.test_framework.factory.backend_testing_api_factory import (
-    backend_testing_api_factory,
-)
-from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
-    frontend_testing_api_factory,
-)
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
+    get_test_messages,
 )
-from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
 
 
 DATE_DIM = "STORY_DATES"
@@ -578,24 +571,14 @@ def unicode_assertion(backend_api, data_db, backend_name, asserted_unicode_colum
     return True
 
 
-def get_test_messages(config, test_id):
-    messages = OffloadMessages()
-    messages.init_log(config.log_path, test_id)
-    return OffloadTestMessages(messages)
-
-
 def test_numeric_controls():
     id = "test_numeric_controls"
     config = cached_current_options()
     schema = cached_default_test_user()
     data_db = data_db_name(schema, config)
     messages = get_test_messages(config, id)
-    backend_api = backend_testing_api_factory(
-        config.target, config, messages, dry_run=False
-    )
-    frontend_api = frontend_testing_api_factory(
-        config.db_type, config, messages, dry_run=False
-    )
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages)
     data_db, nums_dim_be = convert_backend_identifier_case(config, data_db, NUMS_DIM)
 
     max_decimal_precision = backend_api.max_decimal_precision() if backend_api else None
@@ -606,6 +589,7 @@ def test_numeric_controls():
         frontend_api,
         backend_api,
         config,
+        messages,
         frontend_sqls=nums_setup_frontend_ddl(
             frontend_api, backend_api, config, schema, NUMS_DIM
         ),
@@ -780,18 +764,6 @@ def test_numeric_controls():
     )
 
 
-def get_backend_testing_api(config, messages, no_caching=True):
-    return backend_testing_api_factory(
-        config.target, config, messages, dry_run=False, no_caching=no_caching
-    )
-
-
-def get_frontend_testing_api(config, messages, trace_action=None):
-    return frontend_testing_api_factory(
-        config.db_type, config, messages, dry_run=False, trace_action=trace_action
-    )
-
-
 def test_date_controls():
     id = "test_date_controls"
     config = cached_current_options()
@@ -809,6 +781,7 @@ def test_date_controls():
         frontend_api,
         backend_api,
         config,
+        messages,
         frontend_sqls=dates_setup_frontend_ddl(frontend_api, config, schema, DATE_DIM),
         python_fns=lambda: drop_backend_test_table(
             config, backend_api, data_db, date_dim_be
@@ -866,6 +839,7 @@ def test_date_sampling():
         frontend_api,
         backend_api,
         config,
+        messages,
         frontend_sqls=samp_dates_setup_frontend_ddl(
             frontend_api, config, schema, DATE_SDIM
         ),
@@ -889,6 +863,7 @@ def test_date_sampling():
         frontend_api,
         backend_api,
         config,
+        messages,
         frontend_sqls=[
             frontend_api.remove_table_stats_sql_text(schema.upper(), DATE_SDIM.upper())
         ],
@@ -912,6 +887,7 @@ def test_date_sampling():
         frontend_api,
         backend_api,
         config,
+        messages,
         frontend_sqls=[
             frontend_api.remove_table_stats_sql_text(schema.upper(), DATE_SDIM.upper())
         ],
@@ -956,6 +932,7 @@ def test_precision_scale_overflow():
             frontend_api,
             backend_api,
             config,
+            messages,
             frontend_sqls=num_overflow_setup_frontend_ddl(
                 frontend_api, config, schema, NUM_TOO_BIG_DIM, with_stats=False
             ),
@@ -982,6 +959,7 @@ def test_precision_scale_overflow():
             frontend_api,
             backend_api,
             config,
+            messages,
             frontend_sqls=[
                 frontend_api.collect_table_stats_sql_text(
                     schema.upper(), NUM_TOO_BIG_DIM.upper()
@@ -1021,6 +999,7 @@ def test_precision_scale_overflow():
         frontend_api,
         backend_api,
         config,
+        messages,
         frontend_sqls=num_scale_overflow_setup_frontend_ddl(
             frontend_api, config, schema, NUM_TOO_BIG_DIM
         ),
@@ -1076,6 +1055,7 @@ def test_datatype_controls_column_name_checks():
         frontend_api,
         backend_api,
         config,
+        messages,
         frontend_sqls=wildcard_setup_frontend_ddl(
             frontend_api, config, schema, WILDCARD_DIM
         ),
@@ -1121,6 +1101,7 @@ def test_datatype_controls_column_name_checks():
         frontend_api,
         backend_api,
         config,
+        messages,
         frontend_sqls=standard_dimension_frontend_ddl(
             frontend_api, config, schema, OFFLOAD_DIM
         ),

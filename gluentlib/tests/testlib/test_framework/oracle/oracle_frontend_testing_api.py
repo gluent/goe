@@ -931,6 +931,7 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                   'hv4': SALES_BASED_FACT_HV_4,
                   'hv5': SALES_BASED_FACT_HV_5,
                   'hv6': SALES_BASED_FACT_HV_6,
+                  'hv6_date': SALES_BASED_FACT_HV_6,
                   'time_id_alias': time_id_alias,
                   'extra_cols': extra_cols,
                   'part_prefix': '' if simple_partition_names else table_name + '_'}
@@ -987,7 +988,17 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                AS
                SELECT prod_id, cust_id, %(time_id_expr)s AS %(time_id_alias)s, channel_id, promo_id
                , quantity_sold, amount_sold%(extra_cols)s
-               FROM %(schema)s.sales
+               FROM (
+                    SELECT CAST(MOD(ROWNUM,100)+1 AS NUMBER(4))  prod_id
+                    ,      CAST(MOD(ROWNUM,1000)+1 AS NUMBER(5)) cust_id
+                    ,      ADD_MONTHS(DATE'%(hv6_date)s',-(MOD(ROWNUM,7))) - MOD(ROWNUM,28) time_id
+                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(2))    channel_id
+                    ,      CAST(MOD(ROWNUM,100)+1 AS NUMBER)     promo_id
+                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(10,2)) quantity_sold
+                    ,      CAST(ROWNUM*1.75 AS NUMBER(10,2))     amount_sold
+                    FROM   dual
+                    CONNECT BY ROWNUM <= 500
+               ) sales
                WHERE time_id BETWEEN TO_DATE('%(pre_hv)s','YYYY-MM-DD') AND TO_DATE('%(hv6)s','YYYY-MM-DD')
                %(extra_pred)s""")
 
@@ -1201,6 +1212,23 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             return bool(row[0] == 'YES')
         else:
             return bool(row[0] == 'NO')
+
+    def standard_dimension_frontend_ddl(self, schema: str, table_name: str) -> list:
+        subquery = dedent(
+            """\
+            SELECT CAST(1 AS NUMBER(15))          AS id
+            ,      CAST(2 AS NUMBER(4))           AS prod_id
+            ,      CAST(20120931 AS NUMBER(8))    AS txn_day
+            ,      DATE'2012-10-31'               AS txn_date
+            ,      CAST(TIMESTAMP'2012-10-31 01:15:00' AS TIMESTAMP(3)) AS txn_time
+            ,      CAST(17.5 AS NUMBER(10,2))     AS txn_rate
+            ,      CAST('ABC' AS VARCHAR(50))     AS txn_desc
+            ,      CAST('ABC' AS CHAR(3))         AS txn_code
+            FROM dual"""
+        )
+        return self.gen_ctas_from_subquery(
+            schema, table_name, subquery, with_stats_collection=True
+        )
 
     def table_row_count_from_stats(self, schema: str, table_name: str) -> Union[int, None]:
         self._log('table_row_count_from_stats for %s' % table_name, detail=VERBOSE)

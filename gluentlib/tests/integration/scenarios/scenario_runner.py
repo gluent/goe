@@ -8,6 +8,7 @@ from gluentlib.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOS
 from gluentlib.orchestration import orchestration_constants
 from gluentlib.orchestration.execution_id import ExecutionId
 from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
+from gluentlib.util.misc_functions import get_temp_path
 from tests.integration.test_functions import (
     get_default_test_user,
     get_default_test_user_pass,
@@ -33,9 +34,9 @@ def get_config_overrides(config_dict: dict, orchestration_config):
 
 
 def get_conf_path():
-    offload_home = os.environ.get('OFFLOAD_HOME')
-    assert offload_home, 'OFFLOAD_HOME must be set in order to run tests'
-    return os.path.join(offload_home, 'conf')
+    offload_home = os.environ.get("OFFLOAD_HOME")
+    assert offload_home, "OFFLOAD_HOME must be set in order to run tests"
+    return os.path.join(offload_home, "conf")
 
 
 def run_offload(
@@ -87,7 +88,12 @@ def run_offload(
 
 
 def run_setup(
-    frontend_api, backend_api, config, test_messages: OffloadTestMessages, frontend_sqls=None, python_fns=None
+    frontend_api,
+    backend_api,
+    config,
+    test_messages: OffloadTestMessages,
+    frontend_sqls=None,
+    python_fns=None,
 ):
     try:
         if frontend_sqls:
@@ -101,6 +107,7 @@ def run_setup(
                 if config.db_type == DBTYPE_MSSQL:
                     sh_test_api.execute_ddl("BEGIN TRAN")
                 for sql in frontend_sqls:
+                    test_messages.log(f"Setup SQL: {sql}", detail=VVERBOSE)
                     try:
                         sh_test_api.execute_ddl(sql)
                     except Exception as exc:
@@ -142,6 +149,29 @@ def run_setup(
         raise
 
 
+def create_goe_shell_runner(
+    orchestration_config,
+    messages: OffloadTestMessages,
+    shell_command: list,
+    cwd: str = None,
+) -> str:
+    """Creates a temporary shell script to run a GOE command and returns the name of the script."""
+    tmp_file = get_temp_path(suffix=".sh")
+    conf_dir = get_conf_path()
+    conf_file = os.path.join(conf_dir, "offload.env")
+    with open(tmp_file, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write(f". {conf_file}\n")
+        if cwd:
+            f.write(f"cd {cwd}\n")
+        f.write(f"{' '.join(_ for _ in shell_command)}\n")
+    cmd = ["chmod", "700", tmp_file]
+    returncode, _ = subproc_cmd(cmd, orchestration_config, messages)
+    if returncode != 0:
+        raise ScenarioRunnerException(f"Failed chmod command: {cmd}")
+    return tmp_file
+
+
 def run_shell_cmd(
     orchestration_config,
     messages: OffloadTestMessages,
@@ -150,23 +180,34 @@ def run_shell_cmd(
     acceptable_return_codes: list = None,
     expected_exception_string: str = None,
 ):
+    messages.log("Running subproc_cmd: %s" % shell_command, detail=VERBOSE)
+    tmp_file = create_goe_shell_runner(
+        orchestration_config, messages, shell_command, cwd=cwd
+    )
     try:
-        messages.log('Running subproc_cmd: %s' % shell_command, detail=VERBOSE)
-        conf_dir = get_conf_path()
-        conf_file = os.path.join(conf_dir, 'offload.env')
-        cmd = ['.', conf_file, '&&'] + shell_command
-        print("cmd", cmd)
-        returncode, output = subproc_cmd(cmd, orchestration_config, messages, cwd=cwd)
-        messages.log('subproc_cmd return code: %s' % returncode, detail=VVERBOSE)
-        messages.log('subproc_cmd output: %s' % output, detail=VVERBOSE)
+        returncode, output = subproc_cmd([tmp_file], orchestration_config, messages)
+        messages.log("subproc_cmd return code: %s" % returncode, detail=VVERBOSE)
+        messages.log("subproc_cmd output: %s" % output, detail=VVERBOSE)
         acceptable_return_codes = acceptable_return_codes or [0]
         if returncode not in acceptable_return_codes:
-            raise ScenarioRunnerException('Tested shell_command return %s not in %s: %s'
-                                       % (returncode, acceptable_return_codes, shell_command[0]))
+            raise ScenarioRunnerException(
+                "Tested shell_command return %s not in %s: %s"
+                % (returncode, acceptable_return_codes, shell_command[0])
+            )
     except Exception as exc:
-        if expected_exception_string and expected_exception_string.lower() in str(exc).lower():
-            messages.log('Test caught expected exception:\n%s' % str(exc))
-            messages.log('Ignoring exception containing "%s"' % expected_exception_string)
+        if (
+            expected_exception_string
+            and expected_exception_string.lower() in str(exc).lower()
+        ):
+            messages.log("Test caught expected exception:\n%s" % str(exc))
+            messages.log(
+                'Ignoring exception containing "%s"' % expected_exception_string
+            )
         else:
             messages.log(traceback.format_exc())
             raise
+    finally:
+        try:
+            pass  # os.remove(tmp_file)
+        except Exception:
+            pass

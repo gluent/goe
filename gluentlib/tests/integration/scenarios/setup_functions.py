@@ -34,3 +34,9 @@ def drop_backend_test_table(
             detail=VERBOSE,
         )
         backend_api.drop_table(db, table_name, sync=True)
+
+
+def drop_backend_test_load_table(options, backend_api, test_messages, db, table_name):
+    if backend_api and not backend_api.load_db_transport_supported():
+        return
+    drop_backend_test_table(options, backend_api, test_messages, db, table_name)

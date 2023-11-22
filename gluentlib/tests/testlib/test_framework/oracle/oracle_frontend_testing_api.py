@@ -971,7 +971,9 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             params.update({'part_7_name': 'P7', 'part_7_expr': part_7_expr % hv7})
 
         create_ddl = dedent("""\
-        CREATE TABLE %(schema)s.%(table)s PARTITION BY RANGE (%(time_id_alias)s) %(sub_clause)s
+        CREATE TABLE %(schema)s.%(table)s
+        STORAGE (INITIAL 64K NEXT 64K)
+        PARTITION BY RANGE (%(time_id_alias)s) %(sub_clause)s
         (""")
         if noseg_partition:
             create_ddl += dedent("""\

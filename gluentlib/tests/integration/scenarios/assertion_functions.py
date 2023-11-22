@@ -106,6 +106,21 @@ def backend_column_exists(
     return bool(matches == 1)
 
 
+def backend_table_count(
+    config: "OrchestrationConfig",
+    backend_api: "BackendTestingApiInterface",
+    messages: "OffloadMessages",
+    db: str,
+    table_name: str,
+    filter_clause=None,
+):
+    db, table_name = convert_backend_identifier_case(config, db, table_name)
+    messages.log("backend_table_count: %s.%s" % (db, table_name), detail=VERBOSE)
+    count = backend_api.get_table_row_count(db, table_name, filter_clause=filter_clause)
+    messages.log("count: %s" % count, detail=VERBOSE)
+    return count
+
+
 def backend_table_exists(
     config: "OrchestrationConfig",
     backend_api: "BackendTestingApiInterface",
@@ -349,7 +364,7 @@ def standard_dimension_assertion(
         messages.log("check_metadata(%s.%s) == False" % (hybrid_schema, table_name))
         return False
 
-    if not backend_table_exists(backend_api, data_db, backend_table):
+    if not backend_table_exists(config, backend_api, messages, data_db, backend_table):
         messages.log("backend_table_exists() == False")
         return False
 
@@ -432,7 +447,7 @@ def sales_based_fact_assertion(
                 )
             return match
 
-    if not backend_table_exists(backend_api, data_db, backend_table):
+    if not backend_table_exists(config, backend_api, messages, data_db, backend_table):
         messages.log("backend_table_exists() == False")
         return False
 

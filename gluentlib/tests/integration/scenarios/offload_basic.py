@@ -21,22 +21,18 @@ from gluentlib.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
-from test_sets.stories.story_assertion_functions import (
-    backend_table_count,
-)
 from tests.integration.test_sets.stories.story_setup_functions import (
     SALES_BASED_FACT_HV_1,
     SALES_BASED_FACT_HV_2,
     SALES_BASED_FACT_HV_3,
     SALES_BASED_FACT_HV_4,
     SALES_BASED_FACT_PRE_HV,
-    drop_backend_test_load_table,
-    drop_backend_test_table,
     gen_truncate_sales_based_fact_partition_ddls,
     partition_columns_if_supported,
 )
 
 from tests.integration.scenarios.assertion_functions import (
+    backend_table_count,
     backend_table_exists,
     sales_based_fact_assertion,
     standard_dimension_assertion,
@@ -45,13 +41,13 @@ from tests.integration.scenarios.scenario_runner import (
     run_offload,
     run_setup,
 )
+from tests.integration.scenarios.setup_functions import (
+    drop_backend_test_load_table,
+    drop_backend_test_table,
+)
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
-)
-from tests.integration.test_sets.stories.story_setup_functions import (
-    drop_backend_test_table,
-    drop_backend_test_load_table,
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
@@ -103,7 +99,7 @@ def test_offload_basic_dim():
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
     }
-    run_offload(options, config, messages, config_override={"execute": False})
+    run_offload(options, config, messages, config_overrides={"execute": False})
 
     assert not backend_table_exists(
         config, backend_api, messages, data_db, OFFLOAD_DIM
@@ -122,9 +118,6 @@ def test_offload_basic_dim():
     }
     run_offload(options, config, messages)
 
-    assert backend_table_exists(
-        config, backend_api, messages, data_db, OFFLOAD_DIM
-    ), "Backend table should exist"
     assert backend_table_exists(
         config, backend_api, messages, load_db, OFFLOAD_DIM
     ), "Backend load table should exist"
@@ -196,7 +189,7 @@ def test_offload_basic_fact():
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
         "reset_backend_table": True,
     }
-    run_offload(options, config, messages, config_override={"execute": False})
+    run_offload(options, config, messages, config_overrides={"execute": False})
 
     assert not backend_table_exists(
         config, backend_api, messages, data_db, OFFLOAD_FACT
@@ -213,7 +206,7 @@ def test_offload_basic_fact():
         options,
         config,
         messages,
-        config_override={"execute": False},
+        config_overrides={"execute": False},
         expected_exception_string=IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
     )
 
@@ -234,7 +227,7 @@ def test_offload_basic_fact():
             config, backend_api, messages, data_db, OFFLOAD_FACT
         ), "Backend table should exist"
         assert (
-            backend_table_count(backend_api, data_db, OFFLOAD_FACT) == 0
+            backend_table_count(config, backend_api, messages, data_db, OFFLOAD_FACT) == 0
         ), "Backend table should be empty"
 
     # Non-Execute offload of first partition with advanced options.
@@ -264,7 +257,7 @@ def test_offload_basic_fact():
                     "offload_partition_granularity": PART_COL_GRANULARITY_MONTH + ",1",
                 }
             )
-    run_offload(options, config, messages, config_override={"execute": False})
+    run_offload(options, config, messages, config_overrides={"execute": False})
 
     # Offload some partitions from a fact table.
     # The fact is partitioned by multiple columns (if possible) with appropriate granularity.
@@ -290,7 +283,7 @@ def test_offload_basic_fact():
         "owner_table": schema + "." + OFFLOAD_FACT,
         "older_than_date": SALES_BASED_FACT_HV_2,
     }
-    run_offload(options, config, messages, config_override={"execute": False})
+    run_offload(options, config, messages, config_overrides={"execute": False})
 
     # TODO offload_story_fact_1st_incr_assertion(backend_api, options, data_db, offload_fact_be),
 

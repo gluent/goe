@@ -3,9 +3,27 @@ from typing import TYPE_CHECKING
 from gluentlib.offload.offload_constants import DBTYPE_ORACLE
 from gluentlib.offload.offload_functions import convert_backend_identifier_case
 from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
+from gluentlib.offload.offload_metadata_functions import (
+    incremental_hv_list_from_csv,
+    incremental_hv_csv_from_list,
+    flatten_lpa_individual_high_values,
+    split_metadata_incremental_high_values,
+    HYBRID_VIEW_IPA_HWM_TOKEN_RDBMS_BEGIN,
+    HYBRID_VIEW_IPA_HWM_TOKEN_RDBMS_END,
+    HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_BEGIN,
+    HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_END,
+    OFFLOAD_TYPE_FULL,
+    OFFLOAD_TYPE_INCREMENTAL,
+)
+from gluentlib.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING
 from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP
 
-from tests.testlib.test_framework.test_functions import to_hybrid_schema
+from tests.integration.test_sets.stories.story_globals import (
+    OFFLOAD_PATTERN_100_0,
+    OFFLOAD_PATTERN_100_10,
+    OFFLOAD_PATTERN_90_10,
+)
+from tests.testlib.test_framework import test_functions
 
 if TYPE_CHECKING:
     from gluentlib.persistence.orchestration_repo_client import (
@@ -42,6 +60,16 @@ def text_in_log(
     return bool(
         messages.get_line_from_log(search_text, search_from_text=search_from_text)
     )
+
+
+def text_in_events(messages, message_token) -> bool:
+    messages.log(f"text_in_events({message_token})", detail=VERBOSE)
+    return test_functions.text_in_events(messages, message_token)
+
+
+def text_in_messages(messages, log_text) -> bool:
+    messages.log(f"text_in_messages({log_text})", detail=VERBOSE)
+    return test_functions.text_in_messages(messages, log_text)
 
 
 def backend_column_exists(
@@ -274,25 +302,27 @@ def check_metadata(
     return True
 
 
-def offload_rowsource_split_type_assertions(messages, story_id, split_type=""):
-    return (
-        lambda test: text_in_log(
-            messages,
-            "Transport rowsource split type: %s" % split_type,
-            "(%s)" % (story_id),
-        ),
-        lambda test: bool(split_type),
-    )
+def offload_rowsource_split_type_assertion(
+    messages: "OffloadMessages", story_id: str, split_type: str
+):
+    search = "Transport rowsource split type: %s" % split_type
+    if not text_in_log(messages, search, "(%s)" % (story_id)):
+        messages.log(
+            "offload_rowsource_split_type_assertion failed: %s != %s"
+            % (search, split_type)
+        )
+        return False
+    return True
 
 
 def standard_dimension_assertion(
-    config,
+    config: "OrchestrationConfig",
     backend_api: "BackendTestingApiInterface",
-    messages,
+    messages: "OffloadMessages",
     repo_client: "OrchestrationRepoClientInterface",
-    schema,
-    data_db,
-    table_name,
+    schema: str,
+    data_db: str,
+    table_name: str,
     backend_db=None,
     backend_table=None,
     story_id="",
@@ -304,7 +334,7 @@ def standard_dimension_assertion(
     data_db, backend_table = convert_backend_identifier_case(
         config, data_db, backend_table
     )
-    hybrid_schema = to_hybrid_schema(schema)
+    hybrid_schema = test_functions.to_hybrid_schema(schema)
 
     if not check_metadata(
         hybrid_schema,
@@ -318,21 +348,125 @@ def standard_dimension_assertion(
     ):
         messages.log("check_metadata(%s.%s) == False" % (hybrid_schema, table_name))
         return False
+
     if not backend_table_exists(backend_api, data_db, backend_table):
         messages.log("backend_table_exists() == False")
         return False
 
+    if text_in_messages(messages, MISSING_ROWS_IMPORTED_WARNING):
+        return False
+
     if split_type:
-        for i, (asrt_left, asrt_right) in enumerate(
-            offload_rowsource_split_type_assertions(story_id, split_type)
-        ):
-            left_result = asrt_left()
-            right_result = asrt_right()
-            if left_result != right_result:
+        if not offload_rowsource_split_type_assertion(story_id, split_type):
+            return False
+
+    return True
+
+
+def sales_based_fact_assertion(
+    config: "OrchestrationConfig",
+    backend_api: "BackendTestingApiInterface",
+    frontend_api: "FrontendTestingApiInterface",
+    messages: "OffloadMessages",
+    repo_client: "OrchestrationRepoClientInterface",
+    schema: str,
+    data_db: str,
+    table_name: str,
+    hwm_literal: str,
+    backend_db=None,
+    backend_table=None,
+    check_rowcount=True,
+    offload_pattern=OFFLOAD_PATTERN_90_10,
+    incremental_key="TIME_ID",
+    incremental_range=None,
+    story_id="",
+    split_type=None,
+    ipa_predicate_type="RANGE",
+    incremental_key_type=None,
+    incremental_predicate_value=None,
+    partition_functions=None,
+    synthetic_partition_column_name=None,
+    check_backend_rowcount=False,
+) -> bool:
+    data_db = backend_db or data_db
+    backend_table = backend_table or table_name
+    data_db, backend_table = convert_backend_identifier_case(
+        config, data_db, backend_table
+    )
+    hybrid_schema = test_functions.to_hybrid_schema(schema)
+
+    if not incremental_key_type and incremental_key == "TIME_ID":
+        incremental_key_type = frontend_api.test_type_canonical_date()
+
+    hwm_literal, meta_check_literal, _ = frontend_api.sales_based_fact_hwm_literal(
+        hwm_literal, incremental_key_type
+    )
+
+    if offload_pattern == OFFLOAD_PATTERN_90_10:
+        offload_type = OFFLOAD_TYPE_INCREMENTAL
+
+        def check_fn(mt):
+            match = meta_check_literal in mt.incremental_high_value
+            if not match:
                 messages.log(
-                    "offload_rowsource_split_type_assertions assertion %s failed: %s != %s"
-                    % (i, left_result, right_result)
+                    "Checking %s in INCREMENTAL_HIGH_VALUE (%s): %s"
+                    % (meta_check_literal, mt.incremental_high_value, match)
                 )
-                return False
+            return match
+
+    elif offload_pattern == OFFLOAD_PATTERN_100_0:
+        offload_type = OFFLOAD_TYPE_FULL
+        incremental_key = None
+        check_fn = lambda mt: bool(
+            not mt.incremental_key and not mt.incremental_high_value
+        )
+    elif offload_pattern == OFFLOAD_PATTERN_100_10:
+        offload_type = OFFLOAD_TYPE_FULL
+
+        def check_fn(mt):
+            match = meta_check_literal in mt.incremental_high_value
+            if not match:
+                messages.log(
+                    "Checking %s in INCREMENTAL_HIGH_VALUE (%s): %s"
+                    % (meta_check_literal, mt.incremental_high_value, match)
+                )
+            return match
+
+    if not backend_table_exists(backend_api, data_db, backend_table):
+        messages.log("backend_table_exists() == False")
+        return False
+
+    if not check_metadata(
+        hybrid_schema,
+        table_name,
+        messages,
+        repo_client,
+        hadoop_owner=data_db,
+        hadoop_table=backend_table,
+        incremental_key=incremental_key,
+        offload_type=offload_type,
+        incremental_range=incremental_range,
+        incremental_predicate_value=incremental_predicate_value,
+        offload_partition_functions=partition_functions,
+        check_fn=check_fn,
+    ):
+        messages.log("check_metadata(%s.%s) == False" % (hybrid_schema, table_name))
+        return False
+
+    if (
+        synthetic_partition_column_name
+        and backend_api.synthetic_partitioning_supported()
+    ):
+        if not backend_column_exists(
+            backend_api, data_db, backend_table, synthetic_partition_column_name
+        ):
+            return False
+
+    if text_in_messages(messages, MISSING_ROWS_IMPORTED_WARNING):
+        return False
+
+    if split_type:
+        if not offload_rowsource_split_type_assertion(story_id, split_type):
+            return False
 
     return True

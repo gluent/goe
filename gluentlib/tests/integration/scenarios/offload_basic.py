@@ -37,9 +37,8 @@ from tests.integration.test_sets.stories.story_setup_functions import (
 )
 
 from tests.integration.scenarios.assertion_functions import (
-    backend_column_exists,
     backend_table_exists,
-    frontend_column_exists,
+    sales_based_fact_assertion,
     standard_dimension_assertion,
 )
 from tests.integration.scenarios.scenario_runner import (
@@ -53,7 +52,6 @@ from tests.integration.test_functions import (
 from tests.integration.test_sets.stories.story_setup_functions import (
     drop_backend_test_table,
     drop_backend_test_load_table,
-    no_query_import_transport_method,
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
@@ -171,6 +169,7 @@ def test_offload_basic_fact():
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages)
+    repo_client = orchestration_repo_client_factory(config, messages)
 
     # Setup
     run_setup(
@@ -266,14 +265,24 @@ def test_offload_basic_fact():
                 }
             )
     run_offload(options, config, messages, config_override={"execute": False})
-    # TODO offload_story_fact_init_options(schema, OFFLOAD_FACT, option_target, backend_api),
 
     # Offload some partitions from a fact table.
     # The fact is partitioned by multiple columns (if possible) with appropriate granularity.
     # We use COPY stats on this initial offload, also specify some specific data types.
     run_offload(options, config, messages)
 
-    # TODO offload_fact_assertions(config, backend_api, frontend_api, repo_client, schema, data_db, OFFLOAD_FACT, SALES_BASED_FACT_HV_1, check_backend_rowcount=True) + \
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        OFFLOAD_FACT,
+        SALES_BASED_FACT_HV_1,
+        check_backend_rowcount=True,
+    )
     # TODO [(: offload_story_fact_init_assertion(backend_api, data_db, offload_fact_be),
 
     # Incremental Offload of Fact - Non-Execute.
@@ -291,11 +300,31 @@ def test_offload_basic_fact():
         "older_than_date": SALES_BASED_FACT_HV_2,
     }
     run_offload(options, config, messages)
-    # TODO offload_fact_assertions(config, backend_api, frontend_api, repo_client, schema, data_db, OFFLOAD_FACT, SALES_BASED_FACT_HV_2
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        OFFLOAD_FACT,
+        SALES_BASED_FACT_HV_2,
+    )
 
     # Try re-offload same partition which will result in no action and early abort.
     run_offload(options, config, messages, expected_status=False)
-    # TODO offload_fact_assertions(config, backend_api, frontend_api, repo_client, schema, data_db, OFFLOAD_FACT, SALES_BASED_FACT_HV_2
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        OFFLOAD_FACT,
+        SALES_BASED_FACT_HV_2,
+    )
 
     # Offloads next partition with dodgy settings, offload will override these with sensible options.
     options = {
@@ -311,7 +340,17 @@ def test_offload_basic_fact():
         "synthetic_partition_digits": 5,
     }
     run_offload(options, config, messages)
-    # TODO offload_fact_assertions(config, backend_api, frontend_api, repo_client, schema, data_db, OFFLOAD_FACT, SALES_BASED_FACT_HV_3)
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        OFFLOAD_FACT,
+        SALES_BASED_FACT_HV_3,
+    )
     # TODO offload_story_fact_2nd_incr_assertion(backend_api, options, data_db, offload_fact_be)
 
     # Setup
@@ -334,4 +373,15 @@ def test_offload_basic_fact():
 
     # TODO We need to be able to assert on whether the empty partitions were picked up or not,
     #      needs access to the offload log file...
-    # TODO offload_fact_assertions(options, backend_api, frontend_api, repo_client, schema, data_db, OFFLOAD_FACT, SALES_BASED_FACT_HV_6, check_rowcount=False)
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        OFFLOAD_FACT,
+        SALES_BASED_FACT_HV_4,
+        check_rowcount=False,
+    )

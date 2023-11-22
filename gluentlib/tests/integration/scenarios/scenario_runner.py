@@ -2,6 +2,7 @@ import inspect
 import os
 import time
 import traceback
+from typing import TYPE_CHECKING
 
 from gluentlib.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
 from gluentlib.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
@@ -16,12 +17,21 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework.backend_testing_api import subproc_cmd
 from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
 
+if TYPE_CHECKING:
+    from gluentlib.persistence.orchestration_repo_client import (
+        OrchestrationRepoClientInterface,
+    )
+    from testlib.test_framework.backend_testing_api import BackendTestingApiInterface
+    from testlib.test_framework.frontend_testing_api import FrontendTestingApiInterface
+
 
 class ScenarioRunnerException(Exception):
     pass
 
 
-def get_config_overrides(config_dict: dict, orchestration_config):
+def get_config_overrides(
+    config_dict: dict, orchestration_config: "OrchestrationRepoClientInterface"
+):
     """Return config from story enhanced with certain attributes from orchestration_config"""
     base_config = {
         "execute": True,
@@ -41,7 +51,7 @@ def get_conf_path():
 
 def run_offload(
     option_dict: dict,
-    orchestration_config,
+    orchestration_config: "OrchestrationRepoClientInterface",
     parent_messages: OffloadMessages,
     expected_status=True,
     expected_exception_string: str = None,
@@ -88,9 +98,9 @@ def run_offload(
 
 
 def run_setup(
-    frontend_api,
-    backend_api,
-    config,
+    frontend_api: "FrontendTestingApiInterface",
+    backend_api: "BackendTestingApiInterface",
+    config: "OrchestrationRepoClientInterface",
     test_messages: OffloadTestMessages,
     frontend_sqls=None,
     python_fns=None,
@@ -150,7 +160,7 @@ def run_setup(
 
 
 def create_goe_shell_runner(
-    orchestration_config,
+    orchestration_config: "OrchestrationRepoClientInterface",
     messages: OffloadTestMessages,
     shell_command: list,
     cwd: str = None,
@@ -173,7 +183,7 @@ def create_goe_shell_runner(
 
 
 def run_shell_cmd(
-    orchestration_config,
+    orchestration_config: "OrchestrationRepoClientInterface",
     messages: OffloadTestMessages,
     shell_command: list,
     cwd: str = None,

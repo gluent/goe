@@ -45,6 +45,7 @@ from gluentlib.offload.operation.data_type_controls import (
 from tests.integration.scenarios.assertion_functions import (
     backend_column_exists,
     frontend_column_exists,
+    hint_text_in_log,
 )
 from tests.integration.scenarios.scenario_runner import (
     ScenarioRunnerException,
@@ -54,9 +55,6 @@ from tests.integration.scenarios.scenario_runner import (
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
-)
-from tests.integration.test_sets.stories.story_assertion_functions import (
-    hint_text_in_log,
 )
 from tests.integration.test_sets.stories.story_setup_functions import (
     drop_backend_test_table,

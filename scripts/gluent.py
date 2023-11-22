@@ -41,15 +41,21 @@ from gluentlib.offload.column_metadata import ColumnBucketInfo, \
     GLUENT_TYPE_FLOAT, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8,\
     GLUENT_TYPE_INTEGER_38, \
     GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_TIMESTAMP_TZ
-from gluentlib.offload.hadoop.hadoop_backend_api import format_hive_set_command
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE, \
-    DBTYPE_ORACLE, DBTYPE_MSSQL, \
-    FILE_STORAGE_COMPRESSION_CODEC_GZIP, FILE_STORAGE_COMPRESSION_CODEC_SNAPPY, FILE_STORAGE_COMPRESSION_CODEC_ZLIB, \
-    HYBRID_EXT_TABLE_DEGREE_AUTO, \
-    LOG_LEVEL_INFO, LOG_LEVEL_DETAIL, LOG_LEVEL_DEBUG,\
-    OFFLOAD_BUCKET_NAME, NUM_BUCKETS_AUTO, \
-    OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED, \
-    SORT_COLUMNS_NO_CHANGE
+from gluentlib.offload.offload_constants import (
+    DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE,
+    DBTYPE_ORACLE, DBTYPE_MSSQL,
+    FILE_STORAGE_COMPRESSION_CODEC_GZIP, FILE_STORAGE_COMPRESSION_CODEC_SNAPPY, FILE_STORAGE_COMPRESSION_CODEC_ZLIB,
+    HYBRID_EXT_TABLE_DEGREE_AUTO,
+    IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
+    LOG_LEVEL_INFO, LOG_LEVEL_DETAIL, LOG_LEVEL_DEBUG,
+    OFFLOAD_BUCKET_NAME, NUM_BUCKETS_AUTO,
+    OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
+    SORT_COLUMNS_NO_CHANGE,
+)
 from gluentlib.offload.offload_functions import convert_backend_identifier_case, data_db_name
 from gluentlib.offload.offload_source_data import offload_source_data_factory, get_offload_type_for_config, \
     OFFLOAD_SOURCE_CLIENT_OFFLOAD
@@ -138,11 +144,6 @@ LEGACY_MAX_HYBRID_IDENTIFIER_LENGTH = 30
 ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT = 'Using adjusted backend table name'
 CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT = 'Conflicting data identification options'
 HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = 'Including hybrid schema steps due to HWM change'
-IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT = 'INCREMENTAL_PREDICATE_TYPE cannot be changed for offloaded table'
-IPA_PREDICATE_TYPE_EXCEPTION_TEXT = '--offload-predicate-type/RDBMS partition type combination is not valid'
-IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT = 'partition identification options are not compatible'
-IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT = '--offload-predicate-type is not valid for a first time predicate-based offload'
-IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT = 'Missing --offload-predicate option. This option is mandatory to offload tables with an INCREMENTAL_PREDICATE_TYPE configuration of PREDICATE'
 JOIN_PUSHDOWN_HWM_EXCEPTION_TEXT = 'High water mark for join can not be influenced by --older-than-date/days, --less-than-value or --offload-predicate options'
 JOIN_PUSHDOWN_IGNORE_BUCKET_MESSAGE_TEXT = 'Materialized joins generate synthetic bucket column'
 JOIN_PUSHDOWN_INCOMPATIBLE_PREDICATE_EXCEPTION_TEXT = 'Incompatible join INCREMENTAL_PREDICATE_VALUEs'

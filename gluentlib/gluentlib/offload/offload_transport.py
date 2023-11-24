@@ -273,13 +273,8 @@ def is_query_import_available(offload_operation, offload_options, offload_source
                 messages)
             return False
         if offload_operation and (offload_source_table.size_in_bytes or 0) > offload_operation.offload_transport_small_table_threshold:
-            log('Table size > %s (--offload-transport-small-table-threshold) is not valid with transport method: %s'
-                % (offload_operation.offload_transport_small_table_threshold, OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT),
-                messages)
-            return False
-
-        if offload_source_table.partition_type:
-            log('Partition offloads are not valid with transport method: %s' % OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+            log('Table size (%s) > %s (OFFLOAD_TRANSPORT_SMALL_TABLE_THRESHOLD) is not valid with transport method: %s'
+                % (offload_source_table.size_in_bytes or 0, offload_operation.offload_transport_small_table_threshold, OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT),
                 messages)
             return False
 
@@ -2983,7 +2978,12 @@ class OffloadTransportQueryImport(OffloadTransport):
         else:
             sql_projection = self._sql_projection_from_offload_query_expression_list(colexpressions, colnames)
             table_name = ('"%s"."%s"' % (self._rdbms_owner, self._rdbms_table_name)).upper()
-            source_query = 'SELECT %s\nFROM   %s' % (sql_projection, table_name)
+            if partition_chunk:
+                split_row_source_by = self._get_transport_split_type(partition_chunk)
+                row_source = self._get_transport_row_source_query(split_row_source_by, partition_chunk)
+                source_query = 'SELECT %s\nFROM (%s)' % (sql_projection, row_source)
+            else:
+                source_query = 'SELECT %s\nFROM   %s' % (sql_projection, table_name)
             if self._rdbms_offload_predicate:
                 source_query += '\nWHERE (%s)' % self._rdbms_table.predicate_to_where_clause(self._rdbms_offload_predicate)
             source_binds = None

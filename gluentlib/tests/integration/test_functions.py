@@ -7,7 +7,7 @@ from gluentlib.offload.offload_messages import OffloadMessages
 
 
 def build_current_options():
-    return OrchestrationConfig.from_dict({"verbose": False, "execute": False})
+    return OrchestrationConfig.from_dict({"verbose": False, "execute": True})
 
 
 @lru_cache(maxsize=None)

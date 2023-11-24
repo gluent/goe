@@ -147,7 +147,6 @@ class OrchestrationRunner:
             command_id = repo_client.start_command(
                 self._execution_id,
                 command_type,
-                get_log_fh_name(),
                 command_input,
                 operation_dict,
             )

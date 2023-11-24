@@ -63,9 +63,15 @@ alter user gluent_app identified by ...;
 # Development
 Getting setup:
 ```
+. ${OFFLOAD_HOME}/conf/offload.env
 cd goe
 source ./.venv/bin/activate
 PYTHONPATH=${PWD}:${PWD}/scripts
+```
+
+Extra packages for developers:
+```
+python3 -m pip install black pytest pytest-xdist
 ```
 
 Running an Offload:
@@ -78,4 +84,10 @@ Running unit tests:
 ```
 cd goe
 pytest tests/unit
+```
+
+Running integration tests:
+```
+cd goe
+pytest tests/integration/scenarios
 ```

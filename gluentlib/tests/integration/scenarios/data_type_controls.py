@@ -325,7 +325,9 @@ def nums_assertion(
         if col_name == STORY_TEST_OFFLOAD_NUMS_DEC_10_0 and not check_dec_10_0:
             # This test only makes sense when we force it to a decimal via options (nums_on test)
             continue
-        if not frontend_column_exists(frontend_api, data_db, table_name, col_name):
+        if not frontend_column_exists(
+            frontend_api, messages, data_db, table_name, col_name
+        ):
             # Not all test columns are valid in all frontends
             continue
         if not backend_column_exists(
@@ -617,7 +619,7 @@ def test_numeric_controls():
             frontend_api, backend_api, config, schema, NUMS_DIM
         ),
         python_fns=lambda: drop_backend_test_table(
-            config, backend_api, data_db, NUMS_DIM
+            config, backend_api, messages, data_db, NUMS_DIM
         ),
     )
 
@@ -807,7 +809,7 @@ def test_date_controls():
         messages,
         frontend_sqls=dates_setup_frontend_ddl(frontend_api, config, schema, DATE_DIM),
         python_fns=lambda: drop_backend_test_table(
-            config, backend_api, data_db, DATE_DIM
+            config, backend_api, messages, data_db, DATE_DIM
         ),
     )
 
@@ -880,7 +882,7 @@ def test_date_sampling():
             frontend_api, config, schema, DATE_SDIM
         ),
         python_fns=lambda: drop_backend_test_table(
-            config, backend_api, data_db, DATE_SDIM
+            config, backend_api, messages, data_db, DATE_SDIM
         ),
     )
 
@@ -980,7 +982,7 @@ def test_precision_scale_overflow():
                 frontend_api, config, schema, NUM_TOO_BIG_DIM, with_stats=False
             ),
             python_fns=lambda: drop_backend_test_table(
-                config, backend_api, data_db, NUM_TOO_BIG_DIM
+                config, backend_api, messages, data_db, NUM_TOO_BIG_DIM
             ),
         )
 
@@ -1047,7 +1049,7 @@ def test_precision_scale_overflow():
             frontend_api, config, schema, NUM_TOO_BIG_DIM
         ),
         python_fns=lambda: drop_backend_test_table(
-            config, backend_api, data_db, NUM_TOO_BIG_DIM
+            config, backend_api, messages, data_db, NUM_TOO_BIG_DIM
         ),
     )
 
@@ -1103,7 +1105,7 @@ def test_datatype_controls_column_name_checks():
             frontend_api, config, schema, WILDCARD_DIM
         ),
         python_fns=lambda: drop_backend_test_table(
-            config, backend_api, data_db, WILDCARD_DIM
+            config, backend_api, messages, data_db, WILDCARD_DIM
         ),
     )
 
@@ -1147,9 +1149,11 @@ def test_datatype_controls_column_name_checks():
         messages,
         frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, OFFLOAD_DIM),
         python_fns=[
-            lambda: drop_backend_test_table(config, backend_api, data_db, OFFLOAD_DIM),
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, OFFLOAD_DIM
+            ),
             lambda: drop_backend_test_load_table(
-                config, backend_api, load_db, OFFLOAD_DIM
+                config, backend_api, messages, load_db, OFFLOAD_DIM
             ),
         ],
     )

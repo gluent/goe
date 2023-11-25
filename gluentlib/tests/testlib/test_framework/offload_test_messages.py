@@ -58,7 +58,7 @@ class OffloadTestMessages:
         return self._messages.get_log_fh()
 
     def get_log_fh_name(self):
-        return self._messages.get_log_fh().name
+        return self._messages.get_log_fh_name()
 
     def get_messages(self):
         return self._messages.get_messages()

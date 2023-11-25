@@ -236,6 +236,9 @@ class OffloadMessages(object):
     def get_log_fh(self):
         return self._log_fh
 
+    def get_log_fh_name(self):
+        return self._log_fh.name
+
     ########################################################################################
     #   Use of log function vs info/detail/debug functions
     ########################################################################################

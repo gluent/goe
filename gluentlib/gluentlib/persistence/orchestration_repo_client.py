@@ -421,7 +421,6 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         self,
         execution_id: ExecutionId,
         command_type: str,
-        log_path: str,
         command_input: Union[str, dict],
         parameters: Union[dict, None],
     ) -> int:

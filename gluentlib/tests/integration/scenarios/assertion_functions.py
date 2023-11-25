@@ -1,6 +1,12 @@
 from typing import TYPE_CHECKING
 
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE
+from gluentlib.offload.column_metadata import SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE
+from gluentlib.offload.offload_constants import (
+    DBTYPE_ORACLE,
+    DBTYPE_BIGQUERY,
+    PART_COL_GRANULARITY_DAY,
+    PART_COL_GRANULARITY_MONTH,
+)
 from gluentlib.offload.offload_functions import convert_backend_identifier_case
 from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
 from gluentlib.offload.offload_metadata_functions import (
@@ -328,6 +334,41 @@ def offload_rowsource_split_type_assertion(
         )
         return False
     return True
+
+
+def synthetic_part_col_name(
+    granularity,
+    source_col_name,
+    synthetic_partition_digits=None,
+    partition_function=None,
+):
+    """Mock up a synthetic partition column name.
+    Use synthetic_partition_digits for numeric partitioning in order to have the granularity padded.
+    Assumes single partition column for UDFs.
+    """
+    if synthetic_partition_digits:
+        granularity = ("{:0%sd}" % synthetic_partition_digits).format(int(granularity))
+    if partition_function:
+        granularity = "U0"
+    return (
+        SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE % (granularity, source_col_name)
+    ).upper()
+
+
+def date_gl_part_column_name(backend_api, source_col_name, granularity_override=None):
+    """Return a synthetic partition column name based on backend defaults.
+    I feel this is a bit short term because we have some data types that result
+    in native partitioning rather than synthetic columns but at least the
+    function is a single place to hold this short-sighted logic.
+    """
+    if backend_api and backend_api.backend_type() == DBTYPE_BIGQUERY:
+        return synthetic_part_col_name(
+            granularity_override or PART_COL_GRANULARITY_DAY, source_col_name
+        )
+    else:
+        return synthetic_part_col_name(
+            granularity_override or PART_COL_GRANULARITY_MONTH, source_col_name
+        )
 
 
 def standard_dimension_assertion(

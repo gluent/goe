@@ -1,6 +1,12 @@
 from gluentlib.offload.backend_api import IMPALA_NOSHUFFLE_HINT
+from gluentlib.offload.column_metadata import (
+    GLUENT_TYPE_DOUBLE,
+    match_table_column,
+    str_list_of_columns,
+)
 from gluentlib.offload.offload_constants import (
     DBTYPE_BIGQUERY,
+    DBTYPE_HIVE,
     DBTYPE_IMPALA,
     DBTYPE_TERADATA,
     IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
@@ -10,6 +16,7 @@ from gluentlib.offload.offload_constants import (
     PART_COL_GRANULARITY_MONTH,
 )
 from gluentlib.offload.offload_functions import (
+    convert_backend_identifier_case,
     data_db_name,
     load_db_name,
 )
@@ -17,6 +24,7 @@ from gluentlib.offload.offload_metadata_functions import (
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
 )
+from gluentlib.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
 from gluentlib.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
@@ -32,10 +40,13 @@ from tests.integration.test_sets.stories.story_setup_functions import (
 )
 
 from tests.integration.scenarios.assertion_functions import (
+    backend_column_exists,
     backend_table_count,
     backend_table_exists,
+    date_gl_part_column_name,
     sales_based_fact_assertion,
     standard_dimension_assertion,
+    text_in_events,
 )
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
@@ -61,6 +72,175 @@ DEPENDENT_VIEW_DIM = "STORY_VIEW_DIM"
 OFFLOAD_FACT = "STORY_FACT"
 
 
+def offload_basic_dim_assertion(backend_api, messages, data_db, backend_name):
+    def check_column_exists(column_name: str, list_of_columns: list) -> bool:
+        if not match_table_column(column_name, list_of_columns):
+            messages.log(
+                "False from: match_table_column(%s, %s)"
+                % (column_name, str_list_of_columns(list_of_columns))
+            )
+            return False
+        return True
+
+    if backend_api.partition_by_column_supported():
+        if backend_api.backend_type() == DBTYPE_BIGQUERY:
+            part_cols = backend_api.get_partition_columns(data_db, backend_name)
+            if not check_column_exists("prod_id", part_cols):
+                return False
+        else:
+            # Hadoop based
+            if not backend_column_exists(
+                backend_api,
+                data_db,
+                backend_name,
+                "gl_part_000000000000001_prod_id",
+            ):
+                return False
+            if not backend_column_exists(
+                backend_api, data_db, backend_name, "gl_part_1_txn_code"
+            ):
+                return False
+
+    return True
+
+
+def offload_basic_fact_init_assertion(
+    config, backend_api, messages, data_db, backend_name
+):
+    if backend_api.partition_by_column_supported():
+        if backend_api.backend_type() in [DBTYPE_IMPALA, DBTYPE_HIVE]:
+            if not backend_column_exists(
+                config,
+                backend_api,
+                messages,
+                data_db,
+                backend_name,
+                date_gl_part_column_name(backend_api, "TIME_ID"),
+            ):
+                return False
+            if not backend_column_exists(
+                config,
+                backend_api,
+                messages,
+                data_db,
+                backend_name,
+                "gl_part_000000000000001_channel_id",
+            ):
+                return False
+    if not backend_column_exists(
+        config,
+        backend_api,
+        messages,
+        data_db,
+        backend_name,
+        "cust_id",
+        search_type=backend_api.backend_test_type_canonical_int_8(),
+    ):
+        return False
+    if not backend_column_exists(
+        config,
+        backend_api,
+        messages,
+        data_db,
+        backend_name,
+        "channel_id",
+        search_type=backend_api.backend_test_type_canonical_int_2(),
+    ):
+        return False
+    if not backend_column_exists(
+        config,
+        backend_api,
+        messages,
+        data_db,
+        backend_name,
+        "prod_id",
+        search_type=backend_api.backend_test_type_canonical_int_8(),
+    ):
+        return False
+    if backend_api.backend_type() in [DBTYPE_IMPALA, DBTYPE_HIVE]:
+        search_type1 = "decimal(18,4)"
+        search_type2 = "decimal(38,4)"
+    else:
+        search_type1 = backend_api.backend_test_type_canonical_decimal()
+        search_type2 = backend_api.backend_test_type_canonical_decimal()
+    if not backend_column_exists(
+        config,
+        backend_api,
+        messages,
+        data_db,
+        backend_name,
+        "quantity_sold",
+        search_type=search_type1,
+    ):
+        return False
+    if not backend_column_exists(
+        config,
+        backend_api,
+        messages,
+        data_db,
+        backend_name,
+        "amount_sold",
+        search_type=search_type2,
+    ):
+        return False
+    return True
+
+
+def offload_basic_fact_1st_incr_assertion(
+    config, backend_api, messages, data_db, backend_name
+):
+    backend_columns = backend_api.get_partition_columns(data_db, backend_name)
+    if not backend_columns:
+        return True
+    # Check that OffloadSourceData added an optimistic partition pruning clause when appropriate
+    granularity = (
+        PART_COL_GRANULARITY_MONTH
+        if config.target == DBTYPE_IMPALA
+        else PART_COL_GRANULARITY_DAY
+    )
+    expect_optimistic_prune_clause = (
+        backend_api.partition_column_requires_synthetic_column(
+            backend_columns[0], granularity
+        )
+    )
+    if (
+        text_in_events(messages, MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE)
+        != expect_optimistic_prune_clause
+    ):
+        messages.log(
+            "text_in_events(MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE) != %s"
+            % expect_optimistic_prune_clause
+        )
+        return False
+    return True
+
+
+def offload_basic_fact_2nd_incr_assertion(
+    config, backend_api, messages, data_db, backend_name
+):
+    if not backend_column_exists(
+        config,
+        backend_api,
+        messages,
+        data_db,
+        backend_name,
+        "cust_id",
+        search_type=backend_api.backend_test_type_canonical_int_8(),
+    ):
+        return False
+    if not backend_column_exists(
+        config,
+        backend_api,
+        messages,
+        data_db,
+        backend_name,
+        "channel_id",
+        search_type=backend_api.backend_test_type_canonical_int_4(),
+    ):
+        return False
+    return True
+
+
 def test_offload_basic_dim():
     id = "test_offload_basic_dim"
     config = cached_current_options()
@@ -72,6 +252,9 @@ def test_offload_basic_dim():
     frontend_api = get_frontend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(config, messages)
 
+    data_db, backend_name = convert_backend_identifier_case(
+        config, data_db, OFFLOAD_DIM
+    )
     copy_stats_available = backend_api.table_stats_set_supported()
 
     # Setup
@@ -138,7 +321,21 @@ def test_offload_basic_dim():
         "offload_partition_upper_value": 1000,
         "reset_backend_table": True,
     }
-    # TODO offload_story_dim_actual_partition_options(backend_api)
+    if backend_api.partition_by_column_supported():
+        if backend_api.max_partition_columns() == 1:
+            options.update(
+                {
+                    "offload_partition_columns": "prod_id",
+                    "offload_partition_granularity": "1",
+                }
+            )
+        else:
+            options.update(
+                {
+                    "offload_partition_columns": "prod_id,txn_code",
+                    "offload_partition_granularity": "1,1",
+                }
+            )
     run_offload(options, config, messages)
 
     assert backend_table_exists(
@@ -150,7 +347,7 @@ def test_offload_basic_dim():
     standard_dimension_assertion(
         config, backend_api, messages, repo_client, schema, data_db, OFFLOAD_DIM
     )
-    # TODO offload_story_dim_actual_assertion(backend_api, frontend_api, options, data_db)
+    assert offload_basic_dim_assertion(backend_api, messages, data_db, backend_name)
 
 
 def test_offload_basic_fact():
@@ -158,11 +355,14 @@ def test_offload_basic_fact():
     config = cached_current_options()
     schema = cached_default_test_user()
     data_db = data_db_name(schema, config)
-    load_db = load_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(config, messages)
+
+    data_db, backend_name = convert_backend_identifier_case(
+        config, data_db, OFFLOAD_FACT
+    )
 
     # Setup
     run_setup(
@@ -227,7 +427,8 @@ def test_offload_basic_fact():
             config, backend_api, messages, data_db, OFFLOAD_FACT
         ), "Backend table should exist"
         assert (
-            backend_table_count(config, backend_api, messages, data_db, OFFLOAD_FACT) == 0
+            backend_table_count(config, backend_api, messages, data_db, OFFLOAD_FACT)
+            == 0
         ), "Backend table should be empty"
 
     # Non-Execute offload of first partition with advanced options.
@@ -276,7 +477,9 @@ def test_offload_basic_fact():
         SALES_BASED_FACT_HV_1,
         check_backend_rowcount=True,
     )
-    # TODO [(: offload_story_fact_init_assertion(backend_api, data_db, offload_fact_be),
+    assert offload_basic_fact_init_assertion(
+        config, backend_api, messages, data_db, backend_name
+    )
 
     # Incremental Offload of Fact - Non-Execute.
     options = {
@@ -285,7 +488,9 @@ def test_offload_basic_fact():
     }
     run_offload(options, config, messages, config_overrides={"execute": False})
 
-    # TODO offload_story_fact_1st_incr_assertion(backend_api, options, data_db, offload_fact_be),
+    assert offload_basic_fact_1st_incr_assertion(
+        config, backend_api, messages, data_db, backend_name
+    )
 
     # Offloads next partition from fact table.
     options = {
@@ -344,7 +549,9 @@ def test_offload_basic_fact():
         OFFLOAD_FACT,
         SALES_BASED_FACT_HV_3,
     )
-    # TODO offload_story_fact_2nd_incr_assertion(backend_api, options, data_db, offload_fact_be)
+    assert offload_basic_fact_2nd_incr_assertion(
+        config, backend_api, messages, data_db, backend_name
+    )
 
     # Setup
     run_setup(

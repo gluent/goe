@@ -42,6 +42,7 @@ from gluentlib.offload.column_metadata import ColumnBucketInfo, \
     GLUENT_TYPE_INTEGER_38, \
     GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_TIMESTAMP_TZ
 from gluentlib.offload.offload_constants import (
+    ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
     DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE,
     DBTYPE_ORACLE, DBTYPE_MSSQL,
     FILE_STORAGE_COMPRESSION_CODEC_GZIP, FILE_STORAGE_COMPRESSION_CODEC_SNAPPY, FILE_STORAGE_COMPRESSION_CODEC_ZLIB,
@@ -141,7 +142,6 @@ TOKENISE_STRING_CHARS = [TOKENISE_STRING_CHAR_1, TOKENISE_STRING_CHAR_2, TOKENIS
 LEGACY_MAX_HYBRID_IDENTIFIER_LENGTH = 30
 
 # Used in test to identify specific warnings
-ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT = 'Using adjusted backend table name'
 CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT = 'Conflicting data identification options'
 HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = 'Including hybrid schema steps due to HWM change'
 JOIN_PUSHDOWN_HWM_EXCEPTION_TEXT = 'High water mark for join can not be influenced by --older-than-date/days, --less-than-value or --offload-predicate options'
@@ -2441,7 +2441,7 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
   rdbms_part_col_names = set(_.name.upper() for _ in offload_source_table.partition_columns) if offload_source_table.partition_columns else set()
 
   if dry_run and not offload_target_table.table_exists():
-    log('Skipping copy stats in preview mode when backend table does not exist', verbose)
+    messages.log('Skipping copy stats in preview mode when backend table does not exist', detail=VERBOSE)
     return
 
   pro_rate_stats_across_all_partitions = False
@@ -2449,7 +2449,7 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
     pro_rate_stats_across_all_partitions = True
     pro_rate_num_rows = rdbms_tab_stats['num_rows']
     pro_rate_size_bytes = rdbms_tab_stats['num_bytes']
-    log('Pro-rate row count from RDBMS table: %s' % str(pro_rate_num_rows), vverbose)
+    messages.log('Pro-rate row count from RDBMS table: %s' % str(pro_rate_num_rows), detail=VVERBOSE)
     # Full table offloads overwrite backend side stats
     additive_stats = False
   else:
@@ -2466,7 +2466,7 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
       messages.notice('RDBMS partition scheme is not a subset of backend partition scheme, pro-rating stats across all partitions')
       # sum num_rows for all offloaded partitions
       pro_rate_stats_across_all_partitions = True
-      log('Pro-rate row count from offloaded partitions: %s' % str(pro_rate_num_rows), vverbose)
+      messages.log('Pro-rate row count from offloaded partitions: %s' % str(pro_rate_num_rows), detail=VVERBOSE)
     if source_data_client.get_partition_append_predicate_type() == INCREMENTAL_PREDICATE_TYPE_LIST \
         and source_data_client.partitions_to_offload.has_default_partition():
       messages.notice('Offloading DEFAULT partition means backend partitions cannot be identified, pro-rating stats across all partitions')
@@ -2479,17 +2479,18 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
   if tab_stats['num_rows'] is None:
     messages.notice('No RDBMS table stats to copy to backend')
   elif not additive_stats and max(tab_stats['num_rows'], 0) <= max(backend_tab_stats['num_rows'], 0):
-    messages.notice('RDBMS table stats not copied to backend due to row count (RDBMS:%s <= %s:%s)' \
-        % (tab_stats['num_rows'], offload_target_table.backend_db_name(), backend_tab_stats['num_rows']))
+    messages.notice('RDBMS table stats not copied to backend due to row count (RDBMS:%s <= %s:%s)'
+                    % (tab_stats['num_rows'], offload_target_table.backend_db_name(), backend_tab_stats['num_rows']))
     ndv_cap = backend_tab_stats['num_rows']
   else:
     if additive_stats:
-      log('Copying table stats (%s:%s + RDBMS:%s)' \
-          % (offload_target_table.backend_db_name(), max(backend_tab_stats['num_rows'], 0), tab_stats['num_rows']), verbose)
+      messages.log('Copying table stats (%s:%s + RDBMS:%s)'
+                   % (offload_target_table.backend_db_name(), max(backend_tab_stats['num_rows'], 0), tab_stats['num_rows']),
+                   detail=VERBOSE)
       ndv_cap = max(backend_tab_stats['num_rows'], 0) + max(tab_stats['num_rows'], 0)
     else:
-      log('Copying table stats (RDBMS:%s -> %s:%s)' \
-          % (tab_stats['num_rows'], offload_target_table.backend_db_name(), backend_tab_stats['num_rows']), verbose)
+      messages.log('Copying table stats (RDBMS:%s -> %s:%s)'
+                   % (tab_stats['num_rows'], offload_target_table.backend_db_name(), backend_tab_stats['num_rows']), detail=VERBOSE)
       ndv_cap = tab_stats['num_rows']
     offload_target_table.set_table_stats(tab_stats, additive_stats)
 
@@ -2506,7 +2507,7 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
         num_null_factor = (float(pro_rate_num_rows + max(backend_tab_stats['num_rows'], 0)) / float(rdbms_tab_stats['num_rows']))
       else:
         num_null_factor = 1
-      log('Copying stats to %s columns' % len(rdbms_col_stats), verbose)
+      messages.log('Copying stats to %s columns' % len(rdbms_col_stats), detail=VERBOSE)
       offload_target_table.set_column_stats(rdbms_col_stats, ndv_cap, num_null_factor)
     else:
       messages.warning('Unable to copy column stats in %s v%s' % (offload_target_table.backend_db_name(), offload_target_table.target_version()))
@@ -2518,8 +2519,8 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
       messages.notice('No RDBMS table stats to copy to backend partitions')
     else:
       target_partition_count = max(len(backend_partitions), 1)
-      log('Copying stats to %s partitions%s' \
-        % (len(backend_partitions), ' (0 expected in non-execute mode)' if dry_run and not backend_partitions else ''), verbose)
+      messages.log('Copying stats to %s partitions%s' \
+        % (len(backend_partitions), ' (0 expected in non-execute mode)' if dry_run and not backend_partitions else ''), detail=VERBOSE)
 
       for partition_spec in backend_partitions:
         part_stats.append({'partition_spec': partition_spec,
@@ -2540,9 +2541,9 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
     # regenerate rdbms_only_expr in the same order as the RDBMS partition keys
     rdbms_only_expr = [rdbms_only_expr_by_rdbms_col[col_name] for col_name in rdbms_part_col_names]
     filter_synth_col_names = [col_name.lower() for col_name, _, _, _ in rdbms_only_expr]
-    log('Filtering backend partitions on columns: %s' % filter_synth_col_names, vverbose)
+    messages.log('Filtering backend partitions on columns: %s' % filter_synth_col_names, detail=VVERBOSE)
 
-    log('Building partition filters based on predicate type: %s' % source_data_client.get_partition_append_predicate_type(), vverbose)
+    messages.log('Building partition filters based on predicate type: %s' % source_data_client.get_partition_append_predicate_type(), detail=VVERBOSE)
     if source_data_client.get_partition_append_predicate_type() in [INCREMENTAL_PREDICATE_TYPE_RANGE, INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE]:
       prior_hvs = get_prior_offloaded_hv(offload_source_table, source_data_client, offload_operation=offload_operation)
       lower_hvs = prior_hvs[1] if prior_hvs else None
@@ -2552,7 +2553,7 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
       upper_hvs = new_hvs[1] if new_hvs else None
       upper_hv_tuple = comparision_tuple_from_hv(upper_hvs, rdbms_only_expr)
 
-      log('Filtering backend partitions by range: %s -> %s' % (lower_hv_tuple, upper_hv_tuple), vverbose)
+      messages.log('Filtering backend partitions by range: %s -> %s' % (lower_hv_tuple, upper_hv_tuple), detail=VVERBOSE)
 
       partitions_affected_by_offload = filter_for_affected_partitions_range(backend_partitions, filter_synth_col_names, lower_hv_tuple, upper_hv_tuple)
     else:
@@ -2564,12 +2565,12 @@ def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, sour
       # LIST can only have singular partition keys, we multiply this up for each HV
       hv_tuples = [comparision_tuple_from_hv([hv], rdbms_only_expr) for hv in new_hvs]
 
-      log('Filtering backend partitions by list: %s' % str(new_hvs), detail=vverbose)
+      messages.log('Filtering backend partitions by list: %s' % str(new_hvs), detail=VVERBOSE)
 
       partitions_affected_by_offload = filter_for_affected_partitions_list(backend_partitions, filter_synth_col_names, hv_tuples)
 
-    log('Copying stats to %s partitions%s' \
-      % (len(partitions_affected_by_offload), ' (0 expected in non-execute mode)' if dry_run else ''), verbose)
+    messages.log('Copying stats to %s partitions%s' \
+      % (len(partitions_affected_by_offload), ' (0 expected in non-execute mode)' if dry_run else ''), detail=VERBOSE)
 
     # Rather than pro-rate values using offload min/max HV we could loop through RDBMS partitions being more specific. This
     # would cater for skew between partitions. However it could create confusing output with the same partitions being
@@ -2614,7 +2615,7 @@ def offload_operation_logic(offload_operation, offload_source_table, offload_tar
   """
 
   if offload_operation.reset_backend_table and not offload_operation.force:
-    log('Enabling force mode based on --reset-backend-table', detail=vverbose)
+    messages.log('Enabling force mode based on --reset-backend-table', detail=VVERBOSE)
     offload_operation.force = True
 
   # Cache some source data attributes in offload_operation to carry through rest of offload logic
@@ -2771,7 +2772,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
         raise OptionError('Unsupported character(s) in Oracle schema name.')
 
   if not offload_source_table.columns:
-    log('No columns found for table: %s.%s' % (offload_source_table.owner, offload_source_table.table_name))
+    messages.log('No columns found for table: %s.%s' % (offload_source_table.owner, offload_source_table.table_name))
     return False
 
   if not offload_source_table.check_data_types_supported(offload_target_table.max_datetime_scale(),
@@ -2874,7 +2875,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
                                           source_data_client,
                                           messages,
                                           data_gov_client)
-  log('%s: %s' % (TOTAL_ROWS_OFFLOADED_LOG_TEXT, str(rows_offloaded)), detail=VVERBOSE)
+  messages.log('%s: %s' % (TOTAL_ROWS_OFFLOADED_LOG_TEXT, str(rows_offloaded)), detail=VVERBOSE)
 
   if not offload_operation.preserve_load_table:
     offload_target_table.cleanup_staging_area_step()
@@ -2910,7 +2911,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
       offload_data_verification(offload_source_table, offload_target_table, offload_operation,
                                 offload_options, messages, source_data_client)
     else:
-      log('Skipped data verification, no data was transferred', verbose)
+      messages.log('Skipped data verification, no data was transferred', detail=VERBOSE)
 
   return True
 
@@ -2922,14 +2923,14 @@ def get_offload_target_table(offload_operation, offload_options, messages, metad
     backend_table = get_backend_table_from_metadata(existing_metadata, offload_options, messages,
                                                     offload_operation=offload_operation)
     if (backend_table.db_name, backend_table.table_name) != (offload_operation.target_owner, offload_operation.target_name):
-      log('Re-using backend table name from metadata: %s.%s'
-          % (backend_table.db_name, backend_table.table_name), detail=vverbose)
+      messages.log('Re-using backend table name from metadata: %s.%s'
+          % (backend_table.db_name, backend_table.table_name), detail=VVERBOSE)
 
   else:
     db_name = data_db_name(offload_operation.target_owner, offload_options)
     db_name, table_name = convert_backend_identifier_case(offload_options, db_name, offload_operation.target_name)
     if (db_name, table_name) != (offload_operation.target_owner, offload_operation.target_name):
-      log(f'{ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT}: {db_name}.{table_name}', detail=vverbose)
+      messages.log(f'{ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT}: {db_name}.{table_name}', detail=VVERBOSE)
     backend_table = backend_table_factory(db_name, table_name, offload_options.target, offload_options,
                                           messages, orchestration_operation=offload_operation)
   return backend_table

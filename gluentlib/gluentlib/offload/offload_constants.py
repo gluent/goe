@@ -109,6 +109,7 @@ OFFLOAD_TRANSPORT_GCP = "GCP"
 OFFLOAD_TRANSPORT_SQOOP = "SQOOP"
 
 # Exception markers
+ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT = "Using adjusted backend table name"
 INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT = "Invalid data type conversion for column"
 IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT = (
     "INCREMENTAL_PREDICATE_TYPE cannot be changed for offloaded table"

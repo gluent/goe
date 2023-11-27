@@ -25,7 +25,7 @@ class OffloadTestMessages:
         log_file = self.get_log_fh_name()
         if not log_file:
             return []
-        start_found = False if search_from_text else True
+        start_found = bool(not search_from_text)
         matches = []
         lf = open(log_file, "r")
         for line in lf:

@@ -2,6 +2,7 @@ from random import randint
 from textwrap import dedent
 
 from numpy import datetime64
+import pytest
 
 from gluentlib.offload.backend_table import (
     CAST_VALIDATION_EXCEPTION_TEXT,
@@ -99,6 +100,21 @@ OFFLOAD_DIM = "STORY_DC_DIM"
 
 # TODO nj@2020-03-31 when GOE-1528 is fixed we should change bad years below from 0001 to -1000
 BAD_DT = "0001-01-01"
+
+
+@pytest.fixture
+def config():
+    return cached_current_options()
+
+
+@pytest.fixture
+def schema():
+    return cached_default_test_user()
+
+
+@pytest.fixture
+def data_db(schema, config):
+    return data_db_name(schema, config)
 
 
 def log_test_marker(messages, test_id):
@@ -597,11 +613,8 @@ def unicode_assertion(backend_api, data_db, backend_name, asserted_unicode_colum
     return True
 
 
-def test_numeric_controls():
+def test_numeric_controls(config, schema, data_db):
     id = "test_numeric_controls"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages)
@@ -790,11 +803,8 @@ def test_numeric_controls():
     )
 
 
-def test_date_controls():
+def test_date_controls(config, schema, data_db):
     id = "test_date_controls"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(
@@ -860,11 +870,8 @@ def test_date_controls():
     )
 
 
-def test_date_sampling():
+def test_date_sampling(config, schema, data_db):
     id = "test_date_sampling"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(
@@ -958,11 +965,8 @@ def test_date_sampling():
     )
 
 
-def test_precision_scale_overflow():
+def test_precision_scale_overflow(config, schema, data_db):
     id = "test_precision_scale_overflow"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(
@@ -1079,11 +1083,8 @@ def test_precision_scale_overflow():
     }
 
 
-def test_datatype_controls_column_name_checks():
+def test_datatype_controls_column_name_checks(config, schema, data_db):
     id = "test_datatype_controls_column_name_checks"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     load_db = load_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)

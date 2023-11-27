@@ -1,6 +1,7 @@
+import pytest
+
 from gluentlib.offload.backend_api import IMPALA_NOSHUFFLE_HINT
 from gluentlib.offload.column_metadata import (
-    GLUENT_TYPE_DOUBLE,
     match_table_column,
     str_list_of_columns,
 )
@@ -70,6 +71,21 @@ from tests.testlib.test_framework.test_functions import (
 OFFLOAD_DIM = "STORY_DIM"
 DEPENDENT_VIEW_DIM = "STORY_VIEW_DIM"
 OFFLOAD_FACT = "STORY_FACT"
+
+
+@pytest.fixture
+def config():
+    return cached_current_options()
+
+
+@pytest.fixture
+def schema():
+    return cached_default_test_user()
+
+
+@pytest.fixture
+def data_db(schema, config):
+    return data_db_name(schema, config)
 
 
 def offload_basic_dim_assertion(backend_api, messages, data_db, backend_name):
@@ -241,11 +257,8 @@ def offload_basic_fact_2nd_incr_assertion(
     return True
 
 
-def test_offload_basic_dim():
+def test_offload_basic_dim(config, schema, data_db):
     id = "test_offload_basic_dim"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     load_db = load_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
@@ -350,11 +363,8 @@ def test_offload_basic_dim():
     assert offload_basic_dim_assertion(backend_api, messages, data_db, backend_name)
 
 
-def test_offload_basic_fact():
+def test_offload_basic_fact(config, schema, data_db):
     id = "test_offload_basic_fact"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages)

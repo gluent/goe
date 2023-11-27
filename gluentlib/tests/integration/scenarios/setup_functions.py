@@ -40,3 +40,54 @@ def drop_backend_test_load_table(options, backend_api, test_messages, db, table_
     if backend_api and not backend_api.load_db_transport_supported():
         return
     drop_backend_test_table(options, backend_api, test_messages, db, table_name)
+
+
+def gen_drop_sales_based_fact_partition_ddls(
+    schema,
+    table_name,
+    hv_string_list,
+    frontend_api,
+    truncate_instead_of_drop=False,
+    dropping_oldest=None,
+) -> list:
+    """hv_string_list in format YYYY-MM-DD
+    dropping_oldest=True gives frontends with no DROP PARTITION command an opportunity to re-partition for
+    the same effect.
+    """
+    if truncate_instead_of_drop:
+        return frontend_api.sales_based_fact_truncate_partition_ddl(
+            schema, table_name, hv_string_list=hv_string_list
+        )
+    else:
+        return frontend_api.sales_based_fact_drop_partition_ddl(
+            schema,
+            table_name,
+            hv_string_list=hv_string_list,
+            dropping_oldest=dropping_oldest,
+        )
+
+
+def get_sales_based_fact_partition_list(
+    schema, table_name, hv_string_list, frontend_api
+) -> list:
+    """Return a list of partitions matching a date high value string, used for SALES based tests
+    hv_string_list in format YYYY-MM-DD
+    """
+    if not frontend_api:
+        return []
+    if type(hv_string_list) == str:
+        hv_string_list = [hv_string_list]
+
+    partitions = frontend_api.frontend_table_partition_list(
+        schema, table_name, hv_string_list=hv_string_list
+    )
+    return partitions
+
+
+def sales_based_fact_partition_exists(schema, table_name, hv_string_list, frontend_api):
+    """hv_string_list in format YYYY-MM-DD"""
+    return bool(
+        get_sales_based_fact_partition_list(
+            schema, table_name, hv_string_list, frontend_api
+        )
+    )

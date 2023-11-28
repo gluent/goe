@@ -7,9 +7,8 @@ SET SERVEROUTPUT ON
 
 DECLARE
 
-    c_schema        CONSTANT VARCHAR2(128) := SYS_CONTEXT('userenv','current_schema');
-    c_role          CONSTANT VARCHAR2(30) := 'GLUENT_OFFLOAD_ROLE';
-    c_grantee       CONSTANT VARCHAR2(128) := '&gluent_db_app_user';
+    c_owner   CONSTANT VARCHAR2(128) := SYS_CONTEXT('userenv','current_schema');
+    c_grantee CONSTANT VARCHAR2(128) := '&goe_db_app_user';
 
     TYPE args_ntt IS TABLE OF VARCHAR2(130);
 
@@ -30,12 +29,12 @@ DECLARE
 
 BEGIN
 
-    -- Gluent Application User grants...
+    -- GOE Application User grants...
     FOR r IN ( SELECT o.owner
                ,      o.object_name
                ,      o.object_type
                FROM   dba_objects o
-               WHERE  o.owner = c_schema
+               WHERE  o.owner = c_owner
                AND    o.object_type IN ('TYPE','PACKAGE','FUNCTION','PROCEDURE','VIEW')
                ORDER  BY
                       o.object_type

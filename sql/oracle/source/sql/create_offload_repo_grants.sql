@@ -7,9 +7,8 @@ SET SERVEROUTPUT ON
 
 DECLARE
 
-    c_schema        CONSTANT VARCHAR2(128) := '&gluent_db_repo_user';
-    c_role          CONSTANT VARCHAR2(30) := 'GLUENT_OFFLOAD_REPO_ROLE';
-    c_grantee       CONSTANT VARCHAR2(128) := '&gluent_db_adm_user';
+    c_owner   CONSTANT VARCHAR2(128) := '&goe_db_repo_user';
+    c_grantee CONSTANT VARCHAR2(128) := '&goe_db_adm_user';
 
     TYPE args_ntt IS TABLE OF VARCHAR2(130);
 
@@ -30,25 +29,19 @@ DECLARE
 
 BEGIN
 
-    -- Gluent Repository object grants to OFFLOAD_REPO_ROLE and ADMIN schema...
+    -- GOE repo object grants to admin schema...
     FOR r IN ( SELECT o.owner
                ,      o.object_name
                ,      o.object_type
                FROM   dba_objects o
-               WHERE  o.owner = c_schema
+               WHERE  o.owner = c_owner
                AND    o.object_type IN ('VIEW', 'PACKAGE', 'SEQUENCE', 'TYPE')
                ORDER  BY
                       o.object_type
                ,      o.object_name )
     LOOP
-        -- Role grants...
         exec_sql( p_sql  => 'GRANT %1 ON %2.%3 TO %4',
-                  p_args => args_ntt(CASE WHEN r.object_type IN ('SEQUENCE', 'VIEW') THEN 'SELECT' ELSE 'EXECUTE' END, r.owner, r.object_name, c_role) );
-        -- Schema grants...
-        IF r.object_type IN ('PACKAGE','TYPE') THEN
-            exec_sql( p_sql  => 'GRANT %1 ON %2.%3 TO %4',
-                      p_args => args_ntt('EXECUTE', r.owner, r.object_name, c_grantee) );
-        END IF;
+                  p_args => args_ntt(CASE WHEN r.object_type IN ('SEQUENCE', 'VIEW') THEN 'SELECT' ELSE 'EXECUTE' END, r.owner, r.object_name, c_grantee) );
     END LOOP;
 
 END;

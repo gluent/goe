@@ -57,9 +57,13 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
         assert hybrid_owner
         assert hybrid_name
         sql = dedent(f"""\
-            DELETE {self._repo_user}.offload_metadata
-            WHERE  hybrid_view = ?
-            AND    hybrid_view = ?
+            DELETE {self._repo_user}.offload_metadata om
+            WHERE  om.frontend_object_id = (
+                SELECT fo.id
+                FROM   {self._repo_user}.frontend_object fo
+                WHERE  fo.object_owner = ?
+                AND    fo.object_name = ?
+                );
             """)
         self._frontend_api.execute_dml(sql, query_params=[hybrid_owner, hybrid_name], log_level=VERBOSE)
 
@@ -71,9 +75,13 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
         projection = ','.join(ALL_METADATA_TABLE_ATTRIBUTES)
         sql = dedent(f"""\
             SELECT {projection}
-            FROM   {self._repo_user}.offload_metadata
-            WHERE  hybrid_owner = ?
-            AND    hybrid_view = ?
+            FROM   {self._repo_user}.offload_metadata om
+            WHERE  om.frontend_object_id = (
+                SELECT fo.id
+                FROM   {self._repo_user}.frontend_object fo
+                WHERE  fo.object_owner = ?
+                AND    fo.object_name = ?
+                );
             """)
         row = self._frontend_api.execute_query_fetch_one(sql, query_params=[hybrid_owner, hybrid_name],
                                                          log_level=VVERBOSE)

@@ -59,6 +59,7 @@ from gluentlib.persistence.orchestration_metadata import (
     TRANSFORMATIONS,
     UPDATABLE_TRIGGER,
     UPDATABLE_VIEW,
+    COMMAND_EXECUTION,
     OrchestrationMetadata,
 )
 from gluentlib.persistence.orchestration_repo_client import (
@@ -132,7 +133,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             return_type_name=self._get_ora_type_object_name(
                 OFFLOAD_METADATA_ORA_TYPE_NAME
             ),
-            arg_list=[hybrid_owner, hybrid_name, METADATA_SOURCE_TYPE_VIEW],
+            arg_list=[hybrid_owner, hybrid_name],
             log_level=VVERBOSE,
         )
         if metadata_obj:
@@ -158,108 +159,82 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             (owner_override or self._repo_user).upper(), repo_type_name.upper()
         )
 
-    def _metadata_dict_to_ora_object(self, metadata_dict):
+    # TODO: Issue 18: fold execution_id into metadata and not have it as a global in offload_table and 
+    #                 a separate arg to several metadata functions...
+    def _metadata_dict_to_ora_object(self, metadata_dict, execution_id: ExecutionId):
         """
         Used to convert a Python dict of metadata to an Oracle object type ready for saving to the database.
         """
         logger.debug(f"Converting metadata: {metadata_dict}")
         metadata_obj = self._get_offload_metadata_ora_type_object()
-        metadata_obj.HYBRID_OWNER = metadata_dict[HYBRID_OWNER]
-        metadata_obj.HYBRID_VIEW = metadata_dict[HYBRID_VIEW]
-        metadata_obj.HYBRID_VIEW_TYPE = metadata_dict[OBJECT_TYPE]
-        metadata_obj.HYBRID_EXTERNAL_TABLE = metadata_dict[EXTERNAL_TABLE]
-        metadata_obj.HADOOP_OWNER = metadata_dict[HADOOP_OWNER]
-        metadata_obj.HADOOP_TABLE = metadata_dict[HADOOP_TABLE]
+        metadata_obj.FRONTEND_OBJECT_OWNER = metadata_dict[OFFLOADED_OWNER]
+        metadata_obj.FRONTEND_OBJECT_NAME = metadata_dict[OFFLOADED_TABLE]
+        metadata_obj.BACKEND_OBJECT_OWNER = metadata_dict[HADOOP_OWNER]
+        metadata_obj.BACKEND_OBJECT_NAME = metadata_dict[HADOOP_TABLE]
         metadata_obj.OFFLOAD_TYPE = metadata_dict[OFFLOAD_TYPE]
-        metadata_obj.OFFLOADED_OWNER = metadata_dict[OFFLOADED_OWNER]
-        metadata_obj.OFFLOADED_TABLE = metadata_dict[OFFLOADED_TABLE]
-        metadata_obj.INCREMENTAL_KEY = metadata_dict[INCREMENTAL_KEY]
-        metadata_obj.INCREMENTAL_HIGH_VALUE = metadata_dict[INCREMENTAL_HIGH_VALUE]
-        metadata_obj.INCREMENTAL_RANGE = metadata_dict[INCREMENTAL_RANGE]
-        metadata_obj.INCREMENTAL_PREDICATE_TYPE = metadata_dict[
-            INCREMENTAL_PREDICATE_TYPE
-        ]
+        metadata_obj.OFFLOAD_RANGE_TYPE = metadata_dict[INCREMENTAL_RANGE]
+        metadata_obj.OFFLOAD_KEY = metadata_dict[INCREMENTAL_KEY]
+        metadata_obj.OFFLOAD_HIGH_VALUE = metadata_dict[INCREMENTAL_HIGH_VALUE]
+        metadata_obj.OFFLOAD_PREDICATE_TYPE = metadata_dict[INCREMENTAL_PREDICATE_TYPE]
         if metadata_dict[INCREMENTAL_PREDICATE_VALUE] is None:
-            metadata_obj.INCREMENTAL_PREDICATE_VALUE = metadata_dict[
+            metadata_obj.OFFLOAD_PREDICATE_VALUE = metadata_dict[
                 INCREMENTAL_PREDICATE_VALUE
             ]
         else:
-            metadata_obj.INCREMENTAL_PREDICATE_VALUE = (
+            metadata_obj.OFFLOAD_PREDICATE_VALUE = (
                 self._metadata_dict_to_json_string(
                     metadata_dict[INCREMENTAL_PREDICATE_VALUE]
                 )
             )
-        metadata_obj.OFFLOAD_BUCKET_COLUMN = metadata_dict[OFFLOAD_BUCKET_COLUMN]
-        metadata_obj.OFFLOAD_BUCKET_METHOD = metadata_dict[OFFLOAD_BUCKET_METHOD]
-        metadata_obj.OFFLOAD_BUCKET_COUNT = metadata_dict[OFFLOAD_BUCKET_COUNT]
-        metadata_obj.OFFLOAD_VERSION = metadata_dict[OFFLOAD_VERSION]
+        metadata_obj.OFFLOAD_HASH_COLUMN = metadata_dict[OFFLOAD_BUCKET_COLUMN]
         metadata_obj.OFFLOAD_SORT_COLUMNS = metadata_dict[OFFLOAD_SORT_COLUMNS]
-        if isinstance(metadata_dict[TRANSFORMATIONS], dict):
-            metadata_obj.TRANSFORMATIONS = self._metadata_dict_to_json_string(
-                metadata_dict[TRANSFORMATIONS]
-            )
-        else:
-            metadata_obj.TRANSFORMATIONS = metadata_dict[TRANSFORMATIONS]
-        metadata_obj.OBJECT_HASH = metadata_dict[OBJECT_HASH]
-        metadata_obj.OFFLOAD_SCN = metadata_dict[OFFLOAD_SCN]
-        metadata_obj.OFFLOAD_PARTITION_FUNCTIONS = metadata_dict[
-            OFFLOAD_PARTITION_FUNCTIONS
-        ]
-        metadata_obj.IU_KEY_COLUMNS = metadata_dict[IU_KEY_COLUMNS]
-        metadata_obj.IU_EXTRACTION_METHOD = metadata_dict[IU_EXTRACTION_METHOD]
-        metadata_obj.IU_EXTRACTION_SCN = metadata_dict[IU_EXTRACTION_SCN]
-        metadata_obj.IU_EXTRACTION_TIME = metadata_dict[IU_EXTRACTION_TIME]
-        metadata_obj.CHANGELOG_TABLE = metadata_dict[CHANGELOG_TABLE]
-        metadata_obj.CHANGELOG_TRIGGER = metadata_dict[CHANGELOG_TRIGGER]
-        metadata_obj.CHANGELOG_SEQUENCE = metadata_dict[CHANGELOG_SEQUENCE]
-        metadata_obj.UPDATABLE_VIEW = metadata_dict[UPDATABLE_VIEW]
-        metadata_obj.UPDATABLE_TRIGGER = metadata_dict[UPDATABLE_TRIGGER]
+        metadata_obj.OFFLOAD_PARTITION_FUNCTIONS = metadata_dict[OFFLOAD_PARTITION_FUNCTIONS]
+        metadata_obj.COMMAND_EXECUTION = execution_id.as_bytes()
+        metadata_obj.OFFLOAD_VERSION = metadata_dict[OFFLOAD_VERSION]
         return metadata_obj
 
     def _ora_object_to_metadata_dict(self, metadata_obj):
         """Converts the Oracle object type to a Python dict of metadata to be used in orchestration."""
         metadata_dict = {
-            HYBRID_OWNER: metadata_obj.HYBRID_OWNER,
-            HYBRID_VIEW: metadata_obj.HYBRID_VIEW,
-            OBJECT_TYPE: metadata_obj.HYBRID_VIEW_TYPE,
-            EXTERNAL_TABLE: metadata_obj.HYBRID_EXTERNAL_TABLE,
-            HADOOP_OWNER: metadata_obj.HADOOP_OWNER,
-            HADOOP_TABLE: metadata_obj.HADOOP_TABLE,
-            OFFLOAD_TYPE: metadata_obj.OFFLOAD_TYPE or None,
-            OFFLOADED_OWNER: metadata_obj.OFFLOADED_OWNER or None,
-            OFFLOADED_TABLE: metadata_obj.OFFLOADED_TABLE or None,
-            INCREMENTAL_KEY: metadata_obj.INCREMENTAL_KEY or None,
-            INCREMENTAL_HIGH_VALUE: metadata_obj.INCREMENTAL_HIGH_VALUE.read()
-            if metadata_obj.INCREMENTAL_HIGH_VALUE
+            HYBRID_OWNER: metadata_obj.FRONTEND_OBJECT_OWNER,
+            HYBRID_VIEW: metadata_obj.FRONTEND_OBJECT_NAME,
+            OBJECT_TYPE: None,
+            EXTERNAL_TABLE: None,
+            HADOOP_OWNER: metadata_obj.BACKEND_OBJECT_OWNER,
+            HADOOP_TABLE: metadata_obj.BACKEND_OBJECT_NAME,
+            OFFLOAD_TYPE: metadata_obj.OFFLOAD_TYPE,
+            OFFLOADED_OWNER: metadata_obj.FRONTEND_OBJECT_OWNER,
+            OFFLOADED_TABLE: metadata_obj.FRONTEND_OBJECT_NAME,
+            INCREMENTAL_KEY: metadata_obj.OFFLOAD_KEY or None,
+            INCREMENTAL_HIGH_VALUE: metadata_obj.OFFLOAD_HIGH_VALUE.read()
+            if metadata_obj.OFFLOAD_HIGH_VALUE
             else None,
-            INCREMENTAL_RANGE: metadata_obj.INCREMENTAL_RANGE or None,
-            INCREMENTAL_PREDICATE_TYPE: metadata_obj.INCREMENTAL_PREDICATE_TYPE or None,
+            INCREMENTAL_RANGE: metadata_obj.OFFLOAD_RANGE_TYPE or None,
+            INCREMENTAL_PREDICATE_TYPE: metadata_obj.OFFLOAD_PREDICATE_TYPE or None,
             INCREMENTAL_PREDICATE_VALUE: json.loads(
-                metadata_obj.INCREMENTAL_PREDICATE_VALUE.read()
+                metadata_obj.OFFLOAD_PREDICATE_VALUE.read()
             )
-            if metadata_obj.INCREMENTAL_PREDICATE_VALUE
+            if metadata_obj.OFFLOAD_PREDICATE_VALUE
             else None,
             OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_BUCKET_COLUMN or None,
-            OFFLOAD_BUCKET_METHOD: metadata_obj.OFFLOAD_BUCKET_METHOD or None,
-            OFFLOAD_BUCKET_COUNT: metadata_obj.OFFLOAD_BUCKET_COUNT or None,
-            OFFLOAD_VERSION: metadata_obj.OFFLOAD_VERSION or None,
+            OFFLOAD_BUCKET_METHOD: None,
+            OFFLOAD_BUCKET_COUNT: None,
+            OFFLOAD_VERSION: metadata_obj.OFFLOAD_VERSION,
             OFFLOAD_SORT_COLUMNS: metadata_obj.OFFLOAD_SORT_COLUMNS or None,
-            TRANSFORMATIONS: json.loads(metadata_obj.TRANSFORMATIONS)
-            if metadata_obj.TRANSFORMATIONS
-            else None,
-            OBJECT_HASH: metadata_obj.OBJECT_HASH or None,
-            OFFLOAD_SCN: metadata_obj.OFFLOAD_SCN,
-            OFFLOAD_PARTITION_FUNCTIONS: metadata_obj.OFFLOAD_PARTITION_FUNCTIONS
-            or None,  # noqa: W503
-            IU_KEY_COLUMNS: metadata_obj.IU_KEY_COLUMNS or None,
-            IU_EXTRACTION_METHOD: metadata_obj.IU_EXTRACTION_METHOD or None,
-            IU_EXTRACTION_SCN: metadata_obj.IU_EXTRACTION_SCN,
-            IU_EXTRACTION_TIME: metadata_obj.IU_EXTRACTION_TIME,
-            CHANGELOG_TABLE: metadata_obj.CHANGELOG_TABLE or None,
-            CHANGELOG_TRIGGER: metadata_obj.CHANGELOG_TRIGGER or None,
-            CHANGELOG_SEQUENCE: metadata_obj.CHANGELOG_SEQUENCE or None,
-            UPDATABLE_VIEW: metadata_obj.UPDATABLE_VIEW or None,
-            UPDATABLE_TRIGGER: metadata_obj.UPDATABLE_TRIGGER or None,
+            TRANSFORMATIONS: None,
+            OBJECT_HASH: None,
+            OFFLOAD_SCN: None,
+            OFFLOAD_PARTITION_FUNCTIONS: metadata_obj.OFFLOAD_PARTITION_FUNCTIONS or None,
+            IU_KEY_COLUMNS: None,
+            IU_EXTRACTION_METHOD: None,
+            IU_EXTRACTION_SCN: None,
+            IU_EXTRACTION_TIME: None,
+            CHANGELOG_TABLE: None,
+            CHANGELOG_TRIGGER: None,
+            CHANGELOG_SEQUENCE: None,
+            UPDATABLE_VIEW: None,
+            UPDATABLE_TRIGGER: None,
+            COMMAND_EXECUTION: metadata_obj.COMMAND_EXECUTION,
         }
         return metadata_dict
 
@@ -279,7 +254,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             return partitions_ntt
         partition_obj = self._get_ora_type_object(OFFLOAD_PARTITION_ORA_TYPE_NAME)
         for partition in offload_partitions:
-            partition_obj.DATABASE_NAME = frontend_schema
+            partition_obj.TABLE_OWNER = frontend_schema
             partition_obj.TABLE_NAME = frontend_table_name
             partition_obj.PARTITION_NAME = partition.partition_name
             partition_obj.PARTITION_LEVEL = offload_partition_level
@@ -305,10 +280,10 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         hybrid_name = hybrid_name.upper()
         if isinstance(metadata, OrchestrationMetadata):
             metadata = metadata.as_dict()
-        ora_metadata = self._metadata_dict_to_ora_object(metadata)
+        ora_metadata = self._metadata_dict_to_ora_object(metadata, execution_id)
         self._frontend_api.execute_function(
             "offload_repo.save_offload_metadata",
-            arg_list=[hybrid_owner, hybrid_name, ora_metadata, execution_id.as_bytes()],
+            arg_list=[hybrid_owner, hybrid_name, ora_metadata],
             not_when_dry_running=True,
         )
         # FrontendApi logging won't show metadata values due to being in an Oracle type. So we log it here for

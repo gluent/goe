@@ -69,6 +69,11 @@ source ./.venv/bin/activate
 PYTHONPATH=${PWD}:${PWD}/scripts
 ```
 
+Extra packages for developers:
+```
+python3 -m pip install black pytest pytest-xdist
+```
+
 Running an Offload:
 ```
 cd scripts

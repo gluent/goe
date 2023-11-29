@@ -431,7 +431,6 @@ def sales_based_fact_assertion(
     hwm_literal: str,
     backend_db=None,
     backend_table=None,
-    check_rowcount=True,
     offload_pattern=OFFLOAD_PATTERN_90_10,
     incremental_key="TIME_ID",
     incremental_range=None,
@@ -514,7 +513,12 @@ def sales_based_fact_assertion(
         and backend_api.synthetic_partitioning_supported()
     ):
         if not backend_column_exists(
-            backend_api, data_db, backend_table, synthetic_partition_column_name
+            config,
+            backend_api,
+            messages,
+            data_db,
+            backend_table,
+            synthetic_partition_column_name,
         ):
             return False
 

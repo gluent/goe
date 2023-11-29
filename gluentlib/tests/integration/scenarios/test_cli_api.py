@@ -1,7 +1,10 @@
 import os
 
+import pytest
+
 from gluentlib.config import orchestration_defaults
 from gluentlib.offload.offload_functions import (
+    convert_backend_identifier_case,
     data_db_name,
 )
 
@@ -33,6 +36,23 @@ from tests.testlib.test_framework.test_functions import (
 
 CLI_DIM = "STORY_CLI_DIM"
 CLI_FACT = "STORY_CLI_FACT"
+
+
+@pytest.fixture
+def config():
+    return cached_current_options()
+
+
+@pytest.fixture
+def schema():
+    return cached_default_test_user()
+
+
+@pytest.fixture
+def data_db(schema, config):
+    data_db = data_db_name(schema, config)
+    data_db = convert_backend_identifier_case(config, data_db)
+    return data_db
 
 
 def get_bin_path():
@@ -70,9 +90,8 @@ def goe_shell_command(list_of_args):
     return list_of_args + suffix_args
 
 
-def test_connect():
+def test_connect(config):
     id = "test_connect"
-    config = cached_current_options()
     messages = get_test_messages(config, id)
     bin_path = get_bin_path()
 
@@ -85,9 +104,8 @@ def test_connect():
     )
 
 
-def test_offload_opts():
+def test_offload_opts(config):
     id = "test_offload_opts"
-    config = cached_current_options()
     messages = get_test_messages(config, id)
     bin_path = get_bin_path()
 
@@ -102,11 +120,8 @@ def test_offload_opts():
     )
 
 
-def test_offload_full():
+def test_offload_full(config, schema, data_db):
     id = "test_offload_full"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages)
@@ -196,11 +211,8 @@ def test_offload_full():
     ), "The backend table should exist"
 
 
-def test_offload_rpa():
+def test_offload_rpa(config, schema, data_db):
     id = "test_offload_rpa"
-    config = cached_current_options()
-    schema = cached_default_test_user()
-    data_db = data_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages)

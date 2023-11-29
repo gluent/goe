@@ -85,7 +85,9 @@ def schema():
 
 @pytest.fixture
 def data_db(schema, config):
-    return data_db_name(schema, config)
+    data_db = data_db_name(schema, config)
+    data_db = convert_backend_identifier_case(config, data_db)
+    return data_db
 
 
 def offload_basic_dim_assertion(backend_api, messages, data_db, backend_name):
@@ -265,9 +267,7 @@ def test_offload_basic_dim(config, schema, data_db):
     frontend_api = get_frontend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(config, messages)
 
-    data_db, backend_name = convert_backend_identifier_case(
-        config, data_db, OFFLOAD_DIM
-    )
+    backend_name = convert_backend_identifier_case(config, OFFLOAD_DIM)
     copy_stats_available = backend_api.table_stats_set_supported()
 
     # Setup
@@ -370,9 +370,7 @@ def test_offload_basic_fact(config, schema, data_db):
     frontend_api = get_frontend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(config, messages)
 
-    data_db, backend_name = convert_backend_identifier_case(
-        config, data_db, OFFLOAD_FACT
-    )
+    backend_name = convert_backend_identifier_case(config, OFFLOAD_FACT)
 
     # Setup
     run_setup(
@@ -593,5 +591,4 @@ def test_offload_basic_fact(config, schema, data_db):
         data_db,
         OFFLOAD_FACT,
         SALES_BASED_FACT_HV_4,
-        check_rowcount=False,
     )

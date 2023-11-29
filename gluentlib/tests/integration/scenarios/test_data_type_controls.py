@@ -114,7 +114,16 @@ def schema():
 
 @pytest.fixture
 def data_db(schema, config):
-    return data_db_name(schema, config)
+    data_db = data_db_name(schema, config)
+    data_db = convert_backend_identifier_case(config, data_db)
+    return data_db
+
+
+@pytest.fixture
+def load_db(schema, config):
+    load_db = load_db_name(schema, config)
+    load_db = convert_backend_identifier_case(config, load_db)
+    return load_db
 
 
 def log_test_marker(messages, test_id):
@@ -1083,15 +1092,13 @@ def test_precision_scale_overflow(config, schema, data_db):
     }
 
 
-def test_datatype_controls_column_name_checks(config, schema, data_db):
+def test_datatype_controls_column_name_checks(config, schema, data_db, load_db):
     id = "test_datatype_controls_column_name_checks"
-    load_db = load_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(
         config, messages, trace_action=f"FrontendTestingApi({id})"
     )
-    data_db, load_db = convert_backend_identifier_case(config, data_db, load_db)
     wildcard_dim_be, offload_dim_be = convert_backend_identifier_case(
         config, WILDCARD_DIM, OFFLOAD_DIM
     )

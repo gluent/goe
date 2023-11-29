@@ -48,10 +48,7 @@ from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
 )
-from tests.testlib.test_framework.test_constants import (
-    PARTITION_FUNCTION_TEST_FROM_INT8,
-    PARTITION_FUNCTION_TEST_FROM_STRING,
-)
+from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
@@ -81,7 +78,9 @@ def schema():
 
 @pytest.fixture
 def data_db(schema, config):
-    return data_db_name(schema, config)
+    data_db = data_db_name(schema, config)
+    data_db = convert_backend_identifier_case(config, data_db)
+    return data_db
 
 
 def offload_range_ipa_standard_tests(
@@ -385,7 +384,6 @@ def offload_range_ipa_standard_tests(
         table_name,
         hv_4,
         incremental_key_type=part_key_type,
-        check_rowcount=False,
         partition_functions=udf,
     )
 
@@ -427,7 +425,6 @@ def offload_range_ipa_standard_tests(
         table_name,
         hv_4,
         incremental_key_type=part_key_type,
-        check_rowcount=False,
         partition_functions=udf,
     )
 
@@ -574,6 +571,10 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
 
     repo_client = orchestration_repo_client_factory(config, messages)
 
+    backend_api.create_test_partition_functions(
+        data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
+    )
+
     offload_range_ipa_standard_tests(
         schema,
         data_db,
@@ -583,7 +584,7 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         messages,
         repo_client,
         frontend_api.test_type_canonical_int_8(),
-        partition_function=PARTITION_FUNCTION_TEST_FROM_INT8,
+        partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8,
     )
 
 
@@ -601,6 +602,10 @@ def test_offload_rpa_udf_string(config, schema, data_db):
     frontend_api = get_frontend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(config, messages)
 
+    backend_api.create_test_partition_functions(
+        data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING
+    )
+
     offload_range_ipa_standard_tests(
         schema,
         data_db,
@@ -610,13 +615,13 @@ def test_offload_rpa_udf_string(config, schema, data_db):
         messages,
         repo_client,
         frontend_api.test_type_canonical_string(),
-        partition_function=PARTITION_FUNCTION_TEST_FROM_STRING,
+        partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING,
     )
 
 
 def test_offload_rpa_alpha(config, schema, data_db):
     """Tests ensuring lower and upper case alpha characters are differentiated correctly."""
-    id = "test_offload_rpa_udf_string"
+    id = "test_offload_rpa_alpha"
     messages = get_test_messages(config, id)
 
     if config.db_type != DBTYPE_ORACLE:
@@ -649,8 +654,8 @@ def test_offload_rpa_alpha(config, schema, data_db):
                             SELECT owner
                             ,      object_name
                             ,      dbms_random.string('a',5) AS str
-                            FROM   dba_objects
-                            WHERE  object_id <= 1000""",
+                            FROM   all_objects
+                            WHERE  object_id <= 100""",
         ],
         python_fns=[
             lambda: drop_backend_test_table(

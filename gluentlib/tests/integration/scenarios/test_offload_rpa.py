@@ -643,19 +643,20 @@ def test_offload_rpa_alpha(config, schema, data_db):
         frontend_sqls=[
             f"DROP TABLE {schema}.{RPA_ALPHA_FACT_TABLE}",
             f"""CREATE TABLE {schema}.{RPA_ALPHA_FACT_TABLE}
-                            PARTITION BY RANGE(str)
-                            ( PARTITION upper_a_j VALUES LESS THAN ('K')
-                            , PARTITION upper_k_t VALUES LESS THAN ('U')
-                            , PARTITION upper_u_z VALUES LESS THAN ('a')
-                            , PARTITION lower_a_j VALUES LESS THAN ('k')
-                            , PARTITION lower_k_t VALUES LESS THAN ('u')
-                            , PARTITION lower_u_z VALUES LESS THAN ('zzzzzz'))
-                            AS
-                            SELECT owner
-                            ,      object_name
-                            ,      dbms_random.string('a',5) AS str
-                            FROM   all_objects
-                            WHERE  object_id <= 100""",
+                STORAGE (INITIAL 64K NEXT 64K)
+                PARTITION BY RANGE(str)
+                ( PARTITION upper_a_j VALUES LESS THAN ('K')
+                , PARTITION upper_k_t VALUES LESS THAN ('U')
+                , PARTITION upper_u_z VALUES LESS THAN ('a')
+                , PARTITION lower_a_j VALUES LESS THAN ('k')
+                , PARTITION lower_k_t VALUES LESS THAN ('u')
+                , PARTITION lower_u_z VALUES LESS THAN ('zzzzzz'))
+                AS
+                SELECT owner
+                ,      object_name
+                ,      dbms_random.string('a',5) AS str
+                FROM   all_objects
+                WHERE  ROWNUM <= 100""",
         ],
         python_fns=[
             lambda: drop_backend_test_table(

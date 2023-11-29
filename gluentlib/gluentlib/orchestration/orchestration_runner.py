@@ -15,7 +15,6 @@ from gluent import (
     OffloadOperation,
     check_and_set_nls_lang,
     get_log_fh,
-    get_log_fh_name,
     get_offload_target_table,
     init,
     init_redis_execution_id,
@@ -288,6 +287,7 @@ class OrchestrationRunner:
                 trace_action="_get_max_hybrid_identifier_length",
             )
             self._max_hybrid_name_length = frontend_api.max_table_name_length()
+            frontend_api.close()
         return self._max_hybrid_name_length
 
     def _init_command(

@@ -85,8 +85,6 @@ REPORT_ATTR_BACKEND_DISPLAY_NAME = 'backend_display_name'
 REPORT_ATTR_BACKEND_HOST_INFO_TYPE = 'backend_host_info_type'
 REPORT_ATTR_BACKEND_HOST_INFO = 'backend_host_info'
 
-DIAGNOSE_KEY_VALUE_WRAPPER = TextWrapper(width=76, subsequent_indent=' ' * 24)
-
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default
@@ -284,9 +282,6 @@ class BackendApiInterface(metaclass=ABCMeta):
             return clear_password
         else:
             return password
-
-    def _diagnose_key_value_line(self, key, value, wrap=True):
-        return '{0:21s} : {1:10s}'.format(key, DIAGNOSE_KEY_VALUE_WRAPPER.fill(str(value)) if wrap else str(value))
 
     @staticmethod
     def _fixed_session_parameters():
@@ -980,24 +975,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
     def detect_column_has_fractional_seconds(self, db_name, table_name, column):
         """ Detect whether a backend date based column contains fractional seconds.
             Returns True/False.
-        """
-
-    @abstractmethod
-    def diagnose_backend_config(self):
-        """ Return backend configuration information for use by diagnose.
-            Returns a list of tuples containing labels and values, for example:
-            [('System Attribute 1': 'A description from the backend ...'),
-             ('System Attribute 2': 'Another description from the backend ...')]
-        """
-
-    @abstractmethod
-    def diagnose_query_log(self, **kwargs):
-        """ Return a query log for the relevant backend system for use by diagnose.
-            Backends that cannot get a query log via SQL may raise NotImplementedError.
-            Accepts different inputs depending on the backend hence *kwargs.
-            Returns a list of tuples containing labels and payloads, for example:
-            [('Query Profile': 'This is a profile ...'),
-             ('Query Plan': 'This is a different kind of query log ...')]
         """
 
     @abstractmethod

@@ -8,7 +8,7 @@ from unittest import TestCase, main
 from gluentlib.orchestration import command_steps
 
 
-# Console phase 1 only adds steps to the repo for Offload/Present. In time the OSR/Schema Sync/Diagnose steps
+# Console phase 1 only adds steps to the repo for Offload/Present. In time the OSR/Schema Sync steps
 # below will be added to the repo. KNOWN_MISSING_STEPS serves two purposes:
 # 1) Prevents test_command_steps_repo from failing due to known missing steps.
 # 2) Will cause a failure when these steps are added to the repo so we know to remove them from the list.

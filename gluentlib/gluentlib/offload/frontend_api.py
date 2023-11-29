@@ -19,7 +19,6 @@ from gluentlib.offload.offload_constants import (
     CAPABILITY_CANONICAL_TIME,
     CAPABILITY_CASE_SENSITIVE,
     CAPABILITY_GDP_HAS_DB_CODE_COMPONENT,
-    CAPABILITY_GLUENT_DIAGNOSE,
     CAPABILITY_GLUENT_JOIN_PUSHDOWN,
     CAPABILITY_GLUENT_LIST_PARTITION_APPEND,
     CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY,
@@ -646,9 +645,6 @@ class FrontendApiInterface(metaclass=ABCMeta):
     def gdp_has_db_code_component(self) -> bool:
         """ Does the frontend have any in-database GDP code """
         return self.is_capability_supported(CAPABILITY_GDP_HAS_DB_CODE_COMPONENT)
-
-    def gluent_diagnose_supported(self) -> bool:
-        return self.is_capability_supported(CAPABILITY_GLUENT_DIAGNOSE)
 
     def gluent_join_pushdown_supported(self) -> bool:
         return self.is_capability_supported(CAPABILITY_GLUENT_JOIN_PUSHDOWN)

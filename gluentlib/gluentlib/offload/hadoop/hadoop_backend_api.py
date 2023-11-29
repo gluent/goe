@@ -650,12 +650,6 @@ LIMIT 1""" % {'db_table': self.enclose_object_reference(db_name, table_name),
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return True if row else False
 
-    def diagnose_backend_config(self):
-        raise NotImplementedError('Diagnose backend configuration not implemented for Hadoop')
-
-    def diagnose_query_log(self, **kwargs):
-        raise NotImplementedError('Diagnose query log not implemented for Hadoop')
-
     def drop_state(self):
         """ Drop any cached state so values are refreshed on next request.
         """

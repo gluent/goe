@@ -626,7 +626,7 @@ def test_numeric_controls(config, schema, data_db):
     id = "test_numeric_controls"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     max_decimal_precision = backend_api.max_decimal_precision() if backend_api else None
     max_decimal_scale = backend_api.max_decimal_scale() if backend_api else None
@@ -816,9 +816,7 @@ def test_date_controls(config, schema, data_db):
     id = "test_date_controls"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"FrontendTestingApi({id})"
-    )
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     # Setup
     run_setup(
@@ -883,9 +881,7 @@ def test_date_sampling(config, schema, data_db):
     id = "test_date_sampling"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"FrontendTestingApi({id})"
-    )
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     # Create Dimension containing dates that need sampling.
     # TODO nj@2018-06-13 cannot test bad TZ values due to GOE-1102, uncomment bad_tstz/bad_tsltz during GOE-1102
@@ -978,9 +974,7 @@ def test_precision_scale_overflow(config, schema, data_db):
     id = "test_precision_scale_overflow"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"FrontendTestingApi({id})"
-    )
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     if backend_api.max_decimal_integral_magnitude() < 38:
         # Create a table with data that is too big for the backend and no dbms_stats call.
@@ -1096,9 +1090,8 @@ def test_datatype_controls_column_name_checks(config, schema, data_db, load_db):
     id = "test_datatype_controls_column_name_checks"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"FrontendTestingApi({id})"
-    )
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+
     wildcard_dim_be, offload_dim_be = convert_backend_identifier_case(
         config, WILDCARD_DIM, OFFLOAD_DIM
     )

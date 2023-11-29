@@ -433,13 +433,13 @@ def test_offload_rpa_int8(config, schema, data_db):
     id = "test_offload_rpa_int8"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     if config.db_type == DBTYPE_TERADATA:
         # TODO We need our numeric sales table to be partitioned on YYYYMM for assertions to make sense.
         #      Didn't have time to rectify this for Teradata MVP.
         messages.log(
-            f"Skipping offload_range_ipa_standard_story_tests for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
+            f"Skipping {id} for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
         )
         return
 
@@ -461,7 +461,7 @@ def test_offload_rpa_date(config, schema, data_db):
     id = "test_offload_rpa_date"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     offload_range_ipa_standard_tests(
@@ -480,7 +480,7 @@ def test_offload_rpa_timestamp(config, schema, data_db):
     id = "test_offload_rpa_timestamp"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     offload_range_ipa_standard_tests(
@@ -501,13 +501,11 @@ def test_offload_rpa_string(config, schema, data_db):
 
     if config.db_type == DBTYPE_TERADATA:
         # TODO In Teradata MVP we don't support string based partitioning.
-        messages.log(
-            f"Skipping offload_range_ipa_standard_story_tests for system/type: {config.db_type}/{part_key_type}"
-        )
+        messages.log(f"Skipping {id} for system/type: {config.db_type}")
         return
 
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     offload_range_ipa_standard_tests(
@@ -533,7 +531,7 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
         return
 
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     offload_range_ipa_standard_tests(
@@ -559,7 +557,7 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         )
         return
 
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     if config.db_type == DBTYPE_TERADATA:
         # TODO We need our numeric sales table to be partitioned on YYYYMM for assertions to make sense.
@@ -599,7 +597,7 @@ def test_offload_rpa_udf_string(config, schema, data_db):
         )
         return
 
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     backend_api.create_test_partition_functions(
@@ -629,7 +627,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
         return
 
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     canonical_string = frontend_api.test_type_canonical_string()

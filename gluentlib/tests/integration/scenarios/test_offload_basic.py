@@ -264,7 +264,7 @@ def test_offload_basic_dim(config, schema, data_db):
     load_db = load_db_name(schema, config)
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     backend_name = convert_backend_identifier_case(config, OFFLOAD_DIM)
@@ -367,7 +367,7 @@ def test_offload_basic_fact(config, schema, data_db):
     id = "test_offload_basic_fact"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     backend_name = convert_backend_identifier_case(config, OFFLOAD_FACT)

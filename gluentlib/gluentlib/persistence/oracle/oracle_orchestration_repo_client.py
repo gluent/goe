@@ -355,7 +355,6 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         self,
         execution_id: ExecutionId,
         command_type: str,
-        log_path: str,
         command_input: Union[str, dict, None],
         parameters: Union[dict, None],
     ) -> int:
@@ -374,7 +373,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             arg_list=[
                 execution_id.as_bytes(),
                 command_type,
-                log_path,
+                self._messages.get_log_fh_name(),
                 prepared_input,
                 prepared_parameters,
                 command_execution_id,

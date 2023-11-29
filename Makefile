@@ -8,7 +8,10 @@ LICENSE_TEXT=Copyright 2015-$(LICENSE_YEAR) Gluent Inc. All rights reserved.
 
 BUILD=$(strip $(shell git rev-parse --short HEAD))
 
-.PHONY: target package unit-test offload-env package-spark-standalone
+VENV_EXISTS=$(shell python3 -c "if __import__('pathlib').Path('.venv/bin/activate').exists(): print('yes')")
+VENV_PREFIX=.venv/bin
+
+.PHONY: target package unit-test offload-env package-spark-standalone python-goe
 
 package: target
 	cd target && make package
@@ -27,7 +30,7 @@ integration-target:
 	cd testing && make target
 
 
-target: python-gluentlib spark-listener license-txt offload-env
+target: python-goe spark-listener license-txt offload-env
 	@echo -e "=> \e[92m Building target in $(TARGET_DIR)...\e[0m"
 	mkdir -p $(TARGET_DIR)/bin
 	cp scripts/{offload,connect,logmgr,display_gluent_env,clean_gluent_env,listener} $(TARGET_DIR)/bin
@@ -78,8 +81,17 @@ package-spark-standalone: spark-listener
 	cd transport && make spark-target
 	cd target && make package-spark
 
-python-gluentlib:
-	cd gluentlib && make target
+python-goe: python-goe-clean
+	@if [ "$(VENV_EXISTS)" ]; then echo "=> Removing existing virtual environment"; fi
+	if [ "$(VENV_EXISTS)" ]; then $(MAKE) python-goe-destroy; fi
+	if [ "$(VENV_EXISTS)" ]; then $(MAKE) python-goe-clean; fi
+	python3 -m venv ./.venv
+	. $(VENV_PREFIX)/activate
+	python3 -m pip install --quiet --upgrade pip build setuptools wheel
+	sed -i "s/^version = .*/version = \"$(OFFLOAD_VERSION)\"/" pyproject.toml
+	python3 -m build
+	rm -fr $(TARGET_DIR)/setup/python
+	mkdir -p $(TARGET_DIR)/setup/python && cp dist/goe-*.whl $(TARGET_DIR)/setup/python
 
 offload-env:
 	cd templates/conf && make
@@ -91,10 +103,24 @@ license-txt:
 ### CLEANUP ###
 clean:
 	cd templates/conf && make clean
-	cd gluentlib && make clean
 	cd spark-listener && make clean
 	cd target && make clean
 
+.PHONY: python-goe-destroy
+python-goe-destroy:
+	@rm -rf .venv
+
+.PHONY: python-goe-clean
+python-goe-clean:
+	@echo "=> Cleaning working directory"
+	@rm -rf .pytest_cache build/ dist/ .eggs/
+	@find . -name '*.egg-info' -exec rm -rf {} +
+	@find . -name '*.egg' -exec rm -f {} +
+	@find . -name '*.pyc' -exec rm -f {} +
+	@find . -name '*.pyo' -exec rm -f {} +
+	@find . -name '*~' -exec rm -f {} +
+	@find . -name '__pycache__' -exec rm -rf {} +
+	@find . -name '.ipynb_checkpoints' -exec rm -rf {} +
 
 %:
 	@: # magic to make install directory work

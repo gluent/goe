@@ -7,8 +7,8 @@ Simple steps to get a working Python
 sudo apt-get install rustc
 sudo apt-get install unixodbc-dev
 python3 -m venv ./.venv
-pip install --upgrade pip
-python3 -m pip install -r requirements.txt
+python3 -m pip install --upgrade pip build setuptools
+#python3 -m pip install -r requirements.txt
 ```
 Install SBT in order to build Spark Listener:
 ```

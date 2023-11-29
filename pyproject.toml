@@ -1,6 +1,6 @@
 [project]
 name = "goe"
-version = "6.0.8-DEV"
+version = "6.0.8-dev"
 readme = "README.md"
 requires-python = ">=3.7"
 maintainers = [
@@ -79,6 +79,8 @@ Issues = "https://github.com/gluent/goe/issues"
 [project.optional-dependencies]
 dev = [
     "black",
+    "pytest",
+    "pytest-xdist",
 ]
 test = [
     "pytest",

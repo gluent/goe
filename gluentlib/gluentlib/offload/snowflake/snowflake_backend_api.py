@@ -612,17 +612,6 @@ class BackendSnowflakeApi(BackendApiInterface):
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return True if row else False
 
-    def diagnose_backend_config(self):
-        raise NotImplementedError('Diagnose backend configuration not implemented for Snowflake')
-
-    def diagnose_query_log(self, **kwargs):
-        assert 'session_id' in kwargs
-        assert 'query_id' in kwargs
-        query_profile = self.get_session_query_profile(kwargs['session_id'], kwargs['query_id'])
-        query_plan = self.get_query_plan(kwargs['query_id'])
-        return [('Query Profile', query_profile),
-                ('Query Plan', query_plan)]
-
     def drop_state(self):
         pass
 

@@ -30,7 +30,6 @@ from gluentlib.offload.frontend_api import (
     QueryParameter,
 )
 from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
-from gluentlib.offload.offload_source_table import HYBRID_ALL_OBJECTS, HYBRID_OBJECTS_HYBRID_GROUP_TYPE
 from gluentlib.offload.oracle.oracle_column import ORACLE_SPLIT_HIGH_VALUE_RE, ORACLE_TYPE_VARCHAR2, OracleColumn
 from gluentlib.offload.oracle.oracle_literal import OracleLiteral
 from gluentlib.util.misc_functions import double_quote_sandwich, format_list_for_logging

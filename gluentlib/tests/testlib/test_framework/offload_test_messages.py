@@ -25,7 +25,7 @@ class OffloadTestMessages:
         log_file = self.get_log_fh_name()
         if not log_file:
             return []
-        start_found = False if search_from_text else True
+        start_found = bool(not search_from_text)
         matches = []
         lf = open(log_file, "r")
         for line in lf:
@@ -58,7 +58,13 @@ class OffloadTestMessages:
         return self._messages.get_log_fh()
 
     def get_log_fh_name(self):
-        return self._messages.get_log_fh().name
+        return self._messages.get_log_fh_name()
+
+    def get_events(self):
+        return self._messages.get_events()
+
+    def get_messages(self):
+        return self._messages.get_messages()
 
     def info(self, *args, **kwargs):
         return self._messages.info(*args, **kwargs)

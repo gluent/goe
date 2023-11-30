@@ -175,7 +175,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
     #
     # COMMAND EXECUTION LOGGING METHODS
     #
-    def start_command(self, execution_id: ExecutionId, command_type: str, log_path: str,
+    def start_command(self, execution_id: ExecutionId, command_type: str,
                       command_input: Union[str, dict, None], parameters: Union[dict, None]) -> int:
         self._log(f'Recording command start: {execution_id}/{command_type})', detail=VVERBOSE)
         self._debug(f'command_input: {command_input}')

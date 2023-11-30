@@ -6,27 +6,26 @@ Simple steps to get a working Python
 ```
 sudo apt-get install rustc
 sudo apt-get install unixodbc-dev
-python3 -m venv ./.venv
-pip install --upgrade pip
-python3 -m pip install -r requirements.txt
 ```
 Install SBT in order to build Spark Listener:
 ```
 curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup
 ```
 
-# Package
-Simple steps to make an OFFLOAD_HOME package:
+# Install for development
+To create a Python virtualenv and install all required packages:
 ```
-make clean && make package
+make clean && make install-dev
+source ./.venv/bin/activate
+PYTHONPATH=${PWD}:${PWD}/scripts
 ```
 
 # Install
-Simple steps to create your OFFLOAD_HOME:
+Simple steps to create your OFFLOAD_HOME, probably for local testing:
 ```
 OFFLOAD_HOME=~/goe/offload
 mkdir -p ${OFFLOAD_HOME}
-tar --directory=${OFFLOAD_HOME}/../ -xf goe_$(cat version).tar.gz
+make install
 ```
 
 Create your offload.env, assuming Oracle to BigQuery:
@@ -60,10 +59,16 @@ alter user gluent_adm identified by ...;
 alter user gluent_app identified by ...;
 ```
 
-# Development
+# Package
+Simple steps to make an OFFLOAD_HOME package:
+```
+make clean && make package
+```
+
+# Developing
 Getting setup:
 ```
-cd goe
+. ${OFFLOAD_HOME}/conf/offload.env
 source ./.venv/bin/activate
 PYTHONPATH=${PWD}:${PWD}/scripts
 ```
@@ -76,6 +81,10 @@ cd scripts
 
 Running unit tests:
 ```
-cd goe
 pytest tests/unit
+```
+
+Running integration tests:
+```
+pytest tests/integration/scenarios
 ```

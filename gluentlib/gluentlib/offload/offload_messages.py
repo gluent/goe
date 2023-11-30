@@ -18,6 +18,7 @@ import orjson
 # Gluent
 from gluentlib.orchestration import orchestration_constants
 from gluentlib.orchestration.command_steps import STEP_TITLES, step_title
+from gluentlib.util.misc_functions import standard_log_name
 from gluentlib.util.redis_tools import cache
 from gluentlib.orchestration import command_steps
 
@@ -224,7 +225,7 @@ class OffloadMessages(object):
     def init_log(self, log_dir, log_name):
         assert log_dir and log_name
         logger.debug("init_log(%s, %s)" % (log_dir, log_name))
-        current_log_name = "%s_%s.log" % (log_name, datetime.now().isoformat())
+        current_log_name = standard_log_name(log_name)
         log_path = os.path.join(log_dir, current_log_name)
         logger.debug("log_path: %s" % log_path)
         self._log_fh = open(log_path, "w")
@@ -235,6 +236,9 @@ class OffloadMessages(object):
 
     def get_log_fh(self):
         return self._log_fh
+
+    def get_log_fh_name(self):
+        return self._log_fh.name
 
     ########################################################################################
     #   Use of log function vs info/detail/debug functions

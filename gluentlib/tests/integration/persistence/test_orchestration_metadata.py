@@ -295,6 +295,7 @@ class TestOrchestrationMetadata(TestCase):
         """Tests we can get/change and delete OrchestrationMetadata"""
         execution_id = ExecutionId()
         repo_client = test_metadata.client
+        # TODO log name is no longer passed in
         cid = repo_client.start_command(
             execution_id,
             orchestration_constants.COMMAND_OFFLOAD,

@@ -70,6 +70,7 @@ class TestOrchestrationRepoClient(TestCase):
         ]
 
         # Start a CLI based Offload
+        # TODO log name is no longer passed in
         cid = client.start_command(
             execution_id,
             orchestration_constants.COMMAND_OFFLOAD,
@@ -164,6 +165,7 @@ class TestOrchestrationRepoClient(TestCase):
         messages = OffloadMessages.from_options(config, execution_id=execution_id)
         client = orchestration_repo_client_factory(config, messages)
         # Start an API based Offload
+        # TODO log name is no longer passed in
         cid = client.start_command(
             execution_id,
             orchestration_constants.COMMAND_OFFLOAD,

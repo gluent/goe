@@ -10,6 +10,7 @@ sudo apt-get install unixodbc-dev
 Install SBT in order to build Spark Listener:
 ```
 curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup
+. ~/.bash_profile
 ```
 
 # Install for development

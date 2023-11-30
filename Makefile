@@ -31,7 +31,7 @@ endif
 
 
 .PHONY: install-dev
-install-dev: python-goe
+install-dev:
 	# Recreate virtualenvironment and install requirements for development.
 	@if [ "$(VENV_EXISTS)" ]; then echo "=> Removing existing virtual environment"; fi
 	if [ "$(VENV_EXISTS)" ]; then $(MAKE) python-goe-destroy; fi
@@ -40,6 +40,7 @@ install-dev: python-goe
 	. $(VENV_PREFIX)/activate
 	python3 -m pip install --quiet --upgrade pip build setuptools wheel
 	python3 -m pip install .[dev]
+	$(MAKE) python-goe
 
 
 .PHONY: target

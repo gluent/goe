@@ -433,7 +433,7 @@ def test_offload_rpa_int8(config, schema, data_db):
     id = "test_offload_rpa_int8"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     if config.db_type == DBTYPE_TERADATA:
         # TODO We need our numeric sales table to be partitioned on YYYYMM for assertions to make sense.
@@ -461,7 +461,7 @@ def test_offload_rpa_date(config, schema, data_db):
     id = "test_offload_rpa_date"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     offload_range_ipa_standard_tests(
@@ -480,7 +480,7 @@ def test_offload_rpa_timestamp(config, schema, data_db):
     id = "test_offload_rpa_timestamp"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     offload_range_ipa_standard_tests(
@@ -507,7 +507,7 @@ def test_offload_rpa_string(config, schema, data_db):
         return
 
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     offload_range_ipa_standard_tests(
@@ -533,7 +533,7 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
         return
 
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     offload_range_ipa_standard_tests(
@@ -559,7 +559,7 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         )
         return
 
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     if config.db_type == DBTYPE_TERADATA:
         # TODO We need our numeric sales table to be partitioned on YYYYMM for assertions to make sense.
@@ -599,7 +599,7 @@ def test_offload_rpa_udf_string(config, schema, data_db):
         )
         return
 
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     backend_api.create_test_partition_functions(
@@ -629,7 +629,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
         return
 
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
     canonical_string = frontend_api.test_type_canonical_string()

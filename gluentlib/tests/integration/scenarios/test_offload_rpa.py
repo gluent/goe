@@ -439,7 +439,7 @@ def test_offload_rpa_int8(config, schema, data_db):
         # TODO We need our numeric sales table to be partitioned on YYYYMM for assertions to make sense.
         #      Didn't have time to rectify this for Teradata MVP.
         messages.log(
-            f"Skipping offload_range_ipa_standard_story_tests for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
+            f"Skipping {id} for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
         )
         return
 
@@ -501,9 +501,7 @@ def test_offload_rpa_string(config, schema, data_db):
 
     if config.db_type == DBTYPE_TERADATA:
         # TODO In Teradata MVP we don't support string based partitioning.
-        messages.log(
-            f"Skipping offload_range_ipa_standard_story_tests for system/type: {config.db_type}/{part_key_type}"
-        )
+        messages.log(f"Skipping {id} for system/type: {config.db_type}")
         return
 
     backend_api = get_backend_testing_api(config, messages)

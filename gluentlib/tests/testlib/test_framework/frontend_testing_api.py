@@ -501,9 +501,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def canonical_date_supported(self):
         return self._db_api.canonical_date_supported()
 
-    def gluent_diagnose_supported(self) -> bool:
-        return self._db_api.gluent_diagnose_supported()
-
     def gluent_join_pushdown_supported(self):
         return self._db_api.gluent_join_pushdown_supported()
 

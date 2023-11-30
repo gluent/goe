@@ -29,8 +29,7 @@ from gluentlib.offload.hadoop.hadoop_backend_api import BackendHadoopApi, \
 from gluentlib.offload.hadoop.hadoop_column import HadoopColumn
 from gluentlib.offload.hadoop.impala_literal import ImpalaLiteral
 from gluentlib.filesystem.gluent_dfs_factory import get_dfs_from_options
-from gluentlib.filesystem.gluent_dfs import get_scheme_from_location_uri,\
-    OFFLOAD_FS_SCHEME_S3A, OFFLOAD_NON_HDFS_FS_SCHEMES
+from gluentlib.filesystem.gluent_dfs import OFFLOAD_NON_HDFS_FS_SCHEMES
 from gluentlib.util.better_impyla import BetterImpylaException, \
     from_impala_size, \
     HADOOP_TYPE_CHAR, HADOOP_TYPE_STRING, HADOOP_TYPE_VARCHAR, HADOOP_TYPE_TINYINT, HADOOP_TYPE_SMALLINT,\

@@ -139,7 +139,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
     id = "test_identifiers_keyword_column_names"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     # Setup
     run_setup(
@@ -216,7 +216,7 @@ def test_identifiers_bad_char_column_names(config, schema, data_db):
     id = "test_identifiers_bad_char_column_names"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     if config.target == DBTYPE_IMPALA:
         messages.log(f"Skipping {id} for Impala")
@@ -274,7 +274,7 @@ def test_identifiers_table_name_case(config, schema, data_db):
         messages.log(f"Skipping {id} because case_sensitive_identifiers() == False")
         return
 
-    frontend_api = get_frontend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     # Setup
     run_setup(

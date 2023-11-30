@@ -9,7 +9,7 @@ LICENSE_TEXT=Copyright 2015-$(LICENSE_YEAR) Gluent Inc. All rights reserved.
 BUILD=$(strip $(shell git rev-parse --short HEAD))
 
 VENV_EXISTS=$(shell python3 -c "if __import__('pathlib').Path('.venv/bin/activate').exists(): print('yes')")
-VENV_PREFIX=.venv/bin
+VENV_PREFIX=.venv
 
 
 .PHONY: package
@@ -31,15 +31,15 @@ endif
 
 
 .PHONY: install-dev
-install-dev: python-goe
+install-dev:
 	# Recreate virtualenvironment and install requirements for development.
 	@if [ "$(VENV_EXISTS)" ]; then echo "=> Removing existing virtual environment"; fi
 	if [ "$(VENV_EXISTS)" ]; then $(MAKE) python-goe-destroy; fi
 	if [ "$(VENV_EXISTS)" ]; then $(MAKE) python-goe-clean; fi
-	python3 -m venv ./.venv
-	. $(VENV_PREFIX)/activate
-	python3 -m pip install --quiet --upgrade pip build setuptools wheel
-	python3 -m pip install .[dev]
+	python3 -m venv $(VENV_PREFIX)
+	. $(VENV_PREFIX)/bin/activate && python3 -m pip install --quiet --upgrade pip build setuptools wheel
+	. $(VENV_PREFIX)/bin/activate && python3 -m pip install .[dev]
+	$(MAKE) python-goe
 
 
 .PHONY: target
@@ -99,7 +99,7 @@ package-spark-standalone: spark-listener
 .PHONY: python-goe
 python-goe: python-goe-clean
 	sed -i "s/^version = .*/\Lversion = \"$(OFFLOAD_VERSION)\"/" pyproject.toml
-	python3 -m build
+	. $(VENV_PREFIX)/bin/activate && python3 -m build
 
 
 .PHONY: offload-env

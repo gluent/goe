@@ -36,8 +36,6 @@ from gluent import get_db_charset, get_log_fh, get_options, \
 from offload_status_report import normalise_offload_status_report_options, OffloadStatusReport, \
     DEFAULT_REPORT_NAME, DEFAULT_REPORT_DIRECTORY, DEFAULT_CSV_DELIMITER, DEFAULT_CSV_ENCLOSURE,\
     CSV, JSON, RAW, HTML, TEXT, DETAIL_LEVEL, SUMMARY_LEVEL
-from diagnose import DEFAULT_IMPALAD_HTTP_PORT, DEFAULT_HS2_WEBUI_PORT, DEFAULT_LLAP_WEBUI_PORT, \
-    DEFAULT_SPARK_HISTORY_PORT, SPARK_HISTORIC_APPLICATION_DAYS
 from gluentlib.config import orchestration_defaults
 from gluentlib.config.orchestration_config import OrchestrationConfig
 from gluentlib.config.config_validation_functions import normalise_rdbms_options
@@ -84,7 +82,6 @@ from testlib.test_framework.test_results import TestResults, normalize_state, \
 from testlib.test_framework.teamcity_integration import *
 from testlib.test_framework.test_value_generators import TestDecimal
 
-from gluentlib.util.diagnostics import Diagnose, PermissionsTuple
 from gluentlib.util.linux_cmd import LinuxCmd
 from gluentlib.util.misc_functions import load_yaml_in_order
 
@@ -1520,102 +1517,6 @@ def get_html_driver():
     return driver
 
 
-def run_diagnose_tests(options, should_run_test_f, current_schema, orchestration_config):
-    test_teamcity_starttestsuite(options, 'diagnose')
-
-    def diagnose_test_fn(diag, method, params):
-        def test_fn(test):
-            try:
-                out = getattr(diag, method)(*params)
-                if method.startswith('logs_'):
-                    if len(out) == 0:
-                        test.fail('No files matched')
-                    elif len(out) > 2:
-                        log('File match: %s' % out[0])
-                        log('File match: (<%s more files>)' % int(len(out)-1))
-                    else:
-                        [log('File match: %s' % f, verbose) for f in out]
-                elif method.startswith('remove_files'):
-                    filename = os.path.join(options.output_location, 'gluent_diag_test_api.txt')
-                    if os.path.isfile(filename):
-                        test.fail(filename + ' was not removed')
-                else:
-                    if out:
-                        if method.endswith(('_config', '_query_log', '_application_log')):
-                            log(str(out)[-100:])
-                        else:
-                            log(str(out))
-                    else:
-                        if not method.startswith('remove_files'):
-                            test.fail(method + ' returned no output')
-            except Exception as exc:
-                test.fail(method + ' failed with:\n' + traceback.format_exc())
-
-        return test_fn
-
-    def get_offload_log_file_name(cursor, orchestration_config, user_sid, extension):
-        filename_sql = textwrap.dedent("""\
-            SELECT  file_name
-            FROM    TABLE({p_gluent_adm}.offload_file.list_offload_log_files(p_sid => {p_sid}))
-            WHERE   file_name LIKE '%{p_ext}'
-            AND     file_name NOT LIKE '%jfpd%'""".format(p_gluent_adm=orchestration_config.ora_adm_user,
-                                                          p_sid=user_sid,
-                                                          p_ext=extension))
-        log('filename_sql: %s' % filename_sql, detail=VERBOSE)
-        file_name = cursor.execute(filename_sql).fetchone()
-        return file_name[0] if file_name else None
-
-    try:
-        init(options)
-        normalise_options(options, normalise_owner_table=False)
-        options.log_location = options.output_location = '%s/log' % os.environ['OFFLOAD_HOME']
-
-        messages = OffloadMessages.from_options(options, log_fh=get_log_fh(),
-                                                command_type=orchestration_constants.COMMAND_DIAGNOSE)
-        diag = Diagnose.from_options(options, messages)
-
-        ahead_1hr = (datetime.now() + timedelta(hours=1)).strftime('%Y-%m-%d_%H:%M:%S')
-        behind_1hr = (datetime.now() - timedelta(hours=1)).strftime('%Y-%m-%d_%H:%M:%S')
-
-        filename = os.path.join(options.output_location, 'gluent_diag_test_api.txt')
-        with open(filename, 'w') as out_file:
-            out_file.write('\nGluent Diagnose Output File')
-            out_file.write('\nCopyright 2015-%s Gluent Inc. All rights reserved.' % datetime.now().strftime('%Y'))
-
-        api_calls = [{'method': 'logs_last_n', 'params': [options.log_location, '1h']},
-                     {'method': 'logs_from', 'params': [options.log_location, behind_1hr]},
-                     {'method': 'logs_to', 'params': [options.log_location, ahead_1hr]},
-                     {'method': 'logs_between', 'params': [options.log_location, behind_1hr, ahead_1hr]},
-                     {'method': 'processes', 'params': [['offload', 'smon', 'cron']]},
-                     {'method': 'permissions', 'params': [PermissionsTuple('directory', os.environ['OFFLOAD_HOME'], False)]},
-                     {'method': 'frontend_ddl', 'params': [options.test_user.upper(), 'GL_SALES', 'TABLE']},
-                     {'method': 'oracle_table_stats', 'params': [options.test_user.upper(), 'GL_SALES']},
-                     {'method': 'oracle_gluent_dependencies', 'params': [options.test_user.upper(), 'GL_SALES']},
-                     {'method': 'oracle_rewrite_definition', 'params': ['%s_H' % options.test_user.upper(), 'GL_SALES_AGG']}]
-
-        repo_client = orchestration_repo_client_factory(options, messages)
-        backend_db, backend_table = get_backend_db_table_name_from_metadata('%s_H' % options.test_user.upper(),
-                                                                            'GL_SALES', repo_client)
-
-        api_calls.extend([{'method': 'backend_ddl', 'params': [backend_db, backend_table]},
-                          {'method': 'backend_table_stats', 'params': [backend_db, backend_table]},
-                          {'method': 'create_file', 'params': [options.output_location, 'api_test_file',
-                                                               ['one two three']]},
-                          {'method': 'create_zip_archive', 'params': [options.output_location, [filename]]},
-                          {'method': 'remove_files', 'params': [options.output_location, [filename]]}])
-
-        for api_call in api_calls:
-            log('Diagnose (%s)' % api_call['method'], ansi_code='underline')
-            t = Test(options, api_call['method'], diagnose_test_fn(diag, api_call['method'], api_call['params']))
-            t()
-
-    except Exception as exc:
-        log('Unhandled exception in diagnose test set:\n%s' % traceback.format_exc())
-        test_teamcity_failtest(options, 'run_diagnose_tests', 'Fail: %s' % str(exc))
-    finally:
-        test_teamcity_endtestsuite(options, 'diagnose')
-
-
 def run_offload_status_report_tests(options, should_run_test_f, current_schema):
     flow_id = test_teamcity_starttestsuite_pq(options, 'offload_status_report')
 
@@ -2151,9 +2052,6 @@ def run_test_set(should_run_test, current_schema, orchestration_config, messages
     """ Run a given test set or run all test sets if test_set is None
         Note the occasional set is not included unless explicitly named, e.g. datetime-full
     """
-    if test_set is None or test_set == test_constants.SET_DIAGNOSE:
-        run_diagnose_tests(options, should_run_test, current_schema, orchestration_config)
-
     if test_set is None or test_set == test_constants.SET_MSSQL_STORIES:
         run_story_tests(options, should_run_test, teamcity_name=test_constants.SET_MSSQL_STORIES)
 

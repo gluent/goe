@@ -839,29 +839,6 @@ class BackendSynapseApi(BackendApiInterface):
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return True if row else False
 
-    def diagnose_backend_config(self):
-        sql = dedent("""\
-                SELECT  name
-                ,       collation_name
-                ,       compatibility_level
-                FROM    sys.databases
-                WHERE   name = ?""")
-        row = self.execute_query_fetch_one(sql, query_params=[self._synapse_database], log_level=VVERBOSE)
-        if not row:
-            return []
-
-        database_config = [
-            self._diagnose_key_value_line('Name', row[0]),
-            self._diagnose_key_value_line('Collation', row[1]),
-            self._diagnose_key_value_line('Compatibility Level', row[2]),
-        ]
-
-        return [('Database Configuration', '\n'.join(database_config))]
-
-    def diagnose_query_log(self, **kwargs):
-        assert 'query_id' in kwargs
-        return self._get_query_profile_tuples(request_id=kwargs['query_id'])
-
     def drop_state(self):
         pass
 
@@ -1135,7 +1112,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             This is not ideal but Synapse doesn;t have a readily available DDL retrieval method. What this code
             does is derive the inputs as they should have been at table creation time and feeds them back through
             the same code. The flaw is, if we change our code generator we'll get a different output from this code.
-            This is only used in diagnose (at the time of writing) so should be sufficient.
+            This is not widely used (at the time of writing) so should be sufficient.
         """
         def check_external():
             sql = dedent("""\

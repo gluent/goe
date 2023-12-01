@@ -18,10 +18,7 @@ package: target
 
 
 .PHONY: install
-install: package
-ifndef OFFLOAD_HOME
-$(error OFFLOAD_HOME is not set)
-endif
+install: offload-home-check package
 	# Install package into a target OFFLOAD_HOME, usually for local testing.
 	@echo -e "=> \e[92m Installing to directory: $(OFFLOAD_HOME)...\e[0m"
 	test -f goe_$(OFFLOAD_VERSION).tar.gz
@@ -32,7 +29,7 @@ endif
 
 .PHONY: install-dev
 install-dev:
-	# Recreate virtualenvironment and install requirements for development.
+	# Recreate virtual environment and install requirements for development.
 	@if [ "$(VENV_EXISTS)" ]; then echo "=> Removing existing virtual environment"; fi
 	if [ "$(VENV_EXISTS)" ]; then $(MAKE) python-goe-destroy; fi
 	if [ "$(VENV_EXISTS)" ]; then $(MAKE) python-goe-clean; fi
@@ -110,6 +107,12 @@ offload-env:
 .PHONY: license-txt
 license-txt:
 	echo "$(LICENSE_TEXT)" > LICENSE.txt
+
+
+.PHONY: offload-home-check
+offload-home-check:
+	@[ $(OFFLOAD_HOME) ] || echo OFFLOAD_HOME is not set
+	@[ $(OFFLOAD_HOME) ]
 
 
 ### CLEANUP ###

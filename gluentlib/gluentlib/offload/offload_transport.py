@@ -158,7 +158,7 @@ POLLING_VALIDATION_TEXT = 'Calculating offload transport source row counts from 
 SPARK_LOG_ROW_COUNT_PATTERN = r'^.* GOETaskListener: .*"recordsWritten":(\d+).*}\r?$'
 
 GLUENT_LISTENER_NAME = 'GOETaskListener'
-GLUENT_LISTENER_JAR = 'gluent-spark-listener.jar'
+GLUENT_LISTENER_JAR = 'goe-spark-listener.jar'
 
 TRANSPORT_CXT_BYTES = 'staged_bytes'
 TRANSPORT_CXT_ROWS = 'staged_rows'

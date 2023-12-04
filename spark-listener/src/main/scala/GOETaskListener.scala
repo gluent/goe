@@ -4,9 +4,9 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-class GluentTaskListener extends SparkListener {
+class GOETaskListener extends SparkListener {
   override def onTaskEnd(taskEnd: SparkListenerTaskEnd) {
-    val logger = LogManager.getLogger("GluentTaskListener")
+    val logger = LogManager.getLogger("GOETaskListener")
     val taskInfo = taskEnd.taskInfo
     val taskMetrics = taskEnd.taskMetrics
     val launchTime = taskInfo.launchTime

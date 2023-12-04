@@ -153,11 +153,11 @@ POLLING_VALIDATION_TEXT = 'Calculating offload transport source row counts from 
 
 # Used for scraping Spark log messages to find transport row count
 # Example logger messages:
-# 21/08/16 14:07:25 INFO GluentTaskListener: {"taskInfo.id":"1.0","taskInfo.taskId":1,"taskInfo.launchTime":1629122840262,"taskInfo.finishTime":1629122845656,"duration":5394,"recordsWritten":0,"executorRunTime":3952}
-# 21/08/16 14:07:27 INFO GluentTaskListener: {"taskInfo.id":"0.0","taskInfo.taskId":0,"taskInfo.launchTime":1629122840224,"taskInfo.finishTime":1629122847797,"duration":7573,"recordsWritten":145,"executorRunTime":6191}
-SPARK_LOG_ROW_COUNT_PATTERN = r'^.* GluentTaskListener: .*"recordsWritten":(\d+).*}\r?$'
+# 21/08/16 14:07:25 INFO GOETaskListener: {"taskInfo.id":"1.0","taskInfo.taskId":1,"taskInfo.launchTime":1629122840262,"taskInfo.finishTime":1629122845656,"duration":5394,"recordsWritten":0,"executorRunTime":3952}
+# 21/08/16 14:07:27 INFO GOETaskListener: {"taskInfo.id":"0.0","taskInfo.taskId":0,"taskInfo.launchTime":1629122840224,"taskInfo.finishTime":1629122847797,"duration":7573,"recordsWritten":145,"executorRunTime":6191}
+SPARK_LOG_ROW_COUNT_PATTERN = r'^.* GOETaskListener: .*"recordsWritten":(\d+).*}\r?$'
 
-GLUENT_LISTENER_NAME = 'GluentTaskListener'
+GLUENT_LISTENER_NAME = 'GOETaskListener'
 GLUENT_LISTENER_JAR = 'gluent-spark-listener.jar'
 
 TRANSPORT_CXT_BYTES = 'staged_bytes'
@@ -1355,7 +1355,7 @@ class OffloadTransportStandardSqoop(OffloadTransport):
 
 
 class OffloadTransportSqoopByQuery(OffloadTransportStandardSqoop):
-    """ Use Sqoop with a custom Gluent query as the row source to transport data
+    """ Use Sqoop with a custom query as the row source to transport data
         At the moment this is identical to the parent class, I'm hoping to move some specific
         logic to overloads in this child class
     """
@@ -1375,7 +1375,7 @@ class OffloadTransportSqoopByQuery(OffloadTransportStandardSqoop):
     ###########################################################################
 
     def _sqoop_by_query_options(self, partition_chunk, write_options_to_file=False):
-        """ Options dictating that Sqoop should process a Gluent defined query which splits data into groups ready for
+        """ Options dictating that Sqoop should process a GOE defined query which splits data into groups ready for
             distributing amongst mappers
         """
         # No double quotes below - they break Sqoop
@@ -1533,7 +1533,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
             if self._offload_transport_password_alias:
                 password_python.append('hconf = spark.sparkContext._jsc.hadoopConfiguration()')
                 if self._offload_transport_credential_provider_path:
-                    # provider_path is optional because a customer may define it in their Hadoop config rather than Gluent config
+                    # provider_path is optional because a customer may define it in their Hadoop config rather than GOE config
                     password_python.append("hconf.set('hadoop.security.credential.provider.path', '%s')"
                                            % self._offload_transport_credential_provider_path)
                 password_python.append("pw = hconf.getPassword('%s')" % self._offload_transport_password_alias)
@@ -1620,7 +1620,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
             # On HDP2 Livy the UTF coding is causing errors submitting the script:
             # SyntaxError: encoding declaration in Unicode string
             # We want UTF coding just in case we have PBO with a unicode predicate but decided to exclude line below
-            # for Livy only. In reality no-one is using Livy with Gluent in the near future. We might have to revisit.
+            # for Livy only. In reality no-one is using Livy with GOE in the near future. We might have to revisit.
             pyspark_body += dedent("""\
                    # -*- coding: UTF-8 -*-
                    """)
@@ -1742,7 +1742,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                                               'hive.exec.compress.output': true_or_false})
 
     def _local_gluent_listener_jar(self):
-        """ Returns path to GluentListener jar file in $OFFLOAD_HOME/bin directory """
+        """ Returns path to GOETaskListener jar file in $OFFLOAD_HOME/bin directory """
         offload_home = os.environ.get('OFFLOAD_HOME')
         assert offload_home, 'OFFLOAD_HOME is not set, environment is not correct'
         jar_path = os.path.join(offload_home, 'bin', GLUENT_LISTENER_JAR)

@@ -248,7 +248,7 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
         RETURN VARCHAR2 IS
         v_version goe_version.version%TYPE;
     BEGIN
-        SELECT version 
+        SELECT version
         INTO   v_version
         FROM   goe_version
         WHERE  latest = 'Y';
@@ -279,8 +279,8 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
 
         IF NOT (p_metadata.frontend_object_owner = p_frontend_object_owner AND p_metadata.frontend_object_name = p_frontend_object_name) THEN
             RAISE_APPLICATION_ERROR(-20001, format_string( p_str => 'Offload metadata and frontend object mismatch (requested=%s.%s, supplied=%s.%s)',
-                                                           p_args => args_ntt(p_frontend_object_owner, p_frontend_object_name, 
-                                                                              p_metadata.frontend_object_name, p_metadata.frontend_object_name)), TRUE);
+                                                           p_args => args_ntt(p_frontend_object_owner, p_frontend_object_name,
+                                                                              p_metadata.frontend_object_owner, p_metadata.frontend_object_name)), TRUE);
         END IF;
 
         -- Prepare the additional FK values...
@@ -294,7 +294,7 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
 
         v_command_execution_id := get_command_execution_id( p_command_execution_uuid => p_metadata.command_execution );
 
-        -- Always get the latest version from the database, even if the orchestrator layer provides a value... 
+        -- Always get the latest version from the database, even if the orchestrator layer provides a value...
         v_goe_version_id := get_latest_goe_version_id();
 
         IF p_metadata.offload_predicate_type IS NOT NULL THEN
@@ -331,10 +331,10 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
                    , backend_object_id
                    , offload_type_id
                    , offload_range_type_id
-                   , offload_key        
+                   , offload_key
                    , offload_high_value
                    , offload_predicate_type_id
-                   , offload_predicate_value   
+                   , offload_predicate_value
                    , offload_hash_column
                    , offload_sort_columns
                    , offload_partition_functions
@@ -383,7 +383,7 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
 
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     FUNCTION get_offload_metadata ( p_frontend_object_owner IN VARCHAR2,
-                                    p_frontend_object_name  IN VARCHAR2 ) 
+                                    p_frontend_object_name  IN VARCHAR2 )
         RETURN offload_metadata_ot IS
 
         v_offload_metadata offload_metadata_ot;

@@ -125,7 +125,8 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         assert hybrid_owner
         assert hybrid_name
         # In Oracle we expect the identifying owner/name to be upper case
-        hybrid_owner = hybrid_owner.upper()
+        # TODO: Issue 18: replace hybrid args with frontend object args and remove the following hack
+        hybrid_owner = hybrid_owner.upper()[:-2]
         hybrid_name = hybrid_name.upper()
         metadata_obj = self._frontend_api.execute_function(
             "offload_repo.get_offload_metadata",
@@ -159,7 +160,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             (owner_override or self._repo_user).upper(), repo_type_name.upper()
         )
 
-    # TODO: Issue 18: fold execution_id into metadata and not have it as a global in offload_table and 
+    # TODO: Issue 18: fold execution_id into metadata and not have it as a global in offload_table and
     #                 a separate arg to several metadata functions...
     def _metadata_dict_to_ora_object(self, metadata_dict, execution_id: ExecutionId):
         """
@@ -216,7 +217,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             )
             if metadata_obj.OFFLOAD_PREDICATE_VALUE
             else None,
-            OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_BUCKET_COLUMN or None,
+            OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_HASH_COLUMN or None,
             OFFLOAD_BUCKET_METHOD: None,
             OFFLOAD_BUCKET_COUNT: None,
             OFFLOAD_VERSION: metadata_obj.OFFLOAD_VERSION,
@@ -276,8 +277,9 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         assert metadata
         assert execution_id
         # In Oracle we expect the identifying owner/name to be upper case
-        hybrid_owner = hybrid_owner.upper()
-        hybrid_name = hybrid_name.upper()
+        # TODO: Issue 18: replace hybrid args with frontend object args and remove the following hack
+        hybrid_owner = metadata[OFFLOADED_OWNER].upper()
+        hybrid_name = metadata[OFFLOADED_TABLE].upper()
         if isinstance(metadata, OrchestrationMetadata):
             metadata = metadata.as_dict()
         ora_metadata = self._metadata_dict_to_ora_object(metadata, execution_id)

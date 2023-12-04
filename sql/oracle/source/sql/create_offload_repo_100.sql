@@ -26,12 +26,12 @@ CREATE UNIQUE INDEX backend_object_uki ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE backend_object
-    ADD CONSTRAINT backend_object_pk 
+    ADD CONSTRAINT backend_object_pk
         PRIMARY KEY (id)
         USING INDEX backend_object_pki;
 
 ALTER TABLE backend_object
-    ADD CONSTRAINT backend_object_uk 
+    ADD CONSTRAINT backend_object_uk
         UNIQUE (object_owner, object_name)
         USING INDEX backend_object_uki;
 
@@ -74,12 +74,12 @@ CREATE INDEX command_execution_fk3i ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE command_execution
-    ADD CONSTRAINT command_execution_pk 
+    ADD CONSTRAINT command_execution_pk
         PRIMARY KEY (id)
         USING INDEX command_execution_pki;
 
-ALTER TABLE command_execution 
-    ADD CONSTRAINT command_execution_uk 
+ALTER TABLE command_execution
+    ADD CONSTRAINT command_execution_uk
         UNIQUE (uuid)
         USING INDEX command_execution_uki;
 
@@ -119,7 +119,7 @@ CREATE INDEX command_execution_step_fk4i ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE command_execution_step
-    ADD CONSTRAINT command_execution_step_pk 
+    ADD CONSTRAINT command_execution_step_pk
         PRIMARY KEY (id)
         USING INDEX command_execution_step_pki;
 
@@ -141,12 +141,12 @@ CREATE UNIQUE INDEX command_step_uki ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE command_step
-    ADD CONSTRAINT command_step_pk 
+    ADD CONSTRAINT command_step_pk
         PRIMARY KEY (id)
         USING INDEX command_step_pki;
 
-ALTER TABLE command_step 
-    ADD CONSTRAINT command_step_uk 
+ALTER TABLE command_step
+    ADD CONSTRAINT command_step_uk
         UNIQUE ( code )
         USING INDEX command_step_uki;
 
@@ -168,12 +168,12 @@ CREATE UNIQUE INDEX command_type_uki ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE command_type
-    ADD CONSTRAINT command_type_pk 
+    ADD CONSTRAINT command_type_pk
         PRIMARY KEY (id)
         USING INDEX command_type_pki;
 
-ALTER TABLE command_type 
-    ADD CONSTRAINT command_type_uk 
+ALTER TABLE command_type
+    ADD CONSTRAINT command_type_uk
         UNIQUE (code)
         USING INDEX command_type_uki;
 
@@ -195,12 +195,12 @@ CREATE UNIQUE INDEX frontend_object_uki ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE frontend_object
-    ADD CONSTRAINT frontend_object_pk 
+    ADD CONSTRAINT frontend_object_pk
         PRIMARY KEY (id)
         USING INDEX frontend_object_pki;
 
 ALTER TABLE frontend_object
-    ADD CONSTRAINT frontend_object_uk 
+    ADD CONSTRAINT frontend_object_uk
         UNIQUE (object_owner, object_name)
         USING INDEX frontend_object_uki;
 
@@ -208,7 +208,7 @@ ALTER TABLE frontend_object
 -- -----------------------------------------------------------------------------------------------
 CREATE TABLE goe_version (
     id          INTEGER NOT NULL,
-    version     VARCHAR2(8) NOT NULL,
+    version     VARCHAR2(30) NOT NULL,
     build       VARCHAR2(30) NOT NULL,
     create_time TIMESTAMP NOT NULL,
     latest      VARCHAR2(1) NOT NULL,
@@ -216,7 +216,7 @@ CREATE TABLE goe_version (
 ) TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE goe_version
-    ADD CONSTRAINT goe_version_ck 
+    ADD CONSTRAINT goe_version_ck
     CHECK ( latest IN ( 'N', 'Y' ) );
 
 CREATE UNIQUE INDEX goe_version_pki ON
@@ -232,12 +232,12 @@ CREATE UNIQUE INDEX version_uk2i ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE goe_version
-    ADD CONSTRAINT goe_version_pk 
+    ADD CONSTRAINT goe_version_pk
         PRIMARY KEY (id)
         USING INDEX goe_version_pki;
 
-ALTER TABLE goe_version 
-    ADD CONSTRAINT goe_version_uk 
+ALTER TABLE goe_version
+    ADD CONSTRAINT goe_version_uk
         UNIQUE (version)
         USING INDEX goe_version_uk1i;
 
@@ -279,12 +279,12 @@ CREATE INDEX offload_chunk_fk4i ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE offload_chunk
-    ADD CONSTRAINT offload_chunk_pk 
+    ADD CONSTRAINT offload_chunk_pk
         PRIMARY KEY (id)
         USING INDEX offload_chunk_pki;
 
 ALTER TABLE offload_chunk
-    ADD CONSTRAINT offload_chunk_uk 
+    ADD CONSTRAINT offload_chunk_uk
         UNIQUE (command_execution_id, chunk_number)
         USING INDEX offload_chunk_uki;
 
@@ -353,12 +353,12 @@ CREATE INDEX offload_metadata_fk9i ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_pk 
+    ADD CONSTRAINT offload_metadata_pk
         PRIMARY KEY (id)
         USING INDEX offload_metadata_pki;
 
-ALTER TABLE offload_metadata 
-    ADD CONSTRAINT offload_metadata_uk 
+ALTER TABLE offload_metadata
+    ADD CONSTRAINT offload_metadata_uk
         UNIQUE (frontend_object_id)
         USING INDEX offload_metadata_uki;
 
@@ -387,7 +387,7 @@ CREATE INDEX offload_partition_fk2i ON
     TABLESPACE "&goe_repo_tablespace";
 
 ALTER TABLE offload_partition
-    ADD CONSTRAINT offload_partition_pk 
+    ADD CONSTRAINT offload_partition_pk
         PRIMARY KEY (id)
         USING INDEX offload_partition_pki;
 
@@ -408,13 +408,13 @@ CREATE UNIQUE INDEX offload_predicate_type_uki ON
     offload_predicate_type (code)
     TABLESPACE "&goe_repo_tablespace";
 
-ALTER TABLE offload_predicate_type 
-    ADD CONSTRAINT offload_predicate_type_pk 
+ALTER TABLE offload_predicate_type
+    ADD CONSTRAINT offload_predicate_type_pk
         PRIMARY KEY (id)
         USING INDEX offload_predicate_type_pki;
 
-ALTER TABLE offload_predicate_type 
-    ADD CONSTRAINT offload_predicate_type_uk 
+ALTER TABLE offload_predicate_type
+    ADD CONSTRAINT offload_predicate_type_uk
         UNIQUE (code)
         USING INDEX offload_predicate_type_uki;
 
@@ -435,13 +435,13 @@ CREATE UNIQUE INDEX offload_range_type_uki ON
     offload_range_type (code)
     TABLESPACE "&goe_repo_tablespace";
 
-ALTER TABLE offload_range_type 
-    ADD CONSTRAINT offload_range_type_pk 
+ALTER TABLE offload_range_type
+    ADD CONSTRAINT offload_range_type_pk
         PRIMARY KEY (id)
         USING INDEX offload_range_type_pki;
 
-ALTER TABLE offload_range_type 
-    ADD CONSTRAINT offload_range_type_uk 
+ALTER TABLE offload_range_type
+    ADD CONSTRAINT offload_range_type_uk
         UNIQUE (code)
         USING INDEX offload_range_type_uki;
 
@@ -462,13 +462,13 @@ CREATE UNIQUE INDEX offload_type_uki ON
     offload_type (code)
     TABLESPACE "&goe_repo_tablespace";
 
-ALTER TABLE offload_type 
-    ADD CONSTRAINT offload_type_pk 
+ALTER TABLE offload_type
+    ADD CONSTRAINT offload_type_pk
         PRIMARY KEY (id)
         USING INDEX offload_type_pki;
 
-ALTER TABLE offload_type 
-    ADD CONSTRAINT offload_type_uk 
+ALTER TABLE offload_type
+    ADD CONSTRAINT offload_type_uk
         UNIQUE (code)
         USING INDEX offload_type_uki;
 
@@ -489,20 +489,20 @@ CREATE UNIQUE INDEX status_uki ON
     status (code)
     TABLESPACE "&goe_repo_tablespace";
 
-ALTER TABLE status 
-    ADD CONSTRAINT status_pk 
+ALTER TABLE status
+    ADD CONSTRAINT status_pk
         PRIMARY KEY (id)
         USING INDEX status_pki;
 
-ALTER TABLE status 
-    ADD CONSTRAINT status_uk 
+ALTER TABLE status
+    ADD CONSTRAINT status_uk
         UNIQUE (code)
         USING INDEX status_uki;
 
 -- Foreign key constraints
 -- -----------------------------------------------------------------------------------------------
 ALTER TABLE command_execution
-    ADD CONSTRAINT command_execution_fk1 
+    ADD CONSTRAINT command_execution_fk1
         FOREIGN KEY ( command_type_id )
         REFERENCES command_type ( id );
 
@@ -512,102 +512,102 @@ ALTER TABLE command_execution
         REFERENCES goe_version ( id );
 
 ALTER TABLE command_execution
-    ADD CONSTRAINT command_execution_fk3 
+    ADD CONSTRAINT command_execution_fk3
         FOREIGN KEY ( status_id )
         REFERENCES status ( id );
 
 ALTER TABLE command_execution_step
-    ADD CONSTRAINT command_execution_step_fk1 
+    ADD CONSTRAINT command_execution_step_fk1
         FOREIGN KEY ( command_step_id )
         REFERENCES command_step ( id );
 
 ALTER TABLE command_execution_step
-    ADD CONSTRAINT command_execution_step_fk2 
+    ADD CONSTRAINT command_execution_step_fk2
         FOREIGN KEY ( command_type_id )
         REFERENCES command_type ( id );
 
 ALTER TABLE command_execution_step
-    ADD CONSTRAINT command_execution_step_fk3 
+    ADD CONSTRAINT command_execution_step_fk3
         FOREIGN KEY ( command_execution_id )
         REFERENCES command_execution ( id );
 
 ALTER TABLE command_execution_step
-    ADD CONSTRAINT command_execution_step_fk4 
+    ADD CONSTRAINT command_execution_step_fk4
         FOREIGN KEY ( status_id )
         REFERENCES status ( id );
 
 ALTER TABLE offload_chunk
-    ADD CONSTRAINT offload_chunk_fk1 
+    ADD CONSTRAINT offload_chunk_fk1
         FOREIGN KEY ( backend_object_id )
         REFERENCES backend_object ( id );
 
 ALTER TABLE offload_chunk
-    ADD CONSTRAINT offload_chunk_fk2 
+    ADD CONSTRAINT offload_chunk_fk2
         FOREIGN KEY ( frontend_object_id )
         REFERENCES frontend_object ( id );
 
 ALTER TABLE offload_chunk
-    ADD CONSTRAINT offload_chunk_fk3 
+    ADD CONSTRAINT offload_chunk_fk3
         FOREIGN KEY ( command_execution_id )
         REFERENCES command_execution ( id );
 
 ALTER TABLE offload_chunk
-    ADD CONSTRAINT offload_chunk_fk4 
+    ADD CONSTRAINT offload_chunk_fk4
         FOREIGN KEY ( status_id )
         REFERENCES status ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk1 
+    ADD CONSTRAINT offload_metadata_fk1
         FOREIGN KEY ( goe_version_id_initial )
         REFERENCES goe_version ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk2 
+    ADD CONSTRAINT offload_metadata_fk2
         FOREIGN KEY ( goe_version_id_current )
         REFERENCES goe_version ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk3 
+    ADD CONSTRAINT offload_metadata_fk3
         FOREIGN KEY ( command_execution_id_initial )
         REFERENCES command_execution ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk4 
+    ADD CONSTRAINT offload_metadata_fk4
         FOREIGN KEY ( command_execution_id_current )
         REFERENCES command_execution ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk5 
+    ADD CONSTRAINT offload_metadata_fk5
         FOREIGN KEY ( backend_object_id )
         REFERENCES backend_object ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk6 
+    ADD CONSTRAINT offload_metadata_fk6
         FOREIGN KEY ( frontend_object_id )
         REFERENCES frontend_object ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk7 
+    ADD CONSTRAINT offload_metadata_fk7
         FOREIGN KEY ( offload_type_id )
         REFERENCES offload_type ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk8 
+    ADD CONSTRAINT offload_metadata_fk8
         FOREIGN KEY ( offload_range_type_id )
         REFERENCES offload_range_type ( id );
 
 ALTER TABLE offload_metadata
-    ADD CONSTRAINT offload_metadata_fk9 
+    ADD CONSTRAINT offload_metadata_fk9
         FOREIGN KEY ( offload_predicate_type_id )
         REFERENCES offload_predicate_type ( id );
 
 ALTER TABLE offload_partition
-    ADD CONSTRAINT offload_partition_fk1 
+    ADD CONSTRAINT offload_partition_fk1
         FOREIGN KEY ( offload_chunk_id )
         REFERENCES offload_chunk ( id );
 
 ALTER TABLE offload_partition
-    ADD CONSTRAINT offload_partition_fk2 
+    ADD CONSTRAINT offload_partition_fk2
         FOREIGN KEY ( frontend_object_id )
         REFERENCES frontend_object ( id );
 

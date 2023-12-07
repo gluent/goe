@@ -10,8 +10,8 @@ import string
 
 from datetime import datetime, timedelta
 
-from gluentlib.util.ora_query import OracleQuery
-from gluentlib.util.misc_functions import is_number, nvl
+from goe.util.ora_query import OracleQuery
+from goe.util.misc_functions import is_number, nvl
 
 
 ###############################################################################
@@ -392,7 +392,7 @@ if __name__ == "__main__":
     import os
     import sys
 
-    from gluentlib.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_gluentlib_logging
 
     def usage(prog_name):
         print("%s: db_table load_records operations [commit_size] [debug level]" % prog_name)

@@ -4,7 +4,7 @@
 
 from contextlib import contextmanager
 
-from gluentlib.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_ORACLE, DBTYPE_TERADATA
+from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_ORACLE, DBTYPE_TERADATA
 
 
 def frontend_testing_api_factory(frontend_type, connection_options, messages,

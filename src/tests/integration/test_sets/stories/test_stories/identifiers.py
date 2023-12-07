@@ -9,10 +9,10 @@ from gluent import (
     LEGACY_MAX_HYBRID_IDENTIFIER_LENGTH,
     log,
 )
-from gluentlib.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_TERADATA
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_metadata_functions import INCREMENTAL_PREDICATE_TYPE_LIST
-from gluentlib.offload.offload_transport import (
+from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_TERADATA
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_metadata_functions import INCREMENTAL_PREDICATE_TYPE_LIST
+from goe.offload.offload_transport import (
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
@@ -25,8 +25,8 @@ from gluentlib.offload.offload_transport import (
     is_sqoop_available,
     is_sqoop_by_query_available,
 )
-from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_DATE
-from gluentlib.offload.predicate_offload import GenericPredicate
+from goe.offload.oracle.oracle_column import ORACLE_TYPE_DATE
+from goe.offload.predicate_offload import GenericPredicate
 
 from test_sets.stories.story_assertion_functions import (
     backend_column_exists,

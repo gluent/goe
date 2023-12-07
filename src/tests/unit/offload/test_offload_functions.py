@@ -3,19 +3,19 @@
 import re
 from unittest import TestCase, main
 
-from gluentlib.offload.offload_functions import (
+from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     expand_columns_csv,
     hybrid_threshold_clauses,
     hybrid_view_list_clauses,
     trunc_with_hash,
 )
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     CanonicalColumn,
     GLUENT_TYPE_INTEGER_2,
     GLUENT_TYPE_VARIABLE_STRING,
 )
-from gluentlib.offload.predicate_offload import GenericPredicate
+from goe.offload.predicate_offload import GenericPredicate
 
 
 class TestOffloadFunctions(TestCase):

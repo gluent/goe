@@ -9,13 +9,13 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, gen
 from test_sets.stories.story_assertion_functions import offload_fact_assertions, synthetic_part_col_name
 
 from gluent import IPA_PREDICATE_TYPE_EXCEPTION_TEXT, IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT
-from gluentlib.offload.offload_constants import OFFLOAD_STATS_METHOD_COPY, OFFLOAD_STATS_METHOD_NATIVE
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_source_data import INVALID_HV_FOR_LIST_AS_RANGE_EXCEPTION_TEXT, \
+from goe.offload.offload_constants import OFFLOAD_STATS_METHOD_COPY, OFFLOAD_STATS_METHOD_NATIVE
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_source_data import INVALID_HV_FOR_LIST_AS_RANGE_EXCEPTION_TEXT, \
     TOO_MANY_PARTITION_NAMES_EXCEPTION_TEXT
-from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_DATE, ORACLE_TYPE_NUMBER,\
+from goe.offload.oracle.oracle_column import ORACLE_TYPE_DATE, ORACLE_TYPE_NUMBER,\
     ORACLE_TYPE_TIMESTAMP, ORACLE_TYPE_VARCHAR2
-from gluentlib.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE, \
+from goe.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE, \
     INCREMENTAL_PREDICATE_TYPE_RANGE
 from testlib.test_framework.test_constants import PARTITION_FUNCTION_TEST_FROM_INT8
 from testlib.test_framework.test_functions import log

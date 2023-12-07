@@ -5,23 +5,23 @@ from pyarrow import parquet
 from gluent import verbose, vverbose, \
     num_location_files_enabled, \
     TOTAL_ROWS_OFFLOADED_LOG_TEXT
-from gluentlib.offload.factory.backend_table_factory import backend_table_factory
-from gluentlib.offload.column_metadata import SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE
-from gluentlib.offload.frontend_api import QueryParameter
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_ORACLE, PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH
-from gluentlib.offload.offload_functions import convert_backend_identifier_case, data_db_name, prefix_column_with_alias
-from gluentlib.offload.offload_metadata_functions import incremental_hv_list_from_csv, incremental_hv_csv_from_list, \
+from goe.offload.factory.backend_table_factory import backend_table_factory
+from goe.offload.column_metadata import SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE
+from goe.offload.frontend_api import QueryParameter
+from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_ORACLE, PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH
+from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name, prefix_column_with_alias
+from goe.offload.offload_metadata_functions import incremental_hv_list_from_csv, incremental_hv_csv_from_list, \
     flatten_lpa_individual_high_values, split_metadata_incremental_high_values, \
     HYBRID_VIEW_IPA_HWM_TOKEN_RDBMS_BEGIN, HYBRID_VIEW_IPA_HWM_TOKEN_RDBMS_END, \
     HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_BEGIN, HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_END, \
     OFFLOAD_TYPE_FULL, OFFLOAD_TYPE_INCREMENTAL
-from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP
-from gluentlib.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING
-from gluentlib.orchestration import command_steps
-from gluentlib.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE, \
+from goe.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP
+from goe.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING
+from goe.orchestration import command_steps
+from goe.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE, \
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE_AND_PREDICATE, INCREMENTAL_PREDICATE_TYPE_LIST, \
     INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE, INCREMENTAL_PREDICATE_TYPE_RANGE
-from gluentlib.util.misc_functions import add_suffix_in_same_case, get_temp_path, remove_chars, \
+from goe.util.misc_functions import add_suffix_in_same_case, get_temp_path, remove_chars, \
     trunc_with_hash
 from tests.testlib.test_framework import test_functions
 from tests.testlib.test_framework.oracle.oracle_frontend_testing_api import lob_to_hash

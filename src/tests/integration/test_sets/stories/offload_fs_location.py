@@ -1,8 +1,8 @@
 from .story_setup_functions import *
 
-from gluentlib.filesystem.gluent_dfs import OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_HDFS, OFFLOAD_FS_SCHEME_INHERIT, \
+from goe.filesystem.gluent_dfs import OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_HDFS, OFFLOAD_FS_SCHEME_INHERIT, \
     OFFLOAD_FS_SCHEME_MAPRFS, VALID_OFFLOAD_FS_SCHEMES, get_scheme_from_location_uri
-from gluentlib.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
+from goe.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
 
 """ Functions to do some checking related to cloud storage offloads. No specific tests, we piggy back existing
     tests which check data/result set correctness

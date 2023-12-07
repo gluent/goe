@@ -2,8 +2,8 @@
 """
 from unittest import TestCase, main
 
-from gluentlib.offload.offload_source_table import OFFLOAD_PARTITION_TYPE_RANGE
-from gluentlib.offload.teradata.teradata_partition_expression import (
+from goe.offload.offload_source_table import OFFLOAD_PARTITION_TYPE_RANGE
+from goe.offload.teradata.teradata_partition_expression import (
     PARTITION_TYPE_COLUMNAR,
     TeradataPartitionExpression,
     UnsupportedCaseNPartitionExpression,

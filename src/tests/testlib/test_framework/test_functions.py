@@ -11,12 +11,12 @@ import time
 from gluent import get_log_fh, get_log_fh_name, get_offload_options, get_options, init, \
     log as offload_log, normal,\
     OFFLOAD_OP_NAME, verbose, vverbose
-from gluentlib.config.orchestration_config import OrchestrationConfig
-from gluentlib.offload.column_metadata import match_table_column
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE
-from gluentlib.offload.offload_functions import convert_backend_identifier_case, data_db_name
-from gluentlib.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
-from gluentlib.util.misc_functions import substitute_in_same_case
+from goe.config.orchestration_config import OrchestrationConfig
+from goe.offload.column_metadata import match_table_column
+from goe.offload.offload_constants import DBTYPE_ORACLE
+from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
+from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
+from goe.util.misc_functions import substitute_in_same_case
 from tests.integration.test_functions import get_default_test_user, get_default_test_user_pass
 from tests.integration.test_sets.stories.story_globals import STORY_SET_ALL
 from tests.testlib.test_framework import test_constants

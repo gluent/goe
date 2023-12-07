@@ -5,7 +5,7 @@ import decimal
 from numpy import datetime64
 from unittest import TestCase, main
 
-from gluentlib.offload.synthetic_partition_literal import SyntheticPartitionLiteral
+from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 
 
 class TestSyntheticPartitionLiteral(TestCase):

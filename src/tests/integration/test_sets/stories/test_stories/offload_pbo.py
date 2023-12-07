@@ -8,16 +8,16 @@ from gluent import (
     IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
     log,
 )
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
 )
-from gluentlib.offload.offload_metadata_functions import (
+from goe.offload.offload_metadata_functions import (
     OFFLOAD_TYPE_FULL,
     OFFLOAD_TYPE_INCREMENTAL,
 )
-from gluentlib.offload.offload_source_data import (
+from goe.offload.offload_source_data import (
     OFFLOAD_TYPE_CHANGE_FOR_PBO_EXCEPTION_TEXT,
     PREDICATE_APPEND_HWM_MESSAGE_TEXT,
     PREDICATE_TYPE_INCOMPATIBLE_EXCEPTION_TEXT,
@@ -27,10 +27,10 @@ from gluentlib.offload.offload_source_data import (
     PREDICATE_TYPE_REQUIRED_EXCEPTION_TEXT,
     RANGE_AND_PREDICATE_WITHOUT_PART_KEY_EXCEPTION_TEXT,
 )
-from gluentlib.offload.predicate_offload import GenericPredicate
-from gluentlib.orchestration import command_steps
-from gluentlib.orchestration.command_steps import step_title
-from gluentlib.persistence.orchestration_metadata import (
+from goe.offload.predicate_offload import GenericPredicate
+from goe.orchestration import command_steps
+from goe.orchestration.command_steps import step_title
+from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE_AND_PREDICATE,
@@ -38,7 +38,7 @@ from gluentlib.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_RANGE,
     INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE,
 )
-from gluentlib.util.misc_functions import add_suffix_in_same_case
+from goe.util.misc_functions import add_suffix_in_same_case
 
 from test_sets.stories.story_assertion_functions import (
     check_metadata,

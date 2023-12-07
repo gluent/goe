@@ -11,12 +11,12 @@ from test_sets.stories.story_assertion_functions import offload_lpa_fact_asserti
 
 from gluent import RESET_HYBRID_VIEW_EXCEPTION_TEXT, OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT, \
     OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_metadata_functions import OFFLOAD_TYPE_FULL, OFFLOAD_TYPE_INCREMENTAL,\
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_metadata_functions import OFFLOAD_TYPE_FULL, OFFLOAD_TYPE_INCREMENTAL,\
     INCREMENTAL_PREDICATE_TYPE_LIST
-from gluentlib.offload.offload_source_data import INCREMENTAL_OFFLOAD_DEFAULT_PARTITION_EXCEPTION_TEXT, \
+from goe.offload.offload_source_data import INCREMENTAL_OFFLOAD_DEFAULT_PARTITION_EXCEPTION_TEXT, \
     IPA_OFFLOAD_DEFAULT_PARTITION_EXCEPTION_TEXT, NO_MATCHING_PARTITION_EXCEPTION_TEXT
-from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_NUMBER
+from goe.offload.oracle.oracle_column import ORACLE_TYPE_NUMBER
 from testlib.test_framework.test_constants import PARTITION_FUNCTION_TEST_FROM_INT8
 
 LPA_NUM_PART_KEY_TABLE = 'STORY_LPA_NUM_KEY'

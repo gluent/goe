@@ -11,18 +11,18 @@ from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from typing import Optional, Union
 
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     GLUENT_TYPE_INTEGER_1,
     GLUENT_TYPE_INTEGER_2,
     GLUENT_TYPE_INTEGER_4,
     GLUENT_TYPE_INTEGER_8,
     GLUENT_TYPE_INTEGER_38,
 )
-from gluentlib.offload.factory.frontend_api_factory import frontend_api_factory
-from gluentlib.offload.factory.offload_source_table_factory import OffloadSourceTable
-from gluentlib.offload.frontend_api import GET_DDL_TYPE_VIEW
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
-from gluentlib.util.simple_timer import SimpleTimer
+from goe.offload.factory.frontend_api_factory import frontend_api_factory
+from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
+from goe.offload.frontend_api import GET_DDL_TYPE_VIEW
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.util.simple_timer import SimpleTimer
 from tests.testlib.test_framework import test_constants
 
 

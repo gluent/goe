@@ -16,17 +16,17 @@ from tests.integration.offload.unittest_functions import (
 )
 
 from gluent import OffloadOperation
-from gluentlib.offload.factory.backend_table_factory import backend_table_factory
-from gluentlib.offload.factory.offload_source_table_factory import OffloadSourceTable
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.persistence.orchestration_metadata import OrchestrationMetadata
-from gluentlib.offload.predicate_offload import GenericPredicate, parse_predicate_dsl
-from gluentlib.offload.bigquery import bigquery_predicate
-from gluentlib.offload.hadoop import hadoop_predicate
-from gluentlib.offload.microsoft import synapse_predicate
-from gluentlib.offload.oracle import oracle_predicate
-from gluentlib.offload.snowflake import snowflake_predicate
-from gluentlib.offload.teradata import teradata_predicate
+from goe.offload.factory.backend_table_factory import backend_table_factory
+from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
+from goe.offload.offload_messages import OffloadMessages
+from goe.persistence.orchestration_metadata import OrchestrationMetadata
+from goe.offload.predicate_offload import GenericPredicate, parse_predicate_dsl
+from goe.offload.bigquery import bigquery_predicate
+from goe.offload.hadoop import hadoop_predicate
+from goe.offload.microsoft import synapse_predicate
+from goe.offload.oracle import oracle_predicate
+from goe.offload.snowflake import snowflake_predicate
+from goe.offload.teradata import teradata_predicate
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )

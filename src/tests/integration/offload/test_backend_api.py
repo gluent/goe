@@ -1,7 +1,7 @@
 from unittest import main
 
 
-from gluentlib.offload.offload_constants import DBTYPE_SPARK
+from goe.offload.offload_constants import DBTYPE_SPARK
 from tests.integration.test_functions import build_current_options
 from tests.unit.offload.test_backend_api import TestBackendApi
 

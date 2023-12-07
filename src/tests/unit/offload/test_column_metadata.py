@@ -1,7 +1,7 @@
 """ TestColumnMetadata: Unit test TestColumnMetadata library to test all functions """
 from unittest import TestCase, main
 
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     CanonicalColumn,
     ColumnBucketInfo,
     ColumnPartitionInfo,
@@ -23,7 +23,7 @@ from gluentlib.offload.column_metadata import (
     GLUENT_TYPE_VARIABLE_STRING,
     SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE,
 )
-from gluentlib.offload.offload_constants import OFFLOAD_BUCKET_NAME
+from goe.offload.offload_constants import OFFLOAD_BUCKET_NAME
 
 
 class TestColumnMetadata(TestCase):

@@ -11,14 +11,14 @@ from test_sets.stories.story_assertion_functions import offload_lpa_fact_asserti
     synthetic_part_col_name, table_has_stats, text_in_warnings
 
 from gluent import OFFLOAD_STATS_COPY_EXCEPTION_TEXT
-from gluentlib.config import orchestration_defaults
-from gluentlib.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_HIVE, OFFLOAD_BUCKET_NAME, \
+from goe.config import orchestration_defaults
+from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_HIVE, OFFLOAD_BUCKET_NAME, \
     OFFLOAD_STATS_METHOD_NONE, OFFLOAD_STATS_METHOD_NATIVE, OFFLOAD_STATS_METHOD_COPY, \
     OFFLOAD_STATS_METHOD_HISTORY, HADOOP_BASED_BACKEND_DISTRIBUTIONS
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_metadata_functions import INCREMENTAL_PREDICATE_TYPE_LIST
-from gluentlib.orchestration import command_steps
-from gluentlib.orchestration.command_steps import step_title
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_metadata_functions import INCREMENTAL_PREDICATE_TYPE_LIST
+from goe.orchestration import command_steps
+from goe.orchestration.command_steps import step_title
 
 
 LPA_FACT_TABLE = 'BACKEND_STATS_LFACT'

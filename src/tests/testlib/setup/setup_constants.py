@@ -1,6 +1,6 @@
 import os
 
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY
+from goe.offload.offload_constants import DBTYPE_BIGQUERY
 from tests.testlib.test_framework import test_constants
 
 # Per table defaults for synthetic_partition_digits

@@ -1,7 +1,7 @@
-from gluentlib.offload.offload_constants import DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_TERADATA
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_source_data import TOO_MANY_PARTITION_NAMES_EXCEPTION_TEXT
-from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_NVARCHAR2
+from goe.offload.offload_constants import DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_TERADATA
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_source_data import TOO_MANY_PARTITION_NAMES_EXCEPTION_TEXT
+from goe.offload.oracle.oracle_column import ORACLE_TYPE_NVARCHAR2
 from testlib.test_framework.test_constants import PARTITION_FUNCTION_TEST_FROM_INT8,\
     PARTITION_FUNCTION_TEST_FROM_STRING
 from testlib.test_framework.test_functions import log

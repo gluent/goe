@@ -3,11 +3,11 @@
 import os
 from unittest import TestCase, main, mock
 
-from gluentlib.config.orchestration_config import (
+from goe.config.orchestration_config import (
     OrchestrationConfig,
     EXPECTED_CONFIG_ARGS,
 )
-from gluentlib.config.config_validation_functions import (
+from goe.config.config_validation_functions import (
     OrchestrationConfigException,
     verify_json_option,
 )

@@ -2,8 +2,8 @@ from functools import lru_cache
 import os
 
 from gluent import OffloadOperation
-from gluentlib.config.orchestration_config import OrchestrationConfig
-from gluentlib.offload.offload_messages import OffloadMessages
+from goe.config.orchestration_config import OrchestrationConfig
+from goe.offload.offload_messages import OffloadMessages
 
 
 def build_current_options():

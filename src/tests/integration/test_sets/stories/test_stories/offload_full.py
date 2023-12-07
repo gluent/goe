@@ -10,10 +10,10 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, gen
 from test_sets.stories.story_assertion_functions import offload_fact_assertions, text_in_messages
 
 from gluent import verbose
-from gluentlib.offload import offload_constants
-from gluentlib.offload.offload_metadata_functions import OFFLOAD_TYPE_FULL, OFFLOAD_TYPE_INCREMENTAL
-from gluentlib.offload.offload_source_data import NO_MAXVALUE_PARTITION_NOTICE_TEXT
-from gluentlib.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE, \
+from goe.offload import offload_constants
+from goe.offload.offload_metadata_functions import OFFLOAD_TYPE_FULL, OFFLOAD_TYPE_INCREMENTAL
+from goe.offload.offload_source_data import NO_MAXVALUE_PARTITION_NOTICE_TEXT
+from goe.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE, \
     INCREMENTAL_PREDICATE_TYPE_RANGE
 from testlib.test_framework.test_functions import log
 

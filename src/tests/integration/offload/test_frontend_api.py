@@ -3,9 +3,9 @@ from unittest import main
 
 from tests.unit.offload.unittest_functions import get_real_frontend_schema_and_table
 
-from gluentlib.offload.factory.frontend_api_factory import frontend_api_factory
-from gluentlib.offload.frontend_api import QueryParameter
-from gluentlib.offload.offload_messages import OffloadMessages
+from goe.offload.factory.frontend_api_factory import frontend_api_factory
+from goe.offload.frontend_api import QueryParameter
+from goe.offload.offload_messages import OffloadMessages
 from tests.integration.test_functions import build_current_options
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
     frontend_testing_api_factory,

@@ -3,16 +3,16 @@
     they are the very same methods we are trying to test.
 """
 
-from gluentlib.offload.column_metadata import CANONICAL_CHAR_SEMANTICS_BYTE, CANONICAL_CHAR_SEMANTICS_CHAR
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE, DBTYPE_ORACLE,\
+from goe.offload.column_metadata import CANONICAL_CHAR_SEMANTICS_BYTE, CANONICAL_CHAR_SEMANTICS_CHAR
+from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE, DBTYPE_ORACLE,\
     DBTYPE_SNOWFLAKE, DBTYPE_SYNAPSE
-from gluentlib.offload.oracle.oracle_column import OracleColumn, \
+from goe.offload.oracle.oracle_column import OracleColumn, \
     ORACLE_TYPE_CHAR, ORACLE_TYPE_NCHAR, ORACLE_TYPE_CLOB, ORACLE_TYPE_NCLOB, \
     ORACLE_TYPE_VARCHAR2, ORACLE_TYPE_NVARCHAR2, \
     ORACLE_TYPE_RAW, ORACLE_TYPE_BLOB, ORACLE_TYPE_NUMBER, \
     ORACLE_TYPE_BINARY_DOUBLE, ORACLE_TYPE_BINARY_FLOAT, ORACLE_TYPE_DATE, ORACLE_TYPE_TIMESTAMP, \
     ORACLE_TYPE_TIMESTAMP_TZ, ORACLE_TYPE_INTERVAL_DS, ORACLE_TYPE_INTERVAL_YM
-from gluentlib.offload.teradata.teradata_column import TeradataColumn
+from goe.offload.teradata.teradata_column import TeradataColumn
 
 # BigQuery expected frontend columns for GL_BACKEND_TYPE_MAPPING after present.
 BIGQUERY_TO_ORACLE_MAPPINGS = {

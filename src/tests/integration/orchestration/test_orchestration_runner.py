@@ -11,8 +11,8 @@ from tests.integration.offload.unittest_functions import (
     get_real_frontend_schema_and_table,
 )
 
-from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
-from gluentlib.offload.offload_messages import OffloadMessages
+from goe.orchestration.orchestration_runner import OrchestrationRunner
+from goe.offload.offload_messages import OffloadMessages
 
 
 class TestOrchestrationRunner(TestCase):

@@ -5,7 +5,7 @@
 import json
 import unittest
 
-from gluentlib.persistence.key_value_dataset import (
+from goe.persistence.key_value_dataset import (
     KeyValueDatasetSnapshot,
     KeyValueDatasetSpecification,
     KeyValueDatasetPersistence,

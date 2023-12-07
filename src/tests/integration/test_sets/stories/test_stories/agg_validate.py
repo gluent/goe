@@ -1,4 +1,4 @@
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE
+from goe.offload.offload_constants import DBTYPE_ORACLE
 from test_sets.stories.story_globals import STORY_TYPE_AGG_VALIDATE, STORY_TYPE_OFFLOAD, STORY_TYPE_SETUP, \
     STORY_SETUP_TYPE_FRONTEND, STORY_SETUP_TYPE_HYBRID, STORY_SETUP_TYPE_ORACLE, STORY_SETUP_TYPE_PYTHON
 from test_sets.stories.story_setup_functions import drop_backend_test_table, gen_hybrid_drop_ddl, \
@@ -9,8 +9,8 @@ from test_sets.stories.story_assertion_functions import offload_dim_assertion, o
     offload_lpa_fact_assertion, text_in_log
 from test_sets.stories.test_stories.offload_pbo import gen_simple_unicode_dimension_ddl
 
-from gluentlib.offload.predicate_offload import GenericPredicate
-from gluentlib.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE
+from goe.offload.predicate_offload import GenericPredicate
+from goe.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE
 
 
 LPA_FACT = 'STORY_AV_LPA'

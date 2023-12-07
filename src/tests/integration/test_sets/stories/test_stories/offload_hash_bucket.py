@@ -6,8 +6,8 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, dro
     gen_hybrid_drop_ddl, gen_rdbms_dim_create_ddl, dbms_stats_gather_string
 from test_sets.stories.story_assertion_functions import offload_dim_assertion
 
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_SYNAPSE, DBTYPE_TERADATA
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_SYNAPSE, DBTYPE_TERADATA
+from goe.offload.offload_functions import convert_backend_identifier_case
 from testlib.test_framework.test_functions import log
 
 

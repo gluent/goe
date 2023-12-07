@@ -3,18 +3,18 @@
 
 from unittest import TestCase, main
 
-from gluentlib.orchestration.execution_id import ExecutionId
-from gluentlib.persistence.factory.orchestration_repo_client_factory import (
+from goe.orchestration.execution_id import ExecutionId
+from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
-from gluentlib.persistence.orchestration_metadata import (
+from goe.persistence.orchestration_metadata import (
     OrchestrationMetadata,
     METADATA_ATTRIBUTES,
 )
-from gluentlib.offload.factory.frontend_api_factory import frontend_api_factory
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.orchestration import orchestration_constants
+from goe.offload.factory.frontend_api_factory import frontend_api_factory
+from goe.offload.offload_constants import DBTYPE_ORACLE
+from goe.offload.offload_messages import OffloadMessages
+from goe.orchestration import orchestration_constants
 
 from tests.integration.test_functions import (
     build_current_options,

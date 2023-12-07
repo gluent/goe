@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase, main
 
-from gluentlib.offload.bigquery.bigquery_column import (
+from goe.offload.bigquery.bigquery_column import (
     BigQueryColumn,
     BIGQUERY_TYPE_BIGNUMERIC,
     BIGQUERY_TYPE_BOOLEAN,
@@ -15,7 +15,7 @@ from gluentlib.offload.bigquery.bigquery_column import (
     BIGQUERY_TYPE_TIME,
     BIGQUERY_TYPE_TIMESTAMP,
 )
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     CanonicalColumn,
     match_table_column,
     CANONICAL_CHAR_SEMANTICS_BYTE,
@@ -42,9 +42,9 @@ from gluentlib.offload.column_metadata import (
     GLUENT_TYPE_INTERVAL_YM,
     GLUENT_TYPE_BOOLEAN,
 )
-from gluentlib.offload.factory.backend_api_factory import backend_api_factory
-from gluentlib.offload.hadoop.hadoop_column import HadoopColumn
-from gluentlib.offload.offload_constants import (
+from goe.offload.factory.backend_api_factory import backend_api_factory
+from goe.offload.hadoop.hadoop_column import HadoopColumn
+from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
@@ -54,8 +54,8 @@ from gluentlib.offload.offload_constants import (
     FILE_STORAGE_FORMAT_AVRO,
     FILE_STORAGE_FORMAT_PARQUET,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.microsoft.synapse_column import (
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.microsoft.synapse_column import (
     SynapseColumn,
     SYNAPSE_TYPE_BIGINT,
     SYNAPSE_TYPE_BINARY,
@@ -81,8 +81,8 @@ from gluentlib.offload.microsoft.synapse_column import (
     SYNAPSE_TYPE_UNIQUEIDENTIFIER,
     SYNAPSE_TYPE_VARCHAR,
 )
-from gluentlib.offload.microsoft.mssql_offload_source_table import MSSQLSourceTable
-from gluentlib.offload.microsoft.mssql_column import (
+from goe.offload.microsoft.mssql_offload_source_table import MSSQLSourceTable
+from goe.offload.microsoft.mssql_column import (
     MSSQLColumn,
     MSSQL_TYPE_BIGINT,
     MSSQL_TYPE_BIT,
@@ -111,7 +111,7 @@ from gluentlib.offload.microsoft.mssql_column import (
     MSSQL_TYPE_VARBINARY,
     MSSQL_TYPE_IMAGE,
 )
-from gluentlib.offload.netezza.netezza_column import (
+from goe.offload.netezza.netezza_column import (
     NetezzaColumn,
     NETEZZA_TYPE_BIGINT,
     NETEZZA_TYPE_INTEGER,
@@ -132,8 +132,8 @@ from gluentlib.offload.netezza.netezza_column import (
     NETEZZA_TYPE_BINARY_VARYING,
     NETEZZA_TYPE_ST_GEOMETRY,
 )
-from gluentlib.offload.netezza.netezza_offload_source_table import NetezzaSourceTable
-from gluentlib.offload.oracle.oracle_column import (
+from goe.offload.netezza.netezza_offload_source_table import NetezzaSourceTable
+from goe.offload.oracle.oracle_column import (
     OracleColumn,
     ORACLE_TYPE_CHAR,
     ORACLE_TYPE_NCHAR,
@@ -155,8 +155,8 @@ from gluentlib.offload.oracle.oracle_column import (
     ORACLE_TYPE_INTERVAL_DS,
     ORACLE_TYPE_INTERVAL_YM,
 )
-from gluentlib.offload.oracle.oracle_offload_source_table import OracleSourceTable
-from gluentlib.offload.snowflake.snowflake_column import (
+from goe.offload.oracle.oracle_offload_source_table import OracleSourceTable
+from goe.offload.snowflake.snowflake_column import (
     SnowflakeColumn,
     SNOWFLAKE_TYPE_BINARY,
     SNOWFLAKE_TYPE_BOOLEAN,
@@ -168,8 +168,8 @@ from gluentlib.offload.snowflake.snowflake_column import (
     SNOWFLAKE_TYPE_TIMESTAMP_NTZ,
     SNOWFLAKE_TYPE_TIMESTAMP_TZ,
 )
-from gluentlib.offload.factory.staging_file_factory import staging_file_factory
-from gluentlib.offload.staging.avro.avro_column import (
+from goe.offload.factory.staging_file_factory import staging_file_factory
+from goe.offload.staging.avro.avro_column import (
     StagingAvroColumn,
     AVRO_TYPE_STRING,
     AVRO_TYPE_LONG,
@@ -179,7 +179,7 @@ from gluentlib.offload.staging.avro.avro_column import (
     AVRO_TYPE_FLOAT,
     AVRO_TYPE_DOUBLE,
 )
-from gluentlib.offload.staging.parquet.parquet_column import (
+from goe.offload.staging.parquet.parquet_column import (
     StagingParquetColumn,
     PARQUET_TYPE_STRING,
     PARQUET_TYPE_FLOAT,
@@ -189,7 +189,7 @@ from gluentlib.offload.staging.parquet.parquet_column import (
     PARQUET_TYPE_DOUBLE,
     PARQUET_TYPE_INT64,
 )
-from gluentlib.util.better_impyla import (
+from goe.util.better_impyla import (
     HADOOP_TYPE_BOOLEAN,
     HADOOP_TYPE_BIGINT,
     HADOOP_TYPE_BINARY,

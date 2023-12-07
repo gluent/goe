@@ -1,7 +1,7 @@
 """ Test that frontend/backend system column objects are functional """
 from unittest import TestCase, main
 
-from gluentlib.offload.bigquery.bigquery_column import (
+from goe.offload.bigquery.bigquery_column import (
     BigQueryColumn,
     BIGQUERY_TYPE_BIGNUMERIC,
     BIGQUERY_TYPE_BOOLEAN,
@@ -15,7 +15,7 @@ from gluentlib.offload.bigquery.bigquery_column import (
     BIGQUERY_TYPE_TIME,
     BIGQUERY_TYPE_TIMESTAMP,
 )
-from gluentlib.offload.hadoop.hadoop_column import (
+from goe.offload.hadoop.hadoop_column import (
     HadoopColumn,
     HADOOP_TYPE_CHAR,
     HADOOP_TYPE_STRING,
@@ -32,7 +32,7 @@ from gluentlib.offload.hadoop.hadoop_column import (
     HADOOP_TYPE_TIMESTAMP,
     HADOOP_TYPE_BINARY,
 )
-from gluentlib.offload.snowflake.snowflake_column import (
+from goe.offload.snowflake.snowflake_column import (
     SnowflakeColumn,
     SNOWFLAKE_TYPE_BINARY,
     SNOWFLAKE_TYPE_BOOLEAN,
@@ -44,7 +44,7 @@ from gluentlib.offload.snowflake.snowflake_column import (
     SNOWFLAKE_TYPE_TIMESTAMP_NTZ,
     SNOWFLAKE_TYPE_TIMESTAMP_TZ,
 )
-from gluentlib.offload.microsoft.synapse_column import (
+from goe.offload.microsoft.synapse_column import (
     SynapseColumn,
     SYNAPSE_TYPE_BIGINT,
     SYNAPSE_TYPE_BINARY,
@@ -71,7 +71,7 @@ from gluentlib.offload.microsoft.synapse_column import (
     SYNAPSE_TYPE_VARBINARY,
     SYNAPSE_TYPE_VARCHAR,
 )
-from gluentlib.offload.oracle.oracle_column import (
+from goe.offload.oracle.oracle_column import (
     OracleColumn,
     ORACLE_TYPE_CHAR,
     ORACLE_TYPE_NCHAR,
@@ -93,7 +93,7 @@ from gluentlib.offload.oracle.oracle_column import (
     ORACLE_TYPE_INTERVAL_DS,
     ORACLE_TYPE_INTERVAL_YM,
 )
-from gluentlib.offload.teradata.teradata_column import (
+from goe.offload.teradata.teradata_column import (
     TeradataColumn,
     TERADATA_TYPE_BIGINT,
     TERADATA_TYPE_BYTE,

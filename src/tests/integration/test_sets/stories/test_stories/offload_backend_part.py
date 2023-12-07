@@ -8,14 +8,14 @@ from test_sets.stories.story_assertion_functions import backend_column_exists, g
     get_distinct_from_column, get_date_offload_granularity, offload_dim_assertion, offload_fact_assertions,\
     synthetic_part_col_name, text_in_warnings
 
-from gluentlib.offload.backend_table import NULL_BACKEND_PARTITION_VALUE_WARNING_TEXT, PARTITION_KEY_OUT_OF_RANGE
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_ORACLE, DBTYPE_TERADATA, \
+from goe.offload.backend_table import NULL_BACKEND_PARTITION_VALUE_WARNING_TEXT, PARTITION_KEY_OUT_OF_RANGE
+from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_ORACLE, DBTYPE_TERADATA, \
     PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH, PART_COL_GRANULARITY_YEAR
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_messages import VERBOSE
-from gluentlib.offload.operation.partition_controls import MISSING_PARTITION_GRANULARITY_EXCEPTION_TEXT,\
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_messages import VERBOSE
+from goe.offload.operation.partition_controls import MISSING_PARTITION_GRANULARITY_EXCEPTION_TEXT,\
     PARTITION_BY_STRING_NOT_SUPPORTED_EXCEPTION_TEXT
-from gluentlib.util.better_impyla import HADOOP_TYPE_STRING
+from goe.util.better_impyla import HADOOP_TYPE_STRING
 
 from testlib.test_framework.test_functions import log
 

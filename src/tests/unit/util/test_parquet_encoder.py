@@ -4,10 +4,10 @@ from unittest import TestCase, main
 import os.path
 from pyarrow import parquet
 
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.oracle.oracle_column import OracleColumn, ORACLE_TYPE_VARCHAR2
-from gluentlib.util.parquet_encoder import ParquetEncoder, PARQUET_TYPE_STRING
-from gluentlib.util.misc_functions import get_temp_path
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.oracle.oracle_column import OracleColumn, ORACLE_TYPE_VARCHAR2
+from goe.util.parquet_encoder import ParquetEncoder, PARQUET_TYPE_STRING
+from goe.util.misc_functions import get_temp_path
 
 from tests.unit.util.test_avro_encoder import FakeDb, ROW_COUNT
 

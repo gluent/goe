@@ -13,24 +13,24 @@ from numpy import datetime64
 
 from tests.integration.test_functions import get_default_test_user
 
-from gluentlib.connect.connect_constants import (
+from goe.connect.connect_constants import (
     CONNECT_DETAIL,
     CONNECT_STATUS,
     CONNECT_TEST,
 )
-from gluentlib.offload.backend_api import BackendApiException
-from gluentlib.offload.bigquery.bigquery_column import (
+from goe.offload.backend_api import BackendApiException
+from goe.offload.bigquery.bigquery_column import (
     BIGQUERY_TYPE_DATETIME,
     BIGQUERY_TYPE_INT64,
     BIGQUERY_TYPE_TIMESTAMP,
 )
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     ColumnMetadataInterface,
     ColumnPartitionInfo,
     get_partition_columns,
 )
-from gluentlib.offload.factory.backend_api_factory import backend_api_factory
-from gluentlib.offload.offload_constants import (
+from goe.offload.factory.backend_api_factory import backend_api_factory
+from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
@@ -40,9 +40,9 @@ from gluentlib.offload.offload_constants import (
     FILE_STORAGE_FORMAT_AVRO,
     FILE_STORAGE_FORMAT_PARQUET,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.persistence.orchestration_metadata import OrchestrationMetadata
-from gluentlib.util.misc_functions import add_suffix_in_same_case
+from goe.offload.offload_messages import OffloadMessages
+from goe.persistence.orchestration_metadata import OrchestrationMetadata
+from goe.util.misc_functions import add_suffix_in_same_case
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )

@@ -3,7 +3,7 @@
 import os
 from unittest import TestCase, main
 
-from gluentlib.util.password_tools import PasswordTools
+from goe.util.password_tools import PasswordTools
 
 
 class TestPasswordTools(TestCase):

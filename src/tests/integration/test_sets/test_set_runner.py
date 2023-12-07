@@ -6,8 +6,8 @@
 import logging
 import re
 
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
-from gluentlib.util.misc_functions import dict_to_namespace
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.util.misc_functions import dict_to_namespace
 
 from test_sets.base_test import BaseTest
 from test_sets.offload_transport.offload_transport_tests import run_offload_transport_tests

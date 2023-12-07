@@ -5,11 +5,11 @@
 
 import logging
 
-from gluentlib.offload.offload_constants import DBTYPE_HIVE, DBTYPE_SYNAPSE
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
-from gluentlib.orchestration import command_steps
-from gluentlib.orchestration.command_steps import step_title
-from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
+from goe.offload.offload_constants import DBTYPE_HIVE, DBTYPE_SYNAPSE
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.orchestration import command_steps
+from goe.orchestration.command_steps import step_title
+from goe.orchestration.orchestration_runner import OrchestrationRunner
 from tests.testlib.setup import setup_constants
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory

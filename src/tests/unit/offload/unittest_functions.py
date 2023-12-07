@@ -6,15 +6,15 @@
 import os
 from unittest import mock
 
-from gluentlib.config.orchestration_config import OrchestrationConfig
-from gluentlib.offload.offload_constants import (
+from goe.config.orchestration_config import OrchestrationConfig
+from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
     DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.persistence.orchestration_metadata import OrchestrationMetadata
+from goe.offload.offload_messages import OffloadMessages
+from goe.persistence.orchestration_metadata import OrchestrationMetadata
 
 
 def build_non_connecting_options(db_type):

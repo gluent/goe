@@ -1,6 +1,6 @@
 from decimal import Decimal
 from unittest import TestCase, main
-from gluentlib.util.misc_functions import remove_chars
+from goe.util.misc_functions import remove_chars
 from tests.testlib.test_framework.test_value_generators import TestDecimal
 
 

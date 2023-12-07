@@ -9,15 +9,15 @@ import datetime
 import logging
 from typing import Optional, Union
 
-from gluentlib.offload.column_metadata import CanonicalColumn,\
+from goe.offload.column_metadata import CanonicalColumn,\
     GLUENT_TYPE_BINARY, GLUENT_TYPE_DATE, GLUENT_TYPE_DECIMAL,\
     GLUENT_TYPE_DOUBLE, GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_FLOAT,\
     GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38,\
     GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_LARGE_STRING,\
     GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_VARIABLE_STRING
-from gluentlib.offload.microsoft.mssql_column import MSSQLColumn, MSSQL_TYPE_BIGINT, MSSQL_TYPE_DATE,\
+from goe.offload.microsoft.mssql_column import MSSQLColumn, MSSQL_TYPE_BIGINT, MSSQL_TYPE_DATE,\
     MSSQL_TYPE_DATETIMEOFFSET, MSSQL_TYPE_DATETIME2, MSSQL_TYPE_VARCHAR, MSSQL_TYPE_DECIMAL, MSSQL_TYPE_NUMERIC
-from gluentlib.offload.offload_messages import VERBOSE
+from goe.offload.offload_messages import VERBOSE
 from tests.testlib.test_framework.frontend_testing_api import FrontendTestingApiInterface
 from tests.testlib.test_framework.test_value_generators import TestDecimal
 

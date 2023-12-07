@@ -2,10 +2,10 @@ from unittest import TestCase, main
 
 import json
 
-from gluentlib.conductor.hybrid_view_service import HybridViewService,\
+from goe.conductor.hybrid_view_service import HybridViewService,\
     JSON_KEY_BACKEND_NUM_ROWS, JSON_KEY_BACKEND_SIZE, JSON_KEY_BACKEND_PARTITIONS,\
     JSON_KEY_VALIDATE_STATUS, JSON_KEY_VALIDATE_MESSAGE
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_TERADATA
+from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_TERADATA
 from tests.offload.unittest_functions import build_current_options, get_default_test_user
 
 

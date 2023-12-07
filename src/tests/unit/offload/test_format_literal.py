@@ -5,10 +5,10 @@ from decimal import Decimal
 from unittest import TestCase, main
 from numpy import datetime64
 
-from gluentlib.offload.hadoop.hive_literal import HiveLiteral
-from gluentlib.offload.hadoop.impala_literal import ImpalaLiteral
-from gluentlib.offload.bigquery.bigquery_literal import BigQueryLiteral
-from gluentlib.offload.bigquery.bigquery_column import (
+from goe.offload.hadoop.hive_literal import HiveLiteral
+from goe.offload.hadoop.impala_literal import ImpalaLiteral
+from goe.offload.bigquery.bigquery_literal import BigQueryLiteral
+from goe.offload.bigquery.bigquery_column import (
     BIGQUERY_TYPE_DATE,
     BIGQUERY_TYPE_DATETIME,
     BIGQUERY_TYPE_FLOAT64,
@@ -18,7 +18,7 @@ from gluentlib.offload.bigquery.bigquery_column import (
     BIGQUERY_TYPE_STRING,
     BIGQUERY_TYPE_TIME,
 )
-from gluentlib.offload.microsoft.synapse_column import (
+from goe.offload.microsoft.synapse_column import (
     SYNAPSE_TYPE_BIGINT,
     SYNAPSE_TYPE_BINARY,
     SYNAPSE_TYPE_CHAR,
@@ -36,15 +36,15 @@ from gluentlib.offload.microsoft.synapse_column import (
     SYNAPSE_TYPE_VARBINARY,
     SYNAPSE_TYPE_VARCHAR,
 )
-from gluentlib.offload.microsoft.synapse_literal import SynapseLiteral
-from gluentlib.offload.oracle.oracle_column import (
+from goe.offload.microsoft.synapse_literal import SynapseLiteral
+from goe.offload.oracle.oracle_column import (
     ORACLE_TYPE_DATE,
     ORACLE_TYPE_NUMBER,
     ORACLE_TYPE_TIMESTAMP,
     ORACLE_TYPE_VARCHAR2,
 )
-from gluentlib.offload.oracle.oracle_literal import OracleLiteral
-from gluentlib.offload.snowflake.snowflake_column import (
+from goe.offload.oracle.oracle_literal import OracleLiteral
+from goe.offload.snowflake.snowflake_column import (
     SNOWFLAKE_TYPE_DATE,
     SNOWFLAKE_TYPE_FLOAT,
     SNOWFLAKE_TYPE_NUMBER,
@@ -52,8 +52,8 @@ from gluentlib.offload.snowflake.snowflake_column import (
     SNOWFLAKE_TYPE_TIME,
     SNOWFLAKE_TYPE_TIMESTAMP_NTZ,
 )
-from gluentlib.offload.snowflake.snowflake_literal import SnowflakeLiteral
-from gluentlib.offload.teradata.teradata_column import (
+from goe.offload.snowflake.snowflake_literal import SnowflakeLiteral
+from goe.offload.teradata.teradata_column import (
     TERADATA_TYPE_BIGINT,
     TERADATA_TYPE_BYTE,
     TERADATA_TYPE_BYTEINT,
@@ -70,8 +70,8 @@ from gluentlib.offload.teradata.teradata_column import (
     TERADATA_TYPE_VARBYTE,
     TERADATA_TYPE_VARCHAR,
 )
-from gluentlib.offload.teradata.teradata_literal import TeradataLiteral
-from gluentlib.util.better_impyla import (
+from goe.offload.teradata.teradata_literal import TeradataLiteral
+from goe.util.better_impyla import (
     HADOOP_TYPE_BIGINT,
     HADOOP_TYPE_DATE,
     HADOOP_TYPE_DECIMAL,

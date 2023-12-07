@@ -3,7 +3,7 @@
 import time
 from unittest import TestCase, main
 
-from gluentlib.util.simple_timer import SimpleTimer
+from goe.util.simple_timer import SimpleTimer
 
 
 class TestSimpleTimer(TestCase):

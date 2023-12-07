@@ -1,10 +1,10 @@
 import pytest
 
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     match_table_column,
     str_list_of_columns,
 )
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
@@ -17,17 +17,17 @@ from gluentlib.offload.offload_constants import (
     PART_COL_GRANULARITY_DAY,
     PART_COL_GRANULARITY_MONTH,
 )
-from gluentlib.offload.offload_functions import (
+from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
 )
-from gluentlib.offload.offload_messages import VVERBOSE
-from gluentlib.offload.offload_metadata_functions import (
+from goe.offload.offload_messages import VVERBOSE
+from goe.offload.offload_metadata_functions import (
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
 )
-from gluentlib.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
-from gluentlib.offload.offload_transport import (
+from goe.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
+from goe.offload.offload_transport import (
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
@@ -41,7 +41,7 @@ from gluentlib.offload.offload_transport import (
     is_sqoop_available,
     is_sqoop_by_query_available,
 )
-from gluentlib.persistence.factory.orchestration_repo_client_factory import (
+from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 

@@ -4,7 +4,7 @@ import decimal
 from unittest import TestCase, main
 from textwrap import dedent
 
-from gluentlib.util.misc_functions import (
+from goe.util.misc_functions import (
     add_prefix_in_same_case,
     add_suffix_in_same_case,
     case_insensitive_in,

@@ -11,10 +11,10 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, \
 from test_sets.stories.story_assertion_functions import messages_step_executions, text_in_log
 from test_sets.stories.test_stories.cli_api import get_bin_path, goe_shell_command
 
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_messages import step_title_to_step_id, FORCED_EXCEPTION_TEXT
-from gluentlib.orchestration import command_steps
-from gluentlib.orchestration.command_steps import step_title
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_messages import step_title_to_step_id, FORCED_EXCEPTION_TEXT
+from goe.orchestration import command_steps
+from goe.orchestration.command_steps import step_title
 
 
 STEP_DIM = 'story_step_dim'

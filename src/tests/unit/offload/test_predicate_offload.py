@@ -10,7 +10,7 @@ from optparse import OptionValueError
 from lark import Tree, Token
 import numpy as np
 
-from gluentlib.offload.predicate_offload import GenericPredicate, parse_predicate_dsl
+from goe.offload.predicate_offload import GenericPredicate, parse_predicate_dsl
 
 
 class TestIdaPredicateParse(TestCase):

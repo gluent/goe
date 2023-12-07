@@ -12,15 +12,15 @@ from numpy import datetime64
 
 from tests.offload.unittest_functions import build_current_options, build_non_connecting_options, get_default_test_user
 
-from gluentlib.offload.factory.offload_source_table_factory import OffloadSourceTable
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_MSSQL, DBTYPE_NETEZZA, DBTYPE_TERADATA
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.offload_source_table import OffloadSourceTableException
-from gluentlib.offload.microsoft.mssql_column import MSSQL_TYPE_BIGINT, MSSQL_TYPE_DATETIME, MSSQL_TYPE_VARCHAR
-from gluentlib.offload.netezza.netezza_column import NETEZZA_TYPE_BIGINT, NETEZZA_TYPE_TIMESTAMP
-from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_DATE, ORACLE_TYPE_NUMBER,\
+from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
+from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_MSSQL, DBTYPE_NETEZZA, DBTYPE_TERADATA
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_source_table import OffloadSourceTableException
+from goe.offload.microsoft.mssql_column import MSSQL_TYPE_BIGINT, MSSQL_TYPE_DATETIME, MSSQL_TYPE_VARCHAR
+from goe.offload.netezza.netezza_column import NETEZZA_TYPE_BIGINT, NETEZZA_TYPE_TIMESTAMP
+from goe.offload.oracle.oracle_column import ORACLE_TYPE_DATE, ORACLE_TYPE_NUMBER,\
     ORACLE_TYPE_TIMESTAMP, ORACLE_TYPE_VARCHAR2
-from gluentlib.util.ora_query import get_oracle_connection
+from goe.util.ora_query import get_oracle_connection
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
 
 

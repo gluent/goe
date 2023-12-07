@@ -7,20 +7,20 @@
 
 import logging
 
-from gluentlib.filesystem.gluent_dfs import get_scheme_from_location_uri, \
+from goe.filesystem.gluent_dfs import get_scheme_from_location_uri, \
     OFFLOAD_FS_SCHEME_GS
-from gluentlib.offload.bigquery.bigquery_column import BigQueryColumn, \
+from goe.offload.bigquery.bigquery_column import BigQueryColumn, \
     BIGQUERY_TYPE_INT64, BIGQUERY_TYPE_NUMERIC, BIGQUERY_TYPE_BIGNUMERIC, BIGQUERY_TYPE_STRING,\
     BIGQUERY_TYPE_DATE, BIGQUERY_TYPE_DATETIME, BIGQUERY_TYPE_TIME, BIGQUERY_TYPE_FLOAT64,\
     BIGQUERY_TYPE_TIMESTAMP, BIGQUERY_TYPE_BYTES, BIGQUERY_TYPE_BOOLEAN
-from gluentlib.offload.column_metadata import CanonicalColumn, ColumnPartitionInfo, match_table_column, \
+from goe.offload.column_metadata import CanonicalColumn, ColumnPartitionInfo, match_table_column, \
     CANONICAL_CHAR_SEMANTICS_CHAR, CANONICAL_CHAR_SEMANTICS_UNICODE,\
     GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY,\
     GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4,\
     GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT,\
     GLUENT_TYPE_DOUBLE, GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ,\
     GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_BOOLEAN
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from tests.testlib.test_framework.test_constants import PARTITION_FUNCTION_TEST_FROM_DEC1,\
     PARTITION_FUNCTION_TEST_FROM_DEC2, PARTITION_FUNCTION_TEST_FROM_INT8, PARTITION_FUNCTION_TEST_FROM_STRING
 from tests.testlib.test_framework.backend_testing_api import BackendTestingApiInterface, \

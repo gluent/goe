@@ -3,11 +3,11 @@ from textwrap import dedent
 import time
 
 from gluent import verbose
-from gluentlib.offload.frontend_api import QueryParameter
-from gluentlib.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.util.misc_functions import add_suffix_in_same_case, trunc_with_hash
-from gluentlib.offload.offload_transport import (
+from goe.offload.frontend_api import QueryParameter
+from goe.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.util.misc_functions import add_suffix_in_same_case, trunc_with_hash
+from goe.offload.offload_transport import (
     is_sqoop_available,
     is_spark_thrift_available,
     is_spark_submit_available,

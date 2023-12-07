@@ -2,8 +2,8 @@
 """ LICENSE_TEXT
 """
 
-from gluentlib.offload.backend_api import VALID_REMOTE_DB_TYPES
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_SPARK, \
+from goe.offload.backend_api import VALID_REMOTE_DB_TYPES
+from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_SPARK, \
     DBTYPE_SNOWFLAKE, DBTYPE_SYNAPSE
 
 

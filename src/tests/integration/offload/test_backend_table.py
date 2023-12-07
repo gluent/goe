@@ -11,16 +11,16 @@ import logging
 from unittest import TestCase, main
 
 from gluent import OffloadOperation
-from gluentlib.offload.factory.backend_table_factory import backend_table_factory
-from gluentlib.offload.column_metadata import CanonicalColumn, ColumnMetadataInterface, \
+from goe.offload.factory.backend_table_factory import backend_table_factory
+from goe.offload.column_metadata import CanonicalColumn, ColumnMetadataInterface, \
     get_partition_columns,\
     GLUENT_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8
-from gluentlib.offload.offload_constants import DBTYPE_IMPALA
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.synthetic_partition_literal import SyntheticPartitionLiteral
-from gluentlib.orchestration import orchestration_constants
-from gluentlib.orchestration.execution_id import ExecutionId
-from gluentlib.persistence.orchestration_metadata import OrchestrationMetadata
+from goe.offload.offload_constants import DBTYPE_IMPALA
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
+from goe.orchestration import orchestration_constants
+from goe.orchestration.execution_id import ExecutionId
+from goe.persistence.orchestration_metadata import OrchestrationMetadata
 from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
 from tests.unit.offload.unittest_functions import build_current_options, get_default_test_user
 

@@ -1,20 +1,20 @@
 import pytest
 
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
 )
-from gluentlib.offload.offload_functions import (
+from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
 )
-from gluentlib.offload.offload_source_data import (
+from goe.offload.offload_source_data import (
     TOO_MANY_PARTITION_NAMES_EXCEPTION_TEXT,
 )
-from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_NVARCHAR2
-from gluentlib.persistence.factory.orchestration_repo_client_factory import (
+from goe.offload.oracle.oracle_column import ORACLE_TYPE_NVARCHAR2
+from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 

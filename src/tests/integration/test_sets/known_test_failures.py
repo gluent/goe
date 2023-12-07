@@ -2,7 +2,7 @@
 
 from distutils.version import LooseVersion
 
-from gluentlib.offload.offload_constants import BACKEND_DISTRO_CDH, DBTYPE_IMPALA, DBTYPE_ORACLE,\
+from goe.offload.offload_constants import BACKEND_DISTRO_CDH, DBTYPE_IMPALA, DBTYPE_ORACLE,\
     DBTYPE_SPARK, DBTYPE_SYNAPSE
 
 

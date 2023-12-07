@@ -4,7 +4,7 @@ from argparse import Namespace
 import os
 from unittest import TestCase, main, mock
 
-from gluentlib.util.hs2_connection import hs2_connect_using_options, hs2_cursor_user
+from goe.util.hs2_connection import hs2_connect_using_options, hs2_cursor_user
 
 from tests.unit.test_functions import FAKE_ORACLE_HIVE_ENV
 

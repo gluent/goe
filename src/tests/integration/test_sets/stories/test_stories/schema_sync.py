@@ -4,15 +4,15 @@
                             Repeat for a number of data type sets ensuring good type coverage.
             schema_sync_09: Dimension with 995 columns. Offload. add cols. schema sync.
 """
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
     DBTYPE_SYNAPSE,
     OFFLOAD_STATS_METHOD_NONE,
 )
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.orchestration import command_steps
-from gluentlib.orchestration.command_steps import step_title
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.orchestration import command_steps
+from goe.orchestration.command_steps import step_title
 
 from test_sets.stories.story_assertion_functions import (
     backend_column_exists,

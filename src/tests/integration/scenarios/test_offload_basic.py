@@ -1,11 +1,11 @@
 import pytest
 
-from gluentlib.offload.backend_api import IMPALA_NOSHUFFLE_HINT
-from gluentlib.offload.column_metadata import (
+from goe.offload.backend_api import IMPALA_NOSHUFFLE_HINT
+from goe.offload.column_metadata import (
     match_table_column,
     str_list_of_columns,
 )
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
@@ -16,17 +16,17 @@ from gluentlib.offload.offload_constants import (
     PART_COL_GRANULARITY_DAY,
     PART_COL_GRANULARITY_MONTH,
 )
-from gluentlib.offload.offload_functions import (
+from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
     load_db_name,
 )
-from gluentlib.offload.offload_metadata_functions import (
+from goe.offload.offload_metadata_functions import (
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
 )
-from gluentlib.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
-from gluentlib.persistence.factory.orchestration_repo_client_factory import (
+from goe.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
+from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 

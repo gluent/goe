@@ -6,17 +6,17 @@ import logging
 import os
 from unittest import TestCase, main
 
-from gluentlib.tests.unit.test_functions import build_current_options
+from goe.tests.unit.test_functions import build_current_options
 
-from gluentlib.filesystem.cli_hdfs import CliHdfs
-from gluentlib.filesystem.gluent_azure import GluentAzure
-from gluentlib.filesystem.gluent_gcs import GluentGcs
-from gluentlib.filesystem.gluent_s3 import GluentS3
-from gluentlib.filesystem.web_hdfs import WebHdfs
-from gluentlib.filesystem.gluent_dfs import GluentDfsException, gen_fs_uri, uri_component_split, \
+from goe.filesystem.cli_hdfs import CliHdfs
+from goe.filesystem.gluent_azure import GluentAzure
+from goe.filesystem.gluent_gcs import GluentGcs
+from goe.filesystem.gluent_s3 import GluentS3
+from goe.filesystem.web_hdfs import WebHdfs
+from goe.filesystem.gluent_dfs import GluentDfsException, gen_fs_uri, uri_component_split, \
     DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, UNSUPPORTED_URI_SCHEME_EXCEPTION_TEXT
-from gluentlib.filesystem.gluent_dfs_factory import get_dfs_from_options
-from gluentlib.offload.offload_messages import OffloadMessages
+from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
+from goe.offload.offload_messages import OffloadMessages
 
 from tests.unit.filesystem import TestGluentDfs
 

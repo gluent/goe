@@ -5,14 +5,14 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, gen
 from test_sets.stories.story_assertion_functions import backend_column_exists, offload_dim_assertion,\
     synthetic_part_col_name
 
-from gluentlib.offload.backend_table import PARTITION_FUNCTION_ARG_COUNT_EXCEPTION_TEXT,\
+from goe.offload.backend_table import PARTITION_FUNCTION_ARG_COUNT_EXCEPTION_TEXT,\
     PARTITION_FUNCTION_DOES_NOT_EXIST_EXCEPTION_TEXT, PARTITION_FUNCTION_ARG_TYPE_EXCEPTION_TEXT
-from gluentlib.offload.bigquery.bigquery_column import BIGQUERY_TYPE_FLOAT64,\
+from goe.offload.bigquery.bigquery_column import BIGQUERY_TYPE_FLOAT64,\
     BIGQUERY_TYPE_INT64
-from gluentlib.offload.offload_constants import DBTYPE_IMPALA
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_messages import VERBOSE
-from gluentlib.offload.operation.partition_controls import PARTITION_FUNCTIONS_ELEMENT_EXCEPTION_TEXT
+from goe.offload.offload_constants import DBTYPE_IMPALA
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_messages import VERBOSE
+from goe.offload.operation.partition_controls import PARTITION_FUNCTIONS_ELEMENT_EXCEPTION_TEXT
 from testlib.test_framework.test_constants import PARTITION_FUNCTION_TEST_FROM_INT8,\
     PARTITION_FUNCTION_TEST_FROM_DEC1, PARTITION_FUNCTION_TEST_FROM_DEC2, PARTITION_FUNCTION_TEST_FROM_STRING
 from testlib.test_framework.test_functions import log

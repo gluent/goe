@@ -7,14 +7,14 @@ from unittest import TestCase, main
 
 from numpy import datetime64
 
-from gluentlib.config.orchestration_config import OrchestrationConfig
-from gluentlib.persistence.factory.orchestration_repo_client_factory import (
+from goe.config.orchestration_config import OrchestrationConfig
+from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.offload_source_data import OffloadSourcePartition
-from gluentlib.orchestration import command_steps, orchestration_constants
-from gluentlib.orchestration.execution_id import ExecutionId
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_source_data import OffloadSourcePartition
+from goe.orchestration import command_steps, orchestration_constants
+from goe.orchestration.execution_id import ExecutionId
 
 
 GB = 1024**3

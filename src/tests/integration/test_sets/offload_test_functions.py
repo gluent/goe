@@ -8,18 +8,18 @@ from distutils.version import StrictVersion
 import math
 
 from gluent import OffloadOperation, get_log_fh, get_offload_target_table
-from gluentlib.config import orchestration_defaults
-from gluentlib.offload.factory.offload_source_table_factory import OffloadSourceTable
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE, DBTYPE_SNOWFLAKE,\
+from goe.config import orchestration_defaults
+from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
+from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE, DBTYPE_SNOWFLAKE,\
     PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH, PART_OUT_OF_RANGE
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE, OffloadMessages
-from gluentlib.offload.offload_metadata_functions import flatten_lpa_individual_high_values,\
+from goe.offload.offload_messages import VERBOSE, VVERBOSE, OffloadMessages
+from goe.offload.offload_metadata_functions import flatten_lpa_individual_high_values,\
     INCREMENTAL_PREDICATE_TYPE_RANGE, INCREMENTAL_PREDICATE_TYPE_LIST
-from gluentlib.offload.offload_source_data import offload_source_data_factory, OFFLOAD_SOURCE_CLIENT_OFFLOAD
-from gluentlib.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING, MISSING_ROWS_SPARK_WARNING
-from gluentlib.orchestration import orchestration_constants
-from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
-from gluentlib.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
+from goe.offload.offload_source_data import offload_source_data_factory, OFFLOAD_SOURCE_CLIENT_OFFLOAD
+from goe.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING, MISSING_ROWS_SPARK_WARNING
+from goe.orchestration import orchestration_constants
+from goe.orchestration.orchestration_runner import OrchestrationRunner
+from goe.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
 from tests.testlib.setup import setup_constants
 from tests.testlib.test_framework.test_functions import text_in_warnings
 

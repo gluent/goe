@@ -10,22 +10,22 @@ from test_sets.stories.story_assertion_functions import load_table_is_compressed
     table_minus_row_count, text_in_messages, text_in_log
 
 from gluent import get_log_fh
-from gluentlib.filesystem.gluent_dfs_factory import get_dfs_from_options
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_ORACLE, \
+from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
+from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_ORACLE, \
     DBTYPE_TERADATA, OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.offload_metadata_functions import INCREMENTAL_PREDICATE_TYPE_LIST
-from gluentlib.offload.offload_transport import is_query_import_available, is_spark_thrift_available, \
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_metadata_functions import INCREMENTAL_PREDICATE_TYPE_LIST
+from goe.offload.offload_transport import is_query_import_available, is_spark_thrift_available, \
     is_spark_submit_available, is_sqoop_available, is_livy_available, \
     OFFLOAD_TRANSPORT_GLUENT, OFFLOAD_TRANSPORT_SQOOP, OFFLOAD_TRANSPORT_METHOD_SQOOP, \
     OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY, OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT, \
     OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT, OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT, \
     OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY, MISSING_ROWS_IMPORTED_WARNING, POLLING_VALIDATION_TEXT
-from gluentlib.offload.offload_transport_rdbms_api import OFFLOAD_TRANSPORT_SQL_STATISTICS_TITLE,\
+from goe.offload.offload_transport_rdbms_api import OFFLOAD_TRANSPORT_SQL_STATISTICS_TITLE,\
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION, TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION,\
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT, TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_TERADATA_HASHAMP
-from gluentlib.util.misc_functions import human_size_to_bytes
+from goe.util.misc_functions import human_size_to_bytes
 
 ORACLE_DIM_TABLE = 'STORY_OTRANSP_DIM'
 ORACLE_FACT_TABLE = 'STORY_OTRANSP_FACT'

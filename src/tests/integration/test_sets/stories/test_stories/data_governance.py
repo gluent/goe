@@ -5,13 +5,13 @@ from test_sets.stories.story_globals import STORY_SETUP_TYPE_HYBRID, STORY_SETUP
 from test_sets.stories.story_setup_functions import gen_hybrid_drop_ddl, gen_rdbms_dim_create_ddl, story_now_name
 
 from gluent import get_log_fh, log
-from gluentlib.data_governance.hadoop_data_governance import get_hadoop_data_governance_client_from_options, \
+from goe.data_governance.hadoop_data_governance import get_hadoop_data_governance_client_from_options, \
     is_dynamic_tag, stripped_dynamic_tag_name
-from gluentlib.data_governance.hadoop_data_governance_constants import MUTED_DATA_GOVERNANCE_DB_TAGS,\
+from goe.data_governance.hadoop_data_governance_constants import MUTED_DATA_GOVERNANCE_DB_TAGS,\
     MUTED_DATA_GOVERNANCE_DB_PROPERTIES, \
     DATA_GOVERNANCE_DYNAMIC_PROPERTY_SOURCE_RDBMS_OBJECT, DATA_GOVERNANCE_DYNAMIC_PROPERTY_TARGET_RDBMS_OBJECT
-from gluentlib.offload.offload_functions import convert_backend_identifier_case, data_db_name
-from gluentlib.offload.offload_messages import OffloadMessages, VERBOSE
+from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
+from goe.offload.offload_messages import OffloadMessages, VERBOSE
 
 
 def data_governance_is_enabled(options):

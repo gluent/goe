@@ -1,16 +1,16 @@
 from typing import TYPE_CHECKING
 
 from gluent import IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT, TOKENISE_STRING_CHAR_1, log
-from gluentlib.offload.backend_api import IMPALA_NOSHUFFLE_HINT
-from gluentlib.offload.column_metadata import (
+from goe.offload.backend_api import IMPALA_NOSHUFFLE_HINT
+from goe.offload.column_metadata import (
     GLUENT_TYPE_DOUBLE,
     match_table_column,
     str_list_of_columns,
 )
-from gluentlib.offload.hadoop.hadoop_backend_table import (
+from goe.offload.hadoop.hadoop_backend_table import (
     COMPUTE_LOAD_TABLE_STATS_LOG_TEXT,
 )
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
@@ -20,12 +20,12 @@ from gluentlib.offload.offload_constants import (
     PART_COL_GRANULARITY_DAY,
     PART_COL_GRANULARITY_MONTH,
 )
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_metadata_functions import (
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_metadata_functions import (
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
 )
-from gluentlib.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
+from goe.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
 from test_sets.stories.offload_fs_location import base_table_fs_scheme_is_correct
 from test_sets.stories.story_assertion_functions import (
     backend_column_exists,
@@ -68,7 +68,7 @@ from test_sets.stories.story_setup_functions import (
 from test_sets.stories.test_stories.offload_lpa import LPA_UNICODE_PART2_KEY1
 
 if TYPE_CHECKING:
-    from gluentlib.persistence.orchestration_repo_client import (
+    from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )
     from testlib.test_framework.backend_testing_api import BackendTestingApiInterface

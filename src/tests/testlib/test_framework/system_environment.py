@@ -11,10 +11,10 @@ import os.path
 import re
 import socket
 
-from gluentlib.util.linux_cmd import LinuxCmd
-from gluentlib.util.ora_query import OracleQuery
-from gluentlib.util.password_tools import PasswordTools
-from gluentlib.offload.offload_constants import BACKEND_DISTRO_CDH, BACKEND_DISTRO_EMR, \
+from goe.util.linux_cmd import LinuxCmd
+from goe.util.ora_query import OracleQuery
+from goe.util.password_tools import PasswordTools
+from goe.offload.offload_constants import BACKEND_DISTRO_CDH, BACKEND_DISTRO_EMR, \
     BACKEND_DISTRO_HDP, BACKEND_DISTRO_MAPR
 
 
@@ -569,7 +569,7 @@ def goe_hadoop_distro():
 if __name__ == "__main__":
     import sys
 
-    from gluentlib.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_gluentlib_logging
 
     def usage(prog_name):
         print("%s: [dev|prod] [<root>] [debug level]" % prog_name)

@@ -7,10 +7,10 @@
 
 import logging
 
-from gluentlib.offload.snowflake.snowflake_column import SnowflakeColumn, SNOWFLAKE_TYPE_BOOLEAN,\
+from goe.offload.snowflake.snowflake_column import SnowflakeColumn, SNOWFLAKE_TYPE_BOOLEAN,\
     SNOWFLAKE_TYPE_BINARY, SNOWFLAKE_TYPE_DATE, SNOWFLAKE_TYPE_FLOAT, SNOWFLAKE_TYPE_TIME, \
     SNOWFLAKE_TYPE_TIMESTAMP_NTZ, SNOWFLAKE_TYPE_TIMESTAMP_TZ, SNOWFLAKE_TYPE_NUMBER, SNOWFLAKE_TYPE_TEXT
-from gluentlib.offload.column_metadata import CanonicalColumn,\
+from goe.offload.column_metadata import CanonicalColumn,\
     CANONICAL_CHAR_SEMANTICS_CHAR, CANONICAL_CHAR_SEMANTICS_UNICODE,\
     GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING,\
     GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY,\

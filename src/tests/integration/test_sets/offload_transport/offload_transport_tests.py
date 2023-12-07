@@ -6,13 +6,13 @@ import re
 import traceback
 
 from gluent import get_log_fh, normalise_size_option, verbose
-from gluentlib.offload.factory.offload_source_table_factory import OffloadSourceTable
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_TERADATA
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.offload_transport import get_offload_transport_method_validation_fns,\
+from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
+from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_TERADATA
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_transport import get_offload_transport_method_validation_fns,\
     VALID_OFFLOAD_TRANSPORT_METHODS, OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD
-from gluentlib.orchestration import command_steps
-from gluentlib.orchestration.command_steps import step_title
+from goe.orchestration import command_steps
+from goe.orchestration.command_steps import step_title
 from testlib.test_framework.test_functions import get_backend_testing_api, get_frontend_testing_api,\
     test_passes_filter, teamcity_escape, test_teamcity_failtest_pq,\
     test_teamcity_starttestsuite_pq, test_teamcity_endtestsuite_pq

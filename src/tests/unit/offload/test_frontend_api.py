@@ -11,15 +11,15 @@ from numpy import datetime64
 
 from tests.unit.offload.unittest_functions import get_real_frontend_schema_and_table
 
-from gluentlib.offload.column_metadata import ColumnMetadataInterface
-from gluentlib.offload.factory.frontend_api_factory import frontend_api_factory
-from gluentlib.offload.frontend_api import QueryParameter
-from gluentlib.offload.offload_constants import (
+from goe.offload.column_metadata import ColumnMetadataInterface
+from goe.offload.factory.frontend_api_factory import frontend_api_factory
+from goe.offload.frontend_api import QueryParameter
+from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
+from goe.offload.offload_messages import OffloadMessages
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
     frontend_testing_api_factory,
 )

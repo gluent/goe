@@ -1,8 +1,8 @@
 import os
 
-from gluentlib.config import orchestration_defaults
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.schema_sync.schema_sync_constants import (
+from goe.config import orchestration_defaults
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.schema_sync.schema_sync_constants import (
     EXCEPTION_SCHEMA_EVOLUTION_NOT_SUPPORTED,
 )
 from test_sets.stories.story_assertion_functions import (

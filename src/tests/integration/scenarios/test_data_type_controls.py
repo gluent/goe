@@ -4,11 +4,11 @@ from textwrap import dedent
 from numpy import datetime64
 import pytest
 
-from gluentlib.offload.backend_table import (
+from goe.offload.backend_table import (
     CAST_VALIDATION_EXCEPTION_TEXT,
     DATA_VALIDATION_SCALE_EXCEPTION_TEXT,
 )
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     match_table_column,
     GLUENT_TYPE_FIXED_STRING,
     GLUENT_TYPE_VARIABLE_STRING,
@@ -20,25 +20,25 @@ from gluentlib.offload.column_metadata import (
     GLUENT_TYPE_DOUBLE,
     GLUENT_TYPE_DATE,
 )
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_IMPALA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
 )
-from gluentlib.offload.offload_functions import (
+from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
     load_db_name,
 )
-from gluentlib.offload.offload_messages import VVERBOSE
-from gluentlib.offload.offload_source_table import (
+from goe.offload.offload_messages import VVERBOSE
+from goe.offload.offload_source_table import (
     DATA_SAMPLE_SIZE_AUTO,
     DATETIME_STATS_SAMPLING_OPT_ACTION_TEXT,
     COLUMNS_FAILED_SAMPLING_EXCEPTION_TEXT,
 )
-from gluentlib.offload.operation.data_type_controls import (
+from goe.offload.operation.data_type_controls import (
     CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT,
     DECIMAL_COL_TYPE_SYNTAX_TEMPLATE,
 )

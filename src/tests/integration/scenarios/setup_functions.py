@@ -1,8 +1,8 @@
 from textwrap import dedent
 
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_TERADATA
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_messages import VERBOSE
+from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_TERADATA
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_messages import VERBOSE
 
 
 def drop_backend_test_table(

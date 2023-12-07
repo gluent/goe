@@ -5,12 +5,12 @@
 import logging
 from unittest import TestCase, main
 
-from gluentlib.filesystem.cli_hdfs import CliHdfs
-from gluentlib.filesystem.gluent_azure import GluentAzure
-from gluentlib.filesystem.gluent_gcs import GluentGcs
-from gluentlib.filesystem.gluent_s3 import GluentS3
-from gluentlib.filesystem.web_hdfs import WebHdfs
-from gluentlib.filesystem.gluent_dfs import (
+from goe.filesystem.cli_hdfs import CliHdfs
+from goe.filesystem.gluent_azure import GluentAzure
+from goe.filesystem.gluent_gcs import GluentGcs
+from goe.filesystem.gluent_s3 import GluentS3
+from goe.filesystem.web_hdfs import WebHdfs
+from goe.filesystem.gluent_dfs import (
     GluentDfsException,
     gen_fs_uri,
     uri_component_split,
@@ -18,7 +18,7 @@ from gluentlib.filesystem.gluent_dfs import (
     DFS_TYPE_FILE,
     UNSUPPORTED_URI_SCHEME_EXCEPTION_TEXT,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
+from goe.offload.offload_messages import OffloadMessages
 
 ###############################################################################
 # LOGGING

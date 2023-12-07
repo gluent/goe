@@ -7,12 +7,12 @@ from test_sets.stories.story_setup_functions import gen_hybrid_drop_ddl, gen_rdb
 from test_sets.stories.test_stories.cli_api import get_bin_path, get_conf_path, get_log_path, get_run_path,\
     goe_shell_command
 
-from gluentlib.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_transport import is_spark_submit_available, is_sqoop_available, \
+from goe.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_transport import is_spark_submit_available, is_sqoop_available, \
     OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT, OFFLOAD_TRANSPORT_METHOD_SQOOP, OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY
-from gluentlib.offload.offload_transport_functions import ssh_cmd_prefix
-from gluentlib.util.orchestration_lock import LOCK_FILE_PREFIX, LOCK_FILE_SUFFIX
+from goe.offload.offload_transport_functions import ssh_cmd_prefix
+from goe.util.orchestration_lock import LOCK_FILE_PREFIX, LOCK_FILE_SUFFIX
 from testlib.test_framework.test_functions import log
 
 

@@ -1,8 +1,8 @@
-from gluentlib.config import orchestration_defaults
-from gluentlib.offload.column_metadata import match_table_column, CANONICAL_CHAR_SEMANTICS_UNICODE
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_SNOWFLAKE, DBTYPE_SYNAPSE
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
+from goe.config import orchestration_defaults
+from goe.offload.column_metadata import match_table_column, CANONICAL_CHAR_SEMANTICS_UNICODE
+from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_SNOWFLAKE, DBTYPE_SYNAPSE
+from goe.offload.offload_messages import OffloadMessages
+from goe.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
 
 from tests.integration.test_sets.offload_test_functions import get_offload_test_fn
 from tests.integration.test_functions import build_current_options, get_default_test_user, get_default_test_user_pass

@@ -11,11 +11,11 @@ from unittest import TestCase, main
 
 from tests.offload.unittest_functions import build_current_options, get_default_test_user
 
-from gluentlib.config.orchestration_config import OrchestrationConfig
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA,\
+from goe.config.orchestration_config import OrchestrationConfig
+from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA,\
     DBTYPE_SNOWFLAKE, DBTYPE_SYNAPSE
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.persistence.orchestration_metadata import OrchestrationMetadata
+from goe.offload.offload_messages import OffloadMessages
+from goe.persistence.orchestration_metadata import OrchestrationMetadata
 from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
 
 

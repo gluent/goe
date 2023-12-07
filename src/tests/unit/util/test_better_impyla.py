@@ -3,7 +3,7 @@
 """
 from unittest import TestCase, main
 
-from gluentlib.util.better_impyla import BetterImpylaException, from_impala_size
+from goe.util.better_impyla import BetterImpylaException, from_impala_size
 
 
 class TestBetterImpyla(TestCase):

@@ -9,9 +9,9 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, gen
     SALES_BASED_FACT_HV_1, SALES_BASED_FACT_HV_2, SALES_BASED_FACT_HV_3, SALES_BASED_FACT_HV_4, SALES_BASED_FACT_HV_5
 from test_sets.stories.story_assertion_functions import check_metadata
 
-from gluentlib.offload.offload_constants import DBTYPE_HIVE, SORT_COLUMNS_NO_CHANGE
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.operation.sort_columns import SORT_COLUMN_MAX_EXCEEDED_EXCEPTION_TEXT,\
+from goe.offload.offload_constants import DBTYPE_HIVE, SORT_COLUMNS_NO_CHANGE
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.operation.sort_columns import SORT_COLUMN_MAX_EXCEEDED_EXCEPTION_TEXT,\
     SORT_COLUMN_NO_MODIFY_EXCEPTION_TEXT, UNKNOWN_SORT_COLUMN_EXCEPTION_TEXT
 from testlib.test_framework.test_functions import log
 

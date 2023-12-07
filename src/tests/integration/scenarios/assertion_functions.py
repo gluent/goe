@@ -1,15 +1,15 @@
 from typing import TYPE_CHECKING
 
-from gluentlib.offload.column_metadata import SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE
-from gluentlib.offload.offload_constants import (
+from goe.offload.column_metadata import SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE
+from goe.offload.offload_constants import (
     DBTYPE_ORACLE,
     DBTYPE_BIGQUERY,
     PART_COL_GRANULARITY_DAY,
     PART_COL_GRANULARITY_MONTH,
 )
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
-from gluentlib.offload.offload_metadata_functions import (
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_metadata_functions import (
     incremental_hv_list_from_csv,
     incremental_hv_csv_from_list,
     flatten_lpa_individual_high_values,
@@ -21,8 +21,8 @@ from gluentlib.offload.offload_metadata_functions import (
     OFFLOAD_TYPE_FULL,
     OFFLOAD_TYPE_INCREMENTAL,
 )
-from gluentlib.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING
-from gluentlib.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP
+from goe.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING
+from goe.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP
 
 from tests.integration.test_sets.stories.story_globals import (
     OFFLOAD_PATTERN_100_0,
@@ -32,11 +32,11 @@ from tests.integration.test_sets.stories.story_globals import (
 from tests.testlib.test_framework import test_functions
 
 if TYPE_CHECKING:
-    from gluentlib.persistence.orchestration_repo_client import (
+    from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )
-    from gluentlib.offload.offload_messages import OffloadMessages
-    from gluentlib.config.orchestration_config import OrchestrationConfig
+    from goe.offload.offload_messages import OffloadMessages
+    from goe.config.orchestration_config import OrchestrationConfig
     from testlib.test_framework.backend_testing_api import BackendTestingApiInterface
     from testlib.test_framework.frontend_testing_api import FrontendTestingApiInterface
 

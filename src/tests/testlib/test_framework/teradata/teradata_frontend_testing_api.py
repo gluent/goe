@@ -12,7 +12,7 @@ import random
 from textwrap import dedent
 from typing import Optional, Union
 
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     CANONICAL_CHAR_SEMANTICS_UNICODE,
     GLUENT_TYPE_BINARY,
     GLUENT_TYPE_DATE,
@@ -35,10 +35,10 @@ from gluentlib.offload.column_metadata import (
     GLUENT_TYPE_VARIABLE_STRING,
     CanonicalColumn,
 )
-from gluentlib.offload.frontend_api import QueryParameter
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
-from gluentlib.offload.offload_transport_functions import run_os_cmd
-from gluentlib.offload.teradata.teradata_column import (
+from goe.offload.frontend_api import QueryParameter
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_transport_functions import run_os_cmd
+from goe.offload.teradata.teradata_column import (
     TERADATA_TYPE_BIGINT,
     TERADATA_TYPE_BLOB,
     TERADATA_TYPE_BYTE,
@@ -61,7 +61,7 @@ from gluentlib.offload.teradata.teradata_column import (
     TERADATA_TYPE_VARCHAR,
     TeradataColumn,
 )
-from gluentlib.offload.teradata.teradata_frontend_api import (
+from goe.offload.teradata.teradata_frontend_api import (
     teradata_get_primary_partition_expression,
 )
 from pyodbc import SQL_WVARCHAR

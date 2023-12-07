@@ -7,8 +7,8 @@ from unittest import TestCase, main
 
 from tests.integration.offload.unittest_functions import build_current_options
 
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.persistence.factory.orchestration_repo_client_factory import (
+from goe.offload.offload_messages import OffloadMessages
+from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 from tests.unit.orchestration.test_command_steps import (

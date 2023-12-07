@@ -4,14 +4,14 @@
 
 from unittest import TestCase, main
 
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
     DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.factory.offload_transport_rdbms_api_factory import (
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.factory.offload_transport_rdbms_api_factory import (
     offload_transport_rdbms_api_factory,
 )
 from tests.unit.test_functions import (

@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-from gluentlib.config import orchestration_defaults
-from gluentlib.offload.offload_functions import (
+from goe.config import orchestration_defaults
+from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
 )

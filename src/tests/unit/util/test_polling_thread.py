@@ -6,7 +6,7 @@ import traceback
 
 from unittest import TestCase, main
 from itertools import groupby
-from gluentlib.util.polling_thread import PollingThread
+from goe.util.polling_thread import PollingThread
 
 
 class TestPollingThread(TestCase):

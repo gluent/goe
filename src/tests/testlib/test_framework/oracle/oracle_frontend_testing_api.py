@@ -12,20 +12,20 @@ import re
 from textwrap import dedent
 from typing import Optional, Union
 
-from gluentlib.offload.column_metadata import CanonicalColumn,\
+from goe.offload.column_metadata import CanonicalColumn,\
     CANONICAL_CHAR_SEMANTICS_UNICODE, GLUENT_TYPE_BINARY, GLUENT_TYPE_DATE, GLUENT_TYPE_DECIMAL,\
     GLUENT_TYPE_DOUBLE, GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_FLOAT,\
     GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38,\
     GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_LARGE_STRING,\
     GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_VARIABLE_STRING, match_table_column
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
-from gluentlib.offload.oracle.oracle_column import OracleColumn, \
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.oracle.oracle_column import OracleColumn, \
     ORACLE_TYPE_CHAR, ORACLE_TYPE_NCHAR, ORACLE_TYPE_CLOB, ORACLE_TYPE_NCLOB, \
     ORACLE_TYPE_VARCHAR, ORACLE_TYPE_VARCHAR2, ORACLE_TYPE_NVARCHAR2, \
     ORACLE_TYPE_RAW, ORACLE_TYPE_BLOB, ORACLE_TYPE_NUMBER, ORACLE_TYPE_FLOAT, \
     ORACLE_TYPE_BINARY_FLOAT, ORACLE_TYPE_BINARY_DOUBLE, ORACLE_TYPE_DATE, ORACLE_TYPE_TIMESTAMP, \
     ORACLE_TYPE_TIMESTAMP_TZ, ORACLE_TYPE_INTERVAL_DS, ORACLE_TYPE_INTERVAL_YM
-from gluentlib.offload.teradata.teradata_column import TERADATA_TYPE_TIMESTAMP_TZ
+from goe.offload.teradata.teradata_column import TERADATA_TYPE_TIMESTAMP_TZ
 from tests.testlib.setup import gen_test_data
 from tests.testlib.test_framework.test_constants import TEST_GEN_DATA_ASCII7_NONULL, UNICODE_NAME_TOKEN
 from tests.testlib.test_framework.frontend_testing_api import FrontendTestingApiInterface

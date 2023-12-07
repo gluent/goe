@@ -9,17 +9,17 @@ from datetime import datetime
 import logging
 import re
 
-from gluentlib.filesystem.gluent_dfs import get_scheme_from_location_uri, \
+from goe.filesystem.gluent_dfs import get_scheme_from_location_uri, \
     OFFLOAD_FS_SCHEME_HDFS, OFFLOAD_FS_SCHEME_MAPRFS
-from gluentlib.offload.column_metadata import CanonicalColumn,\
+from goe.offload.column_metadata import CanonicalColumn,\
     CANONICAL_CHAR_SEMANTICS_UNICODE, GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING,\
     GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1,\
     GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL,\
     GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE, GLUENT_TYPE_DATE, GLUENT_TYPE_TIMESTAMP,\
     GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM
-from gluentlib.offload.hadoop.hadoop_column import HadoopColumn
-from gluentlib.offload.offload_messages import VERBOSE
-from gluentlib.util.better_impyla import HADOOP_TYPE_BIGINT, HADOOP_TYPE_CHAR, HADOOP_TYPE_DATE,\
+from goe.offload.hadoop.hadoop_column import HadoopColumn
+from goe.offload.offload_messages import VERBOSE
+from goe.util.better_impyla import HADOOP_TYPE_BIGINT, HADOOP_TYPE_CHAR, HADOOP_TYPE_DATE,\
     HADOOP_TYPE_DECIMAL, HADOOP_TYPE_DOUBLE, HADOOP_TYPE_FLOAT, HADOOP_TYPE_INT, HADOOP_TYPE_SMALLINT,\
     HADOOP_TYPE_STRING, HADOOP_TYPE_TIMESTAMP, HADOOP_TYPE_TINYINT, HADOOP_TYPE_VARCHAR
 from tests.testlib.test_framework.backend_testing_api import BackendTestingApiInterface, BackendTestingApiException,\

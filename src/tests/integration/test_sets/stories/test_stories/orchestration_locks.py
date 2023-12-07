@@ -7,9 +7,9 @@ from test_sets.stories.story_setup_functions import gen_hybrid_drop_ddl, gen_rdb
     STORY_SETUP_TYPE_HYBRID, STORY_SETUP_TYPE_PYTHON
 from test_sets.stories.story_assertion_functions import text_in_log
 
-from gluentlib.offload.offload_messages import VERBOSE
-from gluentlib.orchestration.cli_entry_points import offload_by_cli, schema_sync_by_cli
-from gluentlib.util.orchestration_lock import OrchestrationLockTimeout
+from goe.offload.offload_messages import VERBOSE
+from goe.orchestration.cli_entry_points import offload_by_cli, schema_sync_by_cli
+from goe.util.orchestration_lock import OrchestrationLockTimeout
 from gluent import get_offload_options, get_options, OFFLOAD_OP_NAME
 from schema_sync import get_schema_sync_opts,\
     SCHEMA_SYNC_LOCKED_MESSAGE_TEXT

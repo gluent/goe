@@ -8,9 +8,9 @@ import decimal
 from unittest import TestCase, main
 import uuid
 
-from gluentlib.persistence.orchestration_repo_client import type_safe_json_dumps
-from gluentlib.offload.predicate_offload import GenericPredicate
-from gluentlib.orchestration.execution_id import ExecutionId
+from goe.persistence.orchestration_repo_client import type_safe_json_dumps
+from goe.offload.predicate_offload import GenericPredicate
+from goe.orchestration.execution_id import ExecutionId
 
 
 GB = 1024**3

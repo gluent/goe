@@ -7,7 +7,7 @@ import unittest
 from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
 
-from gluentlib.cloud.distcp_wrap import DistcpWrap, DistcpWrapException
+from goe.cloud.distcp_wrap import DistcpWrap, DistcpWrapException
 
 class TestDistcpWrap(unittest.TestCase):
 

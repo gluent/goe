@@ -5,7 +5,7 @@
 import os
 import unittest
 
-from gluentlib.persistence.hdfs_filepath_key_value_store import (
+from goe.persistence.hdfs_filepath_key_value_store import (
     HdfsFilepathKeyValueStore,
     HdfsFilepathKeyValueStoreEntry,
 )

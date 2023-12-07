@@ -2,13 +2,13 @@
 """
 from unittest import TestCase, main
 
-from gluentlib.offload.offload_transport_functions import (
+from goe.offload.offload_transport_functions import (
     running_as_same_user_and_host,
     offload_transport_file_name,
     split_lists_for_id_list,
     split_ranges_for_id_range,
 )
-from gluentlib.util.misc_functions import get_os_username, LINUX_FILE_NAME_LENGTH_LIMIT
+from goe.util.misc_functions import get_os_username, LINUX_FILE_NAME_LENGTH_LIMIT
 
 
 class TestOffloadTransportFunctions(TestCase):

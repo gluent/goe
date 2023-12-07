@@ -7,15 +7,15 @@
 
 import logging
 
-from gluentlib.offload.column_metadata import CanonicalColumn,\
+from goe.offload.column_metadata import CanonicalColumn,\
     GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING,\
     GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1,\
     GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL,\
     GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE, GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP,\
     GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_BOOLEAN
-from gluentlib.offload.hadoop.hadoop_column import HadoopColumn
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
-from gluentlib.util.better_impyla import HADOOP_TYPE_BIGINT, HADOOP_TYPE_BOOLEAN, HADOOP_TYPE_CHAR, HADOOP_TYPE_DATE,\
+from goe.offload.hadoop.hadoop_column import HadoopColumn
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.util.better_impyla import HADOOP_TYPE_BIGINT, HADOOP_TYPE_BOOLEAN, HADOOP_TYPE_CHAR, HADOOP_TYPE_DATE,\
     HADOOP_TYPE_DECIMAL, HADOOP_TYPE_DOUBLE, HADOOP_TYPE_FLOAT, HADOOP_TYPE_INT, HADOOP_TYPE_REAL,\
     HADOOP_TYPE_SMALLINT, HADOOP_TYPE_STRING, HADOOP_TYPE_TIMESTAMP, HADOOP_TYPE_TINYINT
 from tests.testlib.test_framework.hadoop.hadoop_backend_testing_api import BackendHadoopTestingApi

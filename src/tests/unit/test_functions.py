@@ -1,7 +1,7 @@
 import os
 from unittest import mock
 
-from gluentlib.config.orchestration_config import OrchestrationConfig
+from goe.config.orchestration_config import OrchestrationConfig
 
 
 FAKE_COMMON_ENV = {

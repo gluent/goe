@@ -5,7 +5,7 @@ TestCommandSteps: Unit test constants in command_steps are sound.
 """
 from unittest import TestCase, main
 
-from gluentlib.orchestration import command_steps
+from goe.orchestration import command_steps
 
 
 # Console phase 1 only adds steps to the repo for Offload/Present. In time the OSR/Schema Sync steps

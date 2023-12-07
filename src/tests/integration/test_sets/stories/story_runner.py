@@ -13,17 +13,17 @@ from test_sets.base_test import BaseTest
 
 from gluent import get_log_fh, init_log, normalise_owner_table_options,\
     normal, verbose, vverbose
-from gluentlib.config.orchestration_config import OrchestrationConfig
-from gluentlib.offload.offload_constants import BACKEND_DISTRO_EMR, BACKEND_DISTRO_MAPR, DBTYPE_MSSQL, DBTYPE_TERADATA
-from gluentlib.offload.offload_functions import convert_backend_identifier_case, data_db_name, load_db_name
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.offload_validation import DEFAULT_SELECT_COLS, DEFAULT_AGGS
-from gluentlib.orchestration import orchestration_constants
-from gluentlib.orchestration.execution_id import ExecutionId
-from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
-from gluentlib.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
-from gluentlib.schema_sync.schema_sync_constants import SCHEMA_SYNC_OP_NAME
-from gluentlib.scripts import agg_validate
+from goe.config.orchestration_config import OrchestrationConfig
+from goe.offload.offload_constants import BACKEND_DISTRO_EMR, BACKEND_DISTRO_MAPR, DBTYPE_MSSQL, DBTYPE_TERADATA
+from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name, load_db_name
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_validation import DEFAULT_SELECT_COLS, DEFAULT_AGGS
+from goe.orchestration import orchestration_constants
+from goe.orchestration.execution_id import ExecutionId
+from goe.orchestration.orchestration_runner import OrchestrationRunner
+from goe.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
+from goe.schema_sync.schema_sync_constants import SCHEMA_SYNC_OP_NAME
+from goe.scripts import agg_validate
 from schema_sync import normalise_schema_sync_options
 from testlib.test_framework import test_constants
 from testlib.test_framework.backend_testing_api import subproc_cmd
@@ -86,7 +86,7 @@ from test_sets.stories.test_stories.schema_sync import schema_sync_story_tests
 from test_sets.stories.test_stories.transformations import transformations_story_tests
 
 if TYPE_CHECKING:
-    from gluentlib.persistence.orchestration_repo_client import OrchestrationRepoClientInterface
+    from goe.persistence.orchestration_repo_client import OrchestrationRepoClientInterface
 
 
 class StoryRunnerException(Exception):

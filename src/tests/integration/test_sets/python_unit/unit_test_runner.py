@@ -6,9 +6,9 @@
 import unittest
 import sys
 
-from gluentlib.filesystem.gluent_dfs import OFFLOAD_FS_SCHEMES_REQUIRING_CONTAINER
-from gluentlib.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.filesystem.gluent_dfs import OFFLOAD_FS_SCHEMES_REQUIRING_CONTAINER
+from goe.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
 
 from testlib.test_framework import test_constants
 from testlib.test_framework.test_functions import test_teamcity_endtest, test_teamcity_endtestsuite,\

@@ -5,12 +5,12 @@ import os
 from unittest import TestCase, main
 from tests.unit.offload.unittest_functions import get_default_test_user, build_offload_operation
 from tests.integration.test_functions import build_current_options
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.offload_metadata_functions import gen_offload_metadata_from_base
-from gluentlib.offload.predicate_offload import GenericPredicate
-from gluentlib.offload.oracle.oracle_column import OracleColumn
-from gluentlib.persistence.orchestration_metadata import OrchestrationMetadata
-from gluentlib.util.ora_query import get_oracle_connection
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_metadata_functions import gen_offload_metadata_from_base
+from goe.offload.predicate_offload import GenericPredicate
+from goe.offload.oracle.oracle_column import OracleColumn
+from goe.persistence.orchestration_metadata import OrchestrationMetadata
+from goe.util.ora_query import get_oracle_connection
 
 
 class TestOffloadMetadataFunctions(TestCase):

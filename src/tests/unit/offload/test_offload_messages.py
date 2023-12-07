@@ -1,13 +1,13 @@
 from unittest import TestCase, main
 
-from gluentlib.config import orchestration_defaults
-from gluentlib.offload.offload_messages import (
+from goe.config import orchestration_defaults
+from goe.offload.offload_messages import (
     OffloadMessages,
     OffloadMessagesForcedException,
     VERBOSE,
     VVERBOSE,
 )
-from gluentlib.orchestration import command_steps, orchestration_constants
+from goe.orchestration import command_steps, orchestration_constants
 
 
 class FakeOpts(object):

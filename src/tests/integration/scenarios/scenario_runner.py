@@ -4,12 +4,12 @@ import time
 import traceback
 from typing import TYPE_CHECKING
 
-from gluentlib.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
-from gluentlib.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
-from gluentlib.orchestration import orchestration_constants
-from gluentlib.orchestration.execution_id import ExecutionId
-from gluentlib.orchestration.orchestration_runner import OrchestrationRunner
-from gluentlib.util.misc_functions import get_temp_path
+from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
+from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
+from goe.orchestration import orchestration_constants
+from goe.orchestration.execution_id import ExecutionId
+from goe.orchestration.orchestration_runner import OrchestrationRunner
+from goe.util.misc_functions import get_temp_path
 from tests.integration.test_functions import (
     get_default_test_user,
     get_default_test_user_pass,
@@ -18,7 +18,7 @@ from tests.testlib.test_framework.backend_testing_api import subproc_cmd
 from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
 
 if TYPE_CHECKING:
-    from gluentlib.persistence.orchestration_repo_client import (
+    from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )
     from testlib.test_framework.backend_testing_api import BackendTestingApiInterface

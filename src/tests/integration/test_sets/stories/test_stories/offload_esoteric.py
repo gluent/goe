@@ -15,21 +15,21 @@ from test_sets.stories.story_assertion_functions import backend_table_exists, ba
     synthetic_part_col_name, table_minus_row_count, text_in_log
 
 from gluent import num_location_files_enabled
-from gluentlib.config import orchestration_defaults
-from gluentlib.filesystem.gluent_dfs import OFFLOAD_FS_SCHEME_HDFS
-from gluentlib.offload.backend_table import DATA_VALIDATION_NOT_NULL_EXCEPTION_TEXT, \
+from goe.config import orchestration_defaults
+from goe.filesystem.gluent_dfs import OFFLOAD_FS_SCHEME_HDFS
+from goe.offload.backend_table import DATA_VALIDATION_NOT_NULL_EXCEPTION_TEXT, \
     OFFLOAD_CHUNK_COLUMN_MESSAGE_PATTERN
-from gluentlib.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_TERADATA, \
+from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_TERADATA, \
     NOT_NULL_PROPAGATION_AUTO, NOT_NULL_PROPAGATION_NONE, OFFLOAD_BUCKET_NAME, \
     HADOOP_BASED_BACKEND_DISTRIBUTIONS, PART_COL_GRANULARITY_YEAR
-from gluentlib.offload.offload_functions import convert_backend_identifier_case, load_db_name
-from gluentlib.offload.offload_metadata_functions import OFFLOAD_TYPE_FULL
-from gluentlib.offload.operation.not_null_columns import UNKNOWN_NOT_NULL_COLUMN_EXCEPTION_TEXT
-from gluentlib.offload.operation.partition_controls import OFFLOAD_CHUNK_COLUMN_PART_COL_EXCEPTION_TEXT,\
+from goe.offload.offload_functions import convert_backend_identifier_case, load_db_name
+from goe.offload.offload_metadata_functions import OFFLOAD_TYPE_FULL
+from goe.offload.operation.not_null_columns import UNKNOWN_NOT_NULL_COLUMN_EXCEPTION_TEXT
+from goe.offload.operation.partition_controls import OFFLOAD_CHUNK_COLUMN_PART_COL_EXCEPTION_TEXT,\
     PARTITION_FUNCTIONS_NOT_SUPPORTED_EXCEPTION_TEXT, TOO_MANY_BACKEND_PART_COLS_EXCEPTION_TEXT
-from gluentlib.orchestration import command_steps
-from gluentlib.orchestration.command_steps import step_title
-from gluentlib.util.misc_functions import add_suffix_in_same_case
+from goe.orchestration import command_steps
+from goe.orchestration.command_steps import step_title
+from goe.util.misc_functions import add_suffix_in_same_case
 from testlib.test_framework.test_functions import log
 
 

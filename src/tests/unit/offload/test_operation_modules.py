@@ -3,20 +3,20 @@
 
 from unittest import TestCase, main
 
-from gluentlib.offload.offload_constants import (
+from goe.offload.offload_constants import (
     NOT_NULL_PROPAGATION_AUTO,
     NOT_NULL_PROPAGATION_NONE,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.operation.data_type_controls import (
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.operation.data_type_controls import (
     OffloadDataTypeControlsException,
     canonical_columns_from_columns_csv,
 )
-from gluentlib.offload.operation.not_null_columns import (
+from goe.offload.operation.not_null_columns import (
     OffloadNotNullControlsException,
     apply_not_null_columns_csv,
 )
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     CanonicalColumn,
     GLUENT_TYPE_DECIMAL,
     GLUENT_TYPE_INTEGER_2,

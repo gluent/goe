@@ -12,9 +12,9 @@ from unittest import TestCase, main
 from tests.offload.unittest_functions import build_current_options, build_non_connecting_options,\
     get_real_frontend_schema_and_table
 
-from gluentlib.offload.column_metadata import ALL_CANONICAL_TYPES
-from gluentlib.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_MSSQL, DBTYPE_TERADATA
-from gluentlib.offload.offload_messages import OffloadMessages
+from goe.offload.column_metadata import ALL_CANONICAL_TYPES
+from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_MSSQL, DBTYPE_TERADATA
+from goe.offload.offload_messages import OffloadMessages
 from testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
 
 

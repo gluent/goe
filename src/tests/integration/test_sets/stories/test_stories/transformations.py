@@ -3,13 +3,13 @@ from test_sets.stories.story_setup_functions import dbms_stats_gather_string, dr
     gen_hybrid_drop_ddl, post_setup_pause, setup_backend_only
 from test_sets.stories.story_assertion_functions import check_metadata, desc_columns, table_row_count
 
-from gluentlib.offload.offload_constants import DBTYPE_BIGQUERY
-from gluentlib.offload.offload_functions import convert_backend_identifier_case
-from gluentlib.offload.offload_transport import is_spark_thrift_available, is_spark_submit_available, \
+from goe.offload.offload_constants import DBTYPE_BIGQUERY
+from goe.offload.offload_functions import convert_backend_identifier_case
+from goe.offload.offload_transport import is_spark_thrift_available, is_spark_submit_available, \
     is_sqoop_available, is_livy_available, is_query_import_available, \
     OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY, OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT, \
     OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT, OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT, OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY
-from gluentlib.util.misc_functions import add_suffix_in_same_case
+from goe.util.misc_functions import add_suffix_in_same_case
 from testlib.test_framework.test_functions import log
 
 OFFLOAD_STORY_DIM_TRANSFORMATIONS = {"CUST_MARITAL_STATUS": "null",

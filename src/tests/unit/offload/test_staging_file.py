@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase, main
 
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     CanonicalColumn,
     GLUENT_TYPE_FIXED_STRING,
     GLUENT_TYPE_LARGE_STRING,
@@ -24,8 +24,8 @@ from gluentlib.offload.column_metadata import (
     GLUENT_TYPE_INTERVAL_YM,
     GLUENT_TYPE_BOOLEAN,
 )
-from gluentlib.offload.factory.staging_file_factory import staging_file_factory
-from gluentlib.offload.offload_constants import (
+from goe.offload.factory.staging_file_factory import staging_file_factory
+from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
@@ -35,9 +35,9 @@ from gluentlib.offload.offload_constants import (
     FILE_STORAGE_FORMAT_AVRO,
     FILE_STORAGE_FORMAT_PARQUET,
 )
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.staging.avro.avro_column import StagingAvroColumn
-from gluentlib.offload.staging.parquet.parquet_column import StagingParquetColumn
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.staging.avro.avro_column import StagingAvroColumn
+from goe.offload.staging.parquet.parquet_column import StagingParquetColumn
 
 
 STAGING_TYPES = {

@@ -7,7 +7,7 @@
 
 import logging
 
-from gluentlib.offload.offload_messages import VVERBOSE
+from goe.offload.offload_messages import VVERBOSE
 from tests.testlib.test_framework.hadoop.hadoop_backend_testing_api import BackendHadoopTestingApi
 from tests.testlib.test_framework.hadoop.hive_backend_testing_api import BackendHiveTestingApi
 

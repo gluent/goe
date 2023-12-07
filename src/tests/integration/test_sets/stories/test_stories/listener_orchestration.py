@@ -10,11 +10,11 @@ import requests
 
 # Gluent
 from gluent import get_log_fh, serialize_object, verbose, vverbose
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.offload_metadata_functions import OFFLOAD_TYPE_INCREMENTAL
-from gluentlib.orchestration import command_steps, orchestration_constants
-from gluentlib.orchestration.execution_id import ExecutionId
-from gluentlib.persistence.orchestration_metadata import (
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_metadata_functions import OFFLOAD_TYPE_INCREMENTAL
+from goe.orchestration import command_steps, orchestration_constants
+from goe.orchestration.execution_id import ExecutionId
+from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_PREDICATE,
 )
@@ -52,8 +52,8 @@ from testlib.test_framework.backend_testing_api import subproc_cmd
 from testlib.test_framework.test_functions import get_lines_from_log, log
 
 if TYPE_CHECKING:
-    from gluentlib.config.orchestration_config import OrchestrationConfig
-    from gluentlib.persistence.orchestration_repo_client import (
+    from goe.config.orchestration_config import OrchestrationConfig
+    from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )
     from testlib.test_framework.backend_testing_api import BackendTestingApiInterface

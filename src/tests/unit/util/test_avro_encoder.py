@@ -7,10 +7,10 @@ from textwrap import dedent
 from avro.datafile import DataFileReader
 from avro.io import DatumReader
 
-from gluentlib.offload.offload_messages import OffloadMessages
-from gluentlib.offload.oracle.oracle_column import OracleColumn, ORACLE_TYPE_VARCHAR2
-from gluentlib.util.avro_encoder import AvroEncoder
-from gluentlib.util.misc_functions import get_temp_path
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.oracle.oracle_column import OracleColumn, ORACLE_TYPE_VARCHAR2
+from goe.util.avro_encoder import AvroEncoder
+from goe.util.misc_functions import get_temp_path
 
 
 FETCH_SIZE = 5

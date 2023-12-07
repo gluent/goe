@@ -12,7 +12,7 @@ from subprocess import PIPE, STDOUT
 import sys
 import time
 
-from gluentlib.offload.column_metadata import (
+from goe.offload.column_metadata import (
     CanonicalColumn,
     match_table_column,
     GLUENT_TYPE_DATE,
@@ -23,8 +23,8 @@ from gluentlib.offload.column_metadata import (
     GLUENT_TYPE_INTEGER_38,
     GLUENT_TYPE_VARIABLE_STRING,
 )
-from gluentlib.offload.factory.backend_api_factory import backend_api_factory
-from gluentlib.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.factory.backend_api_factory import backend_api_factory
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from tests.testlib.test_framework import test_constants
 
 

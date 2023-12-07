@@ -7,7 +7,7 @@ from uuid import NAMESPACE_DNS, uuid3
 from pydantic import UUID3
 
 # Gluent
-from gluent import version as gluent_version
+from goe.gluent import version as gluent_version
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.listener import utils
 from goe.listener.config import settings

@@ -14,7 +14,7 @@ from goe.util.gluent_log import log
 from goe.util.config_file import GluentRemoteConfig
 from goe.util.misc_functions import check_offload_env, check_remote_offload_env
 
-from gluent import get_options_from_list, normalise_db_paths, init
+from goe.gluent import get_options_from_list, normalise_db_paths, init
 
 
 # -----------------------------------------------------------------------

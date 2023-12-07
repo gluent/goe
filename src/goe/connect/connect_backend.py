@@ -40,7 +40,7 @@ from goe.offload.offload_constants import (
     BACKEND_DISTRO_GCP,
 )
 from goe.util.better_impyla import BetterImpylaException
-from gluent import get_log_fh, verbose
+from goe.gluent import get_log_fh, verbose
 
 
 def static_backend_name(orchestration_config):

@@ -3,7 +3,7 @@ LICENSE_TEXT
 """
 import traceback
 
-from gluent import log
+from goe.gluent import log
 from goe.util.misc_functions import double_quote_sandwich
 from goe.util.ora_query import get_oracle_connection
 from .. import schema_sync_constants

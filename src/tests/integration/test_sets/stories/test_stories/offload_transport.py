@@ -9,7 +9,7 @@ from test_sets.stories.story_assertion_functions import load_table_is_compressed
     offload_dim_assertion, offload_fact_assertions, offload_lpa_fact_assertion, \
     table_minus_row_count, text_in_messages, text_in_log
 
-from gluent import get_log_fh
+from goe.gluent import get_log_fh
 from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
 from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_ORACLE, \
     DBTYPE_TERADATA, OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED

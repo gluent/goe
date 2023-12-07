@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from gluent import get_common_options, log
+from goe.gluent import get_common_options, log
 from goe.schema_sync.schema_sync_analyzer import SchemaSyncAnalyzer
 from goe.schema_sync.schema_sync_processor import SchemaSyncProcessor
 from goe.schema_sync.schema_sync_command_file import SchemaSyncCommandFile

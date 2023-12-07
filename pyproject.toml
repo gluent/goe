@@ -87,10 +87,10 @@ test = [
     "pytest-xdist",
 ]
 
-[tool.setuptools.packages.find]
+# [tool.setuptools.packages.find]
 # Hopefully this is temporary
-where = ["gluentlib"]
-include = ["gluentlib*"]
+# where = ["gluentlib"]
+# include = ["gluentlib*"]
 
 [build-system]
 requires = ["setuptools >= 40.6.0", "wheel"]

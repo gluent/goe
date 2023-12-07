@@ -10,7 +10,7 @@ import decimal
 import logging
 from unittest import TestCase, main
 
-from gluent import OffloadOperation
+from goe.gluent import OffloadOperation
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.column_metadata import CanonicalColumn, ColumnMetadataInterface, \
     get_partition_columns,\

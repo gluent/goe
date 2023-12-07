@@ -10,7 +10,7 @@ from goe.offload.offload_messages import VVERBOSE
 from goe.filesystem.gluent_dfs import (
     OFFLOAD_WEBHDFS_COMPATIBLE_FS_SCHEMES,
 )
-from gluent import ansi, log as offload_log, normal
+from goe.gluent import ansi, log as offload_log, normal
 
 
 class FatalTestFailure(Exception):

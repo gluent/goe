@@ -9,7 +9,7 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, gen
     SALES_BASED_FACT_HV_8, SALES_BASED_FACT_HV_9
 from test_sets.stories.story_assertion_functions import offload_fact_assertions, text_in_messages
 
-from gluent import verbose
+from goe.gluent import verbose
 from goe.offload import offload_constants
 from goe.offload.offload_metadata_functions import OFFLOAD_TYPE_FULL, OFFLOAD_TYPE_INCREMENTAL
 from goe.offload.offload_source_data import NO_MAXVALUE_PARTITION_NOTICE_TEXT

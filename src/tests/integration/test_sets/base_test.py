@@ -9,7 +9,7 @@ import os
 import sys
 import traceback
 
-from gluent import ansi
+from goe.gluent import ansi
 
 from testlib.test_framework import test_constants
 from testlib.test_framework.test_functions import log, test_teamcity_endtest, test_teamcity_endtest_pq,\

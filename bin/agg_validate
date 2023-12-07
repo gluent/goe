@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 # LICENSE_TEXT
 
-from gluentlib.scripts.agg_validate import main
+from goe.scripts.agg_validate import main
 
 main()

@@ -15,7 +15,7 @@ logger = logging.getLogger()
 def validate_python_environment():
     try:
         # Gluent
-        from gluentlib.listener.prestart import prestart
+        from goe.listener.prestart import prestart
 
         prestart()
 
@@ -29,11 +29,11 @@ def validate_python_environment():
 def run_listener():
     """Run Gluent Listener."""
     # Gluent
-    from gluentlib.listener.config.application import settings
-    from gluentlib.listener.config.logging import Logger
-    from gluentlib.listener.heartbeat import run_heartbeat
-    from gluentlib.listener.worker import run_worker
-    from gluentlib.listener.wsgi import run_wsgi
+    from goe.listener.config.application import settings
+    from goe.listener.config.logging import Logger
+    from goe.listener.heartbeat import run_heartbeat
+    from goe.listener.worker import run_worker
+    from goe.listener.wsgi import run_wsgi
 
     logger = Logger.configure_logger()
     logger.info("Booting Gluent Orchestration Listener")

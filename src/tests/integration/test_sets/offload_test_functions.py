@@ -7,7 +7,7 @@ import decimal
 from distutils.version import StrictVersion
 import math
 
-from gluent import OffloadOperation, get_log_fh, get_offload_target_table
+from goe.gluent import OffloadOperation, get_log_fh, get_offload_target_table
 from goe.config import orchestration_defaults
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_constants import DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE, DBTYPE_SNOWFLAKE,\

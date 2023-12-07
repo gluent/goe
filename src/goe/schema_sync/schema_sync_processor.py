@@ -5,7 +5,7 @@
 
 from typing import TYPE_CHECKING
 
-from gluent import log
+from goe.gluent import log
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.schema_sync.schema_sync_constants import ADD_BACKEND_COLUMN,\
     PRESENT_TABLE, ADD_ORACLE_COLUMN

@@ -6,7 +6,7 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, gen
     SALES_BASED_FACT_HV_4, SALES_BASED_LIST_HV_3, SALES_BASED_LIST_HV_4, \
     SALES_BASED_LIST_PNAMES_BY_HV, LOWER_YRMON_NUM, UPPER_YRMON_NUM
 
-from gluent import get_log_fh
+from goe.gluent import get_log_fh
 from goe.conductor.hybrid_view_service import HybridViewService,\
     JSON_KEY_BACKEND_NUM_ROWS, JSON_KEY_BACKEND_PARTITIONS,\
     JSON_KEY_VALIDATE_STATUS, JSON_KEY_VALIDATE_MESSAGE

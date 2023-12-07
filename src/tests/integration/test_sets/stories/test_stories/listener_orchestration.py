@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import requests
 
 # Gluent
-from gluent import get_log_fh, serialize_object, verbose, vverbose
+from goe.gluent import get_log_fh, serialize_object, verbose, vverbose
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_metadata_functions import OFFLOAD_TYPE_INCREMENTAL
 from goe.orchestration import command_steps, orchestration_constants

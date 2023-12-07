@@ -18,7 +18,7 @@ from goe.connect.connect_functions import (
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_ORACLE
 
-from gluent import (
+from goe.gluent import (
     comp_ver_check,
     nls_lang_exists,
     nls_lang_has_charset,

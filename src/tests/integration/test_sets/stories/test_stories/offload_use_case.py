@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from gluent import IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT, TOKENISE_STRING_CHAR_1, log
+from goe.gluent import IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT, TOKENISE_STRING_CHAR_1, log
 from goe.offload.backend_api import IMPALA_NOSHUFFLE_HINT
 from goe.offload.column_metadata import (
     GLUENT_TYPE_DOUBLE,

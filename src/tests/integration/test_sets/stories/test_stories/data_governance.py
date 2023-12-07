@@ -4,7 +4,7 @@ from test_sets.stories.story_globals import STORY_SETUP_TYPE_HYBRID, STORY_SETUP
     STORY_TYPE_OFFLOAD, STORY_TYPE_PRESENT, STORY_TYPE_SETUP
 from test_sets.stories.story_setup_functions import gen_hybrid_drop_ddl, gen_rdbms_dim_create_ddl, story_now_name
 
-from gluent import get_log_fh, log
+from goe.gluent import get_log_fh, log
 from goe.data_governance.hadoop_data_governance import get_hadoop_data_governance_client_from_options, \
     is_dynamic_tag, stripped_dynamic_tag_name
 from goe.data_governance.hadoop_data_governance_constants import MUTED_DATA_GOVERNANCE_DB_TAGS,\

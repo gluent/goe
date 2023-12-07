@@ -15,7 +15,7 @@ from tests.integration.offload.unittest_functions import (
     get_default_test_user,
 )
 
-from gluent import OffloadOperation
+from goe.gluent import OffloadOperation
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_messages import OffloadMessages

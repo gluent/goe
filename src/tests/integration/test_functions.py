@@ -1,7 +1,7 @@
 from functools import lru_cache
 import os
 
-from gluent import OffloadOperation
+from goe.gluent import OffloadOperation
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_messages import OffloadMessages
 

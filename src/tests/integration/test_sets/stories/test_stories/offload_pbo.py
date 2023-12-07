@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from gluent import (
+from goe.gluent import (
     CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_EXCEPTION_TEXT,

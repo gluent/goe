@@ -9,7 +9,7 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, gen
     SALES_BASED_LIST_PNAME_6, LOWER_YRMON_NUM, UPPER_YRMON_NUM
 from test_sets.stories.story_assertion_functions import offload_lpa_fact_assertion, synthetic_part_col_name, text_in_messages
 
-from gluent import RESET_HYBRID_VIEW_EXCEPTION_TEXT, OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT, \
+from goe.gluent import RESET_HYBRID_VIEW_EXCEPTION_TEXT, OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT, \
     OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT
 from goe.offload.offload_functions import convert_backend_identifier_case
 from goe.offload.offload_metadata_functions import OFFLOAD_TYPE_FULL, OFFLOAD_TYPE_INCREMENTAL,\

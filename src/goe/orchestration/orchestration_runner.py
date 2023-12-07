@@ -11,7 +11,7 @@ import traceback
 from typing import Optional, TYPE_CHECKING
 
 # Gluent
-from gluent import (
+from goe.gluent import (
     OffloadOperation,
     check_and_set_nls_lang,
     get_log_fh,

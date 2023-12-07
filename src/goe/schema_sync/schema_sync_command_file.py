@@ -6,7 +6,7 @@ import os
 import traceback
 from datetime import datetime
 
-from gluent import version
+from goe.gluent import version
 
 divider = '=' * 100
 sub_divider = '-' * 100

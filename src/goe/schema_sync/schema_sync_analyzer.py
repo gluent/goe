@@ -9,7 +9,7 @@ import pprint
 import traceback
 from operator import itemgetter
 
-from gluent import log
+from goe.gluent import log
 from goe.config.orchestration_config import OrchestrationConfig
 import gluentlib.schema_sync.schema_sync_constants as schema_sync_constants
 from goe.offload.column_metadata import get_column_names

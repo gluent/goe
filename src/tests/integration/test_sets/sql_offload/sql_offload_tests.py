@@ -4,7 +4,7 @@ import os
 import re
 import traceback
 
-from gluent import get_log_fh, log
+from goe.gluent import get_log_fh, log
 from goe.offload.offload_messages import OffloadMessages
 from testlib.test_framework.test_functions import get_backend_testing_api, get_frontend_testing_api,\
     get_test_set_sql_path, test_passes_filter, test_teamcity_starttestsuite_pq, test_teamcity_endtestsuite_pq

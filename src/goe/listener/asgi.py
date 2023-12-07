@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from redis.exceptions import RedisError
 
 # Gluent
-from gluent import strict_version_ready, version
+from goe.gluent import strict_version_ready, version
 from goe.listener import exceptions, schemas
 from goe.listener.config import settings
 from goe.listener.config.logging import Logger

@@ -4,7 +4,7 @@
         Backend table name case (upper/lower/camel)
 """
 
-from gluent import (
+from goe.gluent import (
     ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
     LEGACY_MAX_HYBRID_IDENTIFIER_LENGTH,
     log,

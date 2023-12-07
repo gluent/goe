@@ -2,7 +2,7 @@ from datetime import datetime
 from textwrap import dedent
 import time
 
-from gluent import verbose
+from goe.gluent import verbose
 from goe.offload.frontend_api import QueryParameter
 from goe.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
 from goe.offload.offload_functions import convert_backend_identifier_case

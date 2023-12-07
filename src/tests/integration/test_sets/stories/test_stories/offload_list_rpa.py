@@ -8,7 +8,7 @@ from test_sets.stories.story_setup_functions import drop_backend_test_table, gen
     STORY_SETUP_TYPE_HYBRID, STORY_SETUP_TYPE_PYTHON, LOWER_YRMON_NUM, UPPER_YRMON_NUM
 from test_sets.stories.story_assertion_functions import offload_fact_assertions, synthetic_part_col_name
 
-from gluent import IPA_PREDICATE_TYPE_EXCEPTION_TEXT, IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT
+from goe.gluent import IPA_PREDICATE_TYPE_EXCEPTION_TEXT, IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT
 from goe.offload.offload_constants import OFFLOAD_STATS_METHOD_COPY, OFFLOAD_STATS_METHOD_NATIVE
 from goe.offload.offload_functions import convert_backend_identifier_case
 from goe.offload.offload_source_data import INVALID_HV_FOR_LIST_AS_RANGE_EXCEPTION_TEXT, \

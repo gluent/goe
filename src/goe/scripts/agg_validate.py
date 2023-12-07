@@ -20,7 +20,7 @@ from goe.util.gluent_log import step, log_exception
 
 from goe.offload.offload_messages import OffloadMessages
 
-from gluent import get_options_from_list, normalise_owner_table_options,\
+from goe.gluent import get_options_from_list, normalise_owner_table_options,\
     init, init_log, log, get_log_fh_name, version, license,\
     get_log_fh, log_timestamp
 

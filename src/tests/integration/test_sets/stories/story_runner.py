@@ -11,7 +11,7 @@ from typing import Callable, Optional, TYPE_CHECKING
 
 from test_sets.base_test import BaseTest
 
-from gluent import get_log_fh, init_log, normalise_owner_table_options,\
+from goe.gluent import get_log_fh, init_log, normalise_owner_table_options,\
     normal, verbose, vverbose
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_constants import BACKEND_DISTRO_EMR, BACKEND_DISTRO_MAPR, DBTYPE_MSSQL, DBTYPE_TERADATA

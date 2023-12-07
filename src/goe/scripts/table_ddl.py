@@ -17,7 +17,7 @@ from goe.util.hive_ddl_transform import DDLTransform
 from goe.util.gluent_log import log
 from goe.util.misc_functions import options_list_to_dict, check_offload_env, check_remote_offload_env
 
-from gluent import get_options_from_list, normalise_owner_table_options, init, license, version
+from goe.gluent import get_options_from_list, normalise_owner_table_options, init, license, version
 
 
 # -----------------------------------------------------------------------

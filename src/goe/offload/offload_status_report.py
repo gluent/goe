@@ -12,7 +12,7 @@ from optparse import OptionGroup, SUPPRESS_HELP
 
 from jinja2 import Environment, FileSystemLoader
 
-from gluent import OptionError, \
+from goe.gluent import OptionError, \
     init_log, version, get_log_fh_name, log_command_line, log_timestamp, init, log, get_log_fh, \
     get_common_options, get_rdbms_db_name
 from goe.config.orchestration_config import OrchestrationConfig

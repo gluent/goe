@@ -1,7 +1,7 @@
 from datetime import datetime
 import pickle
 
-from gluent import version
+from goe.gluent import version
 
 
 class Benchmarks(object):

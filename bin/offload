@@ -4,11 +4,11 @@
 import traceback
 import sys
 
-from gluentlib.config.config_checks import check_cli_path
+from goe.config.config_checks import check_cli_path
 
 check_cli_path()
 
-from gluent import (
+from goe.gluent import (
     OptionError,
     get_log_fh_name,
     get_offload_options,
@@ -22,8 +22,8 @@ from gluent import (
     OFFLOAD_OP_NAME,
     get_log_fh,
 )
-from gluentlib.orchestration.cli_entry_points import offload_by_cli
-from gluentlib.util.gluent_log import log_exception
+from goe.orchestration.cli_entry_points import offload_by_cli
+from goe.util.gluent_log import log_exception
 
 
 if __name__ == "__main__":

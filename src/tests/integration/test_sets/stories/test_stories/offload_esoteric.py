@@ -14,7 +14,7 @@ from test_sets.stories.story_assertion_functions import backend_table_exists, ba
     offload_dim_assertion, offload_fact_assertions, \
     synthetic_part_col_name, table_minus_row_count, text_in_log
 
-from gluent import num_location_files_enabled
+from goe.gluent import num_location_files_enabled
 from goe.config import orchestration_defaults
 from goe.filesystem.gluent_dfs import OFFLOAD_FS_SCHEME_HDFS
 from goe.offload.backend_table import DATA_VALIDATION_NOT_NULL_EXCEPTION_TEXT, \

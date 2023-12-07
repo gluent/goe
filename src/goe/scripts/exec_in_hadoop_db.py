@@ -16,7 +16,7 @@ from goe.util.hs2_connection import hs2_connection, hs2_section_options, hs2_env
 from goe.util.gluent_log import log
 from goe.util.misc_functions import check_offload_env, check_remote_offload_env
 
-from gluent import get_options_from_list, normalise_db_paths, init
+from goe.gluent import get_options_from_list, normalise_db_paths, init
 
 
 # -----------------------------------------------------------------------

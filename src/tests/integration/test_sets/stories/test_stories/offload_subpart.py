@@ -6,7 +6,7 @@ from test_sets.stories.story_setup_functions import gen_hybrid_drop_ddl, drop_ba
 from test_sets.stories.story_assertion_functions import backend_table_count, offload_fact_assertions, \
     offload_lpa_fact_assertion
 
-from gluent import OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT
+from goe.gluent import OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT
 from goe.offload.oracle.oracle_column import ORACLE_TYPE_VARCHAR2
 from goe.offload.offload_constants import DBTYPE_BIGQUERY, PART_COL_GRANULARITY_DAY
 from goe.offload.offload_functions import convert_backend_identifier_case

@@ -2,7 +2,7 @@ import os
 import re
 from pyarrow import parquet
 
-from gluent import verbose, vverbose, \
+from goe.gluent import verbose, vverbose, \
     num_location_files_enabled, \
     TOTAL_ROWS_OFFLOADED_LOG_TEXT
 from goe.offload.factory.backend_table_factory import backend_table_factory

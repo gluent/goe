@@ -10,7 +10,7 @@ import sys
 import traceback
 
 from getpass import getuser
-from gluent import (
+from goe.gluent import (
     get_common_options,
     get_log_fh,
     get_log_fh_name,

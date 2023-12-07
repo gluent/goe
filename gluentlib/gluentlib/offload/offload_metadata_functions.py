@@ -150,7 +150,8 @@ def gen_offload_metadata_from_base(repo_client, hybrid_operation, threshold_cols
         changelog_trigger=changelog_trigger,
         changelog_sequence=changelog_sequence,
         updatable_view=updatable_view,
-        updatable_trigger=updatable_trigger
+        updatable_trigger=updatable_trigger,
+        execution_id=hybrid_operation.execution_id
     )
 
 

@@ -1,7 +1,0 @@
-<?xml version = '1.0' encoding = 'UTF-8'?>
-<SequenceOraclev10g class="oracle.dbtools.crest.model.design.storage.oracle.v10g.SequenceOraclev10g" name="COMMAND_TYPE_SEQ" directorySegmentName="seg_0" id="5D75BA77-A9C0-CBF2-B3A0-2DAEE4419816">
-<createdBy>adrian</createdBy>
-<createdTime>2022-03-15 11:14:44 UTC</createdTime>
-<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
-<noCache>YES</noCache>
-</SequenceOraclev10g>

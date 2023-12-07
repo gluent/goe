@@ -8,7 +8,7 @@ set verify off
 
 prompt
 prompt ================================================================================
-prompt Uninstalling OFFLOAD...
+prompt Uninstalling GOE...
 prompt ================================================================================
 prompt
 
@@ -17,31 +17,21 @@ prompt
 
 WHENEVER SQLERROR CONTINUE
 
-prompt Dropping users...
-drop user &gluent_db_adm_user cascade;
-drop user &gluent_db_app_user cascade;
-
-prompt Dropping roles...
-drop role gluent_offload_role;
-
-prompt Dropping public synonyms...
---drop public synonym offload;
---drop public synonym offload_objects;
-
-@@sql/drop_offload_obsolete_objects.sql
+drop user &goe_db_adm_user cascade;
+drop user &goe_db_app_user cascade;
 
 @@sql/uninstall_offload_repo.sql
 
 prompt
 prompt ================================================================================
-prompt OFFLOAD successfully removed.
+prompt GOE successfully removed.
 prompt ================================================================================
 prompt
-undefine gluent_db_user_prefix
-undefine gluent_db_adm_user
-undefine gluent_db_app_user
-undefine gluent_db_repo_user
-undefine gluent_repo_installed
-undefine gluent_repo_uninstall
+undefine goe_db_user_prefix
+undefine goe_db_adm_user
+undefine goe_db_app_user
+undefine goe_db_repo_user
+undefine goe_repo_installed
+undefine goe_repo_uninstall
 
 @@sql/restore_sqlplus_env.sql

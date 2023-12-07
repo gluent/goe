@@ -5,18 +5,17 @@
 
 BEGIN
 
-    UPDATE version
-    SET    latest_yn = 'N'
-    WHERE  latest_yn = 'Y';
+    UPDATE goe_version
+    SET    latest = 'N'
+    WHERE  latest = 'Y';
 
-    INSERT INTO version
-        (gdp_version, gdp_build, create_date_time, latest_yn, comments)
+    INSERT INTO goe_version
+        (id, version, build, create_time, latest, comments)
     VALUES
-        ('&gluent_offload_repo_version', '&gluent_gdp_build', SYSDATE, 'Y',
-         NVL('&gluent_offload_repo_comments', 'Changes for Gluent Data Platform &gluent_offload_repo_version'));
+        (goe_version_seq.NEXTVAL, '&goe_offload_repo_version', '&goe_build', SYSTIMESTAMP, 'Y',
+         NVL('&goe_offload_repo_comments', 'GOE version &goe_offload_repo_version'));
 
     COMMIT;
 
 END;
 /
-

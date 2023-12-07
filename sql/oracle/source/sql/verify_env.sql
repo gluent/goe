@@ -6,13 +6,13 @@ set heading off feedback off termout on
 prompt
 prompt Confirm installation values:
 prompt
-prompt * Gluent Database User Prefix...................: &gluent_db_user_prefix
-prompt * Gluent Database User Profile..................: &gluent_db_user_profile
-prompt * Gluent Database Admin User....................: &gluent_db_adm_user
-prompt * Gluent Database Application User..............: &gluent_db_app_user
-prompt * Gluent Database Repository User...............: &gluent_db_repo_user
-prompt * Gluent Database Repository Tablespace.........: &gluent_repo_tablespace
-prompt * Gluent Database Repository Tablespace Quota...: &gluent_repo_ts_quota
+prompt * GOE Database User Prefix...................: &goe_db_user_prefix
+prompt * GOE Database User Profile..................: &goe_db_user_profile
+prompt * GOE Database Admin User....................: &goe_db_adm_user
+prompt * GOE Database Application User..............: &goe_db_app_user
+prompt * GOE Database Repository User...............: &goe_db_repo_user
+prompt * GOE Database Repository Tablespace.........: &goe_repo_tablespace
+prompt * GOE Database Repository Tablespace Quota...: &goe_repo_ts_quota
 set heading on feedback on
 
 PROMPT

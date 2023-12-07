@@ -358,12 +358,10 @@ FROM  (
         ora_conn = self._get_adm_connection()
         try:
             ora_curs = ora_conn.cursor()
-            scn = ora_curs.var(cxo.NUMBER)
-            ora_curs.callfunc('SYS.DBMS_FLASHBACK.GET_SYSTEM_CHANGE_NUMBER', scn)
+            scn = ora_curs.execute('SELECT current_scn FROM v$database').fetchone()[0]
             ora_curs.close()
-            return_scn = int(self._cx_getvalue(scn))
             self._close_adm_connection()
-            return return_scn
+            return scn
         except:
             try:
                 if ora_curs:

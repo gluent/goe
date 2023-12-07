@@ -7,13 +7,13 @@ set heading off feedback off termout on serveroutput on
 begin
     dbms_output.put_line('Confirm installation values:');
     dbms_output.new_line;
-    dbms_output.put_line('* Gluent Database User Prefix..................: &gluent_db_user_prefix');
-    dbms_output.put_line('* Gluent Database Admin User...................: &gluent_db_adm_user');
-    dbms_output.put_line('* Gluent Database Application User.............: &gluent_db_app_user');
-    if '&gluent_repo_installed' = 'Y' then
-        dbms_output.put_line('* Gluent Metadata Repository Database User.....: &gluent_db_repo_user');
+    dbms_output.put_line('* GOE Database User Prefix.........: &goe_db_user_prefix');
+    dbms_output.put_line('* GOE Database Admin User..........: &goe_db_adm_user');
+    dbms_output.put_line('* GOE Database Application User....: &goe_db_app_user');
+    if '&goe_repo_installed' = 'Y' then
+        dbms_output.put_line('* GOE repository Database User.....: &goe_db_repo_user');
     end if;
-    dbms_output.put_line('* Gluent Metadata Repository...................: ' || case '&gluent_repo_installed' when 'Y' then case when '&gluent_repo_uninstall' = 'Y' then 'UNINSTALL' else 'DO NOT UNINSTALL' end else 'NOT INSTALLED' end);
+    dbms_output.put_line('* GOE repository...................: ' || case '&goe_repo_installed' when 'Y' then case when '&goe_repo_uninstall' = 'Y' then 'UNINSTALL' else 'DO NOT UNINSTALL' end else 'NOT INSTALLED' end);
 end;
 /
 set heading on feedback on

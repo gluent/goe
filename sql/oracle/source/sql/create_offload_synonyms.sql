@@ -7,10 +7,10 @@ SET SERVEROUTPUT ON
 
 DECLARE
 
-    c_schema        CONSTANT VARCHAR2(128) := SYS_CONTEXT('userenv', 'current_schema');
-    c_adm_schema    CONSTANT VARCHAR2(128) := '&gluent_db_adm_user';
-    c_app_schema    CONSTANT VARCHAR2(128) := '&gluent_db_app_user';
-    c_repo_schema   CONSTANT VARCHAR2(128) := '&gluent_db_repo_user';
+    c_owner        CONSTANT VARCHAR2(128) := SYS_CONTEXT('userenv', 'current_schema');
+    c_adm_schema   CONSTANT VARCHAR2(128) := '&goe_db_adm_user';
+    c_app_schema   CONSTANT VARCHAR2(128) := '&goe_db_app_user';
+    c_repo_schema  CONSTANT VARCHAR2(128) := '&goe_db_repo_user';
 
     TYPE args_ntt IS TABLE OF VARCHAR2(130);
 
@@ -31,15 +31,13 @@ DECLARE
 
 BEGIN
 
-    -- Synonyms for Gluent ADM objects in Gluent APP schema...
+    -- Synonyms for GOE ADM objects in GOE APP schema...
     FOR r IN ( SELECT o.owner
                ,      o.object_name
                ,      o.object_type
                FROM   dba_objects o
-               WHERE  o.owner = c_schema
+               WHERE  o.owner = c_owner
                AND    o.object_type IN ('TYPE','PACKAGE','FUNCTION','PROCEDURE','VIEW')
-               AND    o.object_name NOT LIKE 'SYSTP%'
-               AND    o.object_name NOT LIKE 'ST0%'
                ORDER  BY
                       o.object_type
                ,      o.object_name )
@@ -49,13 +47,6 @@ BEGIN
                                      r.object_name,
                                      r.owner,
                                      r.object_name) );
-
-        --IF r.object_type IN ('PACKAGE', 'VIEW') THEN
-        --    exec_sql( p_sql  => 'CREATE OR REPLACE PUBLIC SYNONYM %1 FOR %2.%3',
-        --              p_args => args_ntt(r.object_name,
-        --                                 r.owner,
-        --                                 r.object_name) );
-        --END IF;
     END LOOP;
 
 END;

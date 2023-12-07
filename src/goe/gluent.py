@@ -16,7 +16,6 @@ import os.path
 import math
 from optparse import OptionParser, Option, OptionValueError, SUPPRESS_HELP
 import re
-from textwrap import dedent
 import traceback
 from typing import Union
 
@@ -32,18 +31,16 @@ from goe.offload.backend_api import IMPALA_SHUFFLE_HINT, IMPALA_NOSHUFFLE_HINT
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory, get_backend_table_from_metadata
 from goe.offload.factory.frontend_api_factory import frontend_api_factory_ctx
-from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.column_metadata import ColumnBucketInfo, \
-    get_column_names, get_partition_source_column_names,\
     invalid_column_list_message, match_table_column,\
     is_synthetic_partition_column, valid_column_list, \
     GLUENT_TYPE_DECIMAL, GLUENT_TYPE_DATE, GLUENT_TYPE_DOUBLE,\
-    GLUENT_TYPE_FLOAT, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8,\
+    GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8,\
     GLUENT_TYPE_INTEGER_38, \
     GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_TIMESTAMP_TZ
 from goe.offload.offload_constants import (
     ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
-    DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_HIVE,
+    DBTYPE_BIGQUERY, DBTYPE_IMPALA,
     DBTYPE_ORACLE, DBTYPE_MSSQL,
     FILE_STORAGE_COMPRESSION_CODEC_GZIP, FILE_STORAGE_COMPRESSION_CODEC_SNAPPY, FILE_STORAGE_COMPRESSION_CODEC_ZLIB,
     HYBRID_EXT_TABLE_DEGREE_AUTO,
@@ -54,38 +51,46 @@ from goe.offload.offload_constants import (
     IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
     LOG_LEVEL_INFO, LOG_LEVEL_DETAIL, LOG_LEVEL_DEBUG,
     OFFLOAD_BUCKET_NAME, NUM_BUCKETS_AUTO,
+    OFFLOAD_STATS_METHOD_COPY,
+    OFFLOAD_STATS_METHOD_HISTORY,
+    OFFLOAD_STATS_METHOD_NATIVE,
+    OFFLOAD_STATS_METHOD_NONE,
     OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
     SORT_COLUMNS_NO_CHANGE,
 )
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
-from goe.offload.offload_source_data import offload_source_data_factory, get_offload_type_for_config, \
+from goe.offload.offload_source_data import get_offload_type_for_config, \
     OFFLOAD_SOURCE_CLIENT_OFFLOAD
 from goe.offload.offload_source_table import OffloadSourceTableInterface, \
     DATA_SAMPLE_SIZE_AUTO, OFFLOAD_PARTITION_TYPE_RANGE, OFFLOAD_PARTITION_TYPE_LIST
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
-from goe.offload.offload_metadata_functions import decode_metadata_incremental_high_values_from_metadata,\
-    flatten_lpa_high_values, incremental_key_csv_from_part_keys, \
-    gen_and_save_offload_metadata, \
-    METADATA_HYBRID_VIEW
+from goe.offload.offload_metadata_functions import incremental_key_csv_from_part_keys, gen_and_save_offload_metadata, METADATA_HYBRID_VIEW
 from goe.offload.offload_validation import BackendCountValidator, CrossDbValidator,\
     build_verification_clauses
 from goe.offload.offload_transport import choose_offload_transport_method, offload_transport_factory, \
     validate_offload_transport_method, \
     VALID_OFFLOAD_TRANSPORT_METHODS
-from goe.offload.offload_transport_functions import transport_and_load_offload_chunk
 from goe.offload.operation.data_type_controls import (
-    BACKEND_DATA_TYPE_CONTROL_OPTIONS,
     DECIMAL_COL_TYPE_SYNTAX_TEMPLATE,
     canonical_columns_from_columns_csv,
-    char_semantics_override_map
+    offload_source_to_canonical_mappings,
 )
-from goe.offload.operation.not_null_columns import apply_not_null_columns_csv
+from goe.offload.operation.transport import (
+    offload_data_to_target,
+)
+from goe.offload.offload import (
+    OffloadException,
+    check_table_structure,
+    create_final_backend_table,
+    offload_backend_db_message,
+    get_current_offload_hv,
+    get_offload_data_manager,
+    get_prior_offloaded_hv,
+)
 from goe.offload.operation.partition_controls import derive_partition_digits, offload_options_to_partition_info,\
     validate_offload_partition_columns, validate_offload_partition_functions, validate_offload_partition_granularity
-from goe.offload.operation.sort_columns import check_and_alter_backend_sort_columns,\
-    sort_columns_csv_to_sort_columns
+from goe.offload.operation.sort_columns import sort_columns_csv_to_sort_columns
 from goe.offload.predicate_offload import GenericPredicate
-from goe.offload.oracle.oracle_column import ORACLE_TYPE_BINARY_FLOAT
 from goe.orchestration import command_steps
 from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
@@ -95,19 +100,13 @@ from goe.persistence.orchestration_metadata import OrchestrationMetadata, hwm_co
     INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE, INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV
 
 from goe.data_governance.hadoop_data_governance import get_hadoop_data_governance_client_from_options,\
-    is_valid_data_governance_tag, data_governance_update_metadata_step
-from goe.data_governance.hadoop_data_governance_constants import DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_BASE_TABLE
+    is_valid_data_governance_tag
 
-from goe.util.misc_functions import case_insensitive_in, csv_split, bytes_to_human_size,\
-    human_size_to_bytes, is_pos_int, format_list_for_logging,\
-    standard_log_name
+from goe.util.misc_functions import csv_split, bytes_to_human_size,\
+    human_size_to_bytes, is_pos_int, standard_log_name
 from goe.util.hs2_connection import hs2_connection as hs2_connection_with_opts
 from goe.util.ora_query import get_oracle_connection
 from goe.util.redis_tools import RedisClient
-
-
-class OffloadException(Exception):
-    pass
 
 
 dev_logger = logging.getLogger('gluent')
@@ -129,11 +128,6 @@ OFFLOAD_OP_NAME = 'offload'
 CONFIG_FILE_NAME = 'offload.env'
 LOCATION_FILE_BASE = 'offload.conf'
 
-OFFLOAD_STATS_METHOD_COPY = 'COPY'
-OFFLOAD_STATS_METHOD_HISTORY = 'HISTORY'
-OFFLOAD_STATS_METHOD_NATIVE = 'NATIVE'
-OFFLOAD_STATS_METHOD_NONE = 'NONE'
-
 TOKENISE_STRING_CHAR_1 = '~'
 TOKENISE_STRING_CHAR_2 = '^'
 TOKENISE_STRING_CHAR_3 = '!'
@@ -144,13 +138,9 @@ LEGACY_MAX_HYBRID_IDENTIFIER_LENGTH = 30
 # Used in test to identify specific warnings
 CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT = 'Conflicting data identification options'
 HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = 'Including hybrid schema steps due to HWM change'
-JOIN_PUSHDOWN_HWM_EXCEPTION_TEXT = 'High water mark for join can not be influenced by --older-than-date/days, --less-than-value or --offload-predicate options'
-JOIN_PUSHDOWN_IGNORE_BUCKET_MESSAGE_TEXT = 'Materialized joins generate synthetic bucket column'
-JOIN_PUSHDOWN_INCOMPATIBLE_PREDICATE_EXCEPTION_TEXT = 'Incompatible join INCREMENTAL_PREDICATE_VALUEs'
 MISSING_HYBRID_METADATA_EXCEPTION_TEMPLATE = 'Missing hybrid metadata for hybrid view %s.%s, contact Gluent support (or --reset-backend-table to overwrite table data)'
 NLS_LANG_MISSING_CHARACTER_SET_EXCEPTION_TEMPLATE = 'NLS_LANG value %s missing character set delimiter (.)'
 OFFLOAD_STATS_COPY_EXCEPTION_TEXT = 'Invalid --offload-stats value'
-OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT = 'Column mismatch detected between the source and backend table. Resolve before offloading'
 OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT = 'Switching to offload type INCREMENTAL for LIST partitioned table requires --equal-to-values/--partition-names'
 OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT = 'Switching to INCREMENTAL for LIST partitioned table'
 OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT = 'Switching from offload type FULL to INCREMENTAL is not supported for Subpartition-Based Offload'
@@ -480,15 +470,6 @@ def parse_size_expr(size, binary_sizes=False):
   return human_size_to_bytes(size, binary_sizes=binary_sizes)
 
 
-def create_final_backend_table(offload_target_table, offload_operation, offload_options, rdbms_columns,
-                               gluent_object_type=DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_BASE_TABLE):
-  """ Create the final backend table """
-  if not offload_target_table.table_exists() or offload_operation.reset_backend_table:
-    offload_target_table.create_backend_table_step(gluent_object_type)
-  else:
-    check_and_alter_backend_sort_columns(offload_target_table, offload_operation)
-
-
 def hybrid_owner(target_owner):
   return OffloadOperation.hybrid_owner(target_owner)
 
@@ -566,14 +547,14 @@ def offload_data_verification(offload_source_table, offload_target_table, offloa
                                                                     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE]:
       # Leave prior_hvs unset for LIST because we don't have a lower bound
       if source_data_client.partitions_to_offload.count() > 0:
-        prior_hv_tuple = get_prior_offloaded_hv(offload_source_table, source_data_client, offload_operation=offload_operation)
+        prior_hv_tuple = get_prior_offloaded_hv(offload_source_table, source_data_client, offload_operation, messages)
         if prior_hv_tuple:
             prior_hvs = prior_hv_tuple[1]
 
     if offloading_open_ended_partition:
       log('MAXVALUE/DEFAULT partition was offloaded therefore cannot add upper bound to verification query', detail=vverbose)
     else:
-      new_hv_tuple = get_current_offload_hv(offload_source_table, source_data_client, offload_operation)
+      new_hv_tuple = get_current_offload_hv(offload_source_table, source_data_client, offload_operation, messages)
       if new_hv_tuple:
         new_hvs = new_hv_tuple[1]
 
@@ -618,100 +599,6 @@ def offload_data_verification(offload_source_table, offload_target_table, offloa
 
 def parse_yyyy_mm_dd(ds):
   return datetime.strptime(ds, '%Y-%m-%d')
-
-
-def get_prior_offloaded_hv(rdbms_table, source_data_client=None, offload_operation=None):
-  """ Identifies the HV for a RANGE offload of the partition prior to the offload
-      If there is pre-offload metadata we can use that otherwise we need to go back to the list of partitions
-  """
-  prior_hvs = None
-
-  if offload_operation and offload_operation.pre_offload_hybrid_metadata and offload_operation.pre_offload_hybrid_metadata.incremental_high_value:
-    # use metadata to get the prior high value
-    log('Assigning prior_hv from pre-offload metadata', detail=vverbose)
-    _, real_hvs, literal_hvs = decode_metadata_incremental_high_values_from_metadata(
-        offload_operation.pre_offload_hybrid_metadata, rdbms_table
-    )
-    log('pre-offload metadata real values: %s' % str(real_hvs), detail=vverbose)
-    log('pre-offload metadata rdbms literals: %s' % str(literal_hvs), detail=vverbose)
-    prior_hvs = [literal_hvs, real_hvs]
-
-  if not prior_hvs and source_data_client:
-    min_offloaded_partition = source_data_client.partitions_to_offload.get_partition_by_index(-1)
-    if min_offloaded_partition:
-      # we haven't gotten values from metadata so let's look at the partition list for the prior HV
-      log('Searching original partitions for partition prior to: %s'
-          % str(min_offloaded_partition.partition_values_python), detail=vverbose)
-      prior_partition = source_data_client.source_partitions.get_prior_partition(partition=min_offloaded_partition)
-      if prior_partition:
-        prior_hvs = [prior_partition.partition_values_individual, prior_partition.partition_values_python]
-
-  log('Found prior_hvs: %s' % str(prior_hvs), detail=vverbose)
-  return prior_hvs
-
-
-def get_current_offload_hv(offload_source_table, source_data_client, offload_operation):
-  """ Identifies the HV for an IPA offload
-      If there are partitions in flight then we can use those otherwise we will fall back to using pre-offload metadata
-      Returns a list of length 2 containing:
-        [RDBMS hv literals, python hv equivalents]
-  """
-  new_hvs = None
-
-  if source_data_client.partitions_to_offload.count() > 0:
-    if offload_operation.ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST:
-      hvs_individual, hvs_python = [], []
-      for p in source_data_client.partitions_to_offload.get_partitions():
-          hvs_individual.append(p.partition_values_individual)
-          hvs_python.append(p.partition_values_python)
-      new_hvs = [hvs_individual, hvs_python]
-    else:
-      # we are offloading partitions so use the latest one from that list, this works for verification mode too
-      max_partition = source_data_client.partitions_to_offload.get_partition_by_index(0)
-      new_hvs = [max_partition.partition_values_individual, max_partition.partition_values_python]
-    log('Identified new_hvs from partitions_to_offload: %s' % str(new_hvs), detail=vverbose)
-  elif offload_operation.offload_type == 'INCREMENTAL' and not offload_operation.reset_backend_table:
-    # if no partitions in flight then get metadata in order to understand HWM
-    current_metadata = offload_operation.get_hybrid_metadata()
-    _, _, partition_literal_hvs = decode_metadata_incremental_high_values_from_metadata(
-        current_metadata, offload_source_table
-    )
-    new_hvs = [partition_literal_hvs, partition_literal_hvs]
-    log('Identified new_hvs from metadata: %s' % str(new_hvs), detail=vverbose)
-
-  return new_hvs
-
-
-def get_offload_data_manager(offload_source_table, offload_target_table, offload_operation, offload_options, messages,
-                             existing_metadata, source_client_type, partition_columns=None,
-                             include_col_offload_source_table=False):
-  """ Return a source data manager object which has methods for slicing and dicing RDBMS partitions and state
-      containing which partitions to offload and data to construct hybrid view/verification predicates
-  """
-  if offload_target_table.exists() and not offload_target_table.is_view() and not offload_operation.reset_backend_table:
-    # "not offload_target_table.is_view()" because we pass through here for presented joins too and do not expect previous metadata
-    log('Pre-offload metadata: ' + str(existing_metadata), detail=vverbose)
-    if not existing_metadata:
-      messages.warning('Backend table exists but hybrid metadata is missing, this appears to be recovery from a failed offload')
-
-  if include_col_offload_source_table and existing_metadata:
-    col_offload_source_table_override = OffloadSourceTable.create(existing_metadata.hybrid_owner,
-                                                                  existing_metadata.hybrid_view,
-                                                                  offload_options,
-                                                                  messages,
-                                                                  offload_by_subpartition=offload_source_table.offload_by_subpartition)
-  else:
-    col_offload_source_table_override = None
-
-  source_data_client = offload_source_data_factory(offload_source_table, offload_target_table,
-                                                   offload_operation, existing_metadata,
-                                                   messages, source_client_type,
-                                                   rdbms_partition_columns_override=partition_columns,
-                                                   col_offload_source_table_override=col_offload_source_table_override)
-
-  source_data_client.offload_data_detection()
-
-  return source_data_client
 
 
 def normalise_column_transformations(column_transformation_list, offload_cols=None, backend_cols=None):
@@ -977,7 +864,7 @@ def normalise_offload_transport_user_options(options):
 
     if hasattr(options, 'offload_transport_validation_polling_interval'):
         if (isinstance(options.offload_transport_validation_polling_interval, str)
-                and (re.search('^[\d\.]+$', options.offload_transport_validation_polling_interval)
+                and (re.search(r'^[\d\.]+$', options.offload_transport_validation_polling_interval)
                      or options.offload_transport_validation_polling_interval == str(
                             OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED))):
             options.offload_transport_validation_polling_interval = float(
@@ -1103,7 +990,7 @@ def normalise_verify_options(options):
 
 def normalise_data_sampling_options(options):
     if hasattr(options, 'data_sample_pct'):
-        if type(options.data_sample_pct) == str and re.search('^[\d\.]+$', options.data_sample_pct):
+        if type(options.data_sample_pct) == str and re.search(r'^[\d\.]+$', options.data_sample_pct):
             options.data_sample_pct = float(options.data_sample_pct)
         elif options.data_sample_pct == 'AUTO':
             options.data_sample_pct = DATA_SAMPLE_SIZE_AUTO
@@ -1433,7 +1320,7 @@ class BaseOperation(object):
         else:
           self.auto_tune_num_buckets(rdbms_table, messages, offload_target)
 
-      if type(self.num_buckets) is str and re.search('^\d+$', str(self.num_buckets)):
+      if type(self.num_buckets) is str and re.search(r'^\d+$', str(self.num_buckets)):
         self.num_buckets = int(self.num_buckets)
 
     if not self.num_buckets \
@@ -2123,131 +2010,6 @@ def unsupported_backend_data_types(supported_backend_data_types, backend_cols=No
   return list(source_data_types - set(supported_backend_data_types))
 
 
-def date_min_max_incompatible(offload_source_table, offload_target_table):
-    """ Return True if it's possible for the source data to hold dates that are incompatible
-        with the target system
-        Currently only looking at the min when checking this. We could add max checks to this
-        in the future
-    """
-    if offload_source_table.min_datetime_value() < offload_target_table.min_datetime_value():
-        return True
-    return False
-
-
-def offload_source_to_canonical_mappings(offload_source_table, offload_target_table, offload_operation, not_null_propagation, messages):
-  """ Take source/RDBMS columns and translate them into intermediate canonical columns.
-      This could be from:
-          User specified options: canonical_overrides.
-          Source schema attributes: offload_source_table.to_canonical_column().
-          Data type sampling: offload_source_table.sample_rdbms_data_types().
-  """
-  canonical_overrides = offload_operation.gen_canonical_overrides(offload_target_table,
-                                                                  columns_override=offload_source_table.columns)
-  sample_candidate_columns = []
-  log('Canonical overrides: {}'.format(str([(_.name, _.data_type) for _ in canonical_overrides])), detail=vverbose)
-  canonical_mappings = {}
-  for tab_col in offload_source_table.columns:
-    new_col = offload_source_table.to_canonical_column_with_overrides(tab_col, canonical_overrides)
-    canonical_mappings[tab_col.name] = new_col
-
-    if not offload_target_table.canonical_float_supported() and (tab_col.data_type == ORACLE_TYPE_BINARY_FLOAT
-                                                                 or new_col.data_type == GLUENT_TYPE_FLOAT):
-      raise OffloadException('4 byte binary floating point data cannot be offloaded to this backend system: %s'
-                             % tab_col.name)
-
-    if (new_col.is_number_based() or new_col.is_date_based()) and new_col.safe_mapping is False:
-      log('Sampling column because of unsafe mapping: %s' % tab_col.name, detail=vverbose)
-      sample_candidate_columns.append(tab_col)
-
-    elif (new_col.is_number_based() and tab_col.data_precision is not None
-          and (tab_col.data_precision - tab_col.data_scale) > offload_target_table.max_decimal_integral_magnitude()):
-      # precision - scale allows data beyond that supported by the backend system, fall back on sampling
-      log('Sampling column because precision-scale > %s: %s'
-          % (offload_target_table.max_decimal_integral_magnitude(), tab_col.name), detail=vverbose)
-      sample_candidate_columns.append(tab_col)
-
-    elif (new_col.is_number_based() and new_col.data_scale
-          and new_col.data_scale > offload_target_table.max_decimal_scale()):
-      # Scale allows data beyond that supported by the backend system, fall back on sampling.
-      # Use new_col above so that any user override of the scale is taken into account.
-      log('Sampling column because scale > %s: %s'
-          % (offload_target_table.max_decimal_scale(), tab_col.name), detail=vverbose)
-      sample_candidate_columns.append(tab_col)
-
-    elif new_col.is_date_based() and date_min_max_incompatible(offload_source_table, offload_target_table):
-      log('Sampling column because of system date boundary incompatibility: %s' % tab_col.name, detail=vverbose)
-      sample_candidate_columns.append(tab_col)
-
-  if sample_candidate_columns and offload_operation.data_sample_pct:
-    # Some columns require sampling to determine a data type
-    if offload_operation.data_sample_pct == DATA_SAMPLE_SIZE_AUTO:
-      data_sample_pct = offload_source_table.get_suitable_sample_size()
-      log('Sampling %s%% of table' % data_sample_pct, detail=verbose)
-    else:
-      data_sample_pct = offload_operation.data_sample_pct
-    log('Sampling columns: %s' % str(get_column_names(sample_candidate_columns)), detail=verbose)
-    sampled_rdbms_cols = offload_source_table.sample_rdbms_data_types(sample_candidate_columns,
-                                                                      data_sample_pct,
-                                                                      offload_operation.data_sample_parallelism,
-                                                                      offload_target_table.min_datetime_value(),
-                                                                      offload_target_table.max_decimal_integral_magnitude(),
-                                                                      offload_target_table.max_decimal_scale(),
-                                                                      offload_operation.allow_decimal_scale_rounding)
-    if sampled_rdbms_cols:
-      for tab_col in sampled_rdbms_cols:
-        # Overwrite any previous canonical mapping with the post sampled version
-        canonical_mappings[tab_col.name] = offload_source_table.to_canonical_column(tab_col)
-
-    report_data_type_control_options_to_simulate_sampling(sampled_rdbms_cols, canonical_mappings, messages)
-
-  # Process any char semantics overrides
-  for col_name, char_semantics in char_semantics_override_map(offload_operation.unicode_string_columns_csv,
-                                                              offload_source_table.columns).items():
-      canonical_mappings[col_name].char_semantics = char_semantics
-      canonical_mappings[col_name].from_override = True
-
-  # Get a fresh list of canonical columns in order to maintain column order
-  canonical_columns = [canonical_mappings[_.name] for _ in offload_source_table.columns]
-
-  canonical_columns = apply_not_null_columns_csv(canonical_columns, offload_operation.not_null_columns_csv,
-                                                 not_null_propagation, offload_source_table.get_column_names(),
-                                                 messages)
-
-  log('Canonical columns:', detail=vverbose)
-  [log(str(_), detail=vverbose) for _ in canonical_columns]
-  return canonical_columns
-
-
-def report_data_type_control_options_to_simulate_sampling(sampled_rdbms_cols, canonical_mappings, messages):
-  """ Users requested the outcome of sampling should be logged to avoid resampling if an offload is re-run
-      An example of when this is useful is running an offload in preview mode and then running in execute mode,
-      this will run sampling twice and in some cases can be frustrating
-  """
-  if not sampled_rdbms_cols:
-    return
-
-  sampled_canonical_columns = [canonical_mappings[_.name] for _ in sampled_rdbms_cols]
-  canonical_types_used = sorted(list(set(_.data_type for _ in sampled_canonical_columns)))
-
-  messages.notice('Data types were identified by sampling data for columns: ' + ', '.join(get_column_names(sampled_canonical_columns)))
-  messages.debug('Canonical types used: %s' % str(canonical_types_used))
-  messages.log('Sampled column/data type detail, use explicit data type controls (--*-columns) to override these values:')
-  for used_type in canonical_types_used:
-    if used_type == GLUENT_TYPE_DECIMAL:
-      # Need to use a combination of options for each precision/scale combo
-      ps_tuples = list(set([(_.data_precision, _.data_scale) for _ in sampled_canonical_columns if _.data_type == used_type]))
-      messages.debug('Decimal precision/scale combinations used: %s' % str(ps_tuples))
-      for p, s in ps_tuples:
-        column_name_csv = ','.join(sorted([_.name for _ in sampled_canonical_columns if _.data_type == used_type and _.data_precision == p and _.data_scale == s]))
-        messages.log('--decimal-columns=%s --decimal-columns-type=%s,%s' % (column_name_csv, p, s))
-    else:
-      column_name_csv = ','.join(sorted([_.name for _ in sampled_canonical_columns if _.data_type == used_type]))
-      if used_type in BACKEND_DATA_TYPE_CONTROL_OPTIONS:
-        messages.log('%s=%s' % (BACKEND_DATA_TYPE_CONTROL_OPTIONS[used_type], column_name_csv))
-      else:
-        messages.log('%s: %s' % (used_type, column_name_csv))
-
-
 def canonical_to_rdbms_mappings(canonical_columns, rdbms_table):
   """ Take intermediate canonical columns and translate them into RDBMS columns
       rdbms_table: An rdbms table object that offers from_canonical_column()
@@ -2309,284 +2071,6 @@ def offload_type_force_and_aapd_effects(hybrid_operation, source_data_client, or
         messages.notice('Enabling force option when columns in INCREMENTAL_PREDICATE_VALUE change ("%s" -> "%s")'
                         % (original_pred_cols, new_pred_cols))
         hybrid_operation.force = True
-
-
-def announce_offload_chunk(chunk, offload_operation, messages, materialize=False):
-  log('')
-  if materialize:
-    log('Materializing chunk', ansi_code='underline')
-  else:
-    log('Offloading chunk', ansi_code='underline')
-  offload_by_subpartition = offload_operation.offload_by_subpartition if hasattr(offload_operation, 'offload_by_subpartition') else False
-  log_timestamp()
-  chunk.report_partitions(offload_by_subpartition, messages)
-
-
-def offload_data_to_target(data_transport_client, offload_source_table, offload_target_table, offload_operation,
-                           offload_options, source_data_client, messages, data_gov_client):
-  """ Offloads the data via whatever means is appropriate (including validation steps).
-      Returns the number of rows offloaded, None if nothing to do (i.e. non execute mode).
-  """
-  def progress_message(total_partitions, chunk_partitions, todo_after_chunk):
-    done_so_far = total_partitions - todo_after_chunk - chunk_partitions
-    perc = float(done_so_far) / total_partitions * 100
-    log('Partition progress %d%% (%d/%d)' % (int(perc), done_so_far, total_partitions), verbose)
-
-  rows_offloaded = None
-  discarded_all_partitions = False
-  if source_data_client.partitions_to_offload.count() > 0:
-    source_data_client.discard_partitions_to_offload_by_no_segment()
-    if source_data_client.partitions_to_offload.count() == 0:
-      discarded_all_partitions = True
-    incremental_stats = True
-  else:
-    incremental_stats = False
-
-  def transport_and_load_offload_chunk_fn(partition_chunk=None, chunk_count=0, sync=True):
-    """ In-line function to de-dupe partition chunk logic that follows """
-    return transport_and_load_offload_chunk(
-        data_transport_client, offload_source_table, offload_target_table,
-        offload_operation.execution_id, offload_operation.repo_client, messages,
-        partition_chunk=partition_chunk, chunk_count=chunk_count, sync=sync,
-        offload_predicate=offload_operation.inflight_offload_predicate,
-        dry_run=bool(not offload_options.execute)
-    )
-
-  if discarded_all_partitions:
-    log('No partitions to offload')
-    # exit early, skipping any stats steps (GOE-1300)
-    return 0
-  elif source_data_client.partitions_to_offload.count() > 0:
-    for i, (chunk, remaining) in enumerate(source_data_client.get_partitions_to_offload_chunks()):
-      announce_offload_chunk(chunk, offload_operation, messages)
-      progress_message(source_data_client.partitions_to_offload.count(), chunk.count(), remaining.count())
-      # sync below is True when we are on the final insert (i.e. remaining partitions is empty)
-      rows_imported = transport_and_load_offload_chunk_fn(partition_chunk=chunk, chunk_count=i, sync=(not remaining.count()))
-      if rows_imported and rows_imported >= 0:
-        rows_offloaded = (rows_offloaded or 0) + rows_imported
-    progress_message(source_data_client.partitions_to_offload.count(), 0, 0)
-  else:
-    rows_imported = transport_and_load_offload_chunk_fn()
-    if rows_imported and rows_imported >= 0:
-      rows_offloaded = rows_imported
-
-  data_governance_update_metadata_step(offload_target_table.db_name, offload_target_table.table_name,
-                                       data_gov_client, messages, offload_options)
-
-  if offload_operation.offload_stats_method in [OFFLOAD_STATS_METHOD_NATIVE, OFFLOAD_STATS_METHOD_HISTORY]:
-    offload_target_table.compute_final_table_stats_step(incremental_stats)
-  elif offload_operation.offload_stats_method == OFFLOAD_STATS_METHOD_COPY:
-    if offload_target_table.table_stats_set_supported():
-      messages.offload_step(
-          command_steps.STEP_COPY_STATS_TO_BACKEND,
-          lambda: copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, source_data_client,
-                                              offload_operation, offload_options, messages),
-          execute=offload_options.execute, optional=True)
-  else:
-    messages.notice('No backend stats due to --offload-stats: %s' % offload_operation.offload_stats_method)
-    if offload_operation.hive_column_stats and offload_options.target == DBTYPE_HIVE:
-      messages.notice('Ignoring --hive-column-stats option due to --offload-stats: %s' % offload_operation.offload_stats_method)
-  return rows_offloaded
-
-
-def copy_rdbms_stats_to_backend(offload_source_table, offload_target_table, source_data_client, offload_operation,
-                                offload_options, messages):
-  """ Copy RDBMS stats from source offload table to target table
-      Copying stats from RDBMS table has only been implemented for Impala engine, this can be switched on for other backends using
-      BackendApi.table_stats_set_supported()
-      General approach to this described in design note: https://gluent.atlassian.net/wiki/display/DEV/Hadoop+Oracle+Stats+Design+Notes
-  """
-
-  def comparision_tuple_from_hv(rdbms_hv_list, rdbms_synth_expressions):
-    # trusting rdbms_synth_expressions to be in the same order as rdbms_hv_list
-    # i.e. the order of the RDBMS partition keys
-    if rdbms_hv_list:
-      return tuple([conv_fn(hv) for (_, _, conv_fn, _), hv in zip(rdbms_synth_expressions, rdbms_hv_list)])
-    else:
-      return None
-
-  def filter_for_affected_partitions_range(backend_partitions, synth_part_col_names, lower_hv_tuple, upper_hv_tuple):
-    # reduce the list of all hadoop partitions down to only those affected by the offload
-    partitions_affected_by_offload = []
-    for partition_spec in backend_partitions:
-      part_details = backend_partitions[partition_spec]
-      literals_by_synth_col = {col_name: col_literal for col_name, col_literal in part_details['partition_spec']}
-      part_comparision_tuple = tuple([literals_by_synth_col[synth_name.lower()] for synth_name in synth_part_col_names])
-      if lower_hv_tuple and part_comparision_tuple < lower_hv_tuple:
-        continue
-      if upper_hv_tuple and part_comparision_tuple > upper_hv_tuple:
-        continue
-      partitions_affected_by_offload.append(partition_spec)
-    return partitions_affected_by_offload
-
-  def filter_for_affected_partitions_list(backend_partitions, synth_part_col_names, new_hv_tuples):
-    # reduce the list of all hadoop partitions down to only those affected by the offload
-    partitions_affected_by_offload = []
-    for partition_spec in backend_partitions:
-      part_details = backend_partitions[partition_spec]
-      literals_by_synth_col = {col_name: col_literal for col_name, col_literal in part_details['partition_spec']}
-      part_comparision_tuple = tuple([literals_by_synth_col[synth_name.lower()] for synth_name in synth_part_col_names])
-      if part_comparision_tuple in new_hv_tuples:
-        partitions_affected_by_offload.append(partition_spec)
-    return partitions_affected_by_offload
-
-  if not offload_target_table.table_stats_set_supported():
-    raise OffloadException('Copy of stats to backend is not support for %s' % offload_target_table.backend_db_name())
-
-  dry_run = bool(not offload_options.execute)
-  rdbms_tab_stats = offload_source_table.table_stats
-  rdbms_col_stats = rdbms_tab_stats['column_stats']
-  rdbms_part_stats = rdbms_tab_stats['partition_stats']
-  tab_stats = {tab_key: rdbms_tab_stats[tab_key] for tab_key in ['num_rows', 'num_bytes', 'avg_row_len']}
-  rdbms_part_col_names = set(_.name.upper() for _ in offload_source_table.partition_columns) if offload_source_table.partition_columns else set()
-
-  if dry_run and not offload_target_table.table_exists():
-    messages.log('Skipping copy stats in preview mode when backend table does not exist', detail=VERBOSE)
-    return
-
-  pro_rate_stats_across_all_partitions = False
-  if not offload_source_table.is_partitioned() or source_data_client.partitions_to_offload.count() == 0:
-    pro_rate_stats_across_all_partitions = True
-    pro_rate_num_rows = rdbms_tab_stats['num_rows']
-    pro_rate_size_bytes = rdbms_tab_stats['num_bytes']
-    messages.log('Pro-rate row count from RDBMS table: %s' % str(pro_rate_num_rows), detail=VVERBOSE)
-    # Full table offloads overwrite backend side stats
-    additive_stats = False
-  else:
-    # Partition append offloads add to existing backend side stats
-    additive_stats = True
-    rdbms_part_col_names = set(_.name.upper() for _ in offload_source_table.partition_columns)
-    upper_fn = lambda x: x.upper() if isinstance(x, str) else x
-    backend_part_col_names = get_partition_source_column_names(offload_target_table.get_columns(), conv_fn=upper_fn)
-    pro_rate_num_rows = source_data_client.partitions_to_offload.row_count()
-    pro_rate_size_bytes = source_data_client.partitions_to_offload.size_in_bytes()
-    tab_stats['num_rows'] = pro_rate_num_rows
-    tab_stats['num_bytes'] = pro_rate_size_bytes
-    if not rdbms_part_col_names.issubset(backend_part_col_names):
-      messages.notice('RDBMS partition scheme is not a subset of backend partition scheme, pro-rating stats across all partitions')
-      # sum num_rows for all offloaded partitions
-      pro_rate_stats_across_all_partitions = True
-      messages.log('Pro-rate row count from offloaded partitions: %s' % str(pro_rate_num_rows), detail=VVERBOSE)
-    if source_data_client.get_partition_append_predicate_type() == INCREMENTAL_PREDICATE_TYPE_LIST \
-        and source_data_client.partitions_to_offload.has_default_partition():
-      messages.notice('Offloading DEFAULT partition means backend partitions cannot be identified, pro-rating stats across all partitions')
-      pro_rate_stats_across_all_partitions = True
-
-  backend_partitions = offload_target_table.get_table_stats_partitions()
-
-  # table level stats
-  backend_tab_stats, _ = offload_target_table.get_table_stats(as_dict=True)
-  if tab_stats['num_rows'] is None:
-    messages.notice('No RDBMS table stats to copy to backend')
-  elif not additive_stats and max(tab_stats['num_rows'], 0) <= max(backend_tab_stats['num_rows'], 0):
-    messages.notice('RDBMS table stats not copied to backend due to row count (RDBMS:%s <= %s:%s)'
-                    % (tab_stats['num_rows'], offload_target_table.backend_db_name(), backend_tab_stats['num_rows']))
-    ndv_cap = backend_tab_stats['num_rows']
-  else:
-    if additive_stats:
-      messages.log('Copying table stats (%s:%s + RDBMS:%s)'
-                   % (offload_target_table.backend_db_name(), max(backend_tab_stats['num_rows'], 0), tab_stats['num_rows']),
-                   detail=VERBOSE)
-      ndv_cap = max(backend_tab_stats['num_rows'], 0) + max(tab_stats['num_rows'], 0)
-    else:
-      messages.log('Copying table stats (RDBMS:%s -> %s:%s)'
-                   % (tab_stats['num_rows'], offload_target_table.backend_db_name(), backend_tab_stats['num_rows']), detail=VERBOSE)
-      ndv_cap = tab_stats['num_rows']
-    offload_target_table.set_table_stats(tab_stats, additive_stats)
-
-  # column level stats
-  if not rdbms_col_stats:
-    messages.notice('No RDBMS column stats to copy to backend')
-  elif max(rdbms_tab_stats['num_rows'], 0) <= max(backend_tab_stats['num_rows'], 0):
-    messages.notice('RDBMS column stats not copied due to row count (RDBMS:%s <= %s:%s)' \
-        % (rdbms_tab_stats['num_rows'], offload_target_table.backend_db_name(), backend_tab_stats['num_rows']))
-  else:
-    if offload_target_table.column_stats_set_supported():
-      if additive_stats and pro_rate_num_rows and rdbms_tab_stats['num_rows']:
-        # when doing incremental offloads we need to factor down num_nulls accordingly
-        num_null_factor = (float(pro_rate_num_rows + max(backend_tab_stats['num_rows'], 0)) / float(rdbms_tab_stats['num_rows']))
-      else:
-        num_null_factor = 1
-      messages.log('Copying stats to %s columns' % len(rdbms_col_stats), detail=VERBOSE)
-      offload_target_table.set_column_stats(rdbms_col_stats, ndv_cap, num_null_factor)
-    else:
-      messages.warning('Unable to copy column stats in %s v%s' % (offload_target_table.backend_db_name(), offload_target_table.target_version()))
-
-  # partition level stats
-  if pro_rate_stats_across_all_partitions:
-    part_stats = []
-    if tab_stats['num_rows'] is None:
-      messages.notice('No RDBMS table stats to copy to backend partitions')
-    else:
-      target_partition_count = max(len(backend_partitions), 1)
-      messages.log('Copying stats to %s partitions%s' \
-        % (len(backend_partitions), ' (0 expected in non-execute mode)' if dry_run and not backend_partitions else ''), detail=VERBOSE)
-
-      for partition_spec in backend_partitions:
-        part_stats.append({'partition_spec': partition_spec,
-                           'num_rows': max(pro_rate_num_rows // target_partition_count, 1) if pro_rate_num_rows is not None else -1,
-                           'num_bytes': max(pro_rate_size_bytes // target_partition_count, 1) if pro_rate_size_bytes is not None else -1,
-                           'avg_row_len': rdbms_tab_stats['avg_row_len']})
-  else:
-    # Source table is partitioned so we can use partitions_to_offload to get more targeted stats
-    synth_part_expressions = offload_target_table.gen_synthetic_partition_col_expressions(as_python_fns=True)
-
-    # When comparing offloaded high values with backend partition keys where need to retain
-    # the order of the partition columns from the RDBMS. For example if we offloaded a source
-    # partitioned by (year, month, day) then that's how we need to compare, even if backend is
-    # partitioned by (category, day, month, year, wibble).
-    rdbms_only_expr = [exprs for exprs in synth_part_expressions
-                       if exprs[0] != offload_bucket_name() and case_insensitive_in(exprs[3], rdbms_part_col_names)]
-    rdbms_only_expr_by_rdbms_col = {exprs[3].upper(): exprs for exprs in rdbms_only_expr}
-    # regenerate rdbms_only_expr in the same order as the RDBMS partition keys
-    rdbms_only_expr = [rdbms_only_expr_by_rdbms_col[col_name] for col_name in rdbms_part_col_names]
-    filter_synth_col_names = [col_name.lower() for col_name, _, _, _ in rdbms_only_expr]
-    messages.log('Filtering backend partitions on columns: %s' % filter_synth_col_names, detail=VVERBOSE)
-
-    messages.log('Building partition filters based on predicate type: %s' % source_data_client.get_partition_append_predicate_type(), detail=VVERBOSE)
-    if source_data_client.get_partition_append_predicate_type() in [INCREMENTAL_PREDICATE_TYPE_RANGE, INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE]:
-      prior_hvs = get_prior_offloaded_hv(offload_source_table, source_data_client, offload_operation=offload_operation)
-      lower_hvs = prior_hvs[1] if prior_hvs else None
-      lower_hv_tuple = comparision_tuple_from_hv(lower_hvs, rdbms_only_expr)
-
-      new_hvs = get_current_offload_hv(offload_source_table, source_data_client, offload_operation)
-      upper_hvs = new_hvs[1] if new_hvs else None
-      upper_hv_tuple = comparision_tuple_from_hv(upper_hvs, rdbms_only_expr)
-
-      messages.log('Filtering backend partitions by range: %s -> %s' % (lower_hv_tuple, upper_hv_tuple), detail=VVERBOSE)
-
-      partitions_affected_by_offload = filter_for_affected_partitions_range(backend_partitions, filter_synth_col_names, lower_hv_tuple, upper_hv_tuple)
-    else:
-      hv_tuple = get_current_offload_hv(offload_source_table, source_data_client, offload_operation)
-      new_hvs = hv_tuple[1] if hv_tuple else None
-      # In the backend the list partition literals are not grouped like they may be in the RDBMS, therefore
-      # we need to flatten the groups out
-      new_hvs = flatten_lpa_high_values(new_hvs)
-      # LIST can only have singular partition keys, we multiply this up for each HV
-      hv_tuples = [comparision_tuple_from_hv([hv], rdbms_only_expr) for hv in new_hvs]
-
-      messages.log('Filtering backend partitions by list: %s' % str(new_hvs), detail=VVERBOSE)
-
-      partitions_affected_by_offload = filter_for_affected_partitions_list(backend_partitions, filter_synth_col_names, hv_tuples)
-
-    messages.log('Copying stats to %s partitions%s' \
-      % (len(partitions_affected_by_offload), ' (0 expected in non-execute mode)' if dry_run else ''), detail=VERBOSE)
-
-    # Rather than pro-rate values using offload min/max HV we could loop through RDBMS partitions being more specific. This
-    # would cater for skew between partitions. However it could create confusing output with the same partitions being
-    # altered several times. Plus this is intended for large tables where COMPUTE will be inefficient, for these we will
-    # only offload a small number at a time therefore I decided that simplified code & screen output was preferable to more
-    # granular stats
-    num_rows_per_backend_partition = max(pro_rate_num_rows // max(len(partitions_affected_by_offload), 1), 2) if pro_rate_num_rows is not None else -1
-    size_bytes_per_backend_partition = max(pro_rate_size_bytes // max(len(partitions_affected_by_offload), 1), 2) if pro_rate_num_rows is not None else -1
-    part_stats = []
-    for partition_spec in partitions_affected_by_offload:
-      part_stats.append({'partition_spec': partition_spec,
-                         'num_rows': num_rows_per_backend_partition,
-                         'num_bytes': size_bytes_per_backend_partition,
-                         'avg_row_len': rdbms_tab_stats['avg_row_len']})
-
-  offload_target_table.set_partition_stats(part_stats, additive_stats)
 
 
 def pre_op_checks(check_version, config_options, frontend_api, exc_class=OffloadException):
@@ -2699,54 +2183,6 @@ def offload_operation_logic(offload_operation, offload_source_table, offload_tar
       return False
 
   return True
-
-
-def offload_backend_db_message(messages, db_type, backend_table, execute_mode):
-  """ Construct messages when backend databases do not exists.
-      Either throw exception in execute mode or output warnings in preview mode.
-  """
-  if backend_table.create_database_supported():
-    message = 'Offload %s does not exist or is incomplete, please create it or include --create-backend-db option' % db_type
-  else:
-    message = 'Offload %s does not exist or is incomplete, please create it before re-executing command' % db_type
-  if execute_mode:
-    # Stop here to avoid subsequent exception further along the process
-    raise OffloadException(message)
-  else:
-    messages.warning(message, ansi_code='red')
-
-
-def check_table_structure(frontend_table, backend_table, messages):
-    """ Compare frontend and backend columns by name and throw an exception if there is a mismatch.
-        Ideally we would use SchemaSyncAnalyzer for this but circular dependencies prevent that for the time being.
-        FIXME revisit this in the future to see if we can hook into SchemaSyncAnalyzer for comparison, see GOE-1307
-    """
-    frontend_cols = frontend_table.get_column_names(conv_fn=str.upper)
-    backend_cols = get_column_names(backend_table.get_non_synthetic_columns(), conv_fn=str.upper)
-    new_frontend_cols = sorted([_ for _ in frontend_cols if _ not in backend_cols])
-    missing_frontend_cols = sorted([_ for _ in backend_cols if _ not in frontend_cols])
-    if new_frontend_cols and not missing_frontend_cols:
-        # There are extra columns in the source and no dropped columns, we can recommend Schema Sync
-        messages.warning(dedent("""\
-                                New columns detected in the source table. Use Schema Sync to resolve.
-                                Recommended schema_sync command to add columns to {}:
-                                    schema_sync --include {}.{} -x
-                                """).format(backend_table.backend_db_name(),
-                                            frontend_table.owner,
-                                            frontend_table.table_name), ansi_code='red')
-        raise OffloadException('{}: {}.{}'.format(OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT,
-                                                  frontend_table.owner, frontend_table.table_name))
-    elif missing_frontend_cols:
-        # There are extra columns in the source but also dropped columns, Schema Sync cannot be used
-        column_table = [(frontend_table.frontend_db_name(), backend_table.backend_db_name())]
-        column_table.extend([(_, '-') for _ in new_frontend_cols])
-        column_table.extend([('-', _) for _ in missing_frontend_cols])
-        messages.warning(dedent("""\
-                                The following column mismatches were detected between the source and backend table:
-                                {}
-                                """).format(format_list_for_logging(column_table, underline_char='-')), ansi_code='red')
-        raise OffloadException('{}: {}.{}'.format(OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT,
-                                                  frontend_table.owner, frontend_table.table_name))
 
 
 def offload_table(offload_options, offload_operation, offload_source_table, offload_target_table, messages):
@@ -3104,7 +2540,7 @@ def get_options(usage=None, operation_name=None):
   opt.add_option('--partition-functions', dest='offload_partition_functions',
                  help='External UDF(s) used by Offload to partition backend data.')
   opt.add_option('--partition-granularity', dest='offload_partition_granularity',
-                 help='Y|M|D|\d+ partition level/granularity. Use integral size for numeric partitions. Use sub-string length for string partitions. eg. "M" partitions by Year-Month, "D" partitions by Year-Month-Day, "5000" partitions in blocks of 5000 values, "2" on a string partition key partitions using the first two characters.')
+                 help='Y|M|D|\\d+ partition level/granularity. Use integral size for numeric partitions. Use sub-string length for string partitions. eg. "M" partitions by Year-Month, "D" partitions by Year-Month-Day, "5000" partitions in blocks of 5000 values, "2" on a string partition key partitions using the first two characters.')
   opt.add_option('--partition-lower-value', dest='offload_partition_lower_value',
                  help='Integer value defining the lower bound of a range values used for backend integer range partitioning.')
   opt.add_option('--partition-upper-value', dest='offload_partition_upper_value',
@@ -3292,7 +2728,7 @@ def get_offload_options(opt):
                  help='Yarn queue name to be used for Offload transport jobs.')
   opt.add_option('--offload-transport-small-table-threshold', dest='offload_transport_small_table_threshold',
                  default=orchestration_defaults.offload_transport_small_table_threshold_default(),
-                 help='Threshold above which Query Import is no longer considered the correct offload choice for non-partitioned tables. [\d.]+[MG] eg. 100M, 0.5G, 1G')
+                 help='Threshold above which Query Import is no longer considered the correct offload choice for non-partitioned tables. [\\d.]+[MG] eg. 100M, 0.5G, 1G')
   opt.add_option('--offload-transport-spark-properties', dest='offload_transport_spark_properties',
                  default=orchestration_defaults.offload_transport_spark_properties_default(),
                  help='Override defaults for Spark configuration properties using key/value pairs in JSON format')

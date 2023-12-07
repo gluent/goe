@@ -11,7 +11,7 @@ from operator import itemgetter
 
 from goe.gluent import log
 from goe.config.orchestration_config import OrchestrationConfig
-import gluentlib.schema_sync.schema_sync_constants as schema_sync_constants
+import goe.schema_sync.schema_sync_constants as schema_sync_constants
 from goe.offload.column_metadata import get_column_names
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory

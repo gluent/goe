@@ -93,7 +93,7 @@ def run_wsgi(
     ]
     if reload:
         sys.argv.append("-r")
-    sys.argv.append("gluentlib.listener.asgi:application")
+    sys.argv.append("goe.listener.asgi:application")
     ApplicationLoader(
         options={
             "host": host,

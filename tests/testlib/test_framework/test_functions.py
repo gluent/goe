@@ -8,7 +8,7 @@ import re
 import threading
 import time
 
-from gluent import get_log_fh, get_log_fh_name, get_offload_options, get_options, init, \
+from goe.gluent import get_log_fh, get_log_fh_name, get_offload_options, get_options, init, \
     log as offload_log, normal,\
     OFFLOAD_OP_NAME, verbose, vverbose
 from goe.config.orchestration_config import OrchestrationConfig

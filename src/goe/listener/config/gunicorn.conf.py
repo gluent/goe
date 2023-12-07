@@ -82,7 +82,7 @@ keyfile = settings.keyfile
 #       True or False
 
 workers = settings.http_workers
-worker_class = "gluentlib.listener.wsgi.UvicornWorker"
+worker_class = "goe.listener.wsgi.UvicornWorker"
 worker_connections = 1000
 timeout = 120
 keepalive = 10

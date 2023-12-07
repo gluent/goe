@@ -16,7 +16,7 @@ def check_cli_path():
         from goe.config.config_checks import check_cli_path
         check_cli_path()
 
-        import gluentlib.other.libraries.if.required
+        import goe.other.libraries.if.required
     """
     if not os.environ.get('OFFLOAD_HOME'):
         print('OFFLOAD_HOME environment variable missing')

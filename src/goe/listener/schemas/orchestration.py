@@ -10,7 +10,7 @@ from uuid import UUID
 from pydantic import UUID4, Field, Json, PositiveInt, validator
 
 # Gluent
-import gluentlib.config.orchestration_defaults as defaults
+import goe.config.orchestration_defaults as defaults
 from goe.listener.schemas.base import BaseSchema, TotaledResults
 from goe.orchestration.execution_id import ExecutionId
 

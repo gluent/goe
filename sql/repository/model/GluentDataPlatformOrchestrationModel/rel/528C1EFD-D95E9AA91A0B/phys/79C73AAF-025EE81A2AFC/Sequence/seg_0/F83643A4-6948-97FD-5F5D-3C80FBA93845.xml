@@ -1,6 +1,0 @@
-<?xml version = '1.0' encoding = 'UTF-8'?>
-<SequenceOraclev10g class="oracle.dbtools.crest.model.design.storage.oracle.v10g.SequenceOraclev10g" name="OFFLOAD_METADATA_HISTORY_SEQ" directorySegmentName="seg_0" id="F83643A4-6948-97FD-5F5D-3C80FBA93845">
-<createdBy>adrian</createdBy>
-<createdTime>2022-03-15 11:18:41 UTC</createdTime>
-<ownerDesignName>GluentDataPlatformOrchestrationModel</ownerDesignName>
-</SequenceOraclev10g>

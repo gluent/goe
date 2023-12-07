@@ -1,0 +1,95 @@
+#! /usr/bin/env python3
+# LICENSE_TEXT
+# -*- coding: utf-8 -*-
+"""Application Web Server Gateway Interface - gunicorn."""
+
+# Standard Library
+import logging
+import multiprocessing
+import sys
+from typing import List
+
+logger = logging.getLogger()
+
+
+def validate_python_environment():
+    try:
+        # Gluent
+        from goe.listener.prestart import prestart
+
+        prestart()
+
+    except ModuleNotFoundError:
+        print(
+            "Could not load required libraries.  Please check your installation and try again."
+        )
+        sys.exit(1)
+
+
+def run_listener():
+    """Run Gluent Listener."""
+    # Gluent
+    from goe.listener.config.application import settings
+    from goe.listener.config.logging import Logger
+    from goe.listener.heartbeat import run_heartbeat
+    from goe.listener.worker import run_worker
+    from goe.listener.wsgi import run_wsgi
+
+    logger = Logger.configure_logger()
+    logger.info("Booting Gluent Orchestration Listener")
+    if settings.cache_enabled:
+        logger.info(
+            "Listener cache configuration is enabled.  Heartbeat and background workers will be started."
+        )
+        logger.info(
+            f"Listener is starting with {settings.http_workers} http worker(s) and {settings.background_workers} background worker(s)"  # noqa: E501
+        )
+    else:
+        logger.info(
+            "Listener cache configuration is disabled.  Skipping heartbeat and background worker startup."
+        )
+        logger.info(
+            f"Listener is starting with {settings.http_workers} http worker(s)"  # noqa: E501
+        )
+    workers: List[multiprocessing.Process] = []
+    try:
+        if settings.cache_enabled:
+            heartbeat_process = multiprocessing.Process(target=run_heartbeat)
+            heartbeat_process.start()
+            workers.append(heartbeat_process)
+            for _ in range(settings.background_workers):
+                process = multiprocessing.Process(
+                    target=run_worker, kwargs={"preserve_signals": True}
+                )
+                process.start()
+                workers.append(process)
+        http_process = multiprocessing.Process(
+            target=run_wsgi,
+            kwargs={
+                "host": settings.host,
+                "port": settings.port,
+                "http_workers": settings.http_workers,
+                "reload": settings.reload,
+            },
+        )
+        http_process.start()
+        http_process.join()
+    except KeyboardInterrupt:
+        http_process.kill()
+        logger.info("Stopping Gluent Orchestration Listener")
+    except Exception:
+        http_process.terminate()
+        logger.info("Force stopping Gluent Orchestration Listener")
+    finally:
+        for worker in workers:
+            worker.kill()
+        if http_process and http_process.is_alive():
+            http_process.terminate()
+        logger.info("Stopped Gluent Orchestration Listener")
+        sys.exit(4)
+
+
+if __name__ == "__main__":
+
+    # validate_python_environment()
+    run_listener()

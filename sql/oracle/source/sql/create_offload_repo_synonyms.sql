@@ -8,9 +8,9 @@ SET SERVEROUTPUT ON
 DECLARE
 
     c_schema        CONSTANT VARCHAR2(128) := SYS_CONTEXT('userenv', 'current_schema');
-    c_adm_schema    CONSTANT VARCHAR2(128) := '&gluent_db_adm_user';
-    c_app_schema    CONSTANT VARCHAR2(128) := '&gluent_db_app_user';
-    c_repo_schema   CONSTANT VARCHAR2(128) := '&gluent_db_repo_user';
+    c_adm_schema    CONSTANT VARCHAR2(128) := '&goe_db_adm_user';
+    c_app_schema    CONSTANT VARCHAR2(128) := '&goe_db_app_user';
+    c_repo_schema   CONSTANT VARCHAR2(128) := '&goe_db_repo_user';
 
     TYPE args_ntt IS TABLE OF VARCHAR2(130);
 
@@ -31,7 +31,7 @@ DECLARE
 
 BEGIN
 
-    -- Synonyms for Gluent REPO objects in Gluent ADM schema...
+    -- Synonyms for GOE REPO objects in GOE ADM schema...
     FOR r IN ( SELECT o.owner
                ,      o.object_name
                FROM   dba_objects o

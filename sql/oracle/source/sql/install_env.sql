@@ -5,30 +5,28 @@
 whenever sqlerror exit failure
 whenever oserror exit failure
 
-undefine gluent_db_user_prefix
-undefine gluent_db_adm_user
-undefine gluent_db_app_user
-undefine gluent_db_repo_user
-undefine raise_existing_role
+undefine goe_db_user_prefix
+undefine goe_db_adm_user
+undefine goe_db_app_user
+undefine goe_db_repo_user
 
-define raise_existing_role = "Y"
-define gluent_gdp_version = "VERSION"
-define gluent_gdp_build = "BUILD"
+define goe_version = "VERSION"
+define goe_build = "BUILD"
 
-ACCEPT gluent_db_user_prefix PROMPT 'Gluent database user prefix [GLUENT]: '
-ACCEPT gluent_db_user_profile PROMPT 'Profile for Gluent database users [DEFAULT]: '
+ACCEPT goe_db_user_prefix PROMPT 'GOE database user prefix [GOE]: '
+ACCEPT goe_db_user_profile PROMPT 'Profile for GOE database users [DEFAULT]: '
 
 set termout off
 
-col gluent_db_user_prefix new_value gluent_db_user_prefix
-col gluent_db_user_profile new_value gluent_db_user_profile
-select upper(coalesce('&gluent_db_user_prefix', 'GLUENT'))      as gluent_db_user_prefix
-     , upper(coalesce('&gluent_db_user_profile', 'DEFAULT'))    as gluent_db_user_profile
+col goe_db_user_prefix new_value goe_db_user_prefix
+col goe_db_user_profile new_value goe_db_user_profile
+select upper(coalesce('&goe_db_user_prefix', 'GOE'))      as goe_db_user_prefix
+     , upper(coalesce('&goe_db_user_profile', 'DEFAULT')) as goe_db_user_profile
   from dual;
 
-define gluent_db_adm_user = &gluent_db_user_prefix._ADM
-define gluent_db_app_user = &gluent_db_user_prefix._APP
-define gluent_db_repo_user = &gluent_db_user_prefix._REPO
+define goe_db_adm_user = &goe_db_user_prefix._ADM
+define goe_db_app_user = &goe_db_user_prefix._APP
+define goe_db_repo_user = &goe_db_user_prefix._REPO
 
 @@repo_env.sql
 

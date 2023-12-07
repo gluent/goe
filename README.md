@@ -18,7 +18,7 @@ To create a Python virtualenv and install all required packages:
 ```
 make clean && make install-dev
 source ./.venv/bin/activate
-PYTHONPATH=${PWD}:${PWD}/scripts
+PYTHONPATH=${PWD}/src
 ```
 
 # Install
@@ -71,12 +71,12 @@ Getting setup:
 ```
 . ${OFFLOAD_HOME}/conf/offload.env
 source ./.venv/bin/activate
-PYTHONPATH=${PWD}:${PWD}/scripts
+PYTHONPATH=${PWD}:${PWD}/src
 ```
 
 Running an Offload:
 ```
-cd scripts
+cd bin
 ./offload -t my.table
 ```
 

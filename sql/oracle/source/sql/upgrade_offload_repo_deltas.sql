@@ -42,17 +42,13 @@ begin
     dbms_output.put_line(q'{-- LICENSE_TEXT}');
     dbms_output.put_line(q'{--}');
 
-    select nvl(max(gdp_version), '0.0.0')
+    select nvl(max(version), '0.0.0')
     into   v_current_version
-    from   version
-    where  latest_yn = 'Y';
+    from   goe_version
+    where  latest = 'Y';
 
     -- Follow this pattern for each repo version file in sequence...
-    check_version(v_current_version, '3.3.0');
-    check_version(v_current_version, '3.4.0');
-    check_version(v_current_version, '4.2.0');
-    check_version(v_current_version, '4.2.1');
-    check_version(v_current_version, '5.0.0');
+    check_version(v_current_version, '1.0.0');
 
 end;
 /

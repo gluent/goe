@@ -73,8 +73,8 @@ LICENSE.txt
 target/
 target/transport/
 *.tmp
-spark-listener/target
-spark-listener/project/target
-spark-listener/project
+tools/spark-listener/target
+tools/spark-listener/project/target
+tools/spark-listener/project
 afiedt.buf
 goe_*.tar.gz

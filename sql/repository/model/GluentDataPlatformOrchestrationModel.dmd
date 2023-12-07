@@ -1,8 +1,0 @@
-<?xml version = '1.0' encoding = 'UTF-8'?>
-<OSDM_Design class="oracle.dbtools.crest.model.design.Design" name="GluentDataPlatformOrchestrationModel" id="583D922B-AE04-E827-C849-B541D0EF4CCD" version="3.5">
-<createdBy>pelbow</createdBy>
-<createdTime>2022-02-22 16:59:08 UTC</createdTime>
-<ownerDesignName>gluent-erd-202203</ownerDesignName>
-<capitalNames>false</capitalNames>
-<designId>583D922B-AE04-E827-C849-B541D0EF4CCD</designId>
-</OSDM_Design>

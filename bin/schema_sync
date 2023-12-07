@@ -2,10 +2,11 @@
 # LICENSE_TEXT
 
 from gluentlib.config.config_checks import check_cli_path
+
 check_cli_path()
 
 from gluentlib.orchestration.cli_entry_points import schema_sync_run
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     schema_sync_run()

@@ -5,39 +5,52 @@ import traceback
 import sys
 
 from gluentlib.config.config_checks import check_cli_path
+
 check_cli_path()
 
-from gluent import OptionError, get_log_fh_name, get_offload_options, get_options, init, init_log,\
-    log, log_command_line, log_timestamp, version, OFFLOAD_OP_NAME, get_log_fh
+from gluent import (
+    OptionError,
+    get_log_fh_name,
+    get_offload_options,
+    get_options,
+    init,
+    init_log,
+    log,
+    log_command_line,
+    log_timestamp,
+    version,
+    OFFLOAD_OP_NAME,
+    get_log_fh,
+)
 from gluentlib.orchestration.cli_entry_points import offload_by_cli
 from gluentlib.util.gluent_log import log_exception
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     options = None
     try:
         opt = get_options(operation_name=OFFLOAD_OP_NAME)
         get_offload_options(opt)
         options, args = opt.parse_args()
         init(options)
-        init_log('offload_%s' % options.owner_table)
+        init_log("offload_%s" % options.owner_table)
 
-        log('')
-        log('Offload v%s' % version(), ansi_code='underline')
-        log('Log file: %s' % get_log_fh_name())
-        log('')
+        log("")
+        log("Offload v%s" % version(), ansi_code="underline")
+        log("Log file: %s" % get_log_fh_name())
+        log("")
         log_command_line()
 
         offload_by_cli(options)
 
     except OptionError as exc:
-        log('Option error: %s' % exc, ansi_code='red')
-        log('')
+        log("Option error: %s" % exc, ansi_code="red")
+        log("")
         opt.print_help()
         sys.exit(1)
 
     except Exception as exc:
-        log('Exception caught at top-level', ansi_code='red')
+        log("Exception caught at top-level", ansi_code="red")
         log_timestamp()
         log_exception(exc, log_fh=get_log_fh(), options=options)
         sys.exit(1)

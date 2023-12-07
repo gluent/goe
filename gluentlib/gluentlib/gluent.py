@@ -1155,20 +1155,20 @@ def normalise_data_governance_options(options):
 
 
 def version():
-  """ Note that this function is modified in the top level Makefile """
-  with open(os.path.join(os.environ.get('OFFLOAD_HOME'), 'version')) as version_file:
-    return '%s-RC' % version_file.read().strip()
+    """ Note that this function is modified in the top level Makefile """
+    with open(os.path.join(os.environ.get('OFFLOAD_HOME'), 'version_build')) as version_file:
+        return version_file.read().strip()
 
 
 def license():
-  """ Note that this function is modified in the top level Makefile """
-  return 'LICENSE_TEXT'
+    """ Note that this function is modified in the top level Makefile """
+    return 'LICENSE_TEXT'
 
 
 def comp_ver_check(frontend_api):
-  v_goe = version()
-  v_ora = frontend_api.gdp_db_component_version()
-  return v_goe == v_ora, v_goe, v_ora
+    v_goe = version()
+    v_ora = frontend_api.gdp_db_component_version()
+    return v_goe == v_ora, v_goe, v_ora
 
 
 def version_abort(check_version, frontend_api):

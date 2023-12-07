@@ -2,9 +2,11 @@
 # LICENSE_TEXT
 
 from gluentlib.config.config_checks import check_cli_path
+
 check_cli_path()
 
-from offload_status_report import offload_status_report_run
+from gluentlib.offload.offload_status_report import offload_status_report_run
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     offload_status_report_run()

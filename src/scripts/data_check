@@ -1,6 +1,0 @@
-#! /usr/bin/env python3
-# LICENSE_TEXT
-
-from gluentlib.scripts.data_check import main
-
-main()

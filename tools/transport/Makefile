@@ -1,4 +1,4 @@
-SPARK_TARGET_DIR=../target/transport
+SPARK_TARGET_DIR=../../target/transport
 SPARK_VER=3.2.4
 SPARK_HADOOP_VER=hadoop3.2
 SPARK_REL_DIR=spark-$(SPARK_VER)-bin-$(SPARK_HADOOP_VER)

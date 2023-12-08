@@ -51,13 +51,13 @@ target: python-goe spark-listener license-txt offload-env
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/clean_gluent_env
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/listener
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/agg_validate
-	mkdir -p $(TARGET_DIR)/scripts
-	cp scripts/gluent-shell-functions.sh $(TARGET_DIR)/scripts
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/scripts/gluent-shell-functions.sh
-	mkdir -p $(TARGET_DIR)/scripts/listener
-	cp scripts/gluent-listener{.sh,.service} $(TARGET_DIR)/scripts/listener
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/scripts/listener/gluent-listener.sh
-	chmod 0755 $(TARGET_DIR)/scripts/listener/gluent-listener.sh
+	mkdir -p $(TARGET_DIR)/tools
+	cp tools/gluent-shell-functions.sh $(TARGET_DIR)/tools
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/tools/gluent-shell-functions.sh
+	mkdir -p $(TARGET_DIR)/tools/listener
+	cp tools/gluent-listener{.sh,.service} $(TARGET_DIR)/tools/listener
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/tools/listener/gluent-listener.sh
+	chmod 0755 $(TARGET_DIR)/tools/listener/gluent-listener.sh
 	chmod 0755 $(TARGET_DIR)/bin/listener
 	rm -rf $(TARGET_DIR)/setup/sql $(TARGET_DIR)/setup/python
 	mkdir -p $(TARGET_DIR)/cache
@@ -82,12 +82,12 @@ spark-basic-auth:
 
 .PHONY: spark-listener
 spark-listener:
-	cd spark-listener && make target
+	cd tools/spark-listener && make target
 
 #package-spark-standalone: spark-basic-auth spark-listener license-txt
 .PHONY: package-spark-standalone
 package-spark-standalone: spark-listener
-	cd transport && make spark-target
+	cd tools/transport && make spark-target
 	cd target && make package-spark
 
 
@@ -117,7 +117,7 @@ offload-home-check:
 .PHONY: clean
 clean:
 	cd templates/conf && make clean
-	cd spark-listener && make clean
+	cd tools/spark-listener && make clean
 	cd target && make clean
 
 

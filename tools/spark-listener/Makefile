@@ -6,7 +6,7 @@ TARGET_JAR_FOR_SPARK_330=target/scala-2.12/$(JAR_FOR_SPARK_330)
 TARGET_JAR_FOR_SPARK_320=target/scala-2.12/$(JAR_FOR_SPARK_320)
 TARGET_JAR_FOR_SPARK_312=target/scala-2.12/$(JAR_FOR_SPARK_312)
 TARGET_JAR_FOR_SPARK_301=target/scala-2.12/$(JAR_FOR_SPARK_301)
-INSTALL_DIR=../target/offload/bin
+INSTALL_DIR=../../target/offload/bin
 INSTALL_JAR=$(INSTALL_DIR)/goe-spark-listener.jar
 
 all: spark-listener

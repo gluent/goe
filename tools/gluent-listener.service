@@ -9,7 +9,7 @@ RestartSec=1
 User=oracle
 Group=oinstall
 Environment=OFFLOAD_HOME=/u01/app/gluent/offload
-ExecStart=/bin/bash -c "${OFFLOAD_HOME}/scripts/listener/gluent-listener.sh"
+ExecStart=/bin/bash -c "${OFFLOAD_HOME}/tools/listener/gluent-listener.sh"
 
 [Install]
 WantedBy=multi-user.target

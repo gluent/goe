@@ -28,7 +28,7 @@ OFFLOAD_HOME=/u01/app/gluent/offload
 # | FUNCTIONS                                                                  |
 # ------------------------------------------------------------------------------
 
-. $OFFLOAD_HOME/scripts/gluent-shell-functions.sh
+. $OFFLOAD_HOME/tools/gluent-shell-functions.sh
 
 # ------------------------------------------------------------------------------
 # | MAIN PROGRAM                                                               |

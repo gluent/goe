@@ -5,11 +5,11 @@ import traceback
 import sys
 
 from goe.config.config_checks import check_cli_path
+from goe.offload.offload import OffloadOptionError
 
 check_cli_path()
 
 from goe.gluent import (
-    OptionError,
     get_log_fh_name,
     get_offload_options,
     get_options,
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
         offload_by_cli(options)
 
-    except OptionError as exc:
+    except OffloadOptionError as exc:
         log("Option error: %s" % exc, ansi_code="red")
         log("")
         opt.print_help()

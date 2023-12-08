@@ -1742,10 +1742,10 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                                               'hive.exec.compress.output': true_or_false})
 
     def _local_gluent_listener_jar(self):
-        """ Returns path to GOETaskListener jar file in $OFFLOAD_HOME/bin directory """
+        """ Returns path to GOETaskListener jar file in $OFFLOAD_HOME/lib directory """
         offload_home = os.environ.get('OFFLOAD_HOME')
         assert offload_home, 'OFFLOAD_HOME is not set, environment is not correct'
-        jar_path = os.path.join(offload_home, 'bin', GLUENT_LISTENER_JAR)
+        jar_path = os.path.join(offload_home, 'lib', GLUENT_LISTENER_JAR)
         # We should never be missing the JAR file as it is bundled with the code that we are part of.
         assert os.path.exists(jar_path), f'{jar_path} cannot be found, environment is not correct'
         return jar_path

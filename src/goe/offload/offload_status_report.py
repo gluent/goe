@@ -12,8 +12,7 @@ from optparse import OptionGroup, SUPPRESS_HELP
 
 from jinja2 import Environment, FileSystemLoader
 
-from goe.gluent import OptionError, \
-    init_log, version, get_log_fh_name, log_command_line, log_timestamp, init, log, get_log_fh, \
+from goe.gluent import init_log, version, get_log_fh_name, log_command_line, log_timestamp, init, log, get_log_fh, \
     get_common_options, get_rdbms_db_name
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload import offload_constants
@@ -22,14 +21,13 @@ from goe.offload.backend_api import REPORT_ATTR_BACKEND_DISPLAY_NAME, \
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
+from goe.offload.offload import OffloadOptionError
 from goe.offload.offload_functions import STARTS_WITH_DATE_PATTERN_RE
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE, SUPPRESS_STDOUT
 from goe.offload.offload_metadata_functions import decode_metadata_incremental_high_values,\
     INCREMENTAL_PREDICATE_TYPE_LIST
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.oracle.oracle_offload_source_table import oracle_datetime_literal_to_python
-from goe.offload.offload_source_table import HYBRID_AAPD_OBJECTS, HYBRID_INCREMENTAL_UPDATE_OBJECTS,\
-    HYBRID_JOIN_OBJECTS, HYBRID_DEPENDENT_OBJECTS
 from goe.orchestration import command_steps, orchestration_constants
 from goe.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
 from goe.persistence.orchestration_metadata import OrchestrationMetadata
@@ -1647,16 +1645,16 @@ def normalise_offload_status_report_options(options):
         options.vverbose = options.verbose = False
 
     if not os.path.exists(options.report_directory):
-        raise OptionError('Invalid value specified for --report-directory parameter. Directory %s does not exist.'
-                          % options.report_directory)
+        raise OffloadOptionError('Invalid value specified for --report-directory parameter. Directory %s does not exist.'
+                                 % options.report_directory)
 
     if len(options.csv_delimiter) > 1:
-        raise OptionError('Invalid value specified for --csv-delimiter parameter (%s). Delimiter must be a single character.'
-                          % options.csv_delimiter)
+        raise OffloadOptionError('Invalid value specified for --csv-delimiter parameter (%s). Delimiter must be a single character.'
+                                 % options.csv_delimiter)
 
     if len(options.csv_enclosure) > 1:
-        raise OptionError('Invalid value specified for --csv-enclosure parameter (%s). Enclosure must be a single character or NULL.'
-                          % options.csv_enclosure)
+        raise OffloadOptionError('Invalid value specified for --csv-enclosure parameter (%s). Enclosure must be a single character or NULL.'
+                                 % options.csv_enclosure)
 
     return
 
@@ -1732,7 +1730,7 @@ def offload_status_report_run():
 
         sys.exit(status)
 
-    except OptionError as exc:
+    except OffloadOptionError as exc:
         log('Option error: %s' % exc.detail, ansi_code='red')
         log('')
         opt.print_help()

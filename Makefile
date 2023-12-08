@@ -43,31 +43,29 @@ install-dev:
 target: python-goe spark-listener license-txt offload-env
 	@echo -e "=> \e[92m Building target: $(TARGET_DIR)...\e[0m"
 	mkdir -p $(TARGET_DIR)/bin
-	cp scripts/{offload,connect,logmgr,display_gluent_env,clean_gluent_env,listener} $(TARGET_DIR)/bin
+	cp bin/{offload,connect,logmgr,display_gluent_env,clean_gluent_env,listener,agg_validate} $(TARGET_DIR)/bin
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/connect
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/offload
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/logmgr
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/display_gluent_env
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/clean_gluent_env
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/listener
-	mkdir -p $(TARGET_DIR)/scripts
-	cp scripts/gluent-shell-functions.sh $(TARGET_DIR)/scripts
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/scripts/gluent-shell-functions.sh
-	mkdir -p $(TARGET_DIR)/scripts/listener
-	cp scripts/gluent-listener{.sh,.service} $(TARGET_DIR)/scripts/listener
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/scripts/listener/gluent-listener.sh
-	chmod 0755 $(TARGET_DIR)/scripts/listener/gluent-listener.sh
-	chmod 0755 $(TARGET_DIR)/bin/listener
-	cp gluentlib/scripts/agg_validate $(TARGET_DIR)/bin
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/agg_validate
+	mkdir -p $(TARGET_DIR)/tools
+	cp tools/gluent-shell-functions.sh $(TARGET_DIR)/tools
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/tools/gluent-shell-functions.sh
+	mkdir -p $(TARGET_DIR)/tools/listener
+	cp tools/gluent-listener{.sh,.service} $(TARGET_DIR)/tools/listener
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/tools/listener/gluent-listener.sh
+	chmod 0755 $(TARGET_DIR)/tools/listener/gluent-listener.sh
+	chmod 0755 $(TARGET_DIR)/bin/listener
 	rm -rf $(TARGET_DIR)/setup/sql $(TARGET_DIR)/setup/python
 	mkdir -p $(TARGET_DIR)/cache
 	mkdir -p $(TARGET_DIR)/setup/sql && cp -a sql/oracle/source/* $(TARGET_DIR)/setup
 	mkdir -p $(TARGET_DIR)/lib && cp dist/goe-*.whl $(TARGET_DIR)/lib
 	cp version $(TARGET_DIR)
 	cp LICENSE.txt $(TARGET_DIR)
-	sed -e "s/return '%s-RC'.*/return '$(OFFLOAD_VERSION) ($(BUILD))'/" -e "s/LICENSE_TEXT/$(LICENSE_TEXT)/" scripts/gluent.py > $(TARGET_DIR)/bin/gluent.py
-	sed -i "s/LICENSE_TEXT_HEADER/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/gluent.py
+	echo "$(OFFLOAD_VERSION) ($(BUILD))" > $(TARGET_DIR)/version_build
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/setup/*.sql $(TARGET_DIR)/setup/sql/*.sql
 	sed -i -e "s/VERSION/$(OFFLOAD_VERSION)/" -e "s/BUILD/$(BUILD)/" $(TARGET_DIR)/setup/sql/{install,upgrade}_env.sql
 	sed -i "s/'%s-SNAPSHOT'/'$(OFFLOAD_VERSION) ($(BUILD))'/" $(TARGET_DIR)/setup/sql/create_offload*_package_spec.sql
@@ -84,12 +82,12 @@ spark-basic-auth:
 
 .PHONY: spark-listener
 spark-listener:
-	cd spark-listener && make target
+	cd tools/spark-listener && make target
 
 #package-spark-standalone: spark-basic-auth spark-listener license-txt
 .PHONY: package-spark-standalone
 package-spark-standalone: spark-listener
-	cd transport && make spark-target
+	cd tools/transport && make spark-target
 	cd target && make package-spark
 
 
@@ -119,7 +117,7 @@ offload-home-check:
 .PHONY: clean
 clean:
 	cd templates/conf && make clean
-	cd spark-listener && make clean
+	cd tools/spark-listener && make clean
 	cd target && make clean
 
 

@@ -1,0 +1,6 @@
+#! /usr/bin/env python3
+# LICENSE_TEXT
+
+from goe.scripts.agg_validate import main
+
+main()

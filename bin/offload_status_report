@@ -1,0 +1,12 @@
+#! /usr/bin/env python3
+# LICENSE_TEXT
+
+from goe.config.config_checks import check_cli_path
+
+check_cli_path()
+
+from goe.offload.offload_status_report import offload_status_report_run
+
+
+if __name__ == "__main__":
+    offload_status_report_run()

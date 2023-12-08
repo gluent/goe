@@ -90,8 +90,8 @@ def goe_shell_command(list_of_args):
     return list_of_args + suffix_args
 
 
-def test_connect(config):
-    id = "test_connect"
+def test_cli_connect(config):
+    id = "test_cli_connect"
     messages = get_test_messages(config, id)
     bin_path = get_bin_path()
 
@@ -104,8 +104,8 @@ def test_connect(config):
     )
 
 
-def test_offload_opts(config):
-    id = "test_offload_opts"
+def test_cli_offload_opts(config):
+    id = "test_cli_offload_opts"
     messages = get_test_messages(config, id)
     bin_path = get_bin_path()
 
@@ -120,8 +120,8 @@ def test_offload_opts(config):
     )
 
 
-def test_offload_full(config, schema, data_db):
-    id = "test_offload_full"
+def test_cli_offload_full(config, schema, data_db):
+    id = "test_cli_offload_full"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages)
@@ -211,8 +211,8 @@ def test_offload_full(config, schema, data_db):
     ), "The backend table should exist"
 
 
-def test_offload_rpa(config, schema, data_db):
-    id = "test_offload_rpa"
+def test_cli_offload_rpa(config, schema, data_db):
+    id = "test_cli_offload_rpa"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages)

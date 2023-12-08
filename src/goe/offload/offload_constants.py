@@ -76,7 +76,7 @@ HADOOP_BASED_BACKEND_DISTRIBUTIONS = [
     BACKEND_DISTRO_MAPR,
 ]
 
-# Stats related constants
+# Stats related constants.
 OFFLOAD_STATS_METHOD_COPY = "COPY"
 OFFLOAD_STATS_METHOD_HISTORY = "HISTORY"
 OFFLOAD_STATS_METHOD_NATIVE = "NATIVE"
@@ -110,6 +110,7 @@ OFFLOAD_TRANSPORT_SQOOP = "SQOOP"
 
 # Exception markers
 ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT = "Using adjusted backend table name"
+CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT = "Conflicting data identification options"
 INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT = "Invalid data type conversion for column"
 IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT = (
     "INCREMENTAL_PREDICATE_TYPE cannot be changed for offloaded table"
@@ -124,6 +125,9 @@ IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT = (
     "--offload-predicate-type is not valid for a first time predicate-based offload"
 )
 IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT = "Missing --offload-predicate option. This option is mandatory to offload tables with an INCREMENTAL_PREDICATE_TYPE configuration of PREDICATE"
+RESET_HYBRID_VIEW_EXCEPTION_TEXT = (
+    "Offload data identification options required with --reset-hybrid-view"
+)
 
 # Offload capabilities we can switch on/off by backend db type
 # Any capabilities that are version specific will have extra code in the BackendApi method

@@ -46,15 +46,11 @@ from goe.offload.offload_constants import (
     HYBRID_EXT_TABLE_DEGREE_AUTO,
     IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
-    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
-    IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
     LOG_LEVEL_INFO, LOG_LEVEL_DETAIL, LOG_LEVEL_DEBUG,
     OFFLOAD_BUCKET_NAME, NUM_BUCKETS_AUTO,
     OFFLOAD_STATS_METHOD_COPY,
-    OFFLOAD_STATS_METHOD_HISTORY,
     OFFLOAD_STATS_METHOD_NATIVE,
-    OFFLOAD_STATS_METHOD_NONE,
     OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
     SORT_COLUMNS_NO_CHANGE,
 )
@@ -62,7 +58,7 @@ from goe.offload.offload_functions import convert_backend_identifier_case, data_
 from goe.offload.offload_source_data import get_offload_type_for_config, \
     OFFLOAD_SOURCE_CLIENT_OFFLOAD
 from goe.offload.offload_source_table import OffloadSourceTableInterface, \
-    DATA_SAMPLE_SIZE_AUTO, OFFLOAD_PARTITION_TYPE_RANGE, OFFLOAD_PARTITION_TYPE_LIST
+    OFFLOAD_PARTITION_TYPE_RANGE, OFFLOAD_PARTITION_TYPE_LIST
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.offload.offload_metadata_functions import incremental_key_csv_from_part_keys, gen_and_save_offload_metadata, METADATA_HYBRID_VIEW
 from goe.offload.offload_validation import BackendCountValidator, CrossDbValidator,\
@@ -80,17 +76,25 @@ from goe.offload.operation.transport import (
 )
 from goe.offload.offload import (
     OffloadException,
+    OffloadOptionError,
+    active_data_append_options,
+    check_opt_is_posint,
+    check_ipa_predicate_type_option_conflicts,
     check_table_structure,
     create_final_backend_table,
     offload_backend_db_message,
     get_current_offload_hv,
     get_offload_data_manager,
     get_prior_offloaded_hv,
+    normalise_data_sampling_options,
+    normalise_less_than_options,
+    normalise_offload_predicate_options,
+    normalise_stats_options,
+    normalise_verify_options,
 )
 from goe.offload.operation.partition_controls import derive_partition_digits, offload_options_to_partition_info,\
     validate_offload_partition_columns, validate_offload_partition_functions, validate_offload_partition_granularity
 from goe.offload.operation.sort_columns import sort_columns_csv_to_sort_columns
-from goe.offload.predicate_offload import GenericPredicate
 from goe.orchestration import command_steps
 from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
@@ -103,7 +107,7 @@ from goe.data_governance.hadoop_data_governance import get_hadoop_data_governanc
     is_valid_data_governance_tag
 
 from goe.util.misc_functions import csv_split, bytes_to_human_size,\
-    human_size_to_bytes, is_pos_int, standard_log_name
+    human_size_to_bytes, standard_log_name
 from goe.util.hs2_connection import hs2_connection as hs2_connection_with_opts
 from goe.util.ora_query import get_oracle_connection
 from goe.util.redis_tools import RedisClient
@@ -136,7 +140,6 @@ TOKENISE_STRING_CHARS = [TOKENISE_STRING_CHAR_1, TOKENISE_STRING_CHAR_2, TOKENIS
 LEGACY_MAX_HYBRID_IDENTIFIER_LENGTH = 30
 
 # Used in test to identify specific warnings
-CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT = 'Conflicting data identification options'
 HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = 'Including hybrid schema steps due to HWM change'
 MISSING_HYBRID_METADATA_EXCEPTION_TEMPLATE = 'Missing hybrid metadata for hybrid view %s.%s, contact Gluent support (or --reset-backend-table to overwrite table data)'
 NLS_LANG_MISSING_CHARACTER_SET_EXCEPTION_TEMPLATE = 'NLS_LANG value %s missing character set delimiter (.)'
@@ -144,7 +147,6 @@ OFFLOAD_STATS_COPY_EXCEPTION_TEXT = 'Invalid --offload-stats value'
 OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT = 'Switching to offload type INCREMENTAL for LIST partitioned table requires --equal-to-values/--partition-names'
 OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT = 'Switching to INCREMENTAL for LIST partitioned table'
 OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT = 'Switching from offload type FULL to INCREMENTAL is not supported for Subpartition-Based Offload'
-RESET_HYBRID_VIEW_EXCEPTION_TEXT = 'Offload data identification options required with --reset-hybrid-view'
 RETAINING_PARTITITON_FUNCTIONS_MESSAGE_TEXT = 'Retaining partition functions from backend target'
 TOTAL_ROWS_OFFLOADED_LOG_TEXT = 'Total rows offloaded'
 
@@ -406,14 +408,6 @@ def offload_bucket_name():
     return OFFLOAD_BUCKET_NAME
 
 
-class OptionError(Exception):
-  def __init__(self, detail):
-    self.detail = detail
-
-  def __str__(self):
-    return repr(self.detail)
-
-
 global ts
 ts = None
 
@@ -597,10 +591,6 @@ def offload_data_verification(offload_source_table, offload_target_table, offloa
       raise OffloadException('Source and Hybrid mismatch')
 
 
-def parse_yyyy_mm_dd(ds):
-  return datetime.strptime(ds, '%Y-%m-%d')
-
-
 def normalise_column_transformations(column_transformation_list, offload_cols=None, backend_cols=None):
   # custom_transformations = {transformation: num_params}
   custom_transformations = {'encrypt': 0
@@ -621,18 +611,18 @@ def normalise_column_transformations(column_transformation_list, offload_cols=No
 
   for ct in column_transformation_list:
     if not ':' in ct:
-      raise OptionError('Missing transformation for column: %s' % ct)
+      raise OffloadOptionError('Missing transformation for column: %s' % ct)
 
     m = re.search(r'^([\w$#]+):([\w$#]+)(\(%s\))?$' % param_match, ct)
     if not m or len(m.groups()) != 3:
-      raise OptionError('Malformed transformation: %s' % ct)
+      raise OffloadOptionError('Malformed transformation: %s' % ct)
 
     cname = m.group(1).lower()
     transformation = m.group(2).lower()
     param_str = m.group(3)
 
     if not transformation.lower() in custom_transformations:
-      raise OptionError('Unknown transformation for column %s: %s' % (cname, transformation))
+      raise OffloadOptionError('Unknown transformation for column %s: %s' % (cname, transformation))
 
     if offload_cols:
       match_col = match_table_column(cname, offload_cols)
@@ -640,10 +630,10 @@ def normalise_column_transformations(column_transformation_list, offload_cols=No
       match_col = match_table_column(cname, backend_cols)
 
     if not match_col:
-      raise OptionError('Unknown column in transformation: %s' % cname)
+      raise OffloadOptionError('Unknown column in transformation: %s' % cname)
 
     if transformation in ['translate', 'regexp_replace'] and not match_col.is_string_based():
-      raise OptionError('Transformation "%s" not valid for %s column' % (transformation, match_col.data_type.upper()))
+      raise OffloadOptionError('Transformation "%s" not valid for %s column' % (transformation, match_col.data_type.upper()))
 
     trans_params = []
     if param_str:
@@ -652,7 +642,7 @@ def normalise_column_transformations(column_transformation_list, offload_cols=No
       trans_params = csv_split(param_str)
 
     if custom_transformations[transformation] != len(trans_params):
-      raise OptionError('Malformed transformation parameters "%s" for column "%s"' % (param_str, cname))
+      raise OffloadOptionError('Malformed transformation parameters "%s" for column "%s"' % (param_str, cname))
 
     column_transformations.update({cname: {'transformation': transformation, 'params': trans_params}})
 
@@ -665,7 +655,7 @@ def bool_option_from_string(opt_name, opt_val):
 
 def normalise_owner_table_options(options):
   if not options.owner_table or len(options.owner_table.split('.')) != 2:
-    raise OptionError('Option -t or --table required in form SCHEMA.TABLENAME')
+    raise OffloadOptionError('Option -t or --table required in form SCHEMA.TABLENAME')
 
   options.owner, options.table_name = options.owner_table.split('.')
 
@@ -677,9 +667,9 @@ def normalise_owner_table_options(options):
     options.base_owner_name = options.owner_table
 
   if len(options.target_owner_name.split('.')) != 2:
-    raise OptionError('Option --target-name required in form SCHEMA.TABLENAME')
+    raise OffloadOptionError('Option --target-name required in form SCHEMA.TABLENAME')
   if len(options.base_owner_name.split('.')) != 2:
-    raise OptionError('Option --base-name required in form SCHEMA.TABLENAME')
+    raise OffloadOptionError('Option --base-name required in form SCHEMA.TABLENAME')
 
   options.target_owner, options.target_name = options.target_owner_name.split('.')
   # When presenting, target-name modifies the frontend (hybrid) details.
@@ -692,97 +682,7 @@ def normalise_owner_table_options(options):
   options.base_owner, options.base_name = options.base_owner_name.upper().split('.')
 
   if options.base_owner_name.upper() != options.owner_table.upper() and options.target_owner.upper() != options.base_owner.upper():
-    raise OptionError('The SCHEMA provided in options --target-name and --base-name must match')
-
-
-def active_data_append_options(opts, partition_type=None, from_options=False, ignore_partition_names_opt=False, ignore_pbo=False):
-  rpa_opts = {'--less-than-value': opts.less_than_value, '--partition-names': opts.partition_names_csv}
-  lpa_opts = {'--equal-to-values': opts.equal_to_values, '--partition-names': opts.partition_names_csv}
-  ida_opts = {'--offload-predicate': opts.offload_predicate}
-
-  if from_options:
-      # options has a couple of synonyms for less_than_value
-    rpa_opts.update({'--older-than-days': opts.older_than_days, '--older-than-date': opts.older_than_date})
-
-  if ignore_partition_names_opt:
-    del rpa_opts['--partition-names']
-    del lpa_opts['--partition-names']
-
-  if partition_type == OFFLOAD_PARTITION_TYPE_RANGE:
-    chk_opts = rpa_opts
-  elif partition_type == OFFLOAD_PARTITION_TYPE_LIST:
-    chk_opts = lpa_opts
-  elif not partition_type:
-    chk_opts = {} if ignore_pbo else ida_opts.copy()
-    chk_opts.update(lpa_opts)
-    chk_opts.update(rpa_opts)
-
-  active_pa_opts = [_ for _ in chk_opts if chk_opts[_]]
-  return active_pa_opts
-
-
-def check_ipa_predicate_type_option_conflicts(options, exc_cls=OffloadException, rdbms_table=None):
-  ipa_predicate_type = getattr(options, 'ipa_predicate_type', None)
-  active_lpa_opts = active_data_append_options(options, partition_type=OFFLOAD_PARTITION_TYPE_LIST, ignore_partition_names_opt=True)
-  active_rpa_opts = active_data_append_options(options, partition_type=OFFLOAD_PARTITION_TYPE_RANGE, ignore_partition_names_opt=True)
-  if ipa_predicate_type in [INCREMENTAL_PREDICATE_TYPE_RANGE, INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE]:
-    if active_lpa_opts:
-      raise exc_cls('LIST %s with %s: %s' \
-          % (IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT, ipa_predicate_type, ', '.join(active_lpa_opts)))
-    if rdbms_table and active_rpa_opts:
-      # If we have access to an RDBMS table then we can check if the partition column data types are valid for IPA
-      unsupported_types = rdbms_table.unsupported_partition_data_types(partition_type_override=OFFLOAD_PARTITION_TYPE_RANGE)
-      if unsupported_types:
-        raise exc_cls('RANGE %s with partition data types: %s' \
-            % (IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT, ', '.join(unsupported_types)))
-  elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST:
-    if active_rpa_opts:
-      raise exc_cls('RANGE %s with %s: %s' \
-          % (IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT, ipa_predicate_type, ', '.join(active_rpa_opts)))
-  elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_PREDICATE:
-    if not options.offload_predicate:
-      raise exc_cls(IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT)
-
-
-def normalise_less_than_options(options, exc_cls=OffloadException):
-  if not hasattr(options, 'older_than_date'):
-    # We mustn't be in offload or present so should just drop out
-    return
-
-  active_pa_opts = active_data_append_options(options, from_options=True)
-  if len(active_pa_opts) > 1:
-      raise exc_cls('%s: %s' % (CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT, ', '.join(active_pa_opts)))
-
-  if options.reset_hybrid_view and len(active_pa_opts) == 0:
-    raise exc_cls(RESET_HYBRID_VIEW_EXCEPTION_TEXT)
-
-  if options.older_than_date:
-    try:
-      # move the value into less_than_value
-      options.less_than_value = parse_yyyy_mm_dd(options.older_than_date)
-      options.older_than_date = None
-    except ValueError as exc:
-      raise exc_cls('option --older-than-date: %s' % str(exc))
-  elif options.older_than_days:
-    options.older_than_days = check_opt_is_posint('--older-than-days', options.older_than_days, allow_zero=True)
-    # move the value into less_than_value
-    options.less_than_value = datetime.today() - timedelta(options.older_than_days)
-    options.older_than_days = None
-
-  check_ipa_predicate_type_option_conflicts(options, exc_cls=exc_cls)
-
-
-def normalise_offload_predicate_options(options):
-  if options.offload_predicate:
-    if isinstance(options.offload_predicate, str):
-        options.offload_predicate = GenericPredicate(options.offload_predicate)
-
-    if options.less_than_value or options.older_than_date or options.older_than_days:
-      raise OptionError('Predicate offload cannot be used with incremental partition offload options: (--less-than-value/--older-than-date/--older-than-days)')
-
-  no_modify_hybrid_view_option_used = not options.offload_predicate_modify_hybrid_view
-  if no_modify_hybrid_view_option_used and not options.offload_predicate:
-    raise OptionError('--no-modify-hybrid-view can only be used with --offload-predicate')
+    raise OffloadOptionError('The SCHEMA provided in options --target-name and --base-name must match')
 
 
 def normalise_datatype_control_options(opts):
@@ -821,7 +721,7 @@ def normalise_insert_select_options(opts):
   if opts.impala_insert_hint:
     opts.impala_insert_hint = opts.impala_insert_hint.upper()
     if opts.impala_insert_hint not in [IMPALA_SHUFFLE_HINT, IMPALA_NOSHUFFLE_HINT]:
-      raise OptionError('Invalid value for --impala-insert-hint: %s' % opts.impala_insert_hint)
+      raise OffloadOptionError('Invalid value for --impala-insert-hint: %s' % opts.impala_insert_hint)
 
   if opts.offload_chunk_column:
     opts.offload_chunk_column = opts.offload_chunk_column.upper()
@@ -870,7 +770,7 @@ def normalise_offload_transport_user_options(options):
             options.offload_transport_validation_polling_interval = float(
                 options.offload_transport_validation_polling_interval)
         elif not isinstance(options.offload_transport_validation_polling_interval, (int, float)):
-            raise OptionError('Invalid value "%s" for --offload-transport-validation-polling-interval'
+            raise OffloadOptionError('Invalid value "%s" for --offload-transport-validation-polling-interval'
                               % options.offload_transport_validation_polling_interval)
     else:
         options.offload_transport_validation_polling_interval = 0
@@ -938,7 +838,7 @@ def normalise_options(options, normalise_owner_table=True):
   if options.target == DBTYPE_IMPALA:
       options.offload_distribute_enabled = False
 
-  normalise_less_than_options(options, exc_cls=OptionError)
+  normalise_less_than_options(options, exc_cls=OffloadOptionError)
 
   options.offload_type = option_is_in_list(options, 'offload_type', '--offload-type', ['FULL', 'INCREMENTAL'])
   options.ipa_predicate_type = option_is_in_list(options, 'ipa_predicate_type', '--offload-predicate-type', \
@@ -957,12 +857,12 @@ def normalise_options(options, normalise_owner_table=True):
   if options.hybrid_ext_table_degree != HYBRID_EXT_TABLE_DEGREE_AUTO:
     # if not AUTO then must be integral
     if not all_int_chars(options.hybrid_ext_table_degree):
-      raise OptionError('Invalid value for --ext-table-degree, must be %s or integral number'
+      raise OffloadOptionError('Invalid value for --ext-table-degree, must be %s or integral number'
                         % HYBRID_EXT_TABLE_DEGREE_AUTO)
 
   valid_combination, message = check_bucket_location_combinations(options)
   if not valid_combination:
-    raise OptionError(message)
+    raise OffloadOptionError(message)
 
   if options.offload_partition_lower_value and not all_int_chars(options.offload_partition_lower_value,
                                                                  allow_negative=True):
@@ -982,42 +882,6 @@ def normalise_options(options, normalise_owner_table=True):
   normalise_data_governance_options(options)
 
 
-def normalise_verify_options(options):
-    if getattr(options, 'verify_parallelism', None):
-        options.verify_parallelism = check_opt_is_posint('--verify-parallelism', options.verify_parallelism,
-                                                         allow_zero=True)
-
-
-def normalise_data_sampling_options(options):
-    if hasattr(options, 'data_sample_pct'):
-        if type(options.data_sample_pct) == str and re.search(r'^[\d\.]+$', options.data_sample_pct):
-            options.data_sample_pct = float(options.data_sample_pct)
-        elif options.data_sample_pct == 'AUTO':
-            options.data_sample_pct = DATA_SAMPLE_SIZE_AUTO
-        elif type(options.data_sample_pct) not in (int, float):
-            raise OptionError('Invalid value "%s" for --data-sample-percent' % options.data_sample_pct)
-    else:
-        options.data_sample_pct = 0
-
-    if hasattr(options, 'data_sample_parallelism'):
-        options.data_sample_parallelism = check_opt_is_posint('--data-sample-parallelism',
-                                                              options.data_sample_parallelism, allow_zero=True)
-
-
-def normalise_stats_options(options, target_backend):
-  if options.offload_stats_method not in [OFFLOAD_STATS_METHOD_NATIVE, OFFLOAD_STATS_METHOD_HISTORY,
-                                          OFFLOAD_STATS_METHOD_COPY, OFFLOAD_STATS_METHOD_NONE]:
-    raise OptionError('Unsupported value for --offload-stats: %s' % options.offload_stats_method)
-
-  if options.offload_stats_method not in [OFFLOAD_STATS_METHOD_NATIVE, OFFLOAD_STATS_METHOD_NONE]:
-    def raise_conjunction_error(option):
-      raise OptionError('Unsupported value for --offload-stats: %s when used with the --%s option'
-                        % (options.offload_stats_method, option))
-
-  if options.offload_stats_method == OFFLOAD_STATS_METHOD_HISTORY and target_backend == DBTYPE_IMPALA:
-    options.offload_stats_method = OFFLOAD_STATS_METHOD_NATIVE
-
-
 def verify_json_option(option_name, option_value):
     if option_value:
       try:
@@ -1026,17 +890,17 @@ def verify_json_option(option_name, option_value):
         invalid_props = [k for k, v in properties.items() if type(v) not in (str, int, float)]
         if invalid_props:
           [log('Invalid property value for key/value pair: %s: %s' % (k, properties[k]), detail=vverbose) for k in invalid_props]
-          raise OptionError('Invalid property value in %s for keys: %s' % (option_name, str(invalid_props)))
+          raise OffloadOptionError('Invalid property value in %s for keys: %s' % (option_name, str(invalid_props)))
       except ValueError as ve:
         log(traceback.format_exc(), vverbose)
-        raise OptionError('Invalid JSON value for %s: %s' % (option_name, str(ve)))
+        raise OffloadOptionError('Invalid JSON value for %s: %s' % (option_name, str(ve)))
 
 
 def normalise_data_governance_options(options):
     tag_list = options.data_governance_custom_tags_csv.split(',') if options.data_governance_custom_tags_csv else []
     invalid_custom_tags = [_ for _ in tag_list if not is_valid_data_governance_tag(_)]
     if invalid_custom_tags:
-        raise OptionError('Invalid values for --data-governance-custom-tags: %s' % invalid_custom_tags)
+        raise OffloadOptionError('Invalid values for --data-governance-custom-tags: %s' % invalid_custom_tags)
 
     verify_json_option('--data-governance-custom-properties', options.data_governance_custom_properties)
 
@@ -2205,7 +2069,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
     messages.warning('Unsupported character(s) %s in Oracle schema name. Use --target-name to specify a compatible backend database name.'
                      % offload_target_table.identifier_contains_invalid_characters(offload_operation.target_owner_name.split('.')[0]))
     if offload_options.execute:
-        raise OptionError('Unsupported character(s) in Oracle schema name.')
+        raise OffloadOptionError('Unsupported character(s) in Oracle schema name.')
 
   if not offload_source_table.columns:
     messages.log('No columns found for table: %s.%s' % (offload_source_table.owner, offload_source_table.table_name))
@@ -2395,13 +2259,6 @@ def get_data_gov_client(options, messages, rdbms_schema=None, source_rdbms_objec
 
 def list_for_option_help(opt_list):
   return '|'.join(opt_list) if opt_list else None
-
-
-def check_opt_is_posint(opt_name, opt_val, exception_class=OptionValueError, allow_zero=False):
-  if is_pos_int(opt_val, allow_zero=allow_zero):
-    return int(opt_val)
-  else:
-    raise exception_class("option %s: invalid positive integer value: %s" % (opt_name, opt_val))
 
 
 def check_posint(option, opt, value):

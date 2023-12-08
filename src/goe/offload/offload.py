@@ -3,6 +3,9 @@
 Ideally these would migrate to better locations in time.
 """
 
+from datetime import datetime, timedelta
+from optparse import OptionParser, Option, OptionValueError, SUPPRESS_HELP
+import re
 from textwrap import dedent
 
 from goe.data_governance.hadoop_data_governance_constants import (
@@ -12,16 +15,54 @@ from goe.offload.column_metadata import (
     get_column_names,
 )
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
+from goe.offload.offload_constants import (
+    ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
+    DBTYPE_BIGQUERY,
+    DBTYPE_IMPALA,
+    DBTYPE_ORACLE,
+    DBTYPE_MSSQL,
+    FILE_STORAGE_COMPRESSION_CODEC_GZIP,
+    FILE_STORAGE_COMPRESSION_CODEC_SNAPPY,
+    FILE_STORAGE_COMPRESSION_CODEC_ZLIB,
+    HYBRID_EXT_TABLE_DEGREE_AUTO,
+    IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
+    CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
+    RESET_HYBRID_VIEW_EXCEPTION_TEXT,
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_DETAIL,
+    LOG_LEVEL_DEBUG,
+    OFFLOAD_BUCKET_NAME,
+    NUM_BUCKETS_AUTO,
+    OFFLOAD_STATS_METHOD_COPY,
+    OFFLOAD_STATS_METHOD_HISTORY,
+    OFFLOAD_STATS_METHOD_NATIVE,
+    OFFLOAD_STATS_METHOD_NONE,
+    OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
+    SORT_COLUMNS_NO_CHANGE,
+)
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
 from goe.offload.offload_metadata_functions import (
     decode_metadata_incremental_high_values_from_metadata,
 )
 from goe.offload.offload_source_data import offload_source_data_factory
-from goe.offload.operation.sort_columns import check_and_alter_backend_sort_columns
-from goe.persistence.orchestration_metadata import (
-    INCREMENTAL_PREDICATE_TYPE_LIST,
+from goe.offload.offload_source_table import (
+    DATA_SAMPLE_SIZE_AUTO,
+    OFFLOAD_PARTITION_TYPE_RANGE,
+    OFFLOAD_PARTITION_TYPE_LIST,
 )
-from goe.util.misc_functions import format_list_for_logging
+from goe.offload.operation.sort_columns import check_and_alter_backend_sort_columns
+from goe.offload.predicate_offload import GenericPredicate
+from goe.persistence.orchestration_metadata import (
+    INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+    INCREMENTAL_PREDICATE_TYPE_LIST,
+    INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+    INCREMENTAL_PREDICATE_TYPE_RANGE,
+)
+from goe.util.misc_functions import format_list_for_logging, is_pos_int
 
 
 OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT = "Column mismatch detected between the source and backend table. Resolve before offloading"
@@ -29,6 +70,80 @@ OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT = "Column mismatch detected between the sour
 
 class OffloadException(Exception):
     pass
+
+
+class OffloadOptionError(Exception):
+    def __init__(self, detail):
+        self.detail = detail
+
+    def __str__(self):
+        return repr(self.detail)
+
+
+def check_ipa_predicate_type_option_conflicts(
+    options, exc_cls=OffloadException, rdbms_table=None
+):
+    ipa_predicate_type = getattr(options, "ipa_predicate_type", None)
+    active_lpa_opts = active_data_append_options(
+        options,
+        partition_type=OFFLOAD_PARTITION_TYPE_LIST,
+        ignore_partition_names_opt=True,
+    )
+    active_rpa_opts = active_data_append_options(
+        options,
+        partition_type=OFFLOAD_PARTITION_TYPE_RANGE,
+        ignore_partition_names_opt=True,
+    )
+    if ipa_predicate_type in [
+        INCREMENTAL_PREDICATE_TYPE_RANGE,
+        INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+    ]:
+        if active_lpa_opts:
+            raise exc_cls(
+                "LIST %s with %s: %s"
+                % (
+                    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                    ipa_predicate_type,
+                    ", ".join(active_lpa_opts),
+                )
+            )
+        if rdbms_table and active_rpa_opts:
+            # If we have access to an RDBMS table then we can check if the partition column data types are valid for IPA
+            unsupported_types = rdbms_table.unsupported_partition_data_types(
+                partition_type_override=OFFLOAD_PARTITION_TYPE_RANGE
+            )
+            if unsupported_types:
+                raise exc_cls(
+                    "RANGE %s with partition data types: %s"
+                    % (
+                        IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                        ", ".join(unsupported_types),
+                    )
+                )
+    elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST:
+        if active_rpa_opts:
+            raise exc_cls(
+                "RANGE %s with %s: %s"
+                % (
+                    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                    ipa_predicate_type,
+                    ", ".join(active_rpa_opts),
+                )
+            )
+    elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_PREDICATE:
+        if not options.offload_predicate:
+            raise exc_cls(IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT)
+
+
+def check_opt_is_posint(
+    opt_name, opt_val, exception_class=OptionValueError, allow_zero=False
+):
+    if is_pos_int(opt_val, allow_zero=allow_zero):
+        return int(opt_val)
+    else:
+        raise exception_class(
+            "option %s: invalid positive integer value: %s" % (opt_name, opt_val)
+        )
 
 
 def check_table_structure(frontend_table, backend_table, messages: OffloadMessages):
@@ -287,3 +402,152 @@ def offload_backend_db_message(
         raise OffloadException(message)
     else:
         messages.warning(message, ansi_code="red")
+
+
+def active_data_append_options(
+    opts,
+    partition_type=None,
+    from_options=False,
+    ignore_partition_names_opt=False,
+    ignore_pbo=False,
+):
+    rpa_opts = {
+        "--less-than-value": opts.less_than_value,
+        "--partition-names": opts.partition_names_csv,
+    }
+    lpa_opts = {
+        "--equal-to-values": opts.equal_to_values,
+        "--partition-names": opts.partition_names_csv,
+    }
+    ida_opts = {"--offload-predicate": opts.offload_predicate}
+
+    if from_options:
+        # options has a couple of synonyms for less_than_value
+        rpa_opts.update(
+            {
+                "--older-than-days": opts.older_than_days,
+                "--older-than-date": opts.older_than_date,
+            }
+        )
+
+    if ignore_partition_names_opt:
+        del rpa_opts["--partition-names"]
+        del lpa_opts["--partition-names"]
+
+    if partition_type == OFFLOAD_PARTITION_TYPE_RANGE:
+        chk_opts = rpa_opts
+    elif partition_type == OFFLOAD_PARTITION_TYPE_LIST:
+        chk_opts = lpa_opts
+    elif not partition_type:
+        chk_opts = {} if ignore_pbo else ida_opts.copy()
+        chk_opts.update(lpa_opts)
+        chk_opts.update(rpa_opts)
+
+    active_pa_opts = [_ for _ in chk_opts if chk_opts[_]]
+    return active_pa_opts
+
+
+def normalise_verify_options(options):
+    if getattr(options, "verify_parallelism", None):
+        options.verify_parallelism = check_opt_is_posint(
+            "--verify-parallelism", options.verify_parallelism, allow_zero=True
+        )
+
+
+def normalise_data_sampling_options(options):
+    if hasattr(options, "data_sample_pct"):
+        if type(options.data_sample_pct) == str and re.search(
+            r"^[\d\.]+$", options.data_sample_pct
+        ):
+            options.data_sample_pct = float(options.data_sample_pct)
+        elif options.data_sample_pct == "AUTO":
+            options.data_sample_pct = DATA_SAMPLE_SIZE_AUTO
+        elif type(options.data_sample_pct) not in (int, float):
+            raise OffloadOptionError(
+                'Invalid value "%s" for --data-sample-percent' % options.data_sample_pct
+            )
+    else:
+        options.data_sample_pct = 0
+
+    if hasattr(options, "data_sample_parallelism"):
+        options.data_sample_parallelism = check_opt_is_posint(
+            "--data-sample-parallelism",
+            options.data_sample_parallelism,
+            allow_zero=True,
+        )
+
+
+def normalise_less_than_options(options, exc_cls=OffloadException):
+    if not hasattr(options, "older_than_date"):
+        # We mustn't be in offload or present so should just drop out
+        return
+
+    active_pa_opts = active_data_append_options(options, from_options=True)
+    if len(active_pa_opts) > 1:
+        raise exc_cls(
+            "%s: %s"
+            % (CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT, ", ".join(active_pa_opts))
+        )
+
+    if options.reset_hybrid_view and len(active_pa_opts) == 0:
+        raise exc_cls(RESET_HYBRID_VIEW_EXCEPTION_TEXT)
+
+    if options.older_than_date:
+        try:
+            # move the value into less_than_value
+            options.less_than_value = parse_yyyy_mm_dd(options.older_than_date)
+            options.older_than_date = None
+        except ValueError as exc:
+            raise exc_cls("option --older-than-date: %s" % str(exc))
+    elif options.older_than_days:
+        options.older_than_days = check_opt_is_posint(
+            "--older-than-days", options.older_than_days, allow_zero=True
+        )
+        # move the value into less_than_value
+        options.less_than_value = datetime.today() - timedelta(options.older_than_days)
+        options.older_than_days = None
+
+    check_ipa_predicate_type_option_conflicts(options, exc_cls=exc_cls)
+
+
+def normalise_offload_predicate_options(options):
+    if options.offload_predicate:
+        if isinstance(options.offload_predicate, str):
+            options.offload_predicate = GenericPredicate(options.offload_predicate)
+
+        if (
+            options.less_than_value
+            or options.older_than_date
+            or options.older_than_days
+        ):
+            raise OffloadOptionError(
+                "Predicate offload cannot be used with incremental partition offload options: (--less-than-value/--older-than-date/--older-than-days)"
+            )
+
+    no_modify_hybrid_view_option_used = not options.offload_predicate_modify_hybrid_view
+    if no_modify_hybrid_view_option_used and not options.offload_predicate:
+        raise OffloadOptionError(
+            "--no-modify-hybrid-view can only be used with --offload-predicate"
+        )
+
+
+def normalise_stats_options(options, target_backend):
+    if options.offload_stats_method not in [
+        OFFLOAD_STATS_METHOD_NATIVE,
+        OFFLOAD_STATS_METHOD_HISTORY,
+        OFFLOAD_STATS_METHOD_COPY,
+        OFFLOAD_STATS_METHOD_NONE,
+    ]:
+        raise OffloadOptionError(
+            "Unsupported value for --offload-stats: %s" % options.offload_stats_method
+        )
+
+    if (
+        options.offload_stats_method == OFFLOAD_STATS_METHOD_HISTORY
+        and target_backend == DBTYPE_IMPALA
+    ):
+        options.offload_stats_method = OFFLOAD_STATS_METHOD_NATIVE
+
+
+def parse_yyyy_mm_dd(ds):
+    return datetime.strptime(ds, "%Y-%m-%d")

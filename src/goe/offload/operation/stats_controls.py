@@ -106,7 +106,6 @@ def copy_rdbms_stats_to_backend(
     dry_run = bool(not offload_options.execute)
     rdbms_tab_stats = offload_source_table.table_stats
     rdbms_col_stats = rdbms_tab_stats["column_stats"]
-    rdbms_part_stats = rdbms_tab_stats["partition_stats"]
     tab_stats = {
         tab_key: rdbms_tab_stats[tab_key]
         for tab_key in ["num_rows", "num_bytes", "avg_row_len"]

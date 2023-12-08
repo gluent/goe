@@ -317,7 +317,7 @@ def test_offload_basic_dim(config, schema, data_db):
     assert backend_table_exists(
         config, backend_api, messages, load_db, OFFLOAD_DIM
     ), "Backend load table should exist"
-    standard_dimension_assertion(
+    assert standard_dimension_assertion(
         config, backend_api, messages, repo_client, schema, data_db, OFFLOAD_DIM
     )
 
@@ -357,7 +357,7 @@ def test_offload_basic_dim(config, schema, data_db):
     assert not backend_table_exists(
         config, backend_api, messages, load_db, OFFLOAD_DIM
     ), "Backend load table should NOT exist"
-    standard_dimension_assertion(
+    assert standard_dimension_assertion(
         config, backend_api, messages, repo_client, schema, data_db, OFFLOAD_DIM
     )
     assert offload_basic_dim_assertion(backend_api, messages, data_db, backend_name)

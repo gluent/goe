@@ -6,18 +6,11 @@ from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     PART_COL_GRANULARITY_DAY,
     PART_COL_GRANULARITY_MONTH,
+    TOTAL_ROWS_OFFLOADED_LOG_TEXT,
 )
 from goe.offload.offload_functions import convert_backend_identifier_case
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.offload_metadata_functions import (
-    incremental_hv_list_from_csv,
-    incremental_hv_csv_from_list,
-    flatten_lpa_individual_high_values,
-    split_metadata_incremental_high_values,
-    HYBRID_VIEW_IPA_HWM_TOKEN_RDBMS_BEGIN,
-    HYBRID_VIEW_IPA_HWM_TOKEN_RDBMS_END,
-    HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_BEGIN,
-    HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_END,
     OFFLOAD_TYPE_FULL,
     OFFLOAD_TYPE_INCREMENTAL,
 )
@@ -76,6 +69,26 @@ def text_in_events(messages, message_token) -> bool:
 def text_in_messages(messages, log_text) -> bool:
     messages.log(f"text_in_messages({log_text})", detail=VERBOSE)
     return test_functions.text_in_messages(messages, log_text)
+
+
+def messages_step_executions(messages, step_text) -> int:
+    """Return the number of times step "step_text" was executed."""
+    assert step_text
+    messages.log("messages_step_executions: %s" % step_text, detail=VERBOSE)
+    if messages and step_text in messages.steps:
+        return messages.steps[step_text]["count"]
+    return 0
+
+
+def get_offload_row_count_from_log(messages, test_name):
+    """Search test log forwards from the "test_name" we are processing and find the offload row count"""
+    messages.log("get_offload_row_count_from_log(%s)" % test_name, detail=VERBOSE)
+    matched_line = messages.get_line_from_log(
+        TOTAL_ROWS_OFFLOADED_LOG_TEXT, search_from_text=test_name
+    )
+    messages.log("matched_line: %s" % matched_line)
+    rows = int(matched_line.split()[-1]) if matched_line else None
+    return rows
 
 
 def backend_column_exists(

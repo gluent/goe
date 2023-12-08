@@ -53,6 +53,7 @@ from goe.offload.offload_constants import (
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
     SORT_COLUMNS_NO_CHANGE,
+    TOTAL_ROWS_OFFLOADED_LOG_TEXT,
 )
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
 from goe.offload.offload_source_data import get_offload_type_for_config, \
@@ -148,7 +149,6 @@ OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT = 'Switching to offload type INCREME
 OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT = 'Switching to INCREMENTAL for LIST partitioned table'
 OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT = 'Switching from offload type FULL to INCREMENTAL is not supported for Subpartition-Based Offload'
 RETAINING_PARTITITON_FUNCTIONS_MESSAGE_TEXT = 'Retaining partition functions from backend target'
-TOTAL_ROWS_OFFLOADED_LOG_TEXT = 'Total rows offloaded'
 
 # Config that you would expect to be different from one offload to the next
 EXPECTED_OFFLOAD_ARGS = [

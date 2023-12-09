@@ -1755,7 +1755,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             FROM (
                     SELECT CAST(MOD(ROWNUM,100)+1 AS NUMBER(4))  prod_id
                     ,      CAST(MOD(ROWNUM,1000)+1 AS NUMBER(5)) cust_id
-                    ,      ADD_MONTHS(DATE'%(hv6_date)s',-(MOD(ROWNUM,7))) - MOD(ROWNUM,28) time_id
+                    ,      ADD_MONTHS(DATE'%(hv6_date)s',-(MOD(ROWNUM,7))) - MOD(ROWNUM,31) time_id
                     ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(2))    channel_id
                     ,      CAST(MOD(ROWNUM,100)+1 AS NUMBER)     promo_id
                     ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(10,2)) quantity_sold

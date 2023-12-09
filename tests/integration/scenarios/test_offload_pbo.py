@@ -70,6 +70,19 @@ from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
 )
+from tests.integration.test_sets.stories.story_setup_functions import (
+    SALES_BASED_FACT_HV_1,
+    SALES_BASED_FACT_HV_2,
+    SALES_BASED_FACT_HV_3,
+    SALES_BASED_FACT_HV_4,
+    SALES_BASED_FACT_PRE_HV,
+    SALES_BASED_FACT_HV_1_NUM,
+    SALES_BASED_FACT_HV_2_NUM,
+    SALES_BASED_FACT_HV_3_NUM,
+    SALES_BASED_FACT_HV_4_NUM,
+    SALES_BASED_FACT_HV_7_NUM,
+    SALES_BASED_FACT_PRE_HV_NUM,
+)
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
@@ -122,6 +135,20 @@ def data_db(schema, config):
     data_db = data_db_name(schema, config)
     data_db = convert_backend_identifier_case(config, data_db)
     return data_db
+
+
+def const_to_date_expr(config, constant):
+    if config.db_type == DBTYPE_TERADATA:
+        return f"DATE '{constant}'"
+    else:
+        return f"DATE' {constant}'"
+
+
+def late_dim_filter_clause(config):
+    return "time_id BETWEEN {} AND  {}".format(
+        const_to_date_expr(config, SALES_BASED_FACT_HV_3),
+        const_to_date_expr(config, SALES_BASED_FACT_HV_4),
+    )
 
 
 def gen_simple_unicode_dimension_ddl(
@@ -794,3 +821,246 @@ def test_offload_pbo_range(config, schema, data_db):
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
     # TODO Testing needs copying over from offload_pbo.py tests.
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+            schema, RANGE_TABLE, simple_partition_names=True
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, RANGE_TABLE
+            ),
+        ],
+    )
+
+    # Offload 1st datetime predicate of RANGE partitioned table.
+    options = {
+        "owner_table": schema + "." + RANGE_TABLE,
+        "offload_predicate": GenericPredicate(
+            "(column(time_id) >= datetime(%s)) and (column(time_id) < datetime(%s))"
+            % (SALES_BASED_FACT_HV_2, SALES_BASED_FACT_HV_3)
+        ),
+        "reset_backend_table": True,
+    }
+    messages.log(f"{id}:1", detail=VVERBOSE)
+    run_offload(options, config, messages)
+    assert pbo_assertion(
+        messages,
+        repo_client,
+        schema,
+        RANGE_TABLE,
+        number_of_predicates=1,
+        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+        expected_incremental_key="NULL",
+        expected_incremental_range="NULL",
+        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+        values_in_predicate_value_metadata=[
+            SALES_BASED_FACT_HV_2,
+            SALES_BASED_FACT_HV_3,
+        ],
+    )
+    assert check_predicate_count_matches_log(
+        frontend_api,
+        messages,
+        schema,
+        RANGE_TABLE,
+        f"{id}:1",
+        "time_id >= %s and time_id < %s"
+        % (
+            const_to_date_expr(config, SALES_BASED_FACT_HV_2),
+            const_to_date_expr(config, SALES_BASED_FACT_HV_3),
+        ),
+    )
+
+    # Offload 2nd datetime predicate of RANGE partitioned table.
+    options = {
+        "owner_table": schema + "." + RANGE_TABLE,
+        "offload_predicate": GenericPredicate(
+            "column(time_id) = datetime(%s)" % SALES_BASED_FACT_HV_1
+        ),
+    }
+    run_offload(options, config, messages)
+    assert pbo_assertion(
+        messages,
+        repo_client,
+        schema,
+        RANGE_TABLE,
+        number_of_predicates=2,
+        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+        expected_incremental_key="NULL",
+        expected_incremental_range="NULL",
+        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+        values_in_predicate_value_metadata=[
+            SALES_BASED_FACT_HV_2,
+            SALES_BASED_FACT_HV_3,
+            SALES_BASED_FACT_HV_1,
+        ],
+    )
+
+    # Offload With Invalid Options.
+    # Attempt to offload by partition while in PREDICATE mode is not valid.
+    options = {
+        "owner_table": schema + "." + RANGE_TABLE,
+        "older_than_date": SALES_BASED_FACT_HV_1,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
+    )
+
+    # Offload With Invalid Options.
+    # Attempt to use offload type FULL while in PREDICATE mode is not valid.
+    options = {
+        "owner_table": schema + "." + RANGE_TABLE,
+        "offload_predicate": GenericPredicate(
+            "(column(time_id) = datetime(%s)) and (column(channel_id) = numeric(3))"
+            % SALES_BASED_FACT_HV_4
+        ),
+        "offload_type": OFFLOAD_TYPE_FULL,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
+    )
+
+
+def test_offload_pbo_list(config, schema, data_db):
+    """PBO testing with a LIST partitioned table."""
+    id = "test_offload_pbo_list"
+    messages = get_test_messages(config, id)
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(config, messages)
+
+    if not frontend_api.gluent_lpa_supported():
+        messages.log(f"Skipping {id} for system/type: {config.db_type}/LIST")
+        return
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+            schema,
+            LIST_TABLE,
+            part_key_type=frontend_api.test_type_canonical_date(),
+            default_partition=True,
+            with_drop=True,
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LIST_TABLE
+            ),
+        ],
+    )
+
+    # Offload 1st partition putting table in LIST mode.
+    options = {
+        "owner_table": "%s.%s" % (schema, LIST_TABLE),
+        "equal_to_values": [SALES_BASED_FACT_HV_1],
+        "reset_backend_table": True,
+    }
+    run_offload(options, config, messages)
+
+    # Attempt to Offload 1st predicate over LIST IPA table, this is not valid.
+    options = {
+        "owner_table": schema + "." + LIST_TABLE,
+        "offload_predicate": GenericPredicate(
+            "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(3)))"
+            % (SALES_BASED_FACT_HV_1)
+        ),
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=PREDICATE_TYPE_INCOMPATIBLE_EXCEPTION_TEXT,
+    )
+
+    # Offload 1st predicate over LIST table.
+    options = {
+        "owner_table": schema + "." + LIST_TABLE,
+        "offload_predicate": GenericPredicate(
+            "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(3)))"
+            % (SALES_BASED_FACT_HV_1)
+        ),
+        "reset_backend_table": True,
+    }
+    messages.log(f"{id}:1", detail=VVERBOSE)
+    run_offload(options, config, messages)
+    assert pbo_assertion(
+        messages,
+        repo_client,
+        schema,
+        LIST_TABLE,
+        number_of_predicates=1,
+        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+        expected_incremental_key="NULL",
+        expected_incremental_range="NULL",
+        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+        values_in_predicate_value_metadata=[SALES_BASED_FACT_HV_1, "(3)"],
+    )
+    assert check_predicate_count_matches_log(
+        frontend_api,
+        messages,
+        schema,
+        LIST_TABLE,
+        f"{id}:1",
+        "yrmon = %s AND channel_id = 3"
+        % const_to_date_expr(config, SALES_BASED_FACT_HV_1),
+    )
+
+    # Attempt to offload partition from LIST table while already in PREDICATE mode.
+    options = {
+        "owner_table": "%s.%s" % (schema, LIST_TABLE),
+        "equal_to_values": [SALES_BASED_FACT_HV_1],
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
+    )
+
+    # Offload 2nd predicate over LIST table.
+    options = {
+        "owner_table": schema + "." + LIST_TABLE,
+        "offload_predicate": GenericPredicate(
+            "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(4)))"
+            % (SALES_BASED_FACT_HV_1)
+        ),
+    }
+    messages.log(f"{id}:2", detail=VVERBOSE)
+    run_offload(options, config, messages)
+    assert pbo_assertion(
+        messages,
+        repo_client,
+        schema,
+        LIST_TABLE,
+        number_of_predicates=2,
+        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+        expected_incremental_key="NULL",
+        expected_incremental_range="NULL",
+        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+        values_in_predicate_value_metadata=[SALES_BASED_FACT_HV_1, "(4)"],
+    )
+    assert check_predicate_count_matches_log(
+        frontend_api,
+        messages,
+        schema,
+        LIST_TABLE,
+        f"{id}:2",
+        "yrmon = %s AND channel_id = 4"
+        % const_to_date_expr(options, SALES_BASED_FACT_HV_1),
+    )

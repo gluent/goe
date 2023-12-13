@@ -546,7 +546,7 @@ def offload_data_verification(offload_source_table, offload_target_table, offloa
             prior_hvs = prior_hv_tuple[1]
 
     if offloading_open_ended_partition:
-      log('MAXVALUE/DEFAULT partition was offloaded therefore cannot add upper bound to verification query', detail=vverbose)
+      messages.log('MAXVALUE/DEFAULT partition was offloaded therefore cannot add upper bound to verification query', detail=VVERBOSE)
     else:
       new_hv_tuple = get_current_offload_hv(offload_source_table, source_data_client, offload_operation, messages)
       if new_hv_tuple:
@@ -570,10 +570,10 @@ def offload_data_verification(offload_source_table, offload_target_table, offloa
     if offload_options.execute and verify_by_count_results:
         num_diff, source_rows, hybrid_rows = verify_by_count_results
         if num_diff == 0:
-            log(f'Source and {hybrid_name} table data matches: offload successful'
-                + (' (with warnings)' if messages.get_warnings() else ''),
-                ansi_code='green')
-            log('%s origin_rows, %s %s' % (source_rows, hybrid_rows, hybrid_label), verbose)
+            messages.log(f'Source and {hybrid_name} table data matches: offload successful'
+                         + (' (with warnings)' if messages.get_warnings() else ''),
+                         ansi_code='green')
+            messages.log('%s origin_rows, %s %s' % (source_rows, hybrid_rows, hybrid_label), detail=VERBOSE)
         else:
             raise OffloadException('Source and Hybrid mismatch: %s differences, %s origin_rows, %s %s'
                                    % (num_diff, source_rows, hybrid_rows, hybrid_label))
@@ -585,8 +585,8 @@ def offload_data_verification(offload_source_table, offload_target_table, offloa
                                                  inflight_offload_predicate=source_data_client.get_inflight_offload_predicate())
     if messages.offload_step(command_steps.STEP_VERIFY_EXPORTED_DATA,
                              verify_fn, execute=offload_options.execute):
-      log('Source and Hybrid table data matches: offload successful%s'
-          % (' (with warnings)' if messages.get_warnings() else ''), ansi_code='green')
+      messages.log('Source and Hybrid table data matches: offload successful%s'
+                   % (' (with warnings)' if messages.get_warnings() else ''), ansi_code='green')
     else:
       raise OffloadException('Source and Hybrid mismatch')
 
@@ -1234,8 +1234,8 @@ class BaseOperation(object):
       size = rdbms_table.size_in_bytes
       size_literal = 'size'
     auto_tune = bool(size and (size or 0) < self._num_buckets_threshold)
-    log('Checking if --num-buckets should be reduced (%s < %s): %s'
-        % (size, self._num_buckets_threshold, auto_tune), vverbose)
+    messages.log('Checking if --num-buckets should be reduced (%s < %s): %s'
+                 % (size, self._num_buckets_threshold, auto_tune), detail=VVERBOSE)
     if auto_tune:
       auto_tune_reason = 'for table with small %s (<= %s)' % (size_literal, bytes_to_human_size(size))
       self.num_buckets = 1
@@ -1355,19 +1355,19 @@ class BaseOperation(object):
       lpa_opts_set = active_data_append_options(self, partition_type=OFFLOAD_PARTITION_TYPE_LIST)
       if offload_source_table.partition_type == OFFLOAD_PARTITION_TYPE_LIST and lpa_opts_set:
         self.ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_LIST
-        log('Defaulting INCREMENTAL_PREDICATE_TYPE=%s due to options: %s' % (self.ipa_predicate_type, lpa_opts_set), detail=vverbose)
+        messages.log('Defaulting INCREMENTAL_PREDICATE_TYPE=%s due to options: %s' % (self.ipa_predicate_type, lpa_opts_set), detail=VVERBOSE)
       elif offload_source_table.partition_type == OFFLOAD_PARTITION_TYPE_LIST and rpa_opts_set:
         unsupported_range_types = offload_source_table.unsupported_partition_data_types(partition_type_override=OFFLOAD_PARTITION_TYPE_RANGE)
         if unsupported_range_types:
           messages.debug('default_ipa_predicate_type for LIST has unsupported_range_types: %s' % str(unsupported_range_types))
         if not unsupported_range_types or not offload_source_table.offload_by_subpartition_capable():
           self.ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE
-          log('Defaulting INCREMENTAL_PREDICATE_TYPE=%s due to options: %s' % (self.ipa_predicate_type, rpa_opts_set), detail=vverbose)
+          messages.log('Defaulting INCREMENTAL_PREDICATE_TYPE=%s due to options: %s' % (self.ipa_predicate_type, rpa_opts_set), detail=VVERBOSE)
           # No subpartition complications so use check_ipa_predicate_type_option_conflicts to throw exception
           check_ipa_predicate_type_option_conflicts(self, rdbms_table=offload_source_table)
       elif offload_source_table.partition_type == OFFLOAD_PARTITION_TYPE_RANGE and rpa_opts_set:
         self.ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
-        log('Defaulting INCREMENTAL_PREDICATE_TYPE=%s due to options: %s' % (self.ipa_predicate_type, rpa_opts_set), detail=vverbose)
+        messages.log('Defaulting INCREMENTAL_PREDICATE_TYPE=%s due to options: %s' % (self.ipa_predicate_type, rpa_opts_set), detail=VVERBOSE)
 
   def set_bucket_hash_method_for_backend(self, backend_table, new_backend_columns, messages):
     if not backend_table.synthetic_bucketing_supported():
@@ -1405,7 +1405,7 @@ class BaseOperation(object):
 
     if self.offload_partition_columns:
       messages.notice('Partitioning backend table by: %s' % ','.join(self.offload_partition_columns), detail=VERBOSE)
-      log('Partition granularities: %s' % ','.join(self.offload_partition_granularity), detail=VVERBOSE)
+      messages.log('Partition granularities: %s' % ','.join(self.offload_partition_granularity), detail=VVERBOSE)
 
   def set_partition_info_on_canonical_columns(self, canonical_columns, rdbms_columns, backend_table):
     def get_partition_info(rdbms_column):
@@ -1477,7 +1477,7 @@ class BaseOperation(object):
       allow_auto_enable = False
       self.offload_by_subpartition = bool(hybrid_metadata and hybrid_metadata.is_subpartition_offload())
       if self.offload_by_subpartition:
-        log('Retaining --offload-by-subpartition from offloaded table', vverbose)
+        messages.log('Retaining --offload-by-subpartition from offloaded table', detail=VVERBOSE)
 
     if allow_auto_enable \
     and offload_source_table.partition_type == OFFLOAD_PARTITION_TYPE_LIST \

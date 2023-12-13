@@ -17,7 +17,7 @@ from goe.offload.offload_metadata_functions import (
 from goe.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING
 from goe.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP
 
-from tests.integration.test_sets.stories.story_globals import (
+from tests.integration.scenarios.scenario_constants import (
     OFFLOAD_PATTERN_100_0,
     OFFLOAD_PATTERN_100_10,
     OFFLOAD_PATTERN_90_10,

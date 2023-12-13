@@ -2,16 +2,13 @@ from textwrap import dedent
 
 import pytest
 
-from goe.gluent import (
-    IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
-    IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
-    IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
-)
 from goe.offload.offload_constants import (
-    DBTYPE_BIGQUERY,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
+    IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
 )
 from goe.offload.offload_functions import (
@@ -24,42 +21,24 @@ from goe.offload.offload_metadata_functions import (
     OFFLOAD_TYPE_INCREMENTAL,
 )
 from goe.offload.offload_source_data import (
-    OFFLOAD_TYPE_CHANGE_FOR_PBO_EXCEPTION_TEXT,
-    PREDICATE_APPEND_HWM_MESSAGE_TEXT,
     PREDICATE_TYPE_INCOMPATIBLE_EXCEPTION_TEXT,
     PREDICATE_TYPE_NO_MODIFY_HV_EXCEPTION_TEXT,
-    PREDICATE_TYPE_NO_MODIFY_RESET_EXCEPTION_TEXT,
     PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
-    PREDICATE_TYPE_REQUIRED_EXCEPTION_TEXT,
-    RANGE_AND_PREDICATE_WITHOUT_PART_KEY_EXCEPTION_TEXT,
 )
 from goe.offload.predicate_offload import GenericPredicate
-from goe.orchestration import command_steps
-from goe.orchestration.command_steps import step_title
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 from goe.persistence.orchestration_metadata import (
-    INCREMENTAL_PREDICATE_TYPE_LIST,
-    INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
-    INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE_AND_PREDICATE,
     INCREMENTAL_PREDICATE_TYPE_PREDICATE,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
-    INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE,
 )
-from goe.util.misc_functions import add_suffix_in_same_case
 
 from tests.integration.scenarios.assertion_functions import (
-    backend_column_exists,
-    backend_table_count,
     backend_table_exists,
     check_metadata,
-    date_gl_part_column_name,
     get_offload_row_count_from_log,
-    messages_step_executions,
-    sales_based_fact_assertion,
     standard_dimension_assertion,
-    text_in_events,
 )
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
@@ -75,15 +54,7 @@ from tests.integration.test_sets.stories.story_setup_functions import (
     SALES_BASED_FACT_HV_2,
     SALES_BASED_FACT_HV_3,
     SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
-    SALES_BASED_FACT_HV_1_NUM,
-    SALES_BASED_FACT_HV_2_NUM,
-    SALES_BASED_FACT_HV_3_NUM,
-    SALES_BASED_FACT_HV_4_NUM,
-    SALES_BASED_FACT_HV_7_NUM,
-    SALES_BASED_FACT_PRE_HV_NUM,
 )
-from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
@@ -96,28 +67,14 @@ EXC_TABLE = "STORY_PBO_EXC"
 DIM_TABLE = "STORY_PBO_DIM"
 DIM_TABLE_LATE = "STORY_PBO_D_LATE"
 RANGE_TABLE = "STORY_PBO_RANGE"
-RANGE_TABLE_LATE = "STORY_PBO_R_LATE"
-RANGE_TABLE_INTRA = "STORY_PBO_R_INTRA"
-LAR_TABLE_LATE = "STORY_PBO_LAR_LATE"
-LAR_TABLE_INTRA = "STORY_PBO_LAR_INTRA"
 LIST_TABLE = "STORY_PBO_LIST"
-LIST_TABLE_LATE = "STORY_PBO_L90_10_LATE"
-LIST_100_0_LATE = "STORY_PBO_L100_0_LATE"
-LIST_TABLE_INTRA = "STORY_PBO_L_INTRA"
-MCOL_TABLE_LATE = "STORY_PBO_MC_LATE"
 
-JOIN_NAME = "STORY_PBO_PJ"
-MJOIN_NAME = "STORY_PBO_MJ"
 UNICODE_TABLE = "STORY_PBO_UNI"
 UCODE_VALUE1 = "\u03a3"
 UCODE_VALUE2 = "\u30ad"
 CHAR_TABLE = "STORY_PBO_CHAR"
 TS_TABLE = "STORY_PBO_TS"
 RANGE_SP_LATE = "STORY_PBO_RR_LATE"
-
-OLD_HV_Y = "1970"
-OLD_HV_M = "01"
-OLD_HV_1 = "1970-01-01"
 
 
 @pytest.fixture
@@ -324,7 +281,6 @@ def test_offload_pbo_exceptions(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
 
     # Setup
     run_setup(
@@ -838,6 +794,24 @@ def test_offload_pbo_range(config, schema, data_db):
         ],
     )
 
+    # Attempt to offload for first time with predicate and "range" predicate type.
+    options = {
+        "owner_table": schema + "." + RANGE_TABLE,
+        "offload_predicate": GenericPredicate(
+            "(column(time_id) = datetime(%s))" % (SALES_BASED_FACT_HV_1)
+        ),
+        "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
+        "reset_backend_table": True,
+    }
+    messages.log(f"{id}:1", detail=VVERBOSE)
+    run_offload(
+        options,
+        config,
+        messages,
+        config_overrides={"execute": False},
+        expected_exception_string=IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
+    )
+
     # Offload 1st datetime predicate of RANGE partitioned table.
     options = {
         "owner_table": schema + "." + RANGE_TABLE,
@@ -1062,5 +1036,5 @@ def test_offload_pbo_list(config, schema, data_db):
         LIST_TABLE,
         f"{id}:2",
         "yrmon = %s AND channel_id = 4"
-        % const_to_date_expr(options, SALES_BASED_FACT_HV_1),
+        % const_to_date_expr(config, SALES_BASED_FACT_HV_1),
     )

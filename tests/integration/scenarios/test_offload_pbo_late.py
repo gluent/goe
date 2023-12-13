@@ -179,22 +179,6 @@ def offload_pbo_late_100_x_tests(
     else:
         raise NotImplementedError(f"Test table not implemented: {table_name}")
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, table_name, simple_partition_names=True
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, table_name
-            ),
-        ],
-    )
-
     # Offload 1st partition putting table in "range" mode.
     options = {
         "owner_table": schema + "." + table_name,
@@ -653,13 +637,13 @@ def test_offload_pbo_late_list_as_range_100_0(config, schema, data_db):
         messages,
         frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
             schema,
-            LAR_TABLE_LATE,
+            LAR_TABLE_LATE_100_0,
             part_key_type=frontend_api.test_type_canonical_date(),
             with_drop=True,
         ),
         python_fns=[
             lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LAR_TABLE_LATE
+                config, backend_api, messages, data_db, LAR_TABLE_LATE_100_0
             ),
         ],
     )

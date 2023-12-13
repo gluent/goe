@@ -1709,7 +1709,7 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                FROM (
                     SELECT CAST(MOD(ROWNUM,100)+1 AS NUMBER(4))  prod_id
                     ,      CAST(MOD(ROWNUM,1000)+1 AS NUMBER(5)) cust_id
-                    ,      ADD_MONTHS(DATE'%(hv6_date)s',-(MOD(ROWNUM,7))) - MOD(ROWNUM,28) time_id
+                    ,      ADD_MONTHS(DATE'%(hv6_date)s',-(MOD(ROWNUM,7))) - MOD(ROWNUM,31) time_id
                     ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(2))    channel_id
                     ,      CAST(MOD(ROWNUM,100)+1 AS NUMBER)     promo_id
                     ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(10,2)) quantity_sold
@@ -1749,12 +1749,21 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             "new_hv": new_hv,
         }
         ins = """INSERT INTO %(schema)s.%(table)s
-                 SELECT * FROM %(schema)s.sales
-                 WHERE time_id BETWEEN %(hv)s AND %(new_hv)s-1""" % {
+                 SELECT *
+                 FROM (
+                    SELECT CAST(MOD(ROWNUM,100)+1 AS NUMBER(4))  prod_id
+                    ,      CAST(MOD(ROWNUM,1000)+1 AS NUMBER(5)) cust_id
+                    ,      DATE'%(hv)s' + MOD(ROWNUM,25) time_id
+                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(2))    channel_id
+                    ,      CAST(MOD(ROWNUM,100)+1 AS NUMBER)     promo_id
+                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(10,2)) quantity_sold
+                    ,      CAST(ROWNUM*1.75 AS NUMBER(10,2))     amount_sold
+                    FROM   dual
+                    CONNECT BY ROWNUM <= 60
+                 ) sales""" % {
             "schema": schema,
             "table": table_name,
             "hv": hv,
-            "new_hv": new_hv,
         }
         return [alt, ins]
 
@@ -1811,10 +1820,9 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         self, schema: str, table_name: str, time_id_literal: str
     ) -> list:
         ins = """INSERT INTO %(schema)s.%(table_name)s
-        SELECT prod_id, cust_id, TO_DATE('%(time_id)s','YYYY-MM-DD HH24:MI:SS'), channel_id,
-               promo_id, quantity_sold, amount_sold
-        FROM   %(schema)s.sales
-        WHERE  ROWNUM = 1""" % {
+        SELECT 1, 1001, TO_DATE('%(time_id)s','YYYY-MM-DD HH24:MI:SS'), 1,
+               1, 1.1, 2.2
+        FROM   dual""" % {
             "schema": schema,
             "table_name": table_name,
             "time_id": time_id_literal,
@@ -1948,7 +1956,9 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         create_ddl = (
             dedent(
                 """\
-        CREATE TABLE %(schema)s.%(table)s PARTITION BY LIST (%(yrmon_alias)s)
+        CREATE TABLE %(schema)s.%(table)s
+        STORAGE (INITIAL 64K NEXT 64K)
+        PARTITION BY LIST (%(yrmon_alias)s)
         (%(p0_partition)sPARTITION %(pname1)s VALUES (%(datefn)s%(chr)s%(hv1)s%(chr)s%(datefnmask)s)
         ,PARTITION %(pname2)s VALUES (%(datefn)s%(chr)s%(hv2)s%(chr)s%(datefnmask)s)
         ,PARTITION %(pname3)s VALUES (%(datefn)s%(chr)s%(hv3)s%(chr)s%(datefnmask)s)
@@ -1958,7 +1968,17 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         ,PARTITION %(pname7)s VALUES (%(hv7datefn)s%(hv7chr)s%(hv7)s%(hv7chr)s%(hv7datefnmask)s))
         AS
         SELECT sales.*, %(yrmon_expr)s AS %(yrmon_alias)s%(extra_cols)s
-        FROM %(schema)s.sales
+        FROM (
+            SELECT CAST(MOD(ROWNUM,100)+1 AS NUMBER(4))  prod_id
+            ,      CAST(MOD(ROWNUM,1000)+1 AS NUMBER(5)) cust_id
+            ,      ADD_MONTHS(TO_DATE('%(hv7_actual)s','YYYYMM'),-(MOD(ROWNUM,7))) - MOD(ROWNUM,31) time_id
+            ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(2))    channel_id
+            ,      CAST(MOD(ROWNUM,100)+1 AS NUMBER)     promo_id
+            ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(10,2)) quantity_sold
+            ,      CAST(ROWNUM*1.75 AS NUMBER(10,2))     amount_sold
+            FROM   dual
+            CONNECT BY ROWNUM <= 500
+        ) sales
         WHERE time_id BETWEEN TO_DATE('%(hv1)s','YYYYMM') AND TO_DATE('%(hv7_actual)s','YYYYMM')
         AND TO_CHAR(time_id, 'YYYYMM') <> '%(hv2)s'
         %(extra_pred)s"""
@@ -2059,9 +2079,8 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         SELECT prod_id, cust_id, TO_DATE('%(time_id)s','YYYY-MM-DD HH24:MI:SS') AS time_id,
                channel_id, promo_id, quantity_sold, amount_sold,
                TO_DATE('%(yrmon)s','YYYY-MM-DD') AS yrmon
-        FROM   %(schema)s.sales
-        WHERE  time_id = TO_DATE('%(yrmon)s','YYYY-MM-DD')
-        AND    ROWNUM = 1""" % {
+        FROM   %(schema)s.%(table_name)s
+        WHERE  ROWNUM = 1""" % {
             "schema": schema,
             "table_name": table_name,
             "time_id": time_id_literal,

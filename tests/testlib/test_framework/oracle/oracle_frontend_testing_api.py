@@ -2079,9 +2079,8 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         SELECT prod_id, cust_id, TO_DATE('%(time_id)s','YYYY-MM-DD HH24:MI:SS') AS time_id,
                channel_id, promo_id, quantity_sold, amount_sold,
                TO_DATE('%(yrmon)s','YYYY-MM-DD') AS yrmon
-        FROM   %(schema)s.sales
-        WHERE  time_id = TO_DATE('%(yrmon)s','YYYY-MM-DD')
-        AND    ROWNUM = 1""" % {
+        FROM   %(schema)s.%(table_name)s
+        WHERE  ROWNUM = 1""" % {
             "schema": schema,
             "table_name": table_name,
             "time_id": time_id_literal,

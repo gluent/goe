@@ -44,24 +44,18 @@ from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_RANGE,
     INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE,
 )
-from goe.util.misc_functions import add_suffix_in_same_case
 
 from tests.integration.scenarios.assertion_functions import (
-    backend_column_exists,
-    backend_table_count,
-    backend_table_exists,
     check_metadata,
     date_gl_part_column_name,
     get_offload_row_count_from_log,
     messages_step_executions,
     sales_based_fact_assertion,
-    standard_dimension_assertion,
-    text_in_events,
+    text_in_log,
 )
 from tests.integration.scenarios.scenario_constants import (
     OFFLOAD_PATTERN_100_0,
     OFFLOAD_PATTERN_100_10,
-    OFFLOAD_PATTERN_90_10,
 )
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
@@ -151,10 +145,13 @@ def offload_pbo_late_100_x_tests(
     assert offload_pattern in (OFFLOAD_PATTERN_100_0, OFFLOAD_PATTERN_100_10)
     assert table_name in (RANGE_TABLE_LATE_100_0, LAR_TABLE_LATE_100_0)
 
-    part_key_type = frontend_api.test_type_canonical_date() if frontend_api else None
+    part_key_type = frontend_api.test_type_canonical_date()
     if table_name == RANGE_TABLE_LATE_100_0:
         inc_key = "TIME_ID"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
+        add_rows_fn = lambda: frontend_api.sales_based_fact_late_arriving_data_sql(
+            schema, table_name, OLD_HV_1
+        )
         if offload_pattern == OFFLOAD_PATTERN_100_0:
             test_id = "range_100_0"
             hv_1 = chk_hv_1 = None
@@ -169,8 +166,9 @@ def offload_pbo_late_100_x_tests(
             return []
         inc_key = "YRMON"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE
-        # add_rows_fn = lambda: gen_insert_late_arriving_sales_based_list_data(frontend_api, schema, LAR_TABLE_LATE_100_0, OLD_HV_1,
-        #                                                                      SALES_BASED_FACT_HV_1)
+        add_rows_fn = lambda: frontend_api.sales_based_list_fact_late_arriving_data_sql(
+            schema, table_name, OLD_HV_1, SALES_BASED_FACT_HV_1
+        )
         if offload_pattern == OFFLOAD_PATTERN_100_0:
             test_id = "lar_100_0"
             hv_1 = chk_hv_1 = None
@@ -228,9 +226,7 @@ def offload_pbo_late_100_x_tests(
         backend_api,
         config,
         messages,
-        frontend_sqls=frontend_api.sales_based_fact_late_arriving_data_sql(
-            schema, table_name, OLD_HV_1
-        ),
+        frontend_sqls=add_rows_fn(),
     )
     assert (
         frontend_api.get_table_row_count(
@@ -321,7 +317,7 @@ def offload_pbo_late_arriving_std_range_tests(
     expected_incremental_range = None
     offload_by_subpartition = False
     offload_partition_columns = None
-    part_key_type = frontend_api.test_type_canonical_date() if frontend_api else None
+    part_key_type = frontend_api.test_type_canonical_date()
     if table_name == RANGE_TABLE_LATE:
         inc_key = "TIME_ID"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
@@ -339,7 +335,9 @@ def offload_pbo_late_arriving_std_range_tests(
             "(column(yrmon) = datetime(%s)) and (column(time_id) = datetime(%s))"
             % (SALES_BASED_FACT_HV_1, OLD_HV_1)
         )
-        # add_row_fn = lambda: gen_insert_late_arriving_sales_based_list_data(frontend_api, schema, table_name, OLD_HV_1, SALES_BASED_FACT_HV_1)
+        add_row_fn = lambda: frontend_api.sales_based_list_fact_late_arriving_data_sql(
+            schema, table_name, OLD_HV_1, SALES_BASED_FACT_HV_1
+        )
     elif table_name == MCOL_TABLE_LATE:
         inc_key = "TIME_YEAR, TIME_MONTH, TIME_ID"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
@@ -404,7 +402,7 @@ def offload_pbo_late_arriving_std_range_tests(
         backend_api,
         config,
         messages,
-        frontend_sqls=[add_row_fn()],
+        frontend_sqls=add_row_fn(),
     )
     assert (
         frontend_api.get_table_row_count(
@@ -495,7 +493,9 @@ def offload_pbo_late_arriving_std_range_tests(
     assert check_predicate_count_matches_log(
         frontend_api, messages, schema, table_name, f"{test_id}:1", chk_cnt_filter
     )
-    assert messages.text_in_messages(PREDICATE_APPEND_HWM_MESSAGE_TEXT)
+    assert text_in_log(
+        messages, PREDICATE_APPEND_HWM_MESSAGE_TEXT, search_from_text=f"{test_id}:1"
+    )
 
     # Attempt to re-offload same predicate.
     run_offload(options, config, messages, expected_status=False)
@@ -538,8 +538,7 @@ def test_offload_pbo_late_range(config, schema, data_db):
     )
 
     # TODO do we need to create a test for below 100_10 tests?
-    # offload_pbo_late_100_x_tests(config, backend_api, frontend_api, messages, repo_client, schema,
-    #                                    data_db, RANGE_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
+    # offload_pbo_late_100_x_tests(config, backend_api, frontend_api, messages, repo_client, schema, data_db, RANGE_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
 
 
 def test_offload_pbo_late_range_100_0(config, schema, data_db):
@@ -582,7 +581,7 @@ def test_offload_pbo_late_range_100_0(config, schema, data_db):
 
 def test_offload_pbo_late_list_as_range(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a LIST_AS_RANGE."""
-    id = "test_offload_pbo_late"
+    id = "test_offload_pbo_late_list_as_range"
     messages = get_test_messages(config, id)
 
     if config.db_type == DBTYPE_TERADATA:
@@ -595,19 +594,93 @@ def test_offload_pbo_late_list_as_range(config, schema, data_db):
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(config, messages)
 
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+            schema,
+            LAR_TABLE_LATE,
+            part_key_type=frontend_api.test_type_canonical_date(),
+            with_drop=True,
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LAR_TABLE_LATE
+            ),
+        ],
+    )
+
+    offload_pbo_late_arriving_std_range_tests(
+        schema,
+        data_db,
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        LAR_TABLE_LATE,
+        id,
+    )
+
     # TODO
-    # setup_fn = lambda: gen_sales_based_list_create_ddl(frontend_api, schema, table_name, part_key_type=part_key_type)
-    # offload_pbo_late_arriving_std_range_tests(schema, data_db, config, backend_api, frontend_api,
-    #                                                 messages, repo_client, LAR_TABLE_LATE)
-    # offload_pbo_late_100_x_tests(options, backend_api, frontend_api, messages, repo_client, schema,
-    #                                    hybrid_schema, data_db, LAR_TABLE_LATE_100_0, OFFLOAD_PATTERN_100_0, id)
     # offload_pbo_late_100_x_tests(options, backend_api, frontend_api, messages, repo_client, schema,
     #                                    hybrid_schema, data_db, LAR_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
 
 
+def test_offload_pbo_late_list_as_range_100_0(config, schema, data_db):
+    """Tests for Late Arriving Predicate Based Offload on a LIST_AS_RANGE 100/0."""
+    id = "test_offload_pbo_late_list_as_range_100_0"
+    messages = get_test_messages(config, id)
+
+    if config.db_type == DBTYPE_TERADATA:
+        messages.log(
+            "Skipping LAR tests on Teradata because CASE_N is not yet supported"
+        )
+        return
+
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(config, messages)
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+            schema,
+            LAR_TABLE_LATE,
+            part_key_type=frontend_api.test_type_canonical_date(),
+            with_drop=True,
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LAR_TABLE_LATE
+            ),
+        ],
+    )
+
+    offload_pbo_late_100_x_tests(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        LAR_TABLE_LATE_100_0,
+        OFFLOAD_PATTERN_100_0,
+        id,
+    )
+
+
 def test_offload_pbo_late_mcol_range(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a multi-partition column table."""
-    id = "test_offload_pbo_late"
+    id = "test_offload_pbo_late_mcol_range"
     messages = get_test_messages(config, id)
 
     if config.db_type == DBTYPE_TERADATA:
@@ -628,7 +701,7 @@ def test_offload_pbo_late_mcol_range(config, schema, data_db):
 
 def test_offload_pbo_late_range_sub(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a RANGE/RANGE table."""
-    id = "test_offload_pbo_late"
+    id = "test_offload_pbo_late_range_sub"
     messages = get_test_messages(config, id)
 
     if config.db_type == DBTYPE_TERADATA:

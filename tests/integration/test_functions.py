@@ -1,9 +1,19 @@
 from functools import lru_cache
 import os
+from typing import TYPE_CHECKING
 
 from goe.gluent import OffloadOperation
 from goe.config.orchestration_config import OrchestrationConfig
-from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
+from goe.offload.offload_messages import OffloadMessages, VVERBOSE
+
+from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
+
+if TYPE_CHECKING:
+    from goe.persistence.orchestration_repo_client import (
+        OrchestrationRepoClientInterface,
+    )
+    from testlib.test_framework.frontend_testing_api import FrontendTestingApiInterface
 
 
 def build_current_options():
@@ -43,3 +53,35 @@ def cached_default_test_user():
 
 def get_default_test_user_pass():
     return os.environ.get("GOE_TEST_USER_PASS", "GOE_TEST")
+
+
+def run_setup_ddl(
+    config: "OrchestrationRepoClientInterface",
+    frontend_api: "FrontendTestingApiInterface",
+    messages: "OffloadTestMessages",
+    sqls: list[str],
+    trace_action: str = "run_setup_ddl",
+):
+    test_schema = get_default_test_user()
+    test_schema_pass = get_default_test_user_pass()
+    with frontend_api.create_new_connection_ctx(
+        test_schema,
+        test_schema_pass,
+        trace_action_override=trace_action,
+    ) as sh_test_api:
+        if config.db_type == DBTYPE_MSSQL:
+            sh_test_api.execute_ddl("BEGIN TRAN")
+        for sql in sqls:
+            messages.log(f"Setup SQL: {sql}", detail=VVERBOSE)
+            try:
+                sh_test_api.execute_ddl(sql)
+            except Exception as exc:
+                if "does not exist" in str(exc) and sql.upper().startswith("DROP"):
+                    messages.log("Ignoring: " + str(exc), detail=VVERBOSE)
+                else:
+                    messages.log(str(exc))
+                    raise
+        if config.db_type != DBTYPE_TERADATA:
+            # We have autocommit enabled on Teradata:
+            #   COMMIT WORK not allowed for a DBC/SQL session. (-3706)
+            sh_test_api.execute_ddl("COMMIT")

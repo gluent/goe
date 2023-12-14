@@ -1379,18 +1379,10 @@ class BaseOperation(object):
                                                self.offload_partition_upper_value, self.synthetic_partition_digits,
                                                rdbms_column, backend_table)
 
-    def get_bucket_info(rdbms_column):
-      bucket_info = None
-      if self.num_buckets and self.bucket_hash_col.upper() == rdbms_column.name.upper() \
-      and backend_table.synthetic_bucketing_supported():
-        bucket_info = ColumnBucketInfo(self.bucket_hash_col, self.num_buckets, self.bucket_hash_method)
-      return bucket_info
-
     new_columns = []
     for canonical_column in canonical_columns:
       rdbms_column = match_table_column(canonical_column.name, rdbms_columns)
       canonical_column.partition_info = get_partition_info(rdbms_column)
-      canonical_column.bucket_info = get_bucket_info(rdbms_column)
       new_columns.append(canonical_column)
     return new_columns
 

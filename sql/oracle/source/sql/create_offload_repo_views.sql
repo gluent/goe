@@ -9,12 +9,13 @@ AS
     ,      fo.object_name                  AS frontend_object_name
     ,      bo.object_owner                 AS backend_object_owner
     ,      bo.object_name                  AS backend_object_name
-    ,      ot.code                         AS offload_type 
+    ,      ot.code                         AS offload_type
     ,      ort.code                        AS offload_range_type
     ,      om.offload_key                  AS offload_key
     ,      om.offload_high_value           AS offload_high_value
     ,      opt.code                        AS offload_predicate_type
-    ,      om.offload_predicate_value      AS offload_predicate_value 
+    ,      om.offload_predicate_value      AS offload_predicate_value
+    ,      om.offload_snapshot             AS offload_snapshot
     ,      om.offload_hash_column          AS offload_hash_column
     ,      om.offload_sort_columns         AS offload_sort_columns
     ,      om.offload_partition_functions  AS offload_partition_functions

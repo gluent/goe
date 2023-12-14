@@ -300,6 +300,7 @@ CREATE TABLE offload_metadata (
     offload_high_value            CLOB,
     offload_predicate_type_id     INTEGER,
     offload_predicate_value       CLOB,
+    offload_snapshot              INTEGER,
     offload_hash_column           VARCHAR2(128),
     offload_sort_columns          VARCHAR2(1000),
     offload_partition_functions   VARCHAR2(1000),

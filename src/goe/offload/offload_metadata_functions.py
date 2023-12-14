@@ -4,13 +4,10 @@
     LICENSE_TEXT
 """
 
-import logging
-
 from goe.offload.column_metadata import invalid_column_list_message, match_table_column, valid_column_list
 from goe.offload.offload_source_table import OffloadSourceTableInterface, convert_high_values_to_python, \
     OFFLOAD_PARTITION_TYPE_LIST, OFFLOAD_PARTITION_TYPE_RANGE
-from goe.offload.offload_xform_functions import transformations_to_metadata
-from goe.orchestration import command_steps, orchestration_constants
+from goe.orchestration import command_steps
 from goe.persistence.orchestration_metadata import OrchestrationMetadata,\
     INCREMENTAL_PREDICATE_TYPE_PREDICATE, INCREMENTAL_PREDICATE_TYPE_LIST, INCREMENTAL_PREDICATE_TYPE_RANGE
 from goe.util.misc_functions import csv_split, nvl, unsurround
@@ -31,9 +28,7 @@ HYBRID_VIEW_IPA_HWM_TOKEN_RDBMS_END = '--ENDRDBMSHWM'
 HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_BEGIN = '--BEGINREMOTEHWM'
 HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_END = '--ENDREMOTEHWM'
 
-METADATA_AGGREGATE_HYBRID_VIEW = 'GLUENT_OFFLOAD_AGGREGATE_HYBRID_VIEW'
 METADATA_HYBRID_VIEW = 'GLUENT_OFFLOAD_HYBRID_VIEW'
-METADATA_JOIN_HYBRID_VIEW = 'GLUENT_OFFLOAD_JOIN_HYBRID_VIEW'
 
 
 ###########################################################################
@@ -41,8 +36,8 @@ METADATA_JOIN_HYBRID_VIEW = 'GLUENT_OFFLOAD_JOIN_HYBRID_VIEW'
 ###########################################################################
 
 def gen_offload_metadata_from_base(repo_client, hybrid_operation, threshold_cols, offload_high_values,
-                                   incremental_predicate_values, object_type, backend_owner, backend_table_name,
-                                   base_metadata, object_hash=None):
+                                   incremental_predicate_values, backend_owner, backend_table_name,
+                                   base_metadata):
     """ base_metadata is used to carry certain metadata attributes forward to another operation,
         e.g. from an offload to a present. Also used to carry forward attributes from one offload to another which would
         not otherwise be set, e.g. Incremental Update attributes.
@@ -56,38 +51,23 @@ def gen_offload_metadata_from_base(repo_client, hybrid_operation, threshold_cols
         assert isinstance(hybrid_operation.offload_partition_functions, list),\
             '{} is not of type list'.format(type(hybrid_operation.offload_partition_functions))
 
-    offloaded_owner, offloaded_table, offload_scn, offload_version = None, None, None, None
-    bucket_hash_column, bucket_hash_method = None, None
+    offloaded_owner, offloaded_table = None, None
+    offload_scn, offload_version = None, None
+    bucket_hash_column = None
     incremental_predicate_type = None
     incremental_range = None
     offload_partition_functions = None
-    iu_key_columns, iu_extraction_method, iu_extraction_scn, iu_extraction_time = None, None, None, None
-    changelog_table, changelog_trigger, changelog_sequence = None, None, None
-    updatable_view, updatable_trigger = None, None
 
     if base_metadata:
         offloaded_owner = base_metadata.get('OFFLOADED_OWNER', '')
         offloaded_table = base_metadata.get('OFFLOADED_TABLE', '')
         offload_scn = base_metadata.get('OFFLOAD_SCN')
         bucket_hash_column = base_metadata.get('OFFLOAD_BUCKET_COLUMN')
-        bucket_hash_method = base_metadata.get('OFFLOAD_BUCKET_METHOD')
         offload_version = base_metadata.get('OFFLOAD_VERSION')
         incremental_range = base_metadata.get('INCREMENTAL_RANGE')
         incremental_predicate_type = base_metadata.get('INCREMENTAL_PREDICATE_TYPE')
         if base_metadata.get('OFFLOAD_PARTITION_FUNCTIONS'):
             offload_partition_functions = csv_split(base_metadata['OFFLOAD_PARTITION_FUNCTIONS'])
-        if object_type == METADATA_HYBRID_VIEW:
-            # Incremental Update metadata is only persisted to the base hybrid view metadata...
-            if base_metadata.get('IU_KEY_COLUMNS'):
-                iu_key_columns = csv_split(base_metadata.get('IU_KEY_COLUMNS'))
-            iu_extraction_method = base_metadata.get('IU_EXTRACTION_METHOD')
-            iu_extraction_scn = base_metadata.get('IU_EXTRACTION_SCN')
-            iu_extraction_time = base_metadata.get('IU_EXTRACTION_TIME')
-            changelog_table = base_metadata.get('CHANGELOG_TABLE')
-            changelog_trigger = base_metadata.get('CHANGELOG_TRIGGER')
-            changelog_sequence = base_metadata.get('CHANGELOG_SEQUENCE')
-            updatable_view = base_metadata.get('UPDATABLE_VIEW')
-            updatable_trigger = base_metadata.get('UPDATABLE_TRIGGER')
 
     # Predicate type might be changing so need to take it off the currently-executing operation...
     incremental_predicate_type = hybrid_operation.ipa_predicate_type or incremental_predicate_type
@@ -99,7 +79,6 @@ def gen_offload_metadata_from_base(repo_client, hybrid_operation, threshold_cols
             incremental_range = 'PARTITION'
 
     bucket_hash_column = bucket_hash_column or hybrid_operation.bucket_hash_col
-    bucket_hash_method = bucket_hash_method or hybrid_operation.bucket_hash_method
     offload_partition_functions = offload_partition_functions or hybrid_operation.offload_partition_functions
 
     if hybrid_operation.hwm_in_hybrid_view and incremental_predicate_type != INCREMENTAL_PREDICATE_TYPE_PREDICATE:
@@ -112,17 +91,11 @@ def gen_offload_metadata_from_base(repo_client, hybrid_operation, threshold_cols
 
     offload_sort_csv = column_name_list_to_csv(hybrid_operation.sort_columns)
     offload_partition_functions_csv = offload_partition_functions_to_csv(offload_partition_functions)
-    xform_str = transformations_to_metadata(hybrid_operation.column_transformations)
     incremental_predicate_value = [p.dsl for p in
                                    incremental_predicate_values] if incremental_predicate_values else None
-    iu_key_columns_csv = column_name_list_to_csv(iu_key_columns)
 
     return OrchestrationMetadata.from_attributes(
         client=repo_client,
-        hybrid_owner=hybrid_operation.hybrid_owner,
-        hybrid_view=hybrid_operation.hybrid_name,
-        object_type=object_type,
-        external_table=hybrid_operation.ext_table_name,
         backend_owner=backend_owner,
         backend_table=backend_table_name,
         offload_type=hybrid_operation.offload_type,
@@ -134,45 +107,32 @@ def gen_offload_metadata_from_base(repo_client, hybrid_operation, threshold_cols
         incremental_predicate_type=incremental_predicate_type,
         incremental_predicate_value=incremental_predicate_value,
         offload_bucket_column=bucket_hash_column,
-        offload_bucket_method=bucket_hash_method,
-        offload_bucket_count=hybrid_operation.num_buckets if bucket_hash_column else None,
         offload_version=offload_version,
         offload_sort_columns=offload_sort_csv,
-        transformations=xform_str,
-        object_hash=object_hash,
         offload_scn=offload_scn,
         offload_partition_functions=offload_partition_functions_csv,
-        iu_key_columns=iu_key_columns_csv,
-        iu_extraction_method=iu_extraction_method,
-        iu_extraction_scn=iu_extraction_scn,
-        iu_extraction_time=iu_extraction_time,
-        changelog_table=changelog_table,
-        changelog_trigger=changelog_trigger,
-        changelog_sequence=changelog_sequence,
-        updatable_view=updatable_view,
-        updatable_trigger=updatable_trigger,
         execution_id=hybrid_operation.execution_id
     )
 
 
 def gen_and_save_offload_metadata(repo_client, messages, hybrid_operation, hybrid_config,
                                   incremental_key_columns, incremental_high_values, incremental_predicate_values,
-                                  object_type, hadoop_owner, hadoop_table_name, base_metadata_dict,
-                                  object_hash=None, parent_command_type=None):
+                                  hadoop_owner, hadoop_table_name, base_metadata_dict,
+                                  parent_command_type=None):
     """ Simple wrapper over generation and saving of hybrid metadata.
         Returns the new metadata object for convenience.
     """
     assert isinstance(base_metadata_dict, dict)
-    hybrid_metadata = gen_offload_metadata_from_base(repo_client, hybrid_operation,
+    goe_metadata = gen_offload_metadata_from_base(repo_client, hybrid_operation,
                                                      incremental_key_columns, incremental_high_values,
-                                                     incremental_predicate_values, object_type,
+                                                     incremental_predicate_values,
                                                      hadoop_owner, hadoop_table_name,
-                                                     base_metadata_dict, object_hash=object_hash)
+                                                     base_metadata_dict)
 
     messages.offload_step(command_steps.STEP_SAVE_METADATA,
-                          lambda: hybrid_metadata.save(hybrid_operation.execution_id), execute=hybrid_config.execute,
+                          lambda: goe_metadata.save(hybrid_operation.execution_id), execute=hybrid_config.execute,
                           command_type=parent_command_type)
-    return hybrid_metadata
+    return goe_metadata
 
 
 def partition_columns_from_metadata(inc_key_string, rdbms_columns):
@@ -374,47 +334,3 @@ def offload_partition_functions_to_csv(offload_partition_functions):
     else:
         return None
     return ','.join(nvl(_, '') for _ in offload_partition_functions)
-
-
-logger = logging.getLogger(__name__)
-# Disabling logging by default
-logger.addHandler(logging.NullHandler())
-
-
-if __name__ == "__main__":
-    import sys
-    from goe.util.misc_functions import set_gluentlib_logging
-
-    log_level = sys.argv[-1:][0].upper()
-    if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
-        log_level = 'CRITICAL'
-
-    set_gluentlib_logging(log_level)
-
-    test_metadata = "TO_DATE(' 2011-04-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
-    print('test_metadata:', test_metadata)
-    decoded_metadata = incremental_hv_list_from_csv(test_metadata, INCREMENTAL_PREDICATE_TYPE_RANGE)
-    print('incremental_hv_list_from_csv:', decoded_metadata)
-    assert decoded_metadata == test_metadata
-
-    test_metadata = "('A', 'B'), ('C', 'D')"
-    print('test_metadata:', test_metadata)
-    decoded_metadata = incremental_hv_list_from_csv(test_metadata, INCREMENTAL_PREDICATE_TYPE_LIST)
-    print('incremental_hv_list_from_csv:', decoded_metadata)
-    assert decoded_metadata == ["'A', 'B'", "'C', 'D'"]
-
-    test_metadata = "2015, 03"
-    print('test_metadata:', test_metadata)
-    decoded_metadata = incremental_hv_list_from_csv(test_metadata, INCREMENTAL_PREDICATE_TYPE_RANGE)
-    print('incremental_hv_list_from_csv:', decoded_metadata)
-    assert decoded_metadata == test_metadata
-
-    test_metadata = ['COLUMN_1', 'COLUMN_2']
-    print('test_metadata:', test_metadata)
-    csv_formatted_metadata = column_name_list_to_csv(test_metadata)
-    print('csv_formatted_metadata:', csv_formatted_metadata)
-    assert csv_formatted_metadata == 'COLUMN_1,COLUMN_2'
-    tsv_formatted_metadata = column_name_list_to_csv(test_metadata, '~')
-    print('tsv_formatted_metadata:', tsv_formatted_metadata)
-    assert tsv_formatted_metadata == 'COLUMN_1~COLUMN_2'
-

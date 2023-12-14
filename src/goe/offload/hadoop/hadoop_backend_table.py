@@ -198,13 +198,6 @@ FROM %s.%s"""% (part_exprs, self.enclose_identifier(self._load_db_name), self.en
                             partition_tuples = partition_str_to_tuples(partition_str)
                             gather_partition_stats(True, partition_tuples)
                             progress_message(index+1, len(col_stats))
-        else:
-            if self._offload_stats_method in [OFFLOAD_STATS_METHOD_NATIVE, OFFLOAD_STATS_METHOD_HISTORY] and self._hive_column_stats_enabled:
-                self._log('Gathering column stats for all offload_bucket_id partitions', detail=VVERBOSE)
-                if not self._dry_run:
-                    for bucket in range(self._num_buckets):
-                        gather_partition_stats(True, [(OFFLOAD_BUCKET_NAME, bucket)])
-                        progress_message(bucket+1, self._num_buckets)
 
     def _create_hadoop_load_database(self):
         """ Hadoop specific method to create a HDFS path and load database """

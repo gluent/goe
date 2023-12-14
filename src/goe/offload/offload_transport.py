@@ -608,7 +608,7 @@ class OffloadTransport(object, metaclass=ABCMeta):
         #   http://spark.apache.org/docs/latest/configuration.html#available-properties
         self._spark_config_properties = self._prepare_spark_config_properties(offload_operation.offload_transport_spark_properties)
         self._bucket_hash_col = offload_operation.bucket_hash_col
-        self._column_transformations = offload_operation.column_transformations
+        self._column_transformations = {}
         self._unicode_string_columns_csv = offload_operation.unicode_string_columns_csv
         self._convert_nans_to_nulls = False
         # Details relating to a load table

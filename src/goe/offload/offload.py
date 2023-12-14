@@ -4,7 +4,7 @@ Ideally these would migrate to better locations in time.
 """
 
 from datetime import datetime, timedelta
-from optparse import OptionParser, Option, OptionValueError, SUPPRESS_HELP
+from optparse import OptionValueError
 import re
 from textwrap import dedent
 
@@ -16,33 +16,15 @@ from goe.offload.column_metadata import (
 )
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_constants import (
-    ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
-    DBTYPE_BIGQUERY,
     DBTYPE_IMPALA,
-    DBTYPE_ORACLE,
-    DBTYPE_MSSQL,
-    FILE_STORAGE_COMPRESSION_CODEC_GZIP,
-    FILE_STORAGE_COMPRESSION_CODEC_SNAPPY,
-    FILE_STORAGE_COMPRESSION_CODEC_ZLIB,
-    HYBRID_EXT_TABLE_DEGREE_AUTO,
-    IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
-    IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
-    IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
     CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
     RESET_HYBRID_VIEW_EXCEPTION_TEXT,
-    LOG_LEVEL_INFO,
-    LOG_LEVEL_DETAIL,
-    LOG_LEVEL_DEBUG,
-    OFFLOAD_BUCKET_NAME,
-    NUM_BUCKETS_AUTO,
     OFFLOAD_STATS_METHOD_COPY,
     OFFLOAD_STATS_METHOD_HISTORY,
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_STATS_METHOD_NONE,
-    OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
-    SORT_COLUMNS_NO_CHANGE,
 )
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
 from goe.offload.offload_metadata_functions import (
@@ -208,8 +190,6 @@ def check_table_structure(frontend_table, backend_table, messages: OffloadMessag
 def create_final_backend_table(
     offload_target_table,
     offload_operation,
-    offload_options,
-    rdbms_columns,
     gluent_object_type=DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_BASE_TABLE,
 ):
     """Create the final backend table"""

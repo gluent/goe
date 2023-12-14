@@ -18,7 +18,7 @@ To create a Python virtualenv and install all required packages:
 ```
 make clean && make install-dev
 source ./.venv/bin/activate
-PYTHONPATH=${PWD}:${PWD}/src
+PYTHONPATH=${PWD}/src
 ```
 
 # Install

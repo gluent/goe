@@ -3,13 +3,16 @@ TestCommandSteps: Unit test constants in command_steps are sound.
     1) Within the module.
     2) When compared to Gluent Repo data.
 """
-from unittest import TestCase, main
+from unittest import main
 
-from tests.integration.offload.unittest_functions import build_current_options
-
-from goe.offload.offload_messages import OffloadMessages
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
+)
+from tests.integration.test_functions import (
+    cached_current_options,
+)
+from tests.testlib.test_framework.test_functions import (
+    get_test_messages,
 )
 from tests.unit.orchestration.test_command_steps import (
     TestCommandSteps,
@@ -25,8 +28,8 @@ class TestCommandStepsIntegration(TestCommandSteps):
     def test_command_steps_repo(self):
         """Test the constants are present in the repo."""
         try:
-            config = build_current_options()
-            messages = OffloadMessages()
+            config = cached_current_options()
+            messages = get_test_messages(config, "TestCommandStepsIntegration")
             client = orchestration_repo_client_factory(config, messages)
             codes = client.get_command_step_codes()
             step_constants = self._get_step_constants()

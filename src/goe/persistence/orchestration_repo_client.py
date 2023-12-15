@@ -268,7 +268,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def set_offload_metadata(
-        self, metadata: Union[dict, OrchestrationMetadata], execution_id: ExecutionId
+        self, metadata: Union[dict, OrchestrationMetadata],
     ):
         """Persist metadata"""
 

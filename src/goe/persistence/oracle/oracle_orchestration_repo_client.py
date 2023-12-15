@@ -149,7 +149,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
 
     # TODO: Issue 18: fold execution_id into metadata and not have it as a global in offload_table and
     #                 a separate arg to several metadata functions...
-    def _metadata_dict_to_ora_object(self, metadata_dict, execution_id: ExecutionId):
+    def _metadata_dict_to_ora_object(self, metadata_dict):
         """
         Used to convert a Python dict of metadata to an Oracle object type ready for saving to the database.
         """
@@ -178,7 +178,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         metadata_obj.OFFLOAD_PARTITION_FUNCTIONS = metadata_dict[
             OFFLOAD_PARTITION_FUNCTIONS
         ]
-        metadata_obj.COMMAND_EXECUTION = execution_id.as_bytes()
+        metadata_obj.COMMAND_EXECUTION = metadata_dict[COMMAND_EXECUTION].as_bytes()
         metadata_obj.OFFLOAD_VERSION = metadata_dict[OFFLOAD_VERSION]
         return metadata_obj
 
@@ -207,7 +207,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             OFFLOAD_SNAPSHOT: metadata_obj.OFFLOAD_SNAPSHOT or None,
             OFFLOAD_PARTITION_FUNCTIONS: metadata_obj.OFFLOAD_PARTITION_FUNCTIONS
             or None,
-            COMMAND_EXECUTION: metadata_obj.COMMAND_EXECUTION,
+            COMMAND_EXECUTION: ExecutionId.from_bytes(metadata_obj.COMMAND_EXECUTION),
         }
         return metadata_dict
 
@@ -239,17 +239,15 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
     def _set_metadata(
         self,
         metadata: Union[dict, OrchestrationMetadata],
-        execution_id: ExecutionId,
     ):
         assert metadata
-        assert execution_id
         # In Oracle we expect the identifying owner/name to be upper case
         frontend_owner = metadata[OFFLOADED_OWNER].upper()
         frontend_name = metadata[OFFLOADED_TABLE].upper()
         logger.debug(f"Writing metadata: {frontend_owner}, {frontend_name}")
         if isinstance(metadata, OrchestrationMetadata):
             metadata = metadata.as_dict()
-        ora_metadata = self._metadata_dict_to_ora_object(metadata, execution_id)
+        ora_metadata = self._metadata_dict_to_ora_object(metadata)
         self._frontend_api.execute_function(
             "offload_repo.save_offload_metadata",
             arg_list=[frontend_owner, frontend_name, ora_metadata],
@@ -266,9 +264,8 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
     def set_offload_metadata(
         self,
         metadata: Union[dict, OrchestrationRepoClientInterface],
-        execution_id: ExecutionId,
     ):
-        self._set_metadata(metadata, execution_id)
+        self._set_metadata(metadata)
 
     def drop_offload_metadata(self, frontend_owner: str, frontend_name: str):
         self._drop_metadata(frontend_owner, frontend_name)

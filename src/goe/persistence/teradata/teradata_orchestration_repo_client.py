@@ -122,7 +122,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
         return metadata_dict
 
     def _set_metadata(
-        self, metadata: Union[dict, OrchestrationMetadata], execution_id: ExecutionId
+        self, metadata: Union[dict, OrchestrationMetadata]
     ):
         def prep_value(k, metadata):
             v = metadata.get(k)
@@ -136,7 +136,6 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
                 return v
 
         assert metadata
-        assert execution_id
         if isinstance(metadata, OrchestrationMetadata):
             metadata = metadata.as_dict()
 
@@ -183,9 +182,8 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
     def set_offload_metadata(
         self,
         metadata: Union[dict, OrchestrationRepoClientInterface],
-        execution_id: ExecutionId,
     ):
-        self._set_metadata(metadata, execution_id)
+        self._set_metadata(metadata)
 
     def drop_offload_metadata(self, frontend_owner, frontend_name):
         self._drop_metadata(frontend_owner, frontend_name)

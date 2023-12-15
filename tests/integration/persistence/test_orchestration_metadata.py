@@ -11,7 +11,6 @@ from goe.persistence.orchestration_metadata import (
     OrchestrationMetadata,
     METADATA_ATTRIBUTES,
 )
-from goe.offload.offload_constants import DBTYPE_ORACLE
 from goe.orchestration import orchestration_constants
 
 from tests.integration.test_functions import (
@@ -40,6 +39,7 @@ METADATA_DICT_TEST_DEFAULTS = {
     "OFFLOAD_SORT_COLUMNS": "SOME_COLUMN1,SOME_COLUMN2",
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": "UDF1,UDF2",
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_CHANNELS_METADATA_DICT = {
@@ -57,6 +57,7 @@ EXAMPLE_CHANNELS_METADATA_DICT = {
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_SALES_METADATA_DICT = {
@@ -75,6 +76,7 @@ EXAMPLE_SALES_METADATA_DICT = {
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
@@ -93,6 +95,7 @@ EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "SUBPARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_STORY_PBO_DIM_METADATA_DICT = {
@@ -111,6 +114,7 @@ EXAMPLE_STORY_PBO_DIM_METADATA_DICT = {
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_STORY_PBO_R_INTRA_METADATA_DICT = {
@@ -131,6 +135,7 @@ EXAMPLE_STORY_PBO_R_INTRA_METADATA_DICT = {
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 
@@ -190,10 +195,13 @@ class TestOrchestrationMetadata(TestCase):
             '{"test": 123}',
         )
 
-        # Save initial metadata
-        test_metadata.save(execution_id)
+        # Inject the execution id into our test metadata.
+        test_metadata.command_execution = execution_id
 
-        # Retrieve the metadata again and confirm all attributes are the same as those we saved
+        # Save initial metadata.
+        test_metadata.save()
+
+        # Retrieve the metadata again and confirm all attributes are the same as those we saved.
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
             UNITTEST_METADATA_NAME,
@@ -211,7 +219,7 @@ class TestOrchestrationMetadata(TestCase):
         # Test that the save function updates changes
         # Change by attribute:
         test_metadata.offload_snapshot = -1
-        test_metadata.save(execution_id)
+        test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
             UNITTEST_METADATA_NAME,
@@ -231,7 +239,7 @@ class TestOrchestrationMetadata(TestCase):
         test_metadata = OrchestrationMetadata(
             test_metadata_dict, client=test_metadata.client
         )
-        test_metadata.save(execution_id)
+        test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
             UNITTEST_METADATA_NAME,

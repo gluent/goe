@@ -1849,8 +1849,7 @@ def canonical_to_rdbms_mappings(canonical_columns, rdbms_table):
   return rdbms_columns
 
 
-def offload_type_force_and_aapd_effects(hybrid_operation, source_data_client, original_metadata, offload_source_table,
-                                        hybrid_options, messages):
+def offload_type_force_effects(hybrid_operation, source_data_client, original_metadata, offload_source_table, messages):
   if source_data_client.is_incremental_append_capable():
     original_offload_type = original_metadata.offload_type
     new_offload_type = hybrid_operation.offload_type
@@ -1929,12 +1928,11 @@ def offload_operation_logic(offload_operation, offload_source_table, offload_tar
   incr_append_capable = source_data_client.is_incremental_append_capable()
 
   if existing_metadata:
-    offload_type_force_and_aapd_effects(offload_operation, source_data_client, existing_metadata, offload_source_table,
-                                        offload_options, messages)
+    offload_type_force_effects(offload_operation, source_data_client, existing_metadata, offload_source_table, messages)
 
   if source_data_client.nothing_to_offload():
-    # Drop out early
-    return False
+      # Drop out early
+      return False
 
   if not offload_target_table.exists() or offload_operation.reset_backend_table:
     # We are creating a fresh table and therefore don't need to concern ourselves with existing structure
@@ -2070,7 +2068,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
   # of offload we'll do. This happens inside offload_operation_logic().
   if not offload_operation_logic(offload_operation, offload_source_table, offload_target_table, offload_options,
                                  source_data_client, existing_metadata, messages):
-    return False
+      return False
 
   data_gov_client = get_data_gov_client(offload_options,
                                         messages,
@@ -2092,11 +2090,11 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
     offload_target_table.drop_backend_table_step(purge=offload_operation.purge_backend_table)
 
   rows_offloaded = None
-  pre_offload_snapshot = None
 
-  # Pre-offload SCN will be stored in metadata.
+  pre_offload_snapshot = None
   if offload_options.db_type == DBTYPE_ORACLE:
-    pre_offload_snapshot = offload_source_table.get_current_scn(return_none_on_failure=True)
+      # Pre-offload SCN will be stored in metadata.
+      pre_offload_snapshot = offload_source_table.get_current_scn(return_none_on_failure=True)
 
   create_final_backend_table(offload_target_table, offload_operation)
 
@@ -2109,7 +2107,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
                                                     dfs_client)
 
   offload_target_table.set_final_table_casts(offload_source_table.columns,
-                                              data_transport_client.get_staging_file().get_staging_columns())
+                                             data_transport_client.get_staging_file().get_staging_columns())
   offload_target_table.setup_staging_area_step(data_transport_client.get_staging_file())
 
   rows_offloaded = offload_data_to_target(data_transport_client,
@@ -2125,24 +2123,18 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
   if not offload_operation.preserve_load_table:
     offload_target_table.cleanup_staging_area_step()
 
-  if not existing_metadata:
-    # New or reset offload. Start a new base metadata dictionary...
-    base_metadata = {'OFFLOADED_OWNER': offload_source_table.owner.upper(),
-                     'OFFLOADED_TABLE': offload_source_table.table_name.upper(),
-                     'OFFLOAD_SNAPSHOT': pre_offload_snapshot,
-                     'OFFLOAD_VERSION': offload_operation.goe_version}
-  else:
-    # Re-use existing metadata as base...
-    base_metadata = existing_metadata.as_dict()
-
   new_metadata = gen_and_save_offload_metadata(
-      repo_client, messages, offload_operation, offload_options,
-      incremental_key_columns=offload_source_table.partition_columns,
-      incremental_high_values=source_data_client.get_incremental_high_values(),
-      incremental_predicate_values=source_data_client.get_post_offload_predicates(),
-      hadoop_owner=offload_target_table.db_name,
-      hadoop_table_name=offload_target_table.table_name,
-      base_metadata_dict=base_metadata
+      repo_client,
+      messages,
+      offload_operation,
+      offload_options,
+      offload_target_table.db_name,
+      offload_target_table.table_name,
+      offload_source_table.partition_columns,
+      source_data_client.get_incremental_high_values(),
+      source_data_client.get_post_offload_predicates(),
+      pre_offload_snapshot,
+      existing_metadata
   )
   offload_operation.reset_hybrid_metadata(offload_options.execute, new_metadata)
 

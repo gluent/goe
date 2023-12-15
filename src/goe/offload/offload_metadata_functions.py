@@ -4,6 +4,8 @@
     LICENSE_TEXT
 """
 
+from typing import TYPE_CHECKING
+
 from goe.offload.column_metadata import (
     invalid_column_list_message,
     match_table_column,
@@ -21,16 +23,13 @@ from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_PREDICATE,
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
-    INCREMENTAL_PREDICATE_TYPE,
-    INCREMENTAL_RANGE,
-    OFFLOAD_BUCKET_COLUMN,
-    OFFLOAD_PARTITION_FUNCTIONS,
-    OFFLOAD_SNAPSHOT,
-    OFFLOAD_VERSION,
-    OFFLOADED_OWNER,
-    OFFLOADED_TABLE,
 )
 from goe.util.misc_functions import csv_split, nvl, unsurround
+
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+    from goe.offload.offload_messages import OffloadMessages
+    from goe.persistence.orchestration_repo_client import OrchestrationRepoClientInterface
 
 
 class OffloadMetadataException(Exception):
@@ -58,61 +57,63 @@ METADATA_HYBRID_VIEW = "GLUENT_OFFLOAD_HYBRID_VIEW"
 
 
 def gen_offload_metadata_from_base(
-    repo_client,
-    hybrid_operation,
+    repo_client: "OrchestrationRepoClientInterface",
+    offload_operation,
+    backend_owner: str,
+    backend_table_name: str,
     threshold_cols,
     offload_high_values,
     incremental_predicate_values,
-    backend_owner,
-    backend_table_name,
-    base_metadata,
+    offload_snapshot,
+    pre_offload_metadata: OrchestrationMetadata,
 ):
-    """base_metadata is used to carry certain metadata attributes forward to another operation,
+    """pre_offload_metadata is used to carry certain metadata attributes forward to another operation,
     e.g. from an offload to a present. Also used to carry forward attributes from one offload to another which would
     not otherwise be set, e.g. Incremental Update attributes.
     Backend owner and table names should NOT have their case interfered with. Some backends are case sensitive so
     we cannot uppercase all values for consistency (which is what we used to do).
     """
-    if hybrid_operation.sort_columns:
+    if offload_operation.sort_columns:
         assert isinstance(
-            hybrid_operation.sort_columns, list
+            offload_operation.sort_columns, list
         ), "{} is not of type list".format(
-            type(hybrid_operation.offload_partition_functions)
+            type(offload_operation.offload_partition_functions)
         )
-    if hybrid_operation.offload_partition_functions:
+    if offload_operation.offload_partition_functions:
         assert isinstance(
-            hybrid_operation.offload_partition_functions, list
+            offload_operation.offload_partition_functions, list
         ), "{} is not of type list".format(
-            type(hybrid_operation.offload_partition_functions)
+            type(offload_operation.offload_partition_functions)
         )
 
-    offloaded_owner, offloaded_table = None, None
-    offload_snapshot, offload_version = None, None
-    bucket_hash_column = None
+    offloaded_owner = offload_operation.owner
+    offloaded_table = offload_operation.table_name
+
     incremental_predicate_type = None
     incremental_range = None
     offload_partition_functions = None
-
-    if base_metadata:
-        offloaded_owner = base_metadata.get(OFFLOADED_OWNER, "")
-        offloaded_table = base_metadata.get(OFFLOADED_TABLE, "")
-        offload_snapshot = base_metadata.get(OFFLOAD_SNAPSHOT)
-        bucket_hash_column = base_metadata.get(OFFLOAD_BUCKET_COLUMN)
-        offload_version = base_metadata.get(OFFLOAD_VERSION)
-        incremental_range = base_metadata.get(INCREMENTAL_RANGE)
-        incremental_predicate_type = base_metadata.get(INCREMENTAL_PREDICATE_TYPE)
-        if base_metadata.get(OFFLOAD_PARTITION_FUNCTIONS):
+    if pre_offload_metadata:
+        # Some attributes should not be changed for data append operations.
+        bucket_hash_column = pre_offload_metadata.offload_bucket_column
+        offload_snapshot = pre_offload_metadata.offload_snapshot
+        offload_version = pre_offload_metadata.offload_version
+        incremental_range = pre_offload_metadata.incremental_range
+        incremental_predicate_type = pre_offload_metadata.incremental_predicate_type
+        if pre_offload_metadata.offload_partition_functions:
             offload_partition_functions = csv_split(
-                base_metadata[OFFLOAD_PARTITION_FUNCTIONS]
+                pre_offload_metadata.offload_partition_functions
             )
+    else:
+        bucket_hash_column = offload_operation.bucket_hash_col
+        offload_version = offload_operation.goe_version
 
-    # Predicate type might be changing so need to take it off the currently-executing operation...
+    # Predicate type might be changing so need to take it from the currently-executing operation...
     incremental_predicate_type = (
-        hybrid_operation.ipa_predicate_type or incremental_predicate_type
+        offload_operation.ipa_predicate_type or incremental_predicate_type
     )
 
     if not incremental_range:
-        if hybrid_operation.offload_by_subpartition:
+        if offload_operation.offload_by_subpartition:
             incremental_range = "SUBPARTITION"
         elif (
             threshold_cols
@@ -120,13 +121,12 @@ def gen_offload_metadata_from_base(
         ):
             incremental_range = "PARTITION"
 
-    bucket_hash_column = bucket_hash_column or hybrid_operation.bucket_hash_col
     offload_partition_functions = (
-        offload_partition_functions or hybrid_operation.offload_partition_functions
+        offload_partition_functions or offload_operation.offload_partition_functions
     )
 
     if (
-        hybrid_operation.hwm_in_hybrid_view
+        offload_operation.hwm_in_hybrid_view
         and incremental_predicate_type != INCREMENTAL_PREDICATE_TYPE_PREDICATE
     ):
         # incremental_predicate_type PREDICATE has a UNION ALL hybrid view but no incremental keys
@@ -136,7 +136,7 @@ def gen_offload_metadata_from_base(
         incremental_key_csv = None
         incremental_hv_csv = None
 
-    offload_sort_csv = column_name_list_to_csv(hybrid_operation.sort_columns)
+    offload_sort_csv = column_name_list_to_csv(offload_operation.sort_columns)
     offload_partition_functions_csv = offload_partition_functions_to_csv(
         offload_partition_functions
     )
@@ -150,7 +150,7 @@ def gen_offload_metadata_from_base(
         client=repo_client,
         backend_owner=backend_owner,
         backend_table=backend_table_name,
-        offload_type=hybrid_operation.offload_type,
+        offload_type=offload_operation.offload_type,
         offloaded_owner=offloaded_owner,
         offloaded_table=offloaded_table,
         incremental_key=incremental_key_csv,
@@ -163,43 +163,42 @@ def gen_offload_metadata_from_base(
         offload_sort_columns=offload_sort_csv,
         offload_snapshot=offload_snapshot,
         offload_partition_functions=offload_partition_functions_csv,
-        execution_id=hybrid_operation.execution_id,
+        command_execution=offload_operation.execution_id,
     )
 
 
 def gen_and_save_offload_metadata(
-    repo_client,
-    messages,
-    hybrid_operation,
-    hybrid_config,
+    repo_client: "OrchestrationRepoClientInterface",
+    messages: "OffloadMessages",
+    offload_operation,
+    config: "OrchestrationConfig",
+    hadoop_owner: str,
+    hadoop_table_name: str,
     incremental_key_columns,
     incremental_high_values,
     incremental_predicate_values,
-    hadoop_owner,
-    hadoop_table_name,
-    base_metadata_dict,
-    parent_command_type=None,
+    pre_offload_snapshot,
+    pre_offload_metadata: OrchestrationMetadata,
 ):
-    """Simple wrapper over generation and saving of hybrid metadata.
+    """Simple wrapper over generation and saving of metadata.
     Returns the new metadata object for convenience.
     """
-    assert isinstance(base_metadata_dict, dict)
     goe_metadata = gen_offload_metadata_from_base(
         repo_client,
-        hybrid_operation,
+        offload_operation,
+        hadoop_owner,
+        hadoop_table_name,
         incremental_key_columns,
         incremental_high_values,
         incremental_predicate_values,
-        hadoop_owner,
-        hadoop_table_name,
-        base_metadata_dict,
+        pre_offload_snapshot,
+        pre_offload_metadata,
     )
 
     messages.offload_step(
         command_steps.STEP_SAVE_METADATA,
-        lambda: goe_metadata.save(hybrid_operation.execution_id),
-        execute=hybrid_config.execute,
-        command_type=parent_command_type,
+        lambda: goe_metadata.save(),
+        execute=config.execute,
     )
     return goe_metadata
 
@@ -306,7 +305,7 @@ def incremental_hv_list_from_csv(metadata_high_value_string, ipa_predicate_type)
 
 
 def decode_metadata_incremental_high_values_from_metadata(
-    base_metadata, rdbms_base_table
+    base_metadata: OrchestrationMetadata, rdbms_base_table: OffloadSourceTableInterface
 ):
     """Equivalent of OffloadSourceTable.decode_partition_high_values_with_literals but for metadata based values
     This function subverts ipa_predicate_type by using it as partition_type. This works currently but is not

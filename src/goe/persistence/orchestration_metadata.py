@@ -7,7 +7,6 @@ import logging
 from typing import Optional, Union, TYPE_CHECKING
 
 from goe.offload.predicate_offload import GenericPredicate
-from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
@@ -271,9 +270,9 @@ class OrchestrationMetadata:
         """Persist metadata"""
         self._get_client().drop_offload_metadata(self.hybrid_owner, self.hybrid_view)
 
-    def save(self, execution_id: ExecutionId):
+    def save(self):
         """Persist metadata"""
-        self._get_client().set_offload_metadata(self._metadata, execution_id)
+        self._get_client().set_offload_metadata(self._metadata)
 
     def decode_incremental_predicate_values(self, as_dsl=False):
         """Take incremental_predicate_value metadata and turn it back into the structure used during Offload."""

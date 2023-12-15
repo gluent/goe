@@ -335,6 +335,7 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
                    , offload_high_value
                    , offload_predicate_type_id
                    , offload_predicate_value
+                   , offload_snapshot
                    , offload_hash_column
                    , offload_sort_columns
                    , offload_partition_functions
@@ -352,6 +353,7 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
                    , p_metadata.offload_high_value
                    , v_offload_predicate_type_id
                    , p_metadata.offload_predicate_value
+                   , p_metadata.offload_snapshot
                    , p_metadata.offload_hash_column
                    , p_metadata.offload_sort_columns
                    , p_metadata.offload_partition_functions
@@ -401,6 +403,7 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
                     v.offload_high_value,
                     v.offload_predicate_type,
                     v.offload_predicate_value,
+                    v.offload_snapshot,
                     v.offload_hash_column,
                     v.offload_sort_columns,
                     v.offload_partition_functions,

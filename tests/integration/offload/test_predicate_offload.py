@@ -7,26 +7,24 @@
 from unittest import TestCase, main
 from optparse import OptionValueError
 
-from lark import Tree, Token
-import numpy as np
-
-from tests.integration.offload.unittest_functions import (
-    build_current_options,
-    get_default_test_user,
-)
-
 from goe.gluent import OffloadOperation
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_messages import OffloadMessages
 from goe.persistence.orchestration_metadata import OrchestrationMetadata
-from goe.offload.predicate_offload import GenericPredicate, parse_predicate_dsl
+from goe.offload.predicate_offload import GenericPredicate
 from goe.offload.bigquery import bigquery_predicate
 from goe.offload.hadoop import hadoop_predicate
 from goe.offload.microsoft import synapse_predicate
 from goe.offload.oracle import oracle_predicate
 from goe.offload.snowflake import snowflake_predicate
 from goe.offload.teradata import teradata_predicate
+from tests.integration.test_functions import (
+    build_current_options,
+    get_default_test_user,
+    run_setup_ddl,
+)
+from tests.testlib.test_framework.test_functions import get_test_messages
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )
@@ -39,13 +37,16 @@ class TestIdaPredicateRenderToSQL(TestCase):
     def __init__(self, *args, **kwargs):
         super(TestIdaPredicateRenderToSQL, self).__init__(*args, **kwargs)
         self.schema = get_default_test_user()
-        self.hybrid_schema = get_default_test_user(hybrid=True)
         self.be_test_api = None
         self.fe_test_api = None
 
     def setUp(self):
         self.options = build_current_options()
-        messages = OffloadMessages()
+        messages = get_test_messages(self.options, "TestIdaPredicateRenderToSQL")
+
+        self.fe_test_api = frontend_testing_api_factory(
+            self.options.db_type, self.options, messages, dry_run=False
+        )
 
         channels_table_name = "CHANNELS"
         self.channels_rdbms_table = OffloadSourceTable.create(
@@ -59,7 +60,7 @@ class TestIdaPredicateRenderToSQL(TestCase):
             messages,
         )
         metadata = OrchestrationMetadata.from_name(
-            self.hybrid_schema,
+            self.schema,
             sales_table_name,
             connection_options=self.options,
             messages=messages,
@@ -91,7 +92,7 @@ class TestIdaPredicateRenderToSQL(TestCase):
             messages,
         )
         metadata = OrchestrationMetadata.from_name(
-            self.hybrid_schema,
+            self.schema,
             self.customers_table_name,
             connection_options=self.options,
             messages=messages,
@@ -111,9 +112,6 @@ class TestIdaPredicateRenderToSQL(TestCase):
 
         self.be_test_api = backend_testing_api_factory(
             self.options.target, self.options, messages, dry_run=True
-        )
-        self.fe_test_api = frontend_testing_api_factory(
-            self.options.db_type, self.options, messages, dry_run=True
         )
 
     def test_frontend_sql_generation(self):
@@ -238,7 +236,7 @@ class TestIdaPredicateRenderToSQL(TestCase):
 
         messages = OffloadMessages()
         metadata = OrchestrationMetadata.from_name(
-            self.hybrid_schema,
+            self.schema,
             self.customers_table_name,
             connection_options=self.options,
             messages=messages,
@@ -277,7 +275,6 @@ class TestIdaPredicateDataTypes(TestCase):
     def __init__(self, *args, **kwargs):
         super(TestIdaPredicateDataTypes, self).__init__(*args, **kwargs)
         self.schema = get_default_test_user()
-        self.hybrid_schema = get_default_test_user(hybrid=True)
 
     def setUp(self):
         self.options = build_current_options()
@@ -290,7 +287,7 @@ class TestIdaPredicateDataTypes(TestCase):
             messages,
         )
         metadata = OrchestrationMetadata.from_name(
-            self.hybrid_schema,
+            self.schema,
             customers_table_name,
             connection_options=self.options,
             messages=messages,

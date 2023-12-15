@@ -53,23 +53,8 @@ class TestFrontendApi(TestCase):
             do_not_connect=bool(not self.connect_to_frontend),
             trace_action="TestFrontendApi",
         )
-        if self.connect_to_frontend:
-            self.db, self.table = get_real_frontend_schema_and_table(
-                "GL_TYPES", self.config, messages=messages
-            )
-            if not self.table:
-                print(
-                    "Falling back to connect_to_frontend=False because there are no test tables"
-                )
-                self.connect_to_frontend = False
-                self.db = "any_db"
-                self.table = "some_table"
-            _, self.part_table = get_real_frontend_schema_and_table(
-                "SALES", self.config, messages=messages
-            )
-        else:
-            self.db = "any_db"
-            self.table = "some_table"
+        self.db = "any_db"
+        self.table = "some_table"
         self.test_api = frontend_testing_api_factory(
             self.db_type,
             self.config,

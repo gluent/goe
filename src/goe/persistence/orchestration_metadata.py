@@ -37,7 +37,7 @@ INCREMENTAL_PREDICATE_VALUE = "INCREMENTAL_PREDICATE_VALUE"
 OFFLOAD_BUCKET_COLUMN = "OFFLOAD_BUCKET_COLUMN"
 OFFLOAD_VERSION = "OFFLOAD_VERSION"
 OFFLOAD_SORT_COLUMNS = "OFFLOAD_SORT_COLUMNS"
-OFFLOAD_SCN = "OFFLOAD_SCN"
+OFFLOAD_SNAPSHOT = "OFFLOAD_SNAPSHOT"
 OFFLOAD_PARTITION_FUNCTIONS = "OFFLOAD_PARTITION_FUNCTIONS"
 COMMAND_EXECUTION = "COMMAND_EXECUTION"
 
@@ -55,7 +55,7 @@ ALL_METADATA_ATTRIBUTES = [
     OFFLOAD_BUCKET_COLUMN,
     OFFLOAD_VERSION,
     OFFLOAD_SORT_COLUMNS,
-    OFFLOAD_SCN,
+    OFFLOAD_SNAPSHOT,
     OFFLOAD_PARTITION_FUNCTIONS,
     COMMAND_EXECUTION,
 ]
@@ -75,7 +75,7 @@ METADATA_ATTRIBUTES = {
     "offload_bucket_column": OFFLOAD_BUCKET_COLUMN,
     "offload_version": OFFLOAD_VERSION,
     "offload_sort_columns": OFFLOAD_SORT_COLUMNS,
-    "offload_scn": OFFLOAD_SCN,
+    "offload_snapshot": OFFLOAD_SNAPSHOT,
     "offload_partition_functions": OFFLOAD_PARTITION_FUNCTIONS,
     "command_execution": COMMAND_EXECUTION,
 }
@@ -347,95 +347,95 @@ class OrchestrationMetadata:
 
     @property
     def backend_owner(self):
-        return self._metadata["HADOOP_OWNER"]
+        return self._metadata[HADOOP_OWNER]
 
     @property
     def backend_table(self):
-        return self._metadata["HADOOP_TABLE"]
+        return self._metadata[HADOOP_TABLE]
 
     @property
     def offload_type(self):
-        return self._metadata["OFFLOAD_TYPE"]
+        return self._metadata[OFFLOAD_TYPE]
 
     @offload_type.setter
     def offload_type(self, new_value):
-        self._metadata["OFFLOAD_TYPE"] = new_value
+        self._metadata[OFFLOAD_TYPE] = new_value
 
     @property
     def offloaded_owner(self):
-        return self._metadata["OFFLOADED_OWNER"]
+        return self._metadata[OFFLOADED_OWNER]
 
     @property
     def offloaded_table(self):
-        return self._metadata["OFFLOADED_TABLE"]
+        return self._metadata[OFFLOADED_TABLE]
 
     @property
     def incremental_key(self):
-        return self._metadata["INCREMENTAL_KEY"]
+        return self._metadata[INCREMENTAL_KEY]
 
     @property
     def incremental_high_value(self):
-        return self._metadata["INCREMENTAL_HIGH_VALUE"]
+        return self._metadata[INCREMENTAL_HIGH_VALUE]
 
     @incremental_high_value.setter
     def incremental_high_value(self, new_value):
-        self._metadata["INCREMENTAL_HIGH_VALUE"] = new_value
+        self._metadata[INCREMENTAL_HIGH_VALUE] = new_value
 
     @property
     def incremental_range(self):
-        return self._metadata["INCREMENTAL_RANGE"]
+        return self._metadata[INCREMENTAL_RANGE]
 
     @property
     def incremental_predicate_type(self):
-        return self._metadata["INCREMENTAL_PREDICATE_TYPE"]
+        return self._metadata[INCREMENTAL_PREDICATE_TYPE]
 
     @property
     def incremental_predicate_value(self):
-        return self._metadata["INCREMENTAL_PREDICATE_VALUE"]
+        return self._metadata[INCREMENTAL_PREDICATE_VALUE]
 
     @incremental_predicate_value.setter
     def incremental_predicate_value(self, new_value):
-        self._metadata["INCREMENTAL_PREDICATE_VALUE"] = new_value
+        self._metadata[INCREMENTAL_PREDICATE_VALUE] = new_value
 
     @property
     def offload_bucket_column(self):
-        return self._metadata["OFFLOAD_BUCKET_COLUMN"]
+        return self._metadata[OFFLOAD_BUCKET_COLUMN]
 
     @property
     def offload_version(self):
-        return self._metadata["OFFLOAD_VERSION"]
+        return self._metadata[OFFLOAD_VERSION]
 
     @offload_version.setter
     def offload_version(self, new_value):
-        self._metadata["OFFLOAD_VERSION"] = new_value
+        self._metadata[OFFLOAD_VERSION] = new_value
 
     @property
     def offload_sort_columns(self):
-        return self._metadata["OFFLOAD_SORT_COLUMNS"]
+        return self._metadata[OFFLOAD_SORT_COLUMNS]
 
     @offload_sort_columns.setter
     def offload_sort_columns(self, new_value):
-        self._metadata["OFFLOAD_SORT_COLUMNS"] = new_value
+        self._metadata[OFFLOAD_SORT_COLUMNS] = new_value
 
     @property
-    def offload_scn(self):
-        return self._metadata["OFFLOAD_SCN"]
+    def offload_snapshot(self):
+        return self._metadata[OFFLOAD_SNAPSHOT]
 
-    @offload_scn.setter
-    def offload_scn(self, new_value):
-        self._metadata["OFFLOAD_SCN"] = new_value
+    @offload_snapshot.setter
+    def offload_snapshot(self, new_value):
+        self._metadata[OFFLOAD_SNAPSHOT] = new_value
 
     @property
     def offload_partition_functions(self):
-        return self._metadata["OFFLOAD_PARTITION_FUNCTIONS"]
+        return self._metadata[OFFLOAD_PARTITION_FUNCTIONS]
 
     @property
     def command_execution(self):
-        return self._metadata["COMMAND_EXECUTION"]
+        return self._metadata[COMMAND_EXECUTION]
 
     @command_execution.setter
     def command_execution(self, new_value):
-        self._metadata["COMMAND_EXECUTION"] = new_value
+        self._metadata[COMMAND_EXECUTION] = new_value
 
     @property
     def repo_client(self):

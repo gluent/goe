@@ -36,7 +36,7 @@ from goe.persistence.orchestration_metadata import (
     INCREMENTAL_RANGE,
     OFFLOAD_BUCKET_COLUMN,
     OFFLOAD_PARTITION_FUNCTIONS,
-    OFFLOAD_SCN,
+    OFFLOAD_SNAPSHOT,
     OFFLOAD_SORT_COLUMNS,
     OFFLOAD_TYPE,
     OFFLOAD_VERSION,
@@ -172,7 +172,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             metadata_obj.OFFLOAD_PREDICATE_VALUE = self._metadata_dict_to_json_string(
                 metadata_dict[INCREMENTAL_PREDICATE_VALUE]
             )
-        metadata_obj.OFFLOAD_SNAPSHOT = metadata_dict[OFFLOAD_SCN]
+        metadata_obj.OFFLOAD_SNAPSHOT = metadata_dict[OFFLOAD_SNAPSHOT]
         metadata_obj.OFFLOAD_HASH_COLUMN = metadata_dict[OFFLOAD_BUCKET_COLUMN]
         metadata_obj.OFFLOAD_SORT_COLUMNS = metadata_dict[OFFLOAD_SORT_COLUMNS]
         metadata_obj.OFFLOAD_PARTITION_FUNCTIONS = metadata_dict[
@@ -204,7 +204,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_HASH_COLUMN or None,
             OFFLOAD_VERSION: metadata_obj.OFFLOAD_VERSION,
             OFFLOAD_SORT_COLUMNS: metadata_obj.OFFLOAD_SORT_COLUMNS or None,
-            OFFLOAD_SCN: metadata_obj.OFFLOAD_SNAPSHOT or None,
+            OFFLOAD_SNAPSHOT: metadata_obj.OFFLOAD_SNAPSHOT or None,
             OFFLOAD_PARTITION_FUNCTIONS: metadata_obj.OFFLOAD_PARTITION_FUNCTIONS
             or None,
             COMMAND_EXECUTION: metadata_obj.COMMAND_EXECUTION,

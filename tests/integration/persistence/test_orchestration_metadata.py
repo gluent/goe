@@ -65,7 +65,7 @@ EXAMPLE_SALES_METADATA_DICT = {
     "HADOOP_TABLE": "SALES",
     "OFFLOADED_OWNER": "SH",
     "OFFLOADED_TABLE": "SALES",
-    "OFFLOAD_SCN": 76850168,
+    "OFFLOAD_SNAPSHOT": 76850168,
     "INCREMENTAL_KEY": "TIME_ID",
     "INCREMENTAL_HIGH_VALUE": "TO_DATE(' 2012-01-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
@@ -83,7 +83,7 @@ EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
     "HADOOP_TABLE": "GL_LIST_RANGE_DAY_DT",
     "OFFLOADED_OWNER": "SH_TEST",
     "OFFLOADED_TABLE": "GL_LIST_RANGE_DAY_DT",
-    "OFFLOAD_SCN": 69472864,
+    "OFFLOAD_SNAPSHOT": 69472864,
     "INCREMENTAL_KEY": "DT",
     "INCREMENTAL_HIGH_VALUE": "TO_DATE(' 2015-01-31 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
@@ -101,7 +101,7 @@ EXAMPLE_STORY_PBO_DIM_METADATA_DICT = {
     "HADOOP_TABLE": "STORY_PBO_DIM",
     "OFFLOADED_OWNER": "SH_TEST",
     "OFFLOADED_TABLE": "STORY_PBO_DIM",
-    "OFFLOAD_SCN": 76853651,
+    "OFFLOAD_SNAPSHOT": 76853651,
     "INCREMENTAL_KEY": None,
     "INCREMENTAL_HIGH_VALUE": None,
     "INCREMENTAL_PREDICATE_TYPE": "PREDICATE",
@@ -119,7 +119,7 @@ EXAMPLE_STORY_PBO_R_INTRA_METADATA_DICT = {
     "HADOOP_TABLE": "STORY_PBO_R_INTRA",
     "OFFLOADED_OWNER": "SH_TEST",
     "OFFLOADED_TABLE": "STORY_PBO_R_INTRA",
-    "OFFLOAD_SCN": 76856298,
+    "OFFLOAD_SNAPSHOT": 76856298,
     "INCREMENTAL_KEY": "TIME_ID",
     "INCREMENTAL_HIGH_VALUE": "TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
     "INCREMENTAL_PREDICATE_TYPE": "RANGE_AND_PREDICATE",
@@ -210,7 +210,7 @@ class TestOrchestrationMetadata(TestCase):
 
         # Test that the save function updates changes
         # Change by attribute:
-        test_metadata.offload_scn = -1
+        test_metadata.offload_snapshot = -1
         test_metadata.save(execution_id)
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
@@ -221,13 +221,13 @@ class TestOrchestrationMetadata(TestCase):
         )
         self.assertIsInstance(saved_metadata, OrchestrationMetadata)
         self.assertEqual(
-            test_metadata.offload_scn,
-            saved_metadata.offload_scn,
-            "Saved metadata.offload_scn mismatch when re-fetched",
+            test_metadata.offload_snapshot,
+            saved_metadata.offload_snapshot,
+            "Saved metadata.offload_snapshot mismatch when re-fetched",
         )
         # Change by dict:
         test_metadata_dict = test_metadata.as_dict()
-        test_metadata_dict["OFFLOAD_SCN"] = -2
+        test_metadata_dict["OFFLOAD_SNAPSHOT"] = -2
         test_metadata = OrchestrationMetadata(
             test_metadata_dict, client=test_metadata.client
         )
@@ -241,9 +241,9 @@ class TestOrchestrationMetadata(TestCase):
         )
         self.assertIsInstance(saved_metadata, OrchestrationMetadata)
         self.assertEqual(
-            test_metadata.offload_scn,
-            saved_metadata.offload_scn,
-            "Saved metadata.offload_scn mismatch when re-fetched",
+            test_metadata.offload_snapshot,
+            saved_metadata.offload_snapshot,
+            "Saved metadata.offload_snapshot mismatch when re-fetched",
         )
 
         # Drop metadata

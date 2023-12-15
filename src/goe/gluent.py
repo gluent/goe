@@ -2092,11 +2092,11 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
     offload_target_table.drop_backend_table_step(purge=offload_operation.purge_backend_table)
 
   rows_offloaded = None
-  pre_offload_scn = None
+  pre_offload_snapshot = None
 
-  # pre-offload SCN will be stored in metadata
+  # Pre-offload SCN will be stored in metadata.
   if offload_options.db_type == DBTYPE_ORACLE:
-    pre_offload_scn = offload_source_table.get_current_scn(return_none_on_failure=True)
+    pre_offload_snapshot = offload_source_table.get_current_scn(return_none_on_failure=True)
 
   create_final_backend_table(offload_target_table, offload_operation)
 
@@ -2129,7 +2129,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
     # New or reset offload. Start a new base metadata dictionary...
     base_metadata = {'OFFLOADED_OWNER': offload_source_table.owner.upper(),
                      'OFFLOADED_TABLE': offload_source_table.table_name.upper(),
-                     'OFFLOAD_SCN': pre_offload_scn,
+                     'OFFLOAD_SNAPSHOT': pre_offload_snapshot,
                      'OFFLOAD_VERSION': offload_operation.goe_version}
   else:
     # Re-use existing metadata as base...

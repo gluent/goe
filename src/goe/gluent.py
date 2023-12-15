@@ -82,7 +82,8 @@ from goe.offload.offload import (
     check_opt_is_posint,
     check_ipa_predicate_type_option_conflicts,
     check_table_structure,
-    create_final_backend_table,
+    create_final_backend_table_step,
+    drop_backend_table_step,
     get_current_offload_hv,
     get_offload_data_manager,
     get_prior_offloaded_hv,
@@ -133,11 +134,6 @@ OFFLOAD_OP_NAME = 'offload'
 
 CONFIG_FILE_NAME = 'offload.env'
 LOCATION_FILE_BASE = 'offload.conf'
-
-TOKENISE_STRING_CHAR_1 = '~'
-TOKENISE_STRING_CHAR_2 = '^'
-TOKENISE_STRING_CHAR_3 = '!'
-TOKENISE_STRING_CHARS = [TOKENISE_STRING_CHAR_1, TOKENISE_STRING_CHAR_2, TOKENISE_STRING_CHAR_3]
 
 LEGACY_MAX_HYBRID_IDENTIFIER_LENGTH = 30
 
@@ -327,19 +323,6 @@ def get_db_charset(opts):
     return ora_single_item_query(opts, "SELECT value FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'")
 
 
-def get_max_hybrid_identifier_length(connection_options, messages):
-    """ Get the max supported hybrid identifier (table/view/column) length for the frontend RDBMS.
-        This is not ideal because it is making a frontend connection just to get this information but at the point
-        this is called we don't already have a connection we can use.
-    """
-    if not connection_options:
-        return None
-    with frontend_api_factory_ctx(connection_options.db_type, connection_options, messages,
-                                  dry_run=bool(not connection_options.execute),
-                                  trace_action='get_max_hybrid_identifier_length') as frontend_api:
-        return frontend_api.max_table_name_length()
-
-
 def next_power_of_two(x):
     return int(2**(math.ceil(math.log(x, 2))))
 
@@ -464,10 +447,6 @@ def parse_size_expr(size, binary_sizes=False):
 
 def hybrid_owner(target_owner):
   return OffloadOperation.hybrid_owner(target_owner)
-
-
-def extract_marker(i, token_char=TOKENISE_STRING_CHAR_1):
-  return str(token_char + str(i) + token_char)
 
 
 def verify_offload_by_backend_count(offload_source_table, offload_target_table, ipa_predicate_type, offload_options,
@@ -1339,7 +1318,7 @@ class BaseOperation(object):
     backend_column = match_table_column(self.bucket_hash_col, new_backend_columns)
     method, _ = backend_table.synthetic_bucket_filter_capable_column(backend_column)
     if method:
-      log('Using optimized bucket expression for to enable bucket partition pruning: %s' % method, vverbose)
+      messages.log('Using optimized bucket expression for to enable bucket partition pruning: %s' % method, detail=VVERBOSE)
       self.bucket_hash_method = method
     else:
       messages.warning('Not using optimized bucket expression for %s, consider using a different column via --bucket-hash-column' \
@@ -1465,7 +1444,7 @@ class BaseOperation(object):
         # ipa_predicate_type was set based on top level so we need to blank it out
         self.ipa_predicate_type = None
       else:
-        log('Leaving --offload-by-subpartition=false due to OFFLOAD_TYPE: %s' % offload_type, vverbose)
+        messages.log('Leaving --offload-by-subpartition=false due to OFFLOAD_TYPE: %s' % offload_type, detail=VVERBOSE)
 
   def validate_sort_columns(self, rdbms_column_names, messages, offload_options, backend_cols, hybrid_metadata,
                             backend_api=None, metadata_refresh=False):
@@ -2024,10 +2003,18 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
                                                     data_gov_client=data_gov_client)
 
   if offload_operation.create_backend_db:
-    offload_target_table.create_backend_db_step()
+      offload_target_table.create_backend_db_step()
 
   if offload_operation.reset_backend_table:
-    offload_target_table.drop_backend_table_step(purge=offload_operation.purge_backend_table)
+      drop_backend_table_step(
+          offload_source_table.owner,
+          offload_source_table.table_name,
+          offload_target_table,
+          messages,
+          repo_client,
+          offload_options.execute,
+          purge=offload_operation.purge_backend_table
+      )
 
   rows_offloaded = None
 
@@ -2036,7 +2023,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
       # Pre-offload SCN will be stored in metadata.
       pre_offload_snapshot = offload_source_table.get_current_scn(return_none_on_failure=True)
 
-  create_final_backend_table(offload_target_table, offload_operation)
+  create_final_backend_table_step(offload_target_table, offload_operation)
 
   data_transport_client = offload_transport_factory(offload_operation.offload_transport_method,
                                                     offload_source_table,

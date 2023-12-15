@@ -1,15 +1,10 @@
-from textwrap import dedent
-
 import pytest
 
 from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
-    DBTYPE_ORACLE,
     DBTYPE_TERADATA,
-    CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
-    IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
 )
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
@@ -23,33 +18,20 @@ from goe.offload.offload_metadata_functions import (
 from goe.offload.offload_source_data import (
     OFFLOAD_TYPE_CHANGE_FOR_PBO_EXCEPTION_TEXT,
     PREDICATE_APPEND_HWM_MESSAGE_TEXT,
-    PREDICATE_TYPE_INCOMPATIBLE_EXCEPTION_TEXT,
-    PREDICATE_TYPE_NO_MODIFY_HV_EXCEPTION_TEXT,
     PREDICATE_TYPE_NO_MODIFY_RESET_EXCEPTION_TEXT,
-    PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
-    PREDICATE_TYPE_REQUIRED_EXCEPTION_TEXT,
-    RANGE_AND_PREDICATE_WITHOUT_PART_KEY_EXCEPTION_TEXT,
 )
 from goe.offload.predicate_offload import GenericPredicate
-from goe.orchestration import command_steps
-from goe.orchestration.command_steps import step_title
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
-    INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE_AND_PREDICATE,
     INCREMENTAL_PREDICATE_TYPE_PREDICATE,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
-    INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE,
 )
 
 from tests.integration.scenarios.assertion_functions import (
-    check_metadata,
-    date_gl_part_column_name,
-    get_offload_row_count_from_log,
-    messages_step_executions,
     sales_based_fact_assertion,
     text_in_log,
 )
@@ -73,22 +55,11 @@ from tests.integration.test_functions import (
 from tests.integration.test_sets.stories.story_setup_functions import (
     SALES_BASED_FACT_HV_1,
     SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-    SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
-    SALES_BASED_FACT_HV_1_NUM,
-    SALES_BASED_FACT_HV_2_NUM,
-    SALES_BASED_FACT_HV_3_NUM,
-    SALES_BASED_FACT_HV_4_NUM,
-    SALES_BASED_FACT_HV_7_NUM,
-    SALES_BASED_FACT_PRE_HV_NUM,
 )
-from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
     get_test_messages,
-    to_hybrid_schema,
 )
 
 
@@ -485,9 +456,9 @@ def offload_pbo_late_arriving_std_range_tests(
     run_offload(options, config, messages, expected_status=False)
 
 
-def test_offload_pbo_late_range(config, schema, data_db):
+def test_offload_pbo_late_range_90_10(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload."""
-    id = "test_offload_pbo_late_range"
+    id = "test_offload_pbo_late_range_90_10"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -544,7 +515,7 @@ def test_offload_pbo_late_range_100_0(config, schema, data_db):
         ),
         python_fns=[
             lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, RANGE_TABLE_LATE
+                config, backend_api, messages, data_db, RANGE_TABLE_LATE_100_0
             ),
         ],
     )

@@ -10,22 +10,43 @@ from unittest import TestCase, main
 
 from numpy import datetime64
 
-from tests.offload.unittest_functions import build_current_options, build_non_connecting_options, get_default_test_user
+from tests.offload.unittest_functions import (
+    build_current_options,
+    build_non_connecting_options,
+    get_default_test_user,
+)
 
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
-from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_MSSQL, DBTYPE_NETEZZA, DBTYPE_TERADATA
+from goe.offload.offload_constants import (
+    DBTYPE_ORACLE,
+    DBTYPE_MSSQL,
+    DBTYPE_NETEZZA,
+    DBTYPE_TERADATA,
+)
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_source_table import OffloadSourceTableException
-from goe.offload.microsoft.mssql_column import MSSQL_TYPE_BIGINT, MSSQL_TYPE_DATETIME, MSSQL_TYPE_VARCHAR
-from goe.offload.netezza.netezza_column import NETEZZA_TYPE_BIGINT, NETEZZA_TYPE_TIMESTAMP
-from goe.offload.oracle.oracle_column import ORACLE_TYPE_DATE, ORACLE_TYPE_NUMBER,\
-    ORACLE_TYPE_TIMESTAMP, ORACLE_TYPE_VARCHAR2
+from goe.offload.microsoft.mssql_column import (
+    MSSQL_TYPE_BIGINT,
+    MSSQL_TYPE_DATETIME,
+    MSSQL_TYPE_VARCHAR,
+)
+from goe.offload.netezza.netezza_column import (
+    NETEZZA_TYPE_BIGINT,
+    NETEZZA_TYPE_TIMESTAMP,
+)
+from goe.offload.oracle.oracle_column import (
+    ORACLE_TYPE_DATE,
+    ORACLE_TYPE_NUMBER,
+    ORACLE_TYPE_TIMESTAMP,
+    ORACLE_TYPE_VARCHAR2,
+)
 from goe.util.ora_query import get_oracle_connection
-from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
+from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
+    frontend_testing_api_factory,
+)
 
 
 class TestOffloadSourceTable(TestCase):
-
     def __init__(self, *args, **kwargs):
         super(TestOffloadSourceTable, self).__init__(*args, **kwargs)
         self.api = None
@@ -39,36 +60,53 @@ class TestOffloadSourceTable(TestCase):
         self.api = None
         self.messages = OffloadMessages()
         if self.connect_to_db:
-            self.test_api = frontend_testing_api_factory(self.config.db_type, self.config,
-                                                         self.messages, dry_run=True)
+            self.test_api = frontend_testing_api_factory(
+                self.config.db_type, self.config, self.messages, dry_run=True
+            )
             # Ideally this is a partitioned table in order to test partition calls
             self.db, self.table = self._get_real_db_table()
             if not self.db or not self.table:
-                raise NotImplementedError('Unable to test current config when no test table available')
-            self.api = OffloadSourceTable.create(self.db, self.table, self.config, self.messages, dry_run=True,
-                                                 do_not_connect=bool(not self.connect_to_db))
+                raise NotImplementedError(
+                    "Unable to test current config when no test table available"
+                )
+            self.api = OffloadSourceTable.create(
+                self.db,
+                self.table,
+                self.config,
+                self.messages,
+                dry_run=True,
+                do_not_connect=bool(not self.connect_to_db),
+            )
             if not self.api.exists():
-                raise NotImplementedError('Unable to test current config because test table is missing: %s.%s'
-                                          % (self.db, self.table))
+                raise NotImplementedError(
+                    "Unable to test current config because test table is missing: %s.%s"
+                    % (self.db, self.table)
+                )
 
         if not self.api:
-            self.db = 'any_db'
-            self.table = 'some_table'
-            self.api = OffloadSourceTable.create(self.db, self.table, self.config, self.messages, dry_run=True,
-                                                 do_not_connect=bool(not self.connect_to_db))
+            self.db = "any_db"
+            self.table = "some_table"
+            self.api = OffloadSourceTable.create(
+                self.db,
+                self.table,
+                self.config,
+                self.messages,
+                dry_run=True,
+                do_not_connect=bool(not self.connect_to_db),
+            )
 
     def _get_real_db_table(self):
-        """ In order to run the connected tests we just need any RDBMS table, ideally
-            a partitioned one as that will exercise more code.
-            We can't get any context from integration test config so this is a hacky
-            method to pick a nice candidate table from the DB.
+        """In order to run the connected tests we just need any RDBMS table, ideally
+        a partitioned one as that will exercise more code.
+        We can't get any context from integration test config so this is a hacky
+        method to pick a nice candidate table from the DB.
         """
-        table_name = 'SALES'
+        table_name = "SALES"
         try:
             test_user = get_default_test_user().upper()
             return self.test_api.get_test_table_owner(test_user, table_name), table_name
         except Exception:
-            print('Unable to test current config: %s' % self.config.db_type)
+            print("Unable to test current config: %s" % self.config.db_type)
             raise
 
     def _test__get_column_low_high_values(self):
@@ -76,8 +114,12 @@ class TestOffloadSourceTable(TestCase):
             if self.api.columns:
                 try:
                     # Testing Oracle only private method
-                    self.api._get_column_low_high_values(self.api.columns[0].name, from_stats=True, sample_perc=1)
-                    self.api._get_column_low_high_values(self.api.columns[0].name, from_stats=False, sample_perc=1)
+                    self.api._get_column_low_high_values(
+                        self.api.columns[0].name, from_stats=True, sample_perc=1
+                    )
+                    self.api._get_column_low_high_values(
+                        self.api.columns[0].name, from_stats=False, sample_perc=1
+                    )
                 except NotImplementedError:
                     pass
 
@@ -109,14 +151,14 @@ class TestOffloadSourceTable(TestCase):
             self.api.exists()
 
     def _test_gen_default_date_column(self):
-        self.api.gen_default_date_column('some_column')
+        self.api.gen_default_date_column("some_column")
 
     def _test_gen_default_numeric_column(self):
-        self.api.gen_default_numeric_column('some_column')
+        self.api.gen_default_numeric_column("some_column")
 
     def _test_get_column(self):
         if self.connect_to_db:
-            self.api.get_column('some_column')
+            self.api.get_column("some_column")
 
     def _test_get_current_scn(self):
         if self.connect_to_db:
@@ -212,7 +254,7 @@ class TestOffloadSourceTable(TestCase):
 
     def _test_numeric_literal_to_python(self):
         try:
-            self.api.numeric_literal_to_python('123')
+            self.api.numeric_literal_to_python("123")
         except NotImplementedError:
             pass
 
@@ -235,60 +277,96 @@ class TestOffloadSourceTable(TestCase):
 
     def _test_rdbms_literal_to_python(self):
         try:
-            self.api.rdbms_literal_to_python(self.api.gen_default_numeric_column('some_col'), '123', None, strict=False)
-            self.api.rdbms_literal_to_python(self.api.gen_default_date_column('some_col'), '123', None, strict=False)
+            self.api.rdbms_literal_to_python(
+                self.api.gen_default_numeric_column("some_col"),
+                "123",
+                None,
+                strict=False,
+            )
+            self.api.rdbms_literal_to_python(
+                self.api.gen_default_date_column("some_col"), "123", None, strict=False
+            )
         except NotImplementedError:
             pass
 
     def _test_sample_rdbms_data_types(self):
         if self.connect_to_db:
             # Sampling only supports numeric and date based columns
-            columns_to_sample = [_ for _ in self.api.columns if _.is_number_based() or _.is_date_based()]
+            columns_to_sample = [
+                _ for _ in self.api.columns if _.is_number_based() or _.is_date_based()
+            ]
             if columns_to_sample:
                 # The backend limit parameters ought to be from a backend but doesn't really matter for unit testing
                 max_integral_magnitude = max_scale = 38
                 allow_scale_rounding = True
                 for parallel in [0, 2]:
-                    self.api.sample_rdbms_data_types(columns_to_sample[:2], 1, parallel, self.api.min_datetime_value(),
-                                                     max_integral_magnitude, max_scale, allow_scale_rounding)
+                    self.api.sample_rdbms_data_types(
+                        columns_to_sample[:2],
+                        1,
+                        parallel,
+                        self.api.min_datetime_value(),
+                        max_integral_magnitude,
+                        max_scale,
+                        allow_scale_rounding,
+                    )
 
     def _test_supported_data_types(self):
         self.api.supported_data_types()
 
     def _test_supported_list_partition_data_type(self):
         try:
-            self.api.supported_list_partition_data_type(self.api.gen_default_numeric_column('some_col').data_type)
+            self.api.supported_list_partition_data_type(
+                self.api.gen_default_numeric_column("some_col").data_type
+            )
         except NotImplementedError:
             pass
 
     def _test_supported_range_partition_data_type(self):
         try:
-            self.api.supported_range_partition_data_type(self.api.gen_default_numeric_column('some_col').data_type)
+            self.api.supported_range_partition_data_type(
+                self.api.gen_default_numeric_column("some_col").data_type
+            )
         except NotImplementedError:
             pass
 
     def _test_to_rdbms_literal_with_sql_conv_fn(self):
         if self.config.db_type == DBTYPE_ORACLE:
             self.api.to_rdbms_literal_with_sql_conv_fn(123, ORACLE_TYPE_NUMBER)
-            self.api.to_rdbms_literal_with_sql_conv_fn(self.api.min_datetime_value(), ORACLE_TYPE_DATE)
-            self.api.to_rdbms_literal_with_sql_conv_fn(datetime64(self.api.min_datetime_value()), ORACLE_TYPE_DATE)
-            self.api.to_rdbms_literal_with_sql_conv_fn(self.api.min_datetime_value(), ORACLE_TYPE_TIMESTAMP)
-            self.api.to_rdbms_literal_with_sql_conv_fn(datetime64(self.api.min_datetime_value()), ORACLE_TYPE_TIMESTAMP)
-            self.api.to_rdbms_literal_with_sql_conv_fn('Hello', ORACLE_TYPE_VARCHAR2)
+            self.api.to_rdbms_literal_with_sql_conv_fn(
+                self.api.min_datetime_value(), ORACLE_TYPE_DATE
+            )
+            self.api.to_rdbms_literal_with_sql_conv_fn(
+                datetime64(self.api.min_datetime_value()), ORACLE_TYPE_DATE
+            )
+            self.api.to_rdbms_literal_with_sql_conv_fn(
+                self.api.min_datetime_value(), ORACLE_TYPE_TIMESTAMP
+            )
+            self.api.to_rdbms_literal_with_sql_conv_fn(
+                datetime64(self.api.min_datetime_value()), ORACLE_TYPE_TIMESTAMP
+            )
+            self.api.to_rdbms_literal_with_sql_conv_fn("Hello", ORACLE_TYPE_VARCHAR2)
         elif self.config.db_type == DBTYPE_MSSQL:
             try:
                 self.api.to_rdbms_literal_with_sql_conv_fn(123, MSSQL_TYPE_BIGINT)
-                self.api.to_rdbms_literal_with_sql_conv_fn(self.api.min_datetime_value(), MSSQL_TYPE_DATETIME)
-                self.api.to_rdbms_literal_with_sql_conv_fn(datetime64(self.api.min_datetime_value()), MSSQL_TYPE_DATETIME)
-                self.api.to_rdbms_literal_with_sql_conv_fn('Hello', MSSQL_TYPE_VARCHAR)
+                self.api.to_rdbms_literal_with_sql_conv_fn(
+                    self.api.min_datetime_value(), MSSQL_TYPE_DATETIME
+                )
+                self.api.to_rdbms_literal_with_sql_conv_fn(
+                    datetime64(self.api.min_datetime_value()), MSSQL_TYPE_DATETIME
+                )
+                self.api.to_rdbms_literal_with_sql_conv_fn("Hello", MSSQL_TYPE_VARCHAR)
             except NotImplementedError:
                 pass
         elif self.config.db_type == DBTYPE_NETEZZA:
             try:
                 self.api.to_rdbms_literal_with_sql_conv_fn(123, NETEZZA_TYPE_BIGINT)
-                self.api.to_rdbms_literal_with_sql_conv_fn(self.api.min_datetime_value(), NETEZZA_TYPE_TIMESTAMP)
-                self.api.to_rdbms_literal_with_sql_conv_fn(datetime64(self.api.min_datetime_value()), NETEZZA_TYPE_TIMESTAMP)
-                self.api.to_rdbms_literal_with_sql_conv_fn('Hello', MSSQL_TYPE_VARCHAR)
+                self.api.to_rdbms_literal_with_sql_conv_fn(
+                    self.api.min_datetime_value(), NETEZZA_TYPE_TIMESTAMP
+                )
+                self.api.to_rdbms_literal_with_sql_conv_fn(
+                    datetime64(self.api.min_datetime_value()), NETEZZA_TYPE_TIMESTAMP
+                )
+                self.api.to_rdbms_literal_with_sql_conv_fn("Hello", MSSQL_TYPE_VARCHAR)
             except NotImplementedError:
                 pass
 
@@ -334,7 +412,6 @@ class TestOffloadSourceTable(TestCase):
 
 
 class TestOracleOffloadSourceTable(TestOffloadSourceTable):
-
     def setUp(self):
         self.connect_to_db = False
         self.config = build_non_connecting_options(DBTYPE_ORACLE)
@@ -345,7 +422,6 @@ class TestOracleOffloadSourceTable(TestOffloadSourceTable):
 
 
 class TestMSSQLOffloadSourceTable(TestOffloadSourceTable):
-
     def setUp(self):
         self.connect_to_db = False
         self.config = build_non_connecting_options(DBTYPE_MSSQL)
@@ -356,7 +432,6 @@ class TestMSSQLOffloadSourceTable(TestOffloadSourceTable):
 
 
 class TestNetezzaOffloadSourceTable(TestOffloadSourceTable):
-
     def setUp(self):
         self.connect_to_db = False
         self.config = build_non_connecting_options(DBTYPE_NETEZZA)
@@ -367,7 +442,6 @@ class TestNetezzaOffloadSourceTable(TestOffloadSourceTable):
 
 
 class TestTeradataOffloadSourceTable(TestOffloadSourceTable):
-
     def setUp(self):
         self.connect_to_db = False
         self.config = build_non_connecting_options(DBTYPE_TERADATA)
@@ -378,7 +452,6 @@ class TestTeradataOffloadSourceTable(TestOffloadSourceTable):
 
 
 class TestCurrentOffloadSourceTable(TestOffloadSourceTable):
-
     def setUp(self):
         self.connect_to_db = True
         self.config = self._build_current_options()
@@ -391,5 +464,5 @@ class TestCurrentOffloadSourceTable(TestOffloadSourceTable):
         self._run_all_tests()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

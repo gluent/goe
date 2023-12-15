@@ -3,6 +3,7 @@
 
 from unittest import TestCase, main
 
+from goe.orchestration import orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
@@ -11,7 +12,6 @@ from goe.persistence.orchestration_metadata import (
     OrchestrationMetadata,
     METADATA_ATTRIBUTES,
 )
-from goe.orchestration import orchestration_constants
 
 from tests.integration.test_functions import (
     build_current_options,

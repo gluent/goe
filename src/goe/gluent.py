@@ -40,15 +40,15 @@ from goe.offload.column_metadata import ColumnBucketInfo, \
     GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_TIMESTAMP_TZ
 from goe.offload.offload_constants import (
     ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
-    DBTYPE_BIGQUERY, DBTYPE_IMPALA,
-    DBTYPE_ORACLE, DBTYPE_MSSQL,
+    DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_MSSQL,
     FILE_STORAGE_COMPRESSION_CODEC_GZIP, FILE_STORAGE_COMPRESSION_CODEC_SNAPPY, FILE_STORAGE_COMPRESSION_CODEC_ZLIB,
     HYBRID_EXT_TABLE_DEGREE_AUTO,
     IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
     LOG_LEVEL_INFO, LOG_LEVEL_DETAIL, LOG_LEVEL_DEBUG,
-    OFFLOAD_BUCKET_NAME, NUM_BUCKETS_AUTO,
+    OFFLOAD_BUCKET_NAME,
+    NUM_BUCKETS_AUTO,
     OFFLOAD_STATS_METHOD_COPY,
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
@@ -83,10 +83,11 @@ from goe.offload.offload import (
     check_ipa_predicate_type_option_conflicts,
     check_table_structure,
     create_final_backend_table,
-    offload_backend_db_message,
     get_current_offload_hv,
     get_offload_data_manager,
     get_prior_offloaded_hv,
+    offload_backend_db_message,
+    offload_type_force_effects,
     normalise_data_sampling_options,
     normalise_less_than_options,
     normalise_offload_predicate_options,
@@ -99,10 +100,10 @@ from goe.offload.operation.sort_columns import sort_columns_csv_to_sort_columns
 from goe.orchestration import command_steps
 from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
-from goe.persistence.orchestration_metadata import OrchestrationMetadata, hwm_column_names_from_predicates,\
+from goe.persistence.orchestration_metadata import OrchestrationMetadata, \
     INCREMENTAL_PREDICATE_TYPE_PREDICATE, INCREMENTAL_PREDICATE_TYPE_LIST, INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,\
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE_AND_PREDICATE, INCREMENTAL_PREDICATE_TYPE_RANGE,\
-    INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE, INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV
+    INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE
 
 from goe.data_governance.hadoop_data_governance import get_hadoop_data_governance_client_from_options,\
     is_valid_data_governance_tag
@@ -145,9 +146,6 @@ HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = 'Including hybrid schema st
 MISSING_HYBRID_METADATA_EXCEPTION_TEMPLATE = 'Missing hybrid metadata for hybrid view %s.%s, contact Gluent support (or --reset-backend-table to overwrite table data)'
 NLS_LANG_MISSING_CHARACTER_SET_EXCEPTION_TEMPLATE = 'NLS_LANG value %s missing character set delimiter (.)'
 OFFLOAD_STATS_COPY_EXCEPTION_TEXT = 'Invalid --offload-stats value'
-OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT = 'Switching to offload type INCREMENTAL for LIST partitioned table requires --equal-to-values/--partition-names'
-OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT = 'Switching to INCREMENTAL for LIST partitioned table'
-OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT = 'Switching from offload type FULL to INCREMENTAL is not supported for Subpartition-Based Offload'
 RETAINING_PARTITITON_FUNCTIONS_MESSAGE_TEXT = 'Retaining partition functions from backend target'
 
 # Config that you would expect to be different from one offload to the next
@@ -1821,17 +1819,7 @@ class OffloadOperation(BaseOperation):
     )
 
 
-def unsupported_backend_data_types(supported_backend_data_types, backend_cols=None, data_type_list=None):
-  assert supported_backend_data_types and type(supported_backend_data_types) is list
-  assert backend_cols or data_type_list
-  if data_type_list:
-    source_data_types = set(data_type.split('(')[0] for data_type in data_type_list)
-  else:
-    source_data_types = set(col.data_type for col in backend_cols)
-  return list(source_data_types - set(supported_backend_data_types))
-
-
-def canonical_to_rdbms_mappings(canonical_columns, rdbms_table):
+def canonical_to_rdbms_mappings(canonical_columns: list, rdbms_table: OffloadSourceTableInterface):
   """ Take intermediate canonical columns and translate them into RDBMS columns
       rdbms_table: An rdbms table object that offers from_canonical_column()
   """
@@ -1849,50 +1837,6 @@ def canonical_to_rdbms_mappings(canonical_columns, rdbms_table):
   return rdbms_columns
 
 
-def offload_type_force_effects(hybrid_operation, source_data_client, original_metadata, offload_source_table, messages):
-  if source_data_client.is_incremental_append_capable():
-    original_offload_type = original_metadata.offload_type
-    new_offload_type = hybrid_operation.offload_type
-    if hybrid_operation.offload_by_subpartition and (original_offload_type, new_offload_type) == ('FULL', 'INCREMENTAL'):
-      # Once we have switched to FULL we cannot trust the HWM with subpartition offloads,
-      # what if another HWM appeared for already offloaded HWM!
-      raise OffloadException(OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT)
-
-    if hybrid_operation.ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST and (original_offload_type, new_offload_type) == ('FULL', 'INCREMENTAL'):
-      # We're switching OFFLOAD_TYPE for a LIST table, this is tricky for the user because we don't know the correct
-      # INCREMENTAL_HIGH_VALUE value for metadata/hybrid view. So best we can do is try to alert them.
-      active_lpa_opts = active_data_append_options(hybrid_operation, partition_type=OFFLOAD_PARTITION_TYPE_LIST)
-      if active_lpa_opts:
-        messages.notice('%s, only the partitions identified by %s will be queried from offloaded data' \
-            % (OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT, active_lpa_opts[0]))
-      else:
-        raise OffloadException(OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT)
-
-    if not hybrid_operation.force:
-      new_inc_key = None
-      original_inc_key = original_metadata.incremental_key
-      if hybrid_operation.hwm_in_hybrid_view and source_data_client.get_incremental_high_values():
-        new_inc_key = incremental_key_csv_from_part_keys(offload_source_table.partition_columns)
-
-      original_pred_cols, new_pred_cols = None, None
-      if hybrid_operation.ipa_predicate_type in INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV:
-        original_pred_cols = original_metadata.hwm_column_names()
-        new_pred_cols = hwm_column_names_from_predicates(source_data_client.get_post_offload_predicates())
-
-      if original_offload_type != new_offload_type:
-        messages.notice('Enabling force option when switching OFFLOAD_TYPE ("%s" -> "%s")'
-                        % (original_offload_type, new_offload_type))
-        hybrid_operation.force = True
-      elif original_inc_key != new_inc_key:
-        messages.notice('Enabling force option when switching INCREMENTAL_KEY ("%s" -> "%s")'
-                        % (original_inc_key, new_inc_key))
-        hybrid_operation.force = True
-      elif original_pred_cols != new_pred_cols and not source_data_client.nothing_to_offload():
-        messages.notice('Enabling force option when columns in INCREMENTAL_PREDICATE_VALUE change ("%s" -> "%s")'
-                        % (original_pred_cols, new_pred_cols))
-        hybrid_operation.force = True
-
-
 def pre_op_checks(check_version, config_options, frontend_api, exc_class=OffloadException):
   if config_options.db_type == DBTYPE_ORACLE:
     abort, v_goe, v_ora = version_abort(check_version, frontend_api)
@@ -1906,10 +1850,6 @@ def pre_op_checks(check_version, config_options, frontend_api, exc_class=Offload
   return True
 
 
-def get_hdfs(config_options, messages=None, force_ssh=False):
-  return get_dfs_from_options(config_options, messages=messages, force_ssh=force_ssh)
-
-
 def offload_operation_logic(offload_operation, offload_source_table, offload_target_table, offload_options,
                             source_data_client, existing_metadata, messages):
   """ Logic defining what will be offloaded and what the final objects will look like
@@ -1919,8 +1859,8 @@ def offload_operation_logic(offload_operation, offload_source_table, offload_tar
   """
 
   if offload_operation.reset_backend_table and not offload_operation.force:
-    messages.log('Enabling force mode based on --reset-backend-table', detail=VVERBOSE)
-    offload_operation.force = True
+      messages.log('Enabling force mode based on --reset-backend-table', detail=VVERBOSE)
+      offload_operation.force = True
 
   # Cache some source data attributes in offload_operation to carry through rest of offload logic
   offload_operation.offload_type = source_data_client.get_offload_type()
@@ -1928,7 +1868,7 @@ def offload_operation_logic(offload_operation, offload_source_table, offload_tar
   incr_append_capable = source_data_client.is_incremental_append_capable()
 
   if existing_metadata:
-    offload_type_force_effects(offload_operation, source_data_client, existing_metadata, offload_source_table, messages)
+      offload_type_force_effects(offload_operation, source_data_client, existing_metadata, offload_source_table, messages)
 
   if source_data_client.nothing_to_offload():
       # Drop out early

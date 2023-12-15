@@ -147,8 +147,6 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             (owner_override or self._repo_user).upper(), repo_type_name.upper()
         )
 
-    # TODO: Issue 18: fold execution_id into metadata and not have it as a global in offload_table and
-    #                 a separate arg to several metadata functions...
     def _metadata_dict_to_ora_object(self, metadata_dict):
         """
         Used to convert a Python dict of metadata to an Oracle object type ready for saving to the database.

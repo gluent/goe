@@ -125,6 +125,11 @@ IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT = (
     "--offload-predicate-type is not valid for a first time predicate-based offload"
 )
 IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT = "Missing --offload-predicate option. This option is mandatory to offload tables with an INCREMENTAL_PREDICATE_TYPE configuration of PREDICATE"
+OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT = "Switching to offload type INCREMENTAL for LIST partitioned table requires --equal-to-values/--partition-names"
+OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT = (
+    "Switching to INCREMENTAL for LIST partitioned table"
+)
+OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT = "Switching from offload type FULL to INCREMENTAL is not supported for Subpartition-Based Offload"
 RESET_HYBRID_VIEW_EXCEPTION_TEXT = (
     "Offload data identification options required with --reset-hybrid-view"
 )

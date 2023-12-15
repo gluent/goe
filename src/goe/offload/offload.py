@@ -20,15 +20,19 @@ from goe.offload.offload_constants import (
     IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
     CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
-    RESET_HYBRID_VIEW_EXCEPTION_TEXT,
     OFFLOAD_STATS_METHOD_COPY,
     OFFLOAD_STATS_METHOD_HISTORY,
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_STATS_METHOD_NONE,
+    OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT,
+    OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT,
+    OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT,
+    RESET_HYBRID_VIEW_EXCEPTION_TEXT,
 )
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
 from goe.offload.offload_metadata_functions import (
     decode_metadata_incremental_high_values_from_metadata,
+    incremental_key_csv_from_part_keys,
 )
 from goe.offload.offload_source_data import offload_source_data_factory
 from goe.offload.offload_source_table import (
@@ -39,10 +43,12 @@ from goe.offload.offload_source_table import (
 from goe.offload.operation.sort_columns import check_and_alter_backend_sort_columns
 from goe.offload.predicate_offload import GenericPredicate
 from goe.persistence.orchestration_metadata import (
+    hwm_column_names_from_predicates,
     INCREMENTAL_PREDICATE_TYPE_PREDICATE,
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
+    INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV,
 )
 from goe.util.misc_functions import format_list_for_logging, is_pos_int
 
@@ -382,6 +388,85 @@ def offload_backend_db_message(
         raise OffloadException(message)
     else:
         messages.warning(message, ansi_code="red")
+
+
+def offload_type_force_effects(
+    hybrid_operation,
+    source_data_client,
+    original_metadata,
+    offload_source_table,
+    messages,
+):
+    if source_data_client.is_incremental_append_capable():
+        original_offload_type = original_metadata.offload_type
+        new_offload_type = hybrid_operation.offload_type
+        if hybrid_operation.offload_by_subpartition and (
+            original_offload_type,
+            new_offload_type,
+        ) == ("FULL", "INCREMENTAL"):
+            # Once we have switched to FULL we cannot trust the HWM with subpartition offloads,
+            # what if another HWM appeared for already offloaded HWM!
+            raise OffloadException(OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT)
+
+        if hybrid_operation.ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST and (
+            original_offload_type,
+            new_offload_type,
+        ) == ("FULL", "INCREMENTAL"):
+            # We're switching OFFLOAD_TYPE for a LIST table, this is tricky for the user because we don't know the correct
+            # INCREMENTAL_HIGH_VALUE value for metadata/hybrid view. So best we can do is try to alert them.
+            active_lpa_opts = active_data_append_options(
+                hybrid_operation, partition_type=OFFLOAD_PARTITION_TYPE_LIST
+            )
+            if active_lpa_opts:
+                messages.notice(
+                    "%s, only the partitions identified by %s will be queried from offloaded data"
+                    % (OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT, active_lpa_opts[0])
+                )
+            else:
+                raise OffloadException(OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT)
+
+        if not hybrid_operation.force:
+            new_inc_key = None
+            original_inc_key = original_metadata.incremental_key
+            if (
+                hybrid_operation.hwm_in_hybrid_view
+                and source_data_client.get_incremental_high_values()
+            ):
+                new_inc_key = incremental_key_csv_from_part_keys(
+                    offload_source_table.partition_columns
+                )
+
+            original_pred_cols, new_pred_cols = None, None
+            if (
+                hybrid_operation.ipa_predicate_type
+                in INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV
+            ):
+                original_pred_cols = original_metadata.hwm_column_names()
+                new_pred_cols = hwm_column_names_from_predicates(
+                    source_data_client.get_post_offload_predicates()
+                )
+
+            if original_offload_type != new_offload_type:
+                messages.notice(
+                    'Enabling force option when switching OFFLOAD_TYPE ("%s" -> "%s")'
+                    % (original_offload_type, new_offload_type)
+                )
+                hybrid_operation.force = True
+            elif original_inc_key != new_inc_key:
+                messages.notice(
+                    'Enabling force option when switching INCREMENTAL_KEY ("%s" -> "%s")'
+                    % (original_inc_key, new_inc_key)
+                )
+                hybrid_operation.force = True
+            elif (
+                original_pred_cols != new_pred_cols
+                and not source_data_client.nothing_to_offload()
+            ):
+                messages.notice(
+                    'Enabling force option when columns in INCREMENTAL_PREDICATE_VALUE change ("%s" -> "%s")'
+                    % (original_pred_cols, new_pred_cols)
+                )
+                hybrid_operation.force = True
 
 
 def active_data_append_options(

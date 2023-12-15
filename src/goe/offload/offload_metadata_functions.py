@@ -29,7 +29,9 @@ from goe.util.misc_functions import csv_split, nvl, unsurround
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
     from goe.offload.offload_messages import OffloadMessages
-    from goe.persistence.orchestration_repo_client import OrchestrationRepoClientInterface
+    from goe.persistence.orchestration_repo_client import (
+        OrchestrationRepoClientInterface,
+    )
 
 
 class OffloadMetadataException(Exception):
@@ -56,7 +58,7 @@ METADATA_HYBRID_VIEW = "GLUENT_OFFLOAD_HYBRID_VIEW"
 ###########################################################################
 
 
-def gen_offload_metadata_from_base(
+def gen_offload_metadata(
     repo_client: "OrchestrationRepoClientInterface",
     offload_operation,
     backend_owner: str,
@@ -183,7 +185,7 @@ def gen_and_save_offload_metadata(
     """Simple wrapper over generation and saving of metadata.
     Returns the new metadata object for convenience.
     """
-    goe_metadata = gen_offload_metadata_from_base(
+    goe_metadata = gen_offload_metadata(
         repo_client,
         offload_operation,
         hadoop_owner,
@@ -329,7 +331,7 @@ def decode_metadata_incremental_high_values(
     incremental_predicate_type,
     incremental_key,
     incremental_high_value,
-    rdbms_base_table,
+    rdbms_base_table: OffloadSourceTableInterface,
 ):
     """Equivalent of OffloadSourceTable.decode_partition_high_values_with_literals but for metadata based values
     This function subverts ipa_predicate_type by using it as partition_type. This works currently but is not

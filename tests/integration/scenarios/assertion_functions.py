@@ -247,8 +247,8 @@ def frontend_column_exists(
 
 
 def check_metadata(
-    hybrid_schema: str,
-    hybrid_name: str,
+    frontend_owner: str,
+    frontend_name: str,
     messages: "OffloadMessages",
     repo_client: "OrchestrationRepoClientInterface",
     metadata_override=None,
@@ -292,10 +292,10 @@ def check_metadata(
         return True
 
     metadata = metadata_override or repo_client.get_offload_metadata(
-        hybrid_schema, hybrid_name
+        frontend_owner, frontend_name
     )
     if not metadata:
-        messages.log("No metadata for %s.%s" % (hybrid_schema, hybrid_name))
+        messages.log("No metadata for %s.%s" % (frontend_owner, frontend_name))
         return False
     if not check_item(metadata, hadoop_owner, "backend_owner"):
         return False
@@ -403,10 +403,9 @@ def standard_dimension_assertion(
     data_db, backend_table = convert_backend_identifier_case(
         config, data_db, backend_table
     )
-    hybrid_schema = test_functions.to_hybrid_schema(schema)
 
     if not check_metadata(
-        hybrid_schema,
+        schema,
         table_name,
         messages,
         repo_client,
@@ -415,7 +414,7 @@ def standard_dimension_assertion(
         offload_partition_functions=partition_functions,
         check_fn=lambda mt: bool(mt.offload_version),
     ):
-        messages.log("check_metadata(%s.%s) == False" % (hybrid_schema, table_name))
+        messages.log("check_metadata(%s.%s) == False" % (schema, table_name))
         return False
 
     if not backend_table_exists(config, backend_api, messages, data_db, backend_table):
@@ -461,7 +460,6 @@ def sales_based_fact_assertion(
     data_db, backend_table = convert_backend_identifier_case(
         config, data_db, backend_table
     )
-    hybrid_schema = test_functions.to_hybrid_schema(schema)
 
     if not incremental_key_type and incremental_key == "TIME_ID":
         incremental_key_type = frontend_api.test_type_canonical_date()
@@ -505,7 +503,7 @@ def sales_based_fact_assertion(
         return False
 
     if not check_metadata(
-        hybrid_schema,
+        schema,
         table_name,
         messages,
         repo_client,
@@ -518,7 +516,7 @@ def sales_based_fact_assertion(
         offload_partition_functions=partition_functions,
         check_fn=check_fn,
     ):
-        messages.log("check_metadata(%s.%s) == False" % (hybrid_schema, table_name))
+        messages.log("check_metadata(%s.%s) == False" % (schema, table_name))
         return False
 
     if (

@@ -9,7 +9,7 @@ from goe.persistence.orchestration_metadata import OrchestrationMetadata
 
 def backend_table_factory(db_name, table_name, backend_type, orchestration_options, messages,
                           orchestration_operation=None, hybrid_metadata=None, data_gov_client=None, dry_run=None,
-                          hybrid_owner_override=None, hybrid_view_override=None, existing_backend_api=None):
+                          frontend_owner_override=None, frontend_name_override=None, existing_backend_api=None):
     """ Return a BackendTable object for the appropriate backend.
         hybrid_owner_override/hybrid_view_override are for use from modules that do not have
         an orchestration_operation or a means of getting hybrid_metadata.
@@ -23,8 +23,8 @@ def backend_table_factory(db_name, table_name, backend_type, orchestration_optio
     if not hybrid_metadata:
         if orchestration_operation:
             hybrid_metadata = orchestration_operation.get_hybrid_metadata()
-        elif hybrid_owner_override and hybrid_view_override:
-            hybrid_metadata = OrchestrationMetadata.from_name(hybrid_owner_override, hybrid_view_override,
+        elif frontend_owner_override and frontend_name_override:
+            hybrid_metadata = OrchestrationMetadata.from_name(frontend_owner_override, frontend_name_override,
                                                               connection_options=orchestration_options,
                                                               messages=messages)
 

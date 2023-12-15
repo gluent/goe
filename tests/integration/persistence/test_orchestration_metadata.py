@@ -3,6 +3,7 @@
 
 from unittest import TestCase, main
 
+from goe.orchestration import orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
@@ -11,170 +12,118 @@ from goe.persistence.orchestration_metadata import (
     OrchestrationMetadata,
     METADATA_ATTRIBUTES,
 )
-from goe.offload.factory.frontend_api_factory import frontend_api_factory
-from goe.offload.offload_constants import DBTYPE_ORACLE
-from goe.offload.offload_messages import OffloadMessages
-from goe.orchestration import orchestration_constants
 
 from tests.integration.test_functions import (
     build_current_options,
     get_default_test_user,
 )
+from tests.testlib.test_framework.test_functions import (
+    get_test_messages,
+)
 
 
 UNITTEST_METADATA_NAME = "UNITTEST_METADATA_SALES"
 
+METADATA_DICT_TEST_DEFAULTS = {
+    "OFFLOAD_TYPE": "FULL",
+    "HADOOP_OWNER": "SH_LONG_1234567890_NAME",
+    "HADOOP_TABLE": "TABLE_LONG_1234567890_NAME",
+    "OFFLOADED_OWNER": "SH_LONG_1234567890_NAME",
+    "OFFLOADED_TABLE": "TABLE_LONG_1234567890_NAME",
+    "INCREMENTAL_KEY": "COLUMN_LONG_1234567890_NAME",
+    "INCREMENTAL_HIGH_VALUE": "LONG_1234567890_1234567890_VALUE",
+    "INCREMENTAL_PREDICATE_TYPE": "RANGE",
+    "INCREMENTAL_PREDICATE_VALUE": ["column(OBJECT_ID) < numeric(100)"],
+    "OFFLOAD_BUCKET_COLUMN": "SOME_COLUMN",
+    "OFFLOAD_VERSION": "6.0.0",
+    "OFFLOAD_SORT_COLUMNS": "SOME_COLUMN1,SOME_COLUMN2",
+    "INCREMENTAL_RANGE": "PARTITION",
+    "OFFLOAD_PARTITION_FUNCTIONS": "UDF1,UDF2",
+    "COMMAND_EXECUTION": "UUID",
+}
+
 EXAMPLE_CHANNELS_METADATA_DICT = {
-    "OBJECT_TYPE": "GLUENT_OFFLOAD_AGGREGATE_HYBRID_VIEW",
-    "EXTERNAL_TABLE": "CHANNELS_AGG_EXT",
-    "HYBRID_OWNER": "SH_H",
-    "HYBRID_VIEW": "CHANNELS_AGG",
     "OFFLOAD_TYPE": "FULL",
     "HADOOP_OWNER": "SH",
     "HADOOP_TABLE": "CHANNELS",
     "OFFLOADED_OWNER": "SH",
     "OFFLOADED_TABLE": "CHANNELS",
-    "OFFLOAD_SCN": 74637165,
     "INCREMENTAL_KEY": None,
     "INCREMENTAL_HIGH_VALUE": None,
     "INCREMENTAL_PREDICATE_TYPE": None,
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_BUCKET_METHOD": None,
-    "OFFLOAD_BUCKET_COUNT": None,
-    "OBJECT_HASH": None,
     "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": None,
-    "TRANSFORMATIONS": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
-    "IU_KEY_COLUMNS": None,
-    "IU_EXTRACTION_METHOD": None,
-    "IU_EXTRACTION_SCN": None,
-    "IU_EXTRACTION_TIME": None,
-    "CHANGELOG_TABLE": None,
-    "CHANGELOG_TRIGGER": None,
-    "CHANGELOG_SEQUENCE": None,
-    "UPDATABLE_VIEW": None,
-    "UPDATABLE_TRIGGER": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_SALES_METADATA_DICT = {
-    "OBJECT_TYPE": "GLUENT_OFFLOAD_HYBRID_VIEW",
-    "EXTERNAL_TABLE": "SALES_EXT",
-    "HYBRID_OWNER": "SH_H",
-    "HYBRID_VIEW": "SALES",
     "OFFLOAD_TYPE": "INCREMENTAL",
     "HADOOP_OWNER": "SH",
     "HADOOP_TABLE": "SALES",
     "OFFLOADED_OWNER": "SH",
     "OFFLOADED_TABLE": "SALES",
-    "OFFLOAD_SCN": 76850168,
+    "OFFLOAD_SNAPSHOT": 76850168,
     "INCREMENTAL_KEY": "TIME_ID",
     "INCREMENTAL_HIGH_VALUE": "TO_DATE(' 2012-01-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_BUCKET_METHOD": None,
-    "OFFLOAD_BUCKET_COUNT": None,
-    "OBJECT_HASH": None,
     "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "PARTITION",
-    "TRANSFORMATIONS": None,
-    "OFFLOAD_PARTITION_FUNCTIONS": "",
-    "IU_KEY_COLUMNS": None,
-    "IU_EXTRACTION_METHOD": None,
-    "IU_EXTRACTION_SCN": None,
-    "IU_EXTRACTION_TIME": None,
-    "CHANGELOG_TABLE": None,
-    "CHANGELOG_TRIGGER": None,
-    "CHANGELOG_SEQUENCE": None,
-    "UPDATABLE_VIEW": None,
-    "UPDATABLE_TRIGGER": None,
+    "OFFLOAD_PARTITION_FUNCTIONS": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
-    "OBJECT_TYPE": "GLUENT_OFFLOAD_HYBRID_VIEW",
-    "EXTERNAL_TABLE": "GL_LIST_RANGE_DAY_DT_EXT",
-    "HYBRID_OWNER": "SH_TEST_H",
-    "HYBRID_VIEW": "GL_LIST_RANGE_DAY_DT",
     "OFFLOAD_TYPE": "INCREMENTAL",
     "HADOOP_OWNER": "SH_TEST",
     "HADOOP_TABLE": "GL_LIST_RANGE_DAY_DT",
     "OFFLOADED_OWNER": "SH_TEST",
     "OFFLOADED_TABLE": "GL_LIST_RANGE_DAY_DT",
-    "OFFLOAD_SCN": 69472864,
+    "OFFLOAD_SNAPSHOT": 69472864,
     "INCREMENTAL_KEY": "DT",
     "INCREMENTAL_HIGH_VALUE": "TO_DATE(' 2015-01-31 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_BUCKET_METHOD": None,
-    "OFFLOAD_BUCKET_COUNT": None,
-    "OBJECT_HASH": None,
     "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "SUBPARTITION",
-    "TRANSFORMATIONS": None,
-    "OFFLOAD_PARTITION_FUNCTIONS": "",
-    "IU_KEY_COLUMNS": None,
-    "IU_EXTRACTION_METHOD": None,
-    "IU_EXTRACTION_SCN": None,
-    "IU_EXTRACTION_TIME": None,
-    "CHANGELOG_TABLE": None,
-    "CHANGELOG_TRIGGER": None,
-    "CHANGELOG_SEQUENCE": None,
-    "UPDATABLE_VIEW": None,
-    "UPDATABLE_TRIGGER": None,
+    "OFFLOAD_PARTITION_FUNCTIONS": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_STORY_PBO_DIM_METADATA_DICT = {
-    "OBJECT_TYPE": "GLUENT_OFFLOAD_HYBRID_VIEW",
-    "EXTERNAL_TABLE": "STORY_PBO_DIM_EXT",
-    "HYBRID_OWNER": "SH_TEST_H",
-    "HYBRID_VIEW": "STORY_PBO_DIM",
     "OFFLOAD_TYPE": "INCREMENTAL",
     "HADOOP_OWNER": "SH_TEST",
     "HADOOP_TABLE": "STORY_PBO_DIM",
     "OFFLOADED_OWNER": "SH_TEST",
     "OFFLOADED_TABLE": "STORY_PBO_DIM",
-    "OFFLOAD_SCN": 76853651,
+    "OFFLOAD_SNAPSHOT": 76853651,
     "INCREMENTAL_KEY": None,
     "INCREMENTAL_HIGH_VALUE": None,
     "INCREMENTAL_PREDICATE_TYPE": "PREDICATE",
     "INCREMENTAL_PREDICATE_VALUE": ['column(PROD_SUBCATEGORY) = string("Camcorders")'],
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_BUCKET_METHOD": None,
-    "OFFLOAD_BUCKET_COUNT": None,
-    "OBJECT_HASH": None,
     "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": None,
-    "TRANSFORMATIONS": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
-    "IU_KEY_COLUMNS": None,
-    "IU_EXTRACTION_METHOD": None,
-    "IU_EXTRACTION_SCN": None,
-    "IU_EXTRACTION_TIME": None,
-    "CHANGELOG_TABLE": None,
-    "CHANGELOG_TRIGGER": None,
-    "CHANGELOG_SEQUENCE": None,
-    "UPDATABLE_VIEW": None,
-    "UPDATABLE_TRIGGER": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 EXAMPLE_STORY_PBO_R_INTRA_METADATA_DICT = {
-    "OBJECT_TYPE": "GLUENT_OFFLOAD_HYBRID_VIEW",
-    "EXTERNAL_TABLE": "STORY_PBO_R_INTRA_EXT",
-    "HYBRID_OWNER": "SH_TEST_H",
-    "HYBRID_VIEW": "STORY_PBO_R_INTRA",
     "OFFLOAD_TYPE": "INCREMENTAL",
     "HADOOP_OWNER": "SH_TEST",
     "HADOOP_TABLE": "STORY_PBO_R_INTRA",
     "OFFLOADED_OWNER": "SH_TEST",
     "OFFLOADED_TABLE": "STORY_PBO_R_INTRA",
-    "OFFLOAD_SCN": 76856298,
+    "OFFLOAD_SNAPSHOT": 76856298,
     "INCREMENTAL_KEY": "TIME_ID",
     "INCREMENTAL_HIGH_VALUE": "TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
     "INCREMENTAL_PREDICATE_TYPE": "RANGE_AND_PREDICATE",
@@ -182,23 +131,11 @@ EXAMPLE_STORY_PBO_R_INTRA_METADATA_DICT = {
         "((column(TIME_ID) >= datetime(2012-02-01) AND column(TIME_ID) < datetime(2012-03-01)) AND column(CHANNEL_ID) = numeric(2))"
     ],
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_BUCKET_METHOD": None,
-    "OFFLOAD_BUCKET_COUNT": None,
-    "OBJECT_HASH": None,
     "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "PARTITION",
-    "TRANSFORMATIONS": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
-    "IU_KEY_COLUMNS": None,
-    "IU_EXTRACTION_METHOD": None,
-    "IU_EXTRACTION_SCN": None,
-    "IU_EXTRACTION_TIME": None,
-    "CHANGELOG_TABLE": None,
-    "CHANGELOG_TRIGGER": None,
-    "CHANGELOG_SEQUENCE": None,
-    "UPDATABLE_VIEW": None,
-    "UPDATABLE_TRIGGER": None,
+    "COMMAND_EXECUTION": "UUID",
 }
 
 
@@ -209,85 +146,41 @@ class TestOrchestrationMetadataException(Exception):
 class TestOrchestrationMetadata(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.options = build_current_options()
-        self.messages = OffloadMessages()
-        self.db = get_default_test_user(hybrid=True)
+        self.config = build_current_options()
+        self.messages = get_test_messages(self.config, "TestOrchestrationMetadata")
+        self.db = get_default_test_user()
         # See all unittest output in diff mismatches
         self.maxDiff = None
 
     def _convert_to_test_metadata(
-        self, source_metadata, new_owner, new_name, metadata_columns
+        self,
+        source_metadata,
+        new_owner,
+        new_name,
     ):
         """Generate some test data, using the metadata for SALES as a base and a description of the
         OFFLOAD_METADATA table to fill in the blanks...
         """
         # Modify the test data...
         test_metadata = source_metadata
-        test_metadata["HYBRID_OWNER"] = new_owner
-        test_metadata["HYBRID_VIEW"] = new_name
-        test_metadata["EXTERNAL_TABLE"] = "%s_EXT" % new_name
+        test_metadata["OFFLOADED_OWNER"] = new_owner
+        test_metadata["OFFLOADED_TABLE"] = new_name
         for k, v in test_metadata.items():
             if v is None:
-                # Fill in the blanks with dummy data (column names for strings and name length for numbers)
-                metadata_value = None
-                metadata_column = metadata_columns[k]
-                # The problem with dynamic data creation... we have to hack the ones that require special knowledge
-                if k == "TRANSFORMATIONS":
-                    metadata_value = None
-                elif k == "INCREMENTAL_PREDICATE_VALUE":
-                    metadata_value = ["column(OBJECT_ID) < numeric(100)"]
-                elif k in ("IU_EXTRACTION_SCN", "IU_EXTRACTION_TIME"):
-                    metadata_value = None
-                elif metadata_column.is_string_based() and metadata_column.data_length:
-                    metadata_value = k[: metadata_column.data_length]
-                elif metadata_column.is_number_based():
-                    metadata_value = len(k)
-                else:
-                    raise TestOrchestrationMetadataException(
-                        f"Metadata unit tests do not cater for key: {k}"
-                    )
-                test_metadata[k] = metadata_value
+                # Fill in the blanks with dummy data.
+                test_metadata[k] = METADATA_DICT_TEST_DEFAULTS[k]
         return test_metadata
 
-    def _gen_test_metadata(self, metadata_client=None, source_table="SALES"):
-        source_metadata = OrchestrationMetadata.from_name(
-            self.db,
-            source_table,
-            client=metadata_client,
-            connection_options=self.options,
-            messages=self.messages,
-        )
-        self.assertIsInstance(source_metadata, OrchestrationMetadata)
-        metadata_columns = self._get_offload_metadata_description()
+    def _gen_test_metadata(self):
+        source_metadata = OrchestrationMetadata(EXAMPLE_SALES_METADATA_DICT)
         new_metadata_dict = self._convert_to_test_metadata(
-            source_metadata.as_dict(), self.db, UNITTEST_METADATA_NAME, metadata_columns
+            source_metadata.as_dict(),
+            self.db,
+            UNITTEST_METADATA_NAME,
         )
         return OrchestrationMetadata(
-            new_metadata_dict, connection_options=self.options, messages=self.messages
+            new_metadata_dict, connection_options=self.config, messages=self.messages
         )
-
-    def _get_offload_metadata_description(self):
-        frontend_api = frontend_api_factory(
-            self.options.db_type, self.options, self.messages, dry_run=True
-        )
-        if self.options.db_type == DBTYPE_ORACLE:
-            return self._get_offload_metadata_description_from_oracle(frontend_api)
-        else:
-            raise Exception(
-                "TestOrchestrationMetadata not implemented for system: {}".format(
-                    self.options.db_type
-                )
-            )
-
-    def _get_offload_metadata_description_from_oracle(self, frontend_api):
-        """Fetch the description of the OFFLOAD_METADATA table to generate some
-        test data...
-        """
-        repo_user = self.options.ora_repo_user.upper()
-        metadata_columns = {}
-        for column in frontend_api.get_columns(repo_user, "OFFLOAD_METADATA"):
-            metadata_columns[column.name] = column
-        return metadata_columns
 
     def _test_metadata(
         self, test_metadata, client=None, connection_options=None, messages=None
@@ -295,19 +188,20 @@ class TestOrchestrationMetadata(TestCase):
         """Tests we can get/change and delete OrchestrationMetadata"""
         execution_id = ExecutionId()
         repo_client = test_metadata.client
-        # TODO log name is no longer passed in
         cid = repo_client.start_command(
             execution_id,
             orchestration_constants.COMMAND_OFFLOAD,
-            "unit_tests",
             "test",
             '{"test": 123}',
         )
 
-        # Save initial metadata
-        test_metadata.save(execution_id)
+        # Inject the execution id into our test metadata.
+        test_metadata.command_execution = execution_id
 
-        # Retrieve the metadata again and confirm all attributes are the same as those we saved
+        # Save initial metadata.
+        test_metadata.save()
+
+        # Retrieve the metadata again and confirm all attributes are the same as those we saved.
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
             UNITTEST_METADATA_NAME,
@@ -324,8 +218,8 @@ class TestOrchestrationMetadata(TestCase):
 
         # Test that the save function updates changes
         # Change by attribute:
-        test_metadata.offload_scn = -1
-        test_metadata.save(execution_id)
+        test_metadata.offload_snapshot = -1
+        test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
             UNITTEST_METADATA_NAME,
@@ -335,17 +229,17 @@ class TestOrchestrationMetadata(TestCase):
         )
         self.assertIsInstance(saved_metadata, OrchestrationMetadata)
         self.assertEqual(
-            test_metadata.offload_scn,
-            saved_metadata.offload_scn,
-            "Saved metadata.offload_scn mismatch when re-fetched",
+            test_metadata.offload_snapshot,
+            saved_metadata.offload_snapshot,
+            "Saved metadata.offload_snapshot mismatch when re-fetched",
         )
         # Change by dict:
         test_metadata_dict = test_metadata.as_dict()
-        test_metadata_dict["OFFLOAD_SCN"] = -2
+        test_metadata_dict["OFFLOAD_SNAPSHOT"] = -2
         test_metadata = OrchestrationMetadata(
             test_metadata_dict, client=test_metadata.client
         )
-        test_metadata.save(execution_id)
+        test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
             UNITTEST_METADATA_NAME,
@@ -355,9 +249,9 @@ class TestOrchestrationMetadata(TestCase):
         )
         self.assertIsInstance(saved_metadata, OrchestrationMetadata)
         self.assertEqual(
-            test_metadata.offload_scn,
-            saved_metadata.offload_scn,
-            "Saved metadata.offload_scn mismatch when re-fetched",
+            test_metadata.offload_snapshot,
+            saved_metadata.offload_snapshot,
+            "Saved metadata.offload_snapshot mismatch when re-fetched",
         )
 
         # Drop metadata
@@ -377,10 +271,8 @@ class TestOrchestrationMetadata(TestCase):
         """Tests we can interact with OrchestrationMetadata by client.
         This is more efficient as it will re-use a connection.
         """
-        client = orchestration_repo_client_factory(self.options, self.messages)
-        self._test_metadata(
-            self._gen_test_metadata(metadata_client=client), client=client
-        )
+        client = orchestration_repo_client_factory(self.config, self.messages)
+        self._test_metadata(self._gen_test_metadata(), client=client)
 
     def test_metadata_direct(self):
         """Tests we can interact with OrchestrationMetadata without creating a client.
@@ -388,7 +280,7 @@ class TestOrchestrationMetadata(TestCase):
         """
         self._test_metadata(
             self._gen_test_metadata(),
-            connection_options=self.options,
+            connection_options=self.config,
             messages=self.messages,
         )
 
@@ -401,14 +293,14 @@ class TestOrchestrationMetadata(TestCase):
             k: source_metadata_dict[v] for k, v in METADATA_ATTRIBUTES.items()
         }
         new_metadata = OrchestrationMetadata.from_attributes(
-            connection_options=self.options, messages=self.messages, **attributes
+            connection_options=self.config, messages=self.messages, **attributes
         )
         self.assertIsInstance(new_metadata, OrchestrationMetadata)
         self.assertEqual(
             source_metadata_dict, new_metadata.as_dict(), "Generated metadata mismatch"
         )
         self._test_metadata(
-            new_metadata, connection_options=self.options, messages=self.messages
+            new_metadata, connection_options=self.config, messages=self.messages
         )
 
     def test_is_subpartition_offload(self):

@@ -40,15 +40,15 @@ from goe.offload.column_metadata import ColumnBucketInfo, \
     GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_TIMESTAMP_TZ
 from goe.offload.offload_constants import (
     ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
-    DBTYPE_BIGQUERY, DBTYPE_IMPALA,
-    DBTYPE_ORACLE, DBTYPE_MSSQL,
+    DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_MSSQL,
     FILE_STORAGE_COMPRESSION_CODEC_GZIP, FILE_STORAGE_COMPRESSION_CODEC_SNAPPY, FILE_STORAGE_COMPRESSION_CODEC_ZLIB,
     HYBRID_EXT_TABLE_DEGREE_AUTO,
     IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
     LOG_LEVEL_INFO, LOG_LEVEL_DETAIL, LOG_LEVEL_DEBUG,
-    OFFLOAD_BUCKET_NAME, NUM_BUCKETS_AUTO,
+    OFFLOAD_BUCKET_NAME,
+    NUM_BUCKETS_AUTO,
     OFFLOAD_STATS_METHOD_COPY,
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
@@ -61,7 +61,7 @@ from goe.offload.offload_source_data import get_offload_type_for_config, \
 from goe.offload.offload_source_table import OffloadSourceTableInterface, \
     OFFLOAD_PARTITION_TYPE_RANGE, OFFLOAD_PARTITION_TYPE_LIST
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
-from goe.offload.offload_metadata_functions import incremental_key_csv_from_part_keys, gen_and_save_offload_metadata, METADATA_HYBRID_VIEW
+from goe.offload.offload_metadata_functions import incremental_key_csv_from_part_keys, gen_and_save_offload_metadata
 from goe.offload.offload_validation import BackendCountValidator, CrossDbValidator,\
     build_verification_clauses
 from goe.offload.offload_transport import choose_offload_transport_method, offload_transport_factory, \
@@ -83,10 +83,11 @@ from goe.offload.offload import (
     check_ipa_predicate_type_option_conflicts,
     check_table_structure,
     create_final_backend_table,
-    offload_backend_db_message,
     get_current_offload_hv,
     get_offload_data_manager,
     get_prior_offloaded_hv,
+    offload_backend_db_message,
+    offload_type_force_effects,
     normalise_data_sampling_options,
     normalise_less_than_options,
     normalise_offload_predicate_options,
@@ -99,10 +100,10 @@ from goe.offload.operation.sort_columns import sort_columns_csv_to_sort_columns
 from goe.orchestration import command_steps
 from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import orchestration_repo_client_factory
-from goe.persistence.orchestration_metadata import OrchestrationMetadata, hwm_column_names_from_predicates,\
+from goe.persistence.orchestration_metadata import OrchestrationMetadata, \
     INCREMENTAL_PREDICATE_TYPE_PREDICATE, INCREMENTAL_PREDICATE_TYPE_LIST, INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,\
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE_AND_PREDICATE, INCREMENTAL_PREDICATE_TYPE_RANGE,\
-    INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE, INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV
+    INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE
 
 from goe.data_governance.hadoop_data_governance import get_hadoop_data_governance_client_from_options,\
     is_valid_data_governance_tag
@@ -145,9 +146,6 @@ HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = 'Including hybrid schema st
 MISSING_HYBRID_METADATA_EXCEPTION_TEMPLATE = 'Missing hybrid metadata for hybrid view %s.%s, contact Gluent support (or --reset-backend-table to overwrite table data)'
 NLS_LANG_MISSING_CHARACTER_SET_EXCEPTION_TEMPLATE = 'NLS_LANG value %s missing character set delimiter (.)'
 OFFLOAD_STATS_COPY_EXCEPTION_TEXT = 'Invalid --offload-stats value'
-OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT = 'Switching to offload type INCREMENTAL for LIST partitioned table requires --equal-to-values/--partition-names'
-OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT = 'Switching to INCREMENTAL for LIST partitioned table'
-OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT = 'Switching from offload type FULL to INCREMENTAL is not supported for Subpartition-Based Offload'
 RETAINING_PARTITITON_FUNCTIONS_MESSAGE_TEXT = 'Retaining partition functions from backend target'
 
 # Config that you would expect to be different from one offload to the next
@@ -1020,7 +1018,6 @@ class BaseOperation(object):
     self.max_hybrid_name_length = max_hybrid_name_length
     self._orchestration_config = config
     self._messages = messages
-    self.column_transformations = {}
     self.hwm_in_hybrid_view = None
     self.inflight_offload_predicate = None
     self.bucket_hash_method = None
@@ -1158,43 +1155,13 @@ class BaseOperation(object):
   def vars(self):
     raise NotImplementedError('vars() has not been implemented for this operation')
 
-  def override_bucket_hash_col(self, new_bucket_hash_col, new_bucket_hash_method, messages=None):
+  def override_bucket_hash_col(self, new_bucket_hash_col, messages):
     """ Pass messages as None to suppress any warnings/notices
     """
     upper_or_none = lambda x: x.upper() if x else x
-    if self.bucket_hash_col and upper_or_none(new_bucket_hash_col) != upper_or_none(self.bucket_hash_col) and messages:
+    if self.bucket_hash_col and upper_or_none(new_bucket_hash_col) != upper_or_none(self.bucket_hash_col):
       messages.notice('Retaining bucket hash column from original offload (ignoring --bucket-hash-column)')
     self.bucket_hash_col = upper_or_none(new_bucket_hash_col)
-    self.bucket_hash_method = new_bucket_hash_method
-
-  def validate_num_buckets(self, rdbms_table, messages, offload_target, backend_table, no_auto_tuning=False):
-    if not backend_table.synthetic_bucketing_supported():
-      self.num_buckets = None
-      return
-
-    if self.num_buckets is None:
-      self.num_buckets = orchestration_defaults.num_buckets_default()
-
-    if type(self.num_buckets) is str:
-      self.num_buckets = self.num_buckets.upper()
-
-      if self.num_buckets == NUM_BUCKETS_AUTO:
-        if no_auto_tuning:
-          self.num_buckets = self.num_buckets_cap(offload_target)
-        else:
-          self.auto_tune_num_buckets(rdbms_table, messages, offload_target)
-
-      if type(self.num_buckets) is str and re.search(r'^\d+$', str(self.num_buckets)):
-        self.num_buckets = int(self.num_buckets)
-
-    if not self.num_buckets \
-    or type(self.num_buckets) is str \
-    or abs(int(self.num_buckets)) != self.num_buckets:
-      raise OffloadException('Invalid value specified for --num-buckets: %s' % str(self.num_buckets))
-
-    if self.num_buckets and self.num_buckets > self._num_buckets_max and not no_auto_tuning:
-      raise OffloadException('--num-buckets cannot be greater than DEFAULT_BUCKETS_MAX (%s > %s)'
-                             % (str(self.num_buckets), str(self._num_buckets_max)))
 
   def override_num_buckets(self, num_buckets_override, messages=None):
     """ Pass messages as None to supress any warnings/notices
@@ -1269,10 +1236,10 @@ class BaseOperation(object):
         force can be used to ensure we read regardless of the reset status of the operation, but not store in state.
     """
     if not self._existing_metadata and not self.reset_backend_table:
-      self._existing_metadata = OrchestrationMetadata.from_name(self.hybrid_owner, self.hybrid_name,
+      self._existing_metadata = OrchestrationMetadata.from_name(self.owner, self.table_name,
                                                                 client=self.repo_client)
     elif force:
-      return OrchestrationMetadata.from_name(self.hybrid_owner, self.hybrid_name, client=self.repo_client)
+      return OrchestrationMetadata.from_name(self.owner, self.table_name, client=self.repo_client)
     return self._existing_metadata
 
   def reset_hybrid_metadata(self, execute, new_metadata):
@@ -1291,11 +1258,8 @@ class BaseOperation(object):
 
   def set_bucket_info_from_metadata(self, existing_metadata, messages):
     if existing_metadata:
-      self.override_bucket_hash_col(existing_metadata.offload_bucket_column,
-                                    existing_metadata.offload_bucket_method, messages)
-      self.override_num_buckets(existing_metadata.offload_bucket_count, messages=messages)
+      self.override_bucket_hash_col(existing_metadata.offload_bucket_column, messages)
     else:
-      self.num_buckets = None
       self.bucket_hash_col = None
       self.bucket_hash_method = None
 
@@ -1317,9 +1281,8 @@ class BaseOperation(object):
     self.validate_bucket_hash_col(offload_source_table.get_column_names(), offload_source_table, offload_options,
                                   messages, offload_target_table.synthetic_bucketing_supported(),
                                   offload_target_table.bucket_hash_column_supported())
-    self.validate_num_buckets(offload_source_table, messages, offload_options.target, offload_target_table)
 
-  def defaults_for_existing_table(self, offload_options, frontend_api, messages=None):
+  def defaults_for_existing_table(self, messages):
     """ Default bucket hash column and datatype mappings from existing table
         This is required for setting up a pre-existing table and is used by
         incremental partition append and incremental update
@@ -1328,7 +1291,7 @@ class BaseOperation(object):
     existing_metadata = self.get_hybrid_metadata()
 
     if not existing_metadata:
-      raise OffloadException(MISSING_HYBRID_METADATA_EXCEPTION_TEMPLATE % (self.hybrid_owner, self.hybrid_name))
+      raise OffloadException(MISSING_HYBRID_METADATA_EXCEPTION_TEMPLATE % (self.owner, self.table_name))
 
     self.set_bucket_info_from_metadata(existing_metadata, messages)
 
@@ -1414,18 +1377,10 @@ class BaseOperation(object):
                                                self.offload_partition_upper_value, self.synthetic_partition_digits,
                                                rdbms_column, backend_table)
 
-    def get_bucket_info(rdbms_column):
-      bucket_info = None
-      if self.num_buckets and self.bucket_hash_col.upper() == rdbms_column.name.upper() \
-      and backend_table.synthetic_bucketing_supported():
-        bucket_info = ColumnBucketInfo(self.bucket_hash_col, self.num_buckets, self.bucket_hash_method)
-      return bucket_info
-
     new_columns = []
     for canonical_column in canonical_columns:
       rdbms_column = match_table_column(canonical_column.name, rdbms_columns)
       canonical_column.partition_info = get_partition_info(rdbms_column)
-      canonical_column.bucket_info = get_bucket_info(rdbms_column)
       new_columns.append(canonical_column)
     return new_columns
 
@@ -1864,17 +1819,7 @@ class OffloadOperation(BaseOperation):
     )
 
 
-def unsupported_backend_data_types(supported_backend_data_types, backend_cols=None, data_type_list=None):
-  assert supported_backend_data_types and type(supported_backend_data_types) is list
-  assert backend_cols or data_type_list
-  if data_type_list:
-    source_data_types = set(data_type.split('(')[0] for data_type in data_type_list)
-  else:
-    source_data_types = set(col.data_type for col in backend_cols)
-  return list(source_data_types - set(supported_backend_data_types))
-
-
-def canonical_to_rdbms_mappings(canonical_columns, rdbms_table):
+def canonical_to_rdbms_mappings(canonical_columns: list, rdbms_table: OffloadSourceTableInterface):
   """ Take intermediate canonical columns and translate them into RDBMS columns
       rdbms_table: An rdbms table object that offers from_canonical_column()
   """
@@ -1892,51 +1837,6 @@ def canonical_to_rdbms_mappings(canonical_columns, rdbms_table):
   return rdbms_columns
 
 
-def offload_type_force_and_aapd_effects(hybrid_operation, source_data_client, original_metadata, offload_source_table,
-                                        hybrid_options, messages):
-  if source_data_client.is_incremental_append_capable():
-    original_offload_type = original_metadata.offload_type
-    new_offload_type = hybrid_operation.offload_type
-    if hybrid_operation.offload_by_subpartition and (original_offload_type, new_offload_type) == ('FULL', 'INCREMENTAL'):
-      # Once we have switched to FULL we cannot trust the HWM with subpartition offloads,
-      # what if another HWM appeared for already offloaded HWM!
-      raise OffloadException(OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT)
-
-    if hybrid_operation.ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST and (original_offload_type, new_offload_type) == ('FULL', 'INCREMENTAL'):
-      # We're switching OFFLOAD_TYPE for a LIST table, this is tricky for the user because we don't know the correct
-      # INCREMENTAL_HIGH_VALUE value for metadata/hybrid view. So best we can do is try to alert them.
-      active_lpa_opts = active_data_append_options(hybrid_operation, partition_type=OFFLOAD_PARTITION_TYPE_LIST)
-      if active_lpa_opts:
-        messages.notice('%s, only the partitions identified by %s will be queried from offloaded data' \
-            % (OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT, active_lpa_opts[0]))
-      else:
-        raise OffloadException(OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT)
-
-    if not hybrid_operation.force:
-      new_inc_key = None
-      original_inc_key = original_metadata.incremental_key
-      if hybrid_operation.hwm_in_hybrid_view and source_data_client.get_incremental_high_values():
-        new_inc_key = incremental_key_csv_from_part_keys(offload_source_table.partition_columns)
-
-      original_pred_cols, new_pred_cols = None, None
-      if hybrid_operation.ipa_predicate_type in INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV:
-        original_pred_cols = original_metadata.hwm_column_names()
-        new_pred_cols = hwm_column_names_from_predicates(source_data_client.get_post_offload_predicates())
-
-      if original_offload_type != new_offload_type:
-        messages.notice('Enabling force option when switching OFFLOAD_TYPE ("%s" -> "%s")'
-                        % (original_offload_type, new_offload_type))
-        hybrid_operation.force = True
-      elif original_inc_key != new_inc_key:
-        messages.notice('Enabling force option when switching INCREMENTAL_KEY ("%s" -> "%s")'
-                        % (original_inc_key, new_inc_key))
-        hybrid_operation.force = True
-      elif original_pred_cols != new_pred_cols and not source_data_client.nothing_to_offload():
-        messages.notice('Enabling force option when columns in INCREMENTAL_PREDICATE_VALUE change ("%s" -> "%s")'
-                        % (original_pred_cols, new_pred_cols))
-        hybrid_operation.force = True
-
-
 def pre_op_checks(check_version, config_options, frontend_api, exc_class=OffloadException):
   if config_options.db_type == DBTYPE_ORACLE:
     abort, v_goe, v_ora = version_abort(check_version, frontend_api)
@@ -1950,10 +1850,6 @@ def pre_op_checks(check_version, config_options, frontend_api, exc_class=Offload
   return True
 
 
-def get_hdfs(config_options, messages=None, force_ssh=False):
-  return get_dfs_from_options(config_options, messages=messages, force_ssh=force_ssh)
-
-
 def offload_operation_logic(offload_operation, offload_source_table, offload_target_table, offload_options,
                             source_data_client, existing_metadata, messages):
   """ Logic defining what will be offloaded and what the final objects will look like
@@ -1963,8 +1859,8 @@ def offload_operation_logic(offload_operation, offload_source_table, offload_tar
   """
 
   if offload_operation.reset_backend_table and not offload_operation.force:
-    messages.log('Enabling force mode based on --reset-backend-table', detail=VVERBOSE)
-    offload_operation.force = True
+      messages.log('Enabling force mode based on --reset-backend-table', detail=VVERBOSE)
+      offload_operation.force = True
 
   # Cache some source data attributes in offload_operation to carry through rest of offload logic
   offload_operation.offload_type = source_data_client.get_offload_type()
@@ -1972,14 +1868,11 @@ def offload_operation_logic(offload_operation, offload_source_table, offload_tar
   incr_append_capable = source_data_client.is_incremental_append_capable()
 
   if existing_metadata:
-    offload_type_force_and_aapd_effects(offload_operation, source_data_client, existing_metadata, offload_source_table,
-                                        offload_options, messages)
+      offload_type_force_effects(offload_operation, source_data_client, existing_metadata, offload_source_table, messages)
 
   if source_data_client.nothing_to_offload():
-    # Drop out early
-    return False
-
-  offload_operation.column_transformations = normalise_column_transformations(offload_operation.column_transformation_list, offload_cols=offload_source_table.columns)
+      # Drop out early
+      return False
 
   if not offload_target_table.exists() or offload_operation.reset_backend_table:
     # We are creating a fresh table and therefore don't need to concern ourselves with existing structure
@@ -2021,14 +1914,6 @@ def offload_operation_logic(offload_operation, offload_source_table, offload_tar
             'Original table filesystem scheme will be used for new partitions (ignoring --offload-fs-scheme, using %s)'
             % get_default_location_fs_scheme(offload_target_table)
         )
-
-      if existing_metadata.transformations:
-        offload_operation.column_transformations = normalise_column_transformations(existing_metadata.transformations,
-                                                                                    offload_cols=offload_source_table.columns)
-      else:
-        offload_operation.column_transformations = {}
-      if offload_operation.column_transformation_list:
-        messages.notice('Retaining column transformations from original offload (ignoring --transform-column)')
 
   offload_operation.validate_sort_columns(offload_source_table.get_column_names(), messages, offload_options,
                                           offload_target_table.get_columns(), existing_metadata,
@@ -2091,9 +1976,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
   existing_metadata = None
   if offload_target_table.exists() and not offload_operation.reset_backend_table:
     # We need to pickup defaults for an existing table here, BEFORE we start looking for data to offload (get_offload_data_manager())
-    existing_metadata = offload_operation.defaults_for_existing_table(
-      offload_options, offload_source_table.get_frontend_api(), messages=messages
-    )
+    existing_metadata = offload_operation.defaults_for_existing_table(messages)
     check_table_structure(offload_source_table, offload_target_table, messages)
     offload_target_table.refresh_operational_settings(offload_operation, rdbms_columns=offload_source_table.columns)
 
@@ -2125,7 +2008,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
   # of offload we'll do. This happens inside offload_operation_logic().
   if not offload_operation_logic(offload_operation, offload_source_table, offload_target_table, offload_options,
                                  source_data_client, existing_metadata, messages):
-    return False
+      return False
 
   data_gov_client = get_data_gov_client(offload_options,
                                         messages,
@@ -2147,13 +2030,13 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
     offload_target_table.drop_backend_table_step(purge=offload_operation.purge_backend_table)
 
   rows_offloaded = None
-  pre_offload_scn = None
 
-  # pre-offload SCN will be stored in metadata
+  pre_offload_snapshot = None
   if offload_options.db_type == DBTYPE_ORACLE:
-    pre_offload_scn = offload_source_table.get_current_scn(return_none_on_failure=True)
+      # Pre-offload SCN will be stored in metadata.
+      pre_offload_snapshot = offload_source_table.get_current_scn(return_none_on_failure=True)
 
-  create_final_backend_table(offload_target_table, offload_operation, offload_options, offload_source_table.columns)
+  create_final_backend_table(offload_target_table, offload_operation)
 
   data_transport_client = offload_transport_factory(offload_operation.offload_transport_method,
                                                     offload_source_table,
@@ -2164,7 +2047,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
                                                     dfs_client)
 
   offload_target_table.set_final_table_casts(offload_source_table.columns,
-                                              data_transport_client.get_staging_file().get_staging_columns())
+                                             data_transport_client.get_staging_file().get_staging_columns())
   offload_target_table.setup_staging_area_step(data_transport_client.get_staging_file())
 
   rows_offloaded = offload_data_to_target(data_transport_client,
@@ -2180,25 +2063,18 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
   if not offload_operation.preserve_load_table:
     offload_target_table.cleanup_staging_area_step()
 
-  if not existing_metadata:
-    # New or reset offload. Start a new base metadata dictionary...
-    base_metadata = {'OFFLOADED_OWNER': offload_source_table.owner.upper(),
-                     'OFFLOADED_TABLE': offload_source_table.table_name.upper(),
-                     'OFFLOAD_SCN': pre_offload_scn,
-                     'OFFLOAD_VERSION': offload_operation.goe_version}
-  else:
-    # Re-use existing metadata as base...
-    base_metadata = existing_metadata.as_dict()
-
   new_metadata = gen_and_save_offload_metadata(
-      repo_client, messages, offload_operation, offload_options,
-      incremental_key_columns=offload_source_table.partition_columns,
-      incremental_high_values=source_data_client.get_incremental_high_values(),
-      incremental_predicate_values=source_data_client.get_post_offload_predicates(),
-      object_type=METADATA_HYBRID_VIEW,
-      hadoop_owner=offload_target_table.db_name,
-      hadoop_table_name=offload_target_table.table_name,
-      base_metadata_dict=base_metadata
+      repo_client,
+      messages,
+      offload_operation,
+      offload_options,
+      offload_target_table.db_name,
+      offload_target_table.table_name,
+      offload_source_table.partition_columns,
+      source_data_client.get_incremental_high_values(),
+      source_data_client.get_post_offload_predicates(),
+      pre_offload_snapshot,
+      existing_metadata
   )
   offload_operation.reset_hybrid_metadata(offload_options.execute, new_metadata)
 

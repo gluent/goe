@@ -27,7 +27,7 @@ from goe.offload.column_metadata import ColumnMetadataInterface, ColumnBucketInf
     CANONICAL_CHAR_SEMANTICS_UNICODE
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.offload_constants import DBTYPE_IMPALA, \
-    INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT, OFFLOAD_BUCKET_NAME, \
+    INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT, \
     PART_COL_DATE_GRANULARITIES, PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH, PART_COL_GRANULARITY_YEAR
 from goe.offload.offload_functions import get_hybrid_threshold_clauses, hvs_to_backend_sql_literals, \
     load_db_name
@@ -36,7 +36,6 @@ from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 from goe.orchestration import command_steps, orchestration_constants
 from goe.util.better_impyla import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
-from goe.util.exception_trigger import trigger_exception
 
 
 class BackendTableException(Exception):
@@ -182,8 +181,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             self._user_requested_storage_format = None
 
         self._bucket_hash_col = None
-        self._bucket_hash_method = None
-        self._num_buckets = None
         self.refresh_operational_settings(offload_operation=orchestration_operation,
                                           data_gov_client=self._data_gov_client)
 
@@ -362,17 +359,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         """ Derive Gluent bucket attributes from an existing partition column """
         assert isinstance(backend_column, ColumnMetadataInterface)
         bucket_info = None
-        if self._is_synthetic_bucket_column(backend_column.name):
-            self._log('Derived bucket info for %s: %s, %s, %s'
-                      % (backend_column.name, self._bucket_hash_col, self._num_buckets, self._bucket_hash_method),
-                      detail=VVERBOSE)
-            if not self._bucket_hash_col and self._hybrid_metadata:
-                # This should not be possible, metadata must be corrupt.
-                raise BackendTableException(
-                    '%s.%s has incorrect metadata, mandatory OFFLOAD_BUCKET_COLUMN is empty'
-                    % (self._hybrid_metadata.hybrid_owner, self._hybrid_metadata.hybrid_view)
-                )
-            bucket_info = ColumnBucketInfo(self._bucket_hash_col, self._num_buckets, self._bucket_hash_method)
         return bucket_info
 
     def _drop_state(self):
@@ -459,13 +445,10 @@ class BackendTableInterface(metaclass=ABCMeta):
                ['GLUENT_BUCKET(CAST(`ID` AS DECIMAL(38,0)),2) = 0',
                 'GLUENT_BUCKET(CAST(`ID` AS DECIMAL(38,0)),2) = 1']
         """
-        if self._user_requested_offload_chunk_column == OFFLOAD_BUCKET_NAME.upper():
-            chunk_col = match_table_column(self._user_requested_offload_chunk_column, self.get_partition_columns())
-        else:
-            chunk_col = [_ for _ in self.get_partition_columns()
-                         if _.partition_info
-                         and _.partition_info.source_column_name.upper() == self._user_requested_offload_chunk_column]
-            chunk_col = chunk_col[0] if chunk_col else None
+        chunk_col = [_ for _ in self.get_partition_columns()
+                     if _.partition_info
+                     and _.partition_info.source_column_name.upper() == self._user_requested_offload_chunk_column]
+        chunk_col = chunk_col[0] if chunk_col else None
         if not chunk_col:
             self._messages.warning('Unknown partition column, ignoring --offload-chunk-column: %s'
                                    % self._user_requested_offload_chunk_column)
@@ -790,8 +773,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         """ Set private attributes based on hybrid metadata or orchestration_operation """
         if self._hybrid_metadata:
             self._bucket_hash_col = self._hybrid_metadata.offload_bucket_column
-            self._bucket_hash_method = self._hybrid_metadata.offload_bucket_method
-            self._num_buckets = self._hybrid_metadata.offload_bucket_count
             self._ipa_predicate_type = self._hybrid_metadata.incremental_predicate_type
             if self._hybrid_metadata.offload_partition_functions:
                 self._debug('Partition functions from metadata: {}'.format(
@@ -801,16 +782,12 @@ class BackendTableInterface(metaclass=ABCMeta):
                 self._partition_functions = None
         elif orchestration_operation:
             self._bucket_hash_col = orchestration_operation.bucket_hash_col
-            self._bucket_hash_method = orchestration_operation.bucket_hash_method
-            self._num_buckets = orchestration_operation.num_buckets
             self._ipa_predicate_type = orchestration_operation.ipa_predicate_type
             self._debug('Partition functions from offload options: {}'.format(
                 orchestration_operation.offload_partition_functions))
             self._partition_functions = orchestration_operation.offload_partition_functions
         else:
             self._bucket_hash_col = None
-            self._bucket_hash_method = None
-            self._num_buckets = None
 
     def _staging_column_is_not_null_sql_expr(self, column_name):
         """ Return a column IS NOT NULL expression.

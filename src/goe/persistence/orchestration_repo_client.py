@@ -15,27 +15,14 @@ from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 # Gluent
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_messages import VVERBOSE
-from goe.offload.offload_metadata_functions import column_name_list_to_csv
 from goe.offload.offload_source_data import OffloadSourcePartition
 from goe.offload.predicate_offload import GenericPredicate
 from goe.orchestration import command_steps, orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.orchestration_metadata import (
     ALL_METADATA_ATTRIBUTES,
-    CHANGELOG_SEQUENCE,
-    CHANGELOG_TABLE,
-    CHANGELOG_TRIGGER,
-    EXTERNAL_TABLE,
-    IU_EXTRACTION_METHOD,
-    IU_EXTRACTION_SCN,
-    IU_EXTRACTION_TIME,
-    IU_KEY_COLUMNS,
-    OBJECT_TYPE,
-    UPDATABLE_TRIGGER,
-    UPDATABLE_VIEW,
     OrchestrationMetadata,
 )
-from goe.util.misc_functions import csv_split
 
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
@@ -46,32 +33,6 @@ if TYPE_CHECKING:
 ###############################################################################
 # CONSTANTS
 ###############################################################################
-
-# Constants for table_name columns which do not match metadata keys
-HYBRID_VIEW_TYPE = "HYBRID_VIEW_TYPE"
-HYBRID_EXTERNAL_TABLE = "HYBRID_EXTERNAL_TABLE"
-# And a dictionary to map the names
-METADATA_KEY_TO_TABLE_COLUMN_MAPPING = {
-    OBJECT_TYPE: HYBRID_VIEW_TYPE,
-    EXTERNAL_TABLE: HYBRID_EXTERNAL_TABLE,
-}
-
-ALL_METADATA_TABLE_ATTRIBUTES = [
-    METADATA_KEY_TO_TABLE_COLUMN_MAPPING.get(_, _) for _ in ALL_METADATA_ATTRIBUTES
-]
-
-INCREMENTAL_UPDATE_METADATA_ATTRIBUTES = [
-    IU_KEY_COLUMNS,
-    IU_EXTRACTION_METHOD,
-    IU_EXTRACTION_SCN,
-    IU_EXTRACTION_TIME,
-    CHANGELOG_TABLE,
-    CHANGELOG_TRIGGER,
-    CHANGELOG_SEQUENCE,
-    UPDATABLE_VIEW,
-    UPDATABLE_TRIGGER,
-]
-
 
 ###########################################################################
 # GLOBAL FUNCTIONS
@@ -106,7 +67,12 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
     get/put of orchestration metadata.
     """
 
-    def __init__(self, connection_options: "OrchestrationConfig", messages: "OffloadMessages", dry_run: bool=False):
+    def __init__(
+        self,
+        connection_options: "OrchestrationConfig",
+        messages: "OffloadMessages",
+        dry_run: bool = False,
+    ):
         """Abstract base class which acts as an interface for frontend specific sub-classes for
         get/put of orchestration metadata.
         dry_run: Read only mode
@@ -244,6 +210,10 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
             )
         return self._frontend_client
 
+    @abstractmethod
+    def _get_metadata(self, frontend_owner: str, frontend_name: str) -> dict:
+        """Return metadata object for owner/name"""
+
     def _metadata_dict_to_json_string(self, metadata_dict) -> str:
         """Simple wrapper over json.dumps to centralise the encoding args."""
         return json.dumps(metadata_dict, sort_keys=True, ensure_ascii=False)
@@ -280,99 +250,31 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
     #
     # OFFLOAD METADATA
     #
-    @abstractmethod
     def get_offload_metadata(
-        self, hybrid_owner: str, hybrid_name: str
+        self, frontend_owner: str, frontend_name: str
     ) -> OrchestrationMetadata:
         """Return metadata object for owner/name"""
+        metadata_dict = self._get_metadata(frontend_owner, frontend_name)
+        if metadata_dict:
+            return OrchestrationMetadata(
+                metadata_dict,
+                connection_options=self._connection_options,
+                messages=self._messages,
+                client=self,
+                dry_run=self._dry_run,
+            )
+        else:
+            return None
 
     @abstractmethod
     def set_offload_metadata(
-        self, metadata: Union[dict, OrchestrationMetadata], execution_id: ExecutionId
+        self, metadata: Union[dict, OrchestrationMetadata],
     ):
         """Persist metadata"""
 
     @abstractmethod
-    def drop_offload_metadata(self, hybrid_owner: str, hybrid_name: str):
+    def drop_offload_metadata(self, frontend_owner: str, frontend_name: str):
         """Remove metadata"""
-
-    #
-    # INCREMENTAL UPDATE CONFIGURATION
-    #
-    def get_incremental_update_metadata(
-        self, hybrid_owner: str, hybrid_name: str
-    ) -> dict:
-        """Return a dict of Incremental Update metadata for a hybrid view"""
-        offload_metadata = self.get_offload_metadata(hybrid_owner, hybrid_name)
-        iu_key_columns = (
-            csv_split(offload_metadata.iu_key_columns)
-            if offload_metadata.iu_key_columns
-            else None
-        )
-        return {
-            "gl_inc_lite_id_columns": iu_key_columns,
-            "gl_inc_lite_extractor_flavor": offload_metadata.iu_extraction_method,
-            "gl_inc_lite_source_table_owner": offload_metadata.offloaded_owner,
-            "gl_inc_lite_source_table_name": offload_metadata.offloaded_table,
-            "gl_inc_lite_base_table_owner": offload_metadata.backend_owner,
-            "gl_inc_lite_current_base_table_name": offload_metadata.backend_table,
-            "gl_inc_lite_changelog_owner": offload_metadata.hybrid_owner,
-            "gl_inc_lite_changelog_table": offload_metadata.changelog_table,
-            "gl_inc_lite_changelog_trigger": offload_metadata.changelog_trigger,
-            "gl_inc_lite_changelog_sequence": offload_metadata.changelog_sequence,
-            "gl_inc_lite_updatable_view": offload_metadata.updatable_view,
-            "gl_inc_lite_updatable_trigger": offload_metadata.updatable_trigger,
-        }
-
-    def save_incremental_update_metadata(
-        self,
-        hybrid_owner: str,
-        hybrid_name: str,
-        incremental_update_metadata: dict,
-        execution_id: ExecutionId,
-    ):
-        """Save Incremental Update metadata for a hybrid view"""
-        assert isinstance(incremental_update_metadata, dict)
-        assert isinstance(execution_id, ExecutionId)
-        if incremental_update_metadata.get("gl_inc_lite_id_columns"):
-            if isinstance(
-                incremental_update_metadata.get("gl_inc_lite_id_columns"), list
-            ):
-                iu_key_columns_csv = column_name_list_to_csv(
-                    incremental_update_metadata.get("gl_inc_lite_id_columns")
-                )
-            elif isinstance(
-                incremental_update_metadata.get("gl_inc_lite_id_columns"), str
-            ):
-                iu_key_columns_csv = incremental_update_metadata.get(
-                    "gl_inc_lite_id_columns"
-                )
-        else:
-            iu_key_columns_csv = None
-
-        offload_metadata = self.get_offload_metadata(hybrid_owner, hybrid_name)
-        offload_metadata.iu_key_columns = iu_key_columns_csv
-        offload_metadata.iu_extraction_method = incremental_update_metadata.get(
-            "gl_inc_lite_extractor_flavor"
-        )
-        offload_metadata.iu_extraction_scn = None
-        offload_metadata.iu_extraction_time = None
-        offload_metadata.changelog_table = incremental_update_metadata.get(
-            "gl_inc_lite_changelog_table"
-        )
-        offload_metadata.changelog_trigger = incremental_update_metadata.get(
-            "gl_inc_lite_changelog_trigger"
-        )
-        offload_metadata.changelog_sequence = incremental_update_metadata.get(
-            "gl_inc_lite_changelog_sequence"
-        )
-        offload_metadata.updatable_view = incremental_update_metadata.get(
-            "gl_inc_lite_updatable_view"
-        )
-        offload_metadata.updatable_trigger = incremental_update_metadata.get(
-            "gl_inc_lite_updatable_trigger"
-        )
-        offload_metadata.save(execution_id)
 
     #
     # INCREMENTAL UPDATE EXTRACTION METADATA
@@ -401,17 +303,6 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         offload_metadata.iu_extraction_scn = int(extraction_metadata["last_scn"])
         offload_metadata.iu_extraction_time = int(extraction_metadata["ts"])
         offload_metadata.save(execution_id)
-
-    def delete_incremental_update_metadata(
-        self, hybrid_owner: str, hybrid_name: str, execution_id: ExecutionId
-    ):
-        """Save Incremental Update metadata for a hybrid view"""
-        incremental_update_metadata = {
-            k: None for k in INCREMENTAL_UPDATE_METADATA_ATTRIBUTES
-        }
-        self.save_incremental_update_metadata(
-            hybrid_owner, hybrid_name, incremental_update_metadata, execution_id
-        )
 
     #
     # COMMAND EXECUTION LOGGING METHODS

@@ -8,7 +8,6 @@ from goe.persistence.key_value_store import KeyValueStore
 
 
 class PickleKeyValueStore(KeyValueStore):
-
     def __init__(self, pickle_path, dry_run=False):
         self._pickle_path = pickle_path
         self._dry_run = dry_run
@@ -27,7 +26,7 @@ class PickleKeyValueStore(KeyValueStore):
 
     def get_all(self, key_string_list=None):
         try:
-            with open(self._pickle_path, 'rb') as handle:
+            with open(self._pickle_path, "rb") as handle:
                 kv_dict = pickle.load(handle)
         except FileNotFoundError:
             kv_dict = {}
@@ -38,7 +37,7 @@ class PickleKeyValueStore(KeyValueStore):
 
     def put_all(self, key_string_to_value_string_map):
         if not self._dry_run:
-            with open(self._pickle_path, 'wb') as handle:
+            with open(self._pickle_path, "wb") as handle:
                 pickle.dump(key_string_to_value_string_map, handle)
 
     def run_gc(self):

@@ -4,15 +4,13 @@ import time
 import traceback
 from typing import TYPE_CHECKING
 
-from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.orchestration import orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
 from goe.orchestration.orchestration_runner import OrchestrationRunner
 from goe.util.misc_functions import get_temp_path
 from tests.integration.test_functions import (
-    get_default_test_user,
-    get_default_test_user_pass,
+    run_setup_ddl,
 )
 from tests.testlib.test_framework.backend_testing_api import subproc_cmd
 from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
@@ -107,31 +105,13 @@ def run_setup(
 ):
     try:
         if frontend_sqls:
-            test_schema = get_default_test_user()
-            test_schema_pass = get_default_test_user_pass()
-            with frontend_api.create_new_connection_ctx(
-                test_schema,
-                test_schema_pass,
-                trace_action_override="FrontendTestingApi(StorySetup)",
-            ) as sh_test_api:
-                if config.db_type == DBTYPE_MSSQL:
-                    sh_test_api.execute_ddl("BEGIN TRAN")
-                for sql in frontend_sqls:
-                    test_messages.log(f"Setup SQL: {sql}", detail=VVERBOSE)
-                    try:
-                        sh_test_api.execute_ddl(sql)
-                    except Exception as exc:
-                        if "does not exist" in str(exc) and sql.upper().startswith(
-                            "DROP"
-                        ):
-                            test_messages.log("Ignoring: " + str(exc), detail=VVERBOSE)
-                        else:
-                            test_messages.log(str(exc))
-                            raise
-                if config.db_type != DBTYPE_TERADATA:
-                    # We have autocommit enabled on Teradata:
-                    #   COMMIT WORK not allowed for a DBC/SQL session. (-3706)
-                    sh_test_api.execute_ddl("COMMIT")
+            run_setup_ddl(
+                config,
+                frontend_api,
+                test_messages,
+                frontend_sqls,
+                trace_action="scenarios.run_setup()",
+            )
 
         if backend_api.test_setup_seconds_delay():
             time.sleep(backend_api.test_setup_seconds_delay())

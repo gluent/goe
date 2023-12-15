@@ -59,7 +59,6 @@ from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
     get_test_messages,
-    to_hybrid_schema,
 )
 
 
@@ -168,8 +167,8 @@ def gen_ts_frontend_ddl(config, frontend_api, schema, table_name) -> list:
 def check_pbo_metadata(
     messages,
     repo_client,
-    hybrid_schema,
-    hybrid_view,
+    frontend_owner,
+    frontend_name,
     number_of_predicates=None,
     expected_offload_type=None,
     expected_incremental_key=None,
@@ -180,11 +179,11 @@ def check_pbo_metadata(
     values_not_in_predicate_value_metadata=None,
 ):
     """Fetches hybrid metadata and runs checks pertinent to PBO offloads."""
-    metadata = repo_client.get_offload_metadata(hybrid_schema, hybrid_view)
+    metadata = repo_client.get_offload_metadata(frontend_owner, frontend_name)
 
     if not check_metadata(
-        hybrid_schema,
-        hybrid_view,
+        frontend_owner,
+        frontend_name,
         messages,
         repo_client,
         metadata_override=metadata,
@@ -203,7 +202,7 @@ def check_pbo_metadata(
         ):
             messages.log(
                 "Length of decode_incremental_predicate_values(%s) != %s"
-                % (hybrid_view, number_of_predicates)
+                % (frontend_name, number_of_predicates)
             )
             return False
     for check_val in values_in_predicate_value_metadata or []:
@@ -250,7 +249,6 @@ def pbo_assertion(
     values_not_in_predicate_value_metadata=None,
 ):
     assert schema and table_name
-    hybrid_schema = to_hybrid_schema(schema)
     if values_in_predicate_value_metadata:
         assert isinstance(values_in_predicate_value_metadata, list)
     if values_not_in_predicate_value_metadata:
@@ -259,7 +257,7 @@ def pbo_assertion(
     if not check_pbo_metadata(
         messages,
         repo_client,
-        hybrid_schema,
+        schema,
         table_name,
         number_of_predicates=number_of_predicates,
         expected_offload_type=expected_offload_type,

@@ -16,6 +16,10 @@ from goe.offload.offload_source_data import OffloadSourcePartition
 from goe.orchestration import command_steps, orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
 
+from tests.testlib.test_framework.test_functions import (
+    get_test_messages,
+)
+
 
 GB = 1024**3
 
@@ -33,7 +37,9 @@ class TestOrchestrationRepoClient(TestCase):
         # execute=True because we want to actually insert and update the repo records for this test.
         config = OrchestrationConfig.from_dict({"verbose": False, "execute": True})
         execution_id = ExecutionId()
-        messages = OffloadMessages.from_options(config, execution_id=execution_id)
+        messages = get_test_messages(
+            config, "test_orchestration_command_logging_cli", execution_id=execution_id
+        )
         client = orchestration_repo_client_factory(config, messages)
 
         offload_partitions = [
@@ -70,11 +76,9 @@ class TestOrchestrationRepoClient(TestCase):
         ]
 
         # Start a CLI based Offload
-        # TODO log name is no longer passed in
         cid = client.start_command(
             execution_id,
             orchestration_constants.COMMAND_OFFLOAD,
-            "/tmp/offload_unit_test.log",
             "./offload -t acme.unit_test_table",
             {"owner_table": "acme.unit_test_table"},
         )
@@ -162,14 +166,14 @@ class TestOrchestrationRepoClient(TestCase):
         # execute=True because we want to actually insert and update the repo records for this test.
         config = OrchestrationConfig.from_dict({"verbose": False, "execute": True})
         execution_id = ExecutionId()
-        messages = OffloadMessages.from_options(config, execution_id=execution_id)
+        messages = get_test_messages(
+            config, "test_orchestration_command_logging_api", execution_id=execution_id
+        )
         client = orchestration_repo_client_factory(config, messages)
         # Start an API based Offload
-        # TODO log name is no longer passed in
         cid = client.start_command(
             execution_id,
             orchestration_constants.COMMAND_OFFLOAD,
-            "/tmp/offload_unit_test_api.log",
             {
                 "owner_table": "acme.unit_test_table",
                 "execute": True,
@@ -208,13 +212,6 @@ class TestOrchestrationRepoClient(TestCase):
             GB * 400,
             GB * 600,
             GB * 300,
-        )
-
-        # Log a recursive present step within an offload
-        sid = client.start_command_step(
-            execution_id,
-            orchestration_constants.COMMAND_PRESENT,
-            command_steps.STEP_CREATE_HYBRID_VIEW,
         )
 
         # Finish the step

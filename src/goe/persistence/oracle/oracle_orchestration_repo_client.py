@@ -27,38 +27,21 @@ from goe.offload.offload_constants import (
 from goe.offload.offload_messages import QUIET, VERBOSE, VVERBOSE, OffloadMessages
 from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.orchestration_metadata import (
-    CHANGELOG_SEQUENCE,
-    CHANGELOG_TABLE,
-    CHANGELOG_TRIGGER,
-    EXTERNAL_TABLE,
     HADOOP_OWNER,
     HADOOP_TABLE,
-    HYBRID_OWNER,
-    HYBRID_VIEW,
     INCREMENTAL_HIGH_VALUE,
     INCREMENTAL_KEY,
     INCREMENTAL_PREDICATE_TYPE,
     INCREMENTAL_PREDICATE_VALUE,
     INCREMENTAL_RANGE,
-    IU_EXTRACTION_METHOD,
-    IU_EXTRACTION_SCN,
-    IU_EXTRACTION_TIME,
-    IU_KEY_COLUMNS,
-    OBJECT_HASH,
-    OBJECT_TYPE,
     OFFLOAD_BUCKET_COLUMN,
-    OFFLOAD_BUCKET_COUNT,
-    OFFLOAD_BUCKET_METHOD,
     OFFLOAD_PARTITION_FUNCTIONS,
-    OFFLOAD_SCN,
+    OFFLOAD_SNAPSHOT,
     OFFLOAD_SORT_COLUMNS,
     OFFLOAD_TYPE,
     OFFLOAD_VERSION,
     OFFLOADED_OWNER,
     OFFLOADED_TABLE,
-    TRANSFORMATIONS,
-    UPDATABLE_TRIGGER,
-    UPDATABLE_VIEW,
     COMMAND_EXECUTION,
     OrchestrationMetadata,
 )
@@ -99,7 +82,12 @@ logger.addHandler(logging.NullHandler())
 class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
     """OracleOrchestrationRepoClient: Oracle implementation of API for get/put of orchestration metadata"""
 
-    def __init__(self, connection_options: "OrchestrationConfig", messages: "OffloadMessages", dry_run: bool=False):
+    def __init__(
+        self,
+        connection_options: "OrchestrationConfig",
+        messages: "OffloadMessages",
+        dry_run: bool = False,
+    ):
         super().__init__(connection_options, messages, dry_run=dry_run)
         self._repo_user = self._connection_options.ora_repo_user
 
@@ -107,34 +95,33 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
     # PRIVATE METHODS
     ###########################################################################
 
-    def _drop_metadata(self, hybrid_owner, hybrid_name):
-        logger.debug(f"Dropping metadata: {hybrid_owner}, {hybrid_name}")
-        assert hybrid_owner
-        assert hybrid_name
+    def _drop_metadata(self, frontend_owner: str, frontend_name: str):
+        logger.debug(f"Dropping metadata: {frontend_owner}, {frontend_name}")
+        assert frontend_owner
+        assert frontend_name
         # In Oracle we expect the identifying owner/name to be upper case
-        hybrid_owner = hybrid_owner.upper()
-        hybrid_name = hybrid_name.upper()
+        frontend_owner = frontend_owner.upper()
+        frontend_name = frontend_name.upper()
         self._frontend_api.execute_function(
             "offload_repo.delete_offload_metadata",
-            arg_list=[hybrid_owner, hybrid_name],
+            arg_list=[frontend_owner, frontend_name],
             not_when_dry_running=True,
         )
 
-    def _get_metadata(self, hybrid_owner, hybrid_name):
-        logger.debug(f"Fetching metadata: {hybrid_owner}, {hybrid_name}")
-        assert hybrid_owner
-        assert hybrid_name
+    def _get_metadata(self, frontend_owner: str, frontend_name: str) -> dict:
+        logger.debug(f"Fetching metadata: {frontend_owner}, {frontend_name}")
+        assert frontend_owner
+        assert frontend_name
         # In Oracle we expect the identifying owner/name to be upper case
-        # TODO: Issue 18: replace hybrid args with frontend object args and remove the following hack
-        hybrid_owner = hybrid_owner.upper()[:-2]
-        hybrid_name = hybrid_name.upper()
+        frontend_owner = frontend_owner.upper()
+        frontend_name = frontend_name.upper()
         metadata_obj = self._frontend_api.execute_function(
             "offload_repo.get_offload_metadata",
             return_type=cx_Oracle.OBJECT,
             return_type_name=self._get_ora_type_object_name(
                 OFFLOAD_METADATA_ORA_TYPE_NAME
             ),
-            arg_list=[hybrid_owner, hybrid_name],
+            arg_list=[frontend_owner, frontend_name],
             log_level=VVERBOSE,
         )
         if metadata_obj:
@@ -160,9 +147,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             (owner_override or self._repo_user).upper(), repo_type_name.upper()
         )
 
-    # TODO: Issue 18: fold execution_id into metadata and not have it as a global in offload_table and
-    #                 a separate arg to several metadata functions...
-    def _metadata_dict_to_ora_object(self, metadata_dict, execution_id: ExecutionId):
+    def _metadata_dict_to_ora_object(self, metadata_dict):
         """
         Used to convert a Python dict of metadata to an Oracle object type ready for saving to the database.
         """
@@ -182,26 +167,22 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
                 INCREMENTAL_PREDICATE_VALUE
             ]
         else:
-            metadata_obj.OFFLOAD_PREDICATE_VALUE = (
-                self._metadata_dict_to_json_string(
-                    metadata_dict[INCREMENTAL_PREDICATE_VALUE]
-                )
+            metadata_obj.OFFLOAD_PREDICATE_VALUE = self._metadata_dict_to_json_string(
+                metadata_dict[INCREMENTAL_PREDICATE_VALUE]
             )
-        metadata_obj.OFFLOAD_SNAPSHOT = metadata_dict[OFFLOAD_SCN]
+        metadata_obj.OFFLOAD_SNAPSHOT = metadata_dict[OFFLOAD_SNAPSHOT]
         metadata_obj.OFFLOAD_HASH_COLUMN = metadata_dict[OFFLOAD_BUCKET_COLUMN]
         metadata_obj.OFFLOAD_SORT_COLUMNS = metadata_dict[OFFLOAD_SORT_COLUMNS]
-        metadata_obj.OFFLOAD_PARTITION_FUNCTIONS = metadata_dict[OFFLOAD_PARTITION_FUNCTIONS]
-        metadata_obj.COMMAND_EXECUTION = execution_id.as_bytes()
+        metadata_obj.OFFLOAD_PARTITION_FUNCTIONS = metadata_dict[
+            OFFLOAD_PARTITION_FUNCTIONS
+        ]
+        metadata_obj.COMMAND_EXECUTION = metadata_dict[COMMAND_EXECUTION].as_bytes()
         metadata_obj.OFFLOAD_VERSION = metadata_dict[OFFLOAD_VERSION]
         return metadata_obj
 
     def _ora_object_to_metadata_dict(self, metadata_obj):
         """Converts the Oracle object type to a Python dict of metadata to be used in orchestration."""
         metadata_dict = {
-            HYBRID_OWNER: metadata_obj.FRONTEND_OBJECT_OWNER,
-            HYBRID_VIEW: metadata_obj.FRONTEND_OBJECT_NAME,
-            OBJECT_TYPE: None,
-            EXTERNAL_TABLE: None,
             HADOOP_OWNER: metadata_obj.BACKEND_OBJECT_OWNER,
             HADOOP_TABLE: metadata_obj.BACKEND_OBJECT_NAME,
             OFFLOAD_TYPE: metadata_obj.OFFLOAD_TYPE,
@@ -219,24 +200,12 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             if metadata_obj.OFFLOAD_PREDICATE_VALUE
             else None,
             OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_HASH_COLUMN or None,
-            OFFLOAD_BUCKET_METHOD: None,
-            OFFLOAD_BUCKET_COUNT: None,
             OFFLOAD_VERSION: metadata_obj.OFFLOAD_VERSION,
             OFFLOAD_SORT_COLUMNS: metadata_obj.OFFLOAD_SORT_COLUMNS or None,
-            TRANSFORMATIONS: None,
-            OBJECT_HASH: None,
-            OFFLOAD_SCN: metadata_obj.OFFLOAD_SNAPSHOT or None,
-            OFFLOAD_PARTITION_FUNCTIONS: metadata_obj.OFFLOAD_PARTITION_FUNCTIONS or None,
-            IU_KEY_COLUMNS: None,
-            IU_EXTRACTION_METHOD: None,
-            IU_EXTRACTION_SCN: None,
-            IU_EXTRACTION_TIME: None,
-            CHANGELOG_TABLE: None,
-            CHANGELOG_TRIGGER: None,
-            CHANGELOG_SEQUENCE: None,
-            UPDATABLE_VIEW: None,
-            UPDATABLE_TRIGGER: None,
-            COMMAND_EXECUTION: metadata_obj.COMMAND_EXECUTION,
+            OFFLOAD_SNAPSHOT: metadata_obj.OFFLOAD_SNAPSHOT or None,
+            OFFLOAD_PARTITION_FUNCTIONS: metadata_obj.OFFLOAD_PARTITION_FUNCTIONS
+            or None,
+            COMMAND_EXECUTION: ExecutionId.from_bytes(metadata_obj.COMMAND_EXECUTION),
         }
         return metadata_dict
 
@@ -267,26 +236,19 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
 
     def _set_metadata(
         self,
-        hybrid_owner: str,
-        hybrid_name: str,
         metadata: Union[dict, OrchestrationMetadata],
-        execution_id: ExecutionId,
     ):
-        logger.debug(f"Writing metadata: {hybrid_owner}, {hybrid_name}")
-        assert hybrid_owner
-        assert hybrid_name
         assert metadata
-        assert execution_id
         # In Oracle we expect the identifying owner/name to be upper case
-        # TODO: Issue 18: replace hybrid args with frontend object args and remove the following hack
-        hybrid_owner = metadata[OFFLOADED_OWNER].upper()
-        hybrid_name = metadata[OFFLOADED_TABLE].upper()
+        frontend_owner = metadata[OFFLOADED_OWNER].upper()
+        frontend_name = metadata[OFFLOADED_TABLE].upper()
+        logger.debug(f"Writing metadata: {frontend_owner}, {frontend_name}")
         if isinstance(metadata, OrchestrationMetadata):
             metadata = metadata.as_dict()
-        ora_metadata = self._metadata_dict_to_ora_object(metadata, execution_id)
+        ora_metadata = self._metadata_dict_to_ora_object(metadata)
         self._frontend_api.execute_function(
             "offload_repo.save_offload_metadata",
-            arg_list=[hybrid_owner, hybrid_name, ora_metadata],
+            arg_list=[frontend_owner, frontend_name, ora_metadata],
             not_when_dry_running=True,
         )
         # FrontendApi logging won't show metadata values due to being in an Oracle type. So we log it here for
@@ -297,34 +259,14 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
     # PUBLIC METHODS
     ###########################################################################
 
-    def get_offload_metadata(self, hybrid_owner, hybrid_name) -> OrchestrationMetadata:
-        metadata_dict = self._get_metadata(hybrid_owner, hybrid_name)
-        if metadata_dict:
-            return OrchestrationMetadata(
-                metadata_dict,
-                connection_options=self._connection_options,
-                messages=self._messages,
-                client=self,
-                dry_run=self._dry_run,
-            )
-        else:
-            return None
-
     def set_offload_metadata(
         self,
         metadata: Union[dict, OrchestrationRepoClientInterface],
-        execution_id: ExecutionId,
     ):
-        if isinstance(metadata, OrchestrationMetadata):
-            hybrid_owner = metadata.hybrid_owner
-            hybrid_name = metadata.hybrid_view
-        else:
-            hybrid_owner = metadata[HYBRID_OWNER]
-            hybrid_name = metadata[HYBRID_VIEW]
-        self._set_metadata(hybrid_owner, hybrid_name, metadata, execution_id)
+        self._set_metadata(metadata)
 
-    def drop_offload_metadata(self, hybrid_owner, hybrid_name):
-        self._drop_metadata(hybrid_owner, hybrid_name)
+    def drop_offload_metadata(self, frontend_owner: str, frontend_name: str):
+        self._drop_metadata(frontend_owner, frontend_name)
 
     #
     # COMMAND EXECUTION LOGGING METHODS

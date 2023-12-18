@@ -52,8 +52,8 @@ def test_gen_offload_metadata_rpa():
 
     # First offload
     fake_hybrid_operation = Mock()
-    fake_hybrid_operation.owner = "GOE_TEST"
-    fake_hybrid_operation.table_name = "SALES"
+    fake_hybrid_operation.owner = "goe_test"
+    fake_hybrid_operation.table_name = "sales"
     fake_hybrid_operation.bucket_hash_col = "CUST_ID"
     fake_hybrid_operation.goe_version = "1.2.3"
     fake_hybrid_operation.offload_partition_functions = ["UDF1"]
@@ -69,6 +69,8 @@ def test_gen_offload_metadata_rpa():
     generated_metadata = gen_offload_metadata(
         fake_repo_client,
         fake_hybrid_operation,
+        fake_hybrid_operation.owner.upper(),
+        fake_hybrid_operation.table_name.upper(),
         fake_hybrid_operation.owner.lower(),
         fake_hybrid_operation.table_name.lower(),
         inc_cols,

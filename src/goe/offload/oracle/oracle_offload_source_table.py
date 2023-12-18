@@ -111,8 +111,8 @@ class OracleSourceTable(OffloadSourceTableInterface):
         self._offload_by_subpartition = False
         self._table_stats = None
 
-        # attributes below are specified as private so they can be enforced
-        # (where relevant) as properties via base class
+        # Attributes below are specified as private so they can be enforced
+        # (where relevant) as properties via base class.
         self._iot_type = None
         self._partitioned = None
         self._partition_type = None
@@ -126,7 +126,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
 
         self._conn = conn
         if do_not_connect:
-            # Unit testing requires no db connection
+            # Unit testing requires no db connection.
             self._db_conn = None
             self._db_curs = None
         else:
@@ -134,7 +134,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
             self._get_db_block_size()
             self._get_table_details()
             self._hash_bucket_candidate = None
-            # Get columns regardless of self._table_exists because it might be a view
+            # Get columns regardless of self._table_exists because it might be a view.
             self._columns_setter(self._get_column_details(), skip_exists_check=True)
             if self._table_exists:
                 self._is_compression_enabled()

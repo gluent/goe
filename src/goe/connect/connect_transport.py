@@ -28,6 +28,8 @@ from goe.offload.offload_transport import (
     LIVY_SESSIONS_SUBURL,
     spark_submit_executable_exists,
     is_spark_gcloud_available,
+    is_spark_gcloud_batches_available,
+    is_spark_gcloud_dataproc_available,
     is_spark_submit_available,
     is_spark_thrift_available,
     is_livy_available,
@@ -294,10 +296,17 @@ def test_spark_gcloud(orchestration_config, messages):
         # no sense in more gcloud checks if this fails
         return
 
-    data_transport_client = spark_dataproc_jdbc_connectivity_checker(
-        orchestration_config, messages
-    )
-    verify_offload_transport_rdbms_connectivity(data_transport_client, "Spark Dataproc")
+    if is_spark_gcloud_dataproc_available(orchestration_config, None, messages=messages):
+        data_transport_client = spark_dataproc_jdbc_connectivity_checker(
+            orchestration_config, messages
+        )
+        verify_offload_transport_rdbms_connectivity(data_transport_client, "Spark Dataproc")
+
+    if is_spark_gcloud_batches_available(orchestration_config, None, messages=messages):
+        data_transport_client = spark_dataproc_jdbc_connectivity_checker(
+            orchestration_config, messages
+        )
+        verify_offload_transport_rdbms_connectivity(data_transport_client, "Spark Dataproc Batches")
 
 
 def verify_offload_transport_rdbms_connectivity(data_transport_client, transport_type):

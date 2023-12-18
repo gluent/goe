@@ -245,9 +245,15 @@ def is_spark_gcloud_available(offload_options, offload_source_table, messages=No
 
 
 def is_spark_gcloud_dataproc_available(offload_options, offload_source_table, messages=None):
-    # TODO We should be able to do a more complete check than presence of "gcloud".
     return bool(
         offload_options.google_dataproc_cluster and
+        is_spark_gcloud_available(offload_options, offload_source_table, messages=messages)
+    )
+
+
+def is_spark_gcloud_batches_available(offload_options, offload_source_table, messages=None):
+    return bool(
+        offload_options.google_dataproc_batches_version and
         is_spark_gcloud_available(offload_options, offload_source_table, messages=messages)
     )
 
@@ -352,7 +358,7 @@ def get_offload_transport_method_validation_fns(offload_options, offload_operati
             OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT:
                 lambda: is_spark_submit_available(offload_options, offload_source_table, messages=messages),
             OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD:
-                lambda: is_spark_gcloud_available(offload_options, offload_source_table, messages=messages),
+                lambda: is_spark_gcloud_batches_available(offload_options, offload_source_table, messages=messages),
             OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD:
                 lambda: is_spark_gcloud_dataproc_available(offload_options, offload_source_table, messages=messages),
             OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT:
@@ -516,6 +522,14 @@ def spark_dataproc_jdbc_connectivity_checker(offload_options, messages):
     """
     messages.log('Invoking OffloadTransportSparkDataprocGcloudCanary', detail=VVERBOSE)
     return OffloadTransportSparkDataprocGcloudCanary(offload_options, messages)
+
+
+def spark_dataproc_batches_jdbc_connectivity_checker(offload_options, messages):
+    """ Connect needs a cut down client to simply check RDBMS connectivity from Dataproc Batches
+        back to the source RDBMS is correctly configured
+    """
+    messages.log('Invoking OffloadTransportSparkBatchesGcloudCanary', detail=VVERBOSE)
+    return OffloadTransportSparkBatchesGcloudCanary(offload_options, messages)
 
 
 def sqoop_jdbc_connectivity_checker(offload_options, messages):
@@ -2855,6 +2869,56 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         return self._verify_rdbms_connectivity()
 
 
+class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGcloud):
+    """ Validate Spark Dataproc Serverless connectivity
+    """
+    def __init__(self, offload_options, messages):
+        """ CONSTRUCTOR
+            This does not call up the stack to parent constructor because we only want a subset of functionality.
+        """
+        self._offload_options = offload_options
+        self._messages = messages
+        self._dry_run = False
+
+        self._offload_transport_method = OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD
+
+        self._create_basic_connectivity_attributes(offload_options)
+
+        self._offload_transport_consistent_read = orchestration_defaults.bool_option_from_string(
+            'OFFLOAD_TRANSPORT_CONSISTENT_READ', orchestration_defaults.offload_transport_consistent_read_default()
+        )
+        self._offload_transport_fetch_size = orchestration_defaults.offload_transport_fetch_size_default()
+        self._offload_transport_jvm_overrides = orchestration_defaults.offload_transport_spark_overrides_default()
+        self._offload_transport_queue_name = orchestration_defaults.offload_transport_spark_queue_name_default()
+        self._offload_transport_parallelism = 1
+        self._validation_polling_interval = orchestration_defaults.offload_transport_validation_polling_interval_default()
+        self._spark_config_properties = self._prepare_spark_config_properties(orchestration_defaults.offload_transport_spark_properties_default())
+
+        self._rdbms_api = offload_transport_rdbms_api_factory('dummy_owner', 'dummy_table', self._offload_options,
+                                                              self._messages, dry_run=self._dry_run)
+
+        self._rdbms_module = FRONTEND_TRACE_MODULE
+        self._rdbms_action = self._rdbms_api.generate_transport_action()
+
+        self._dataproc_cluster = offload_options.google_dataproc_cluster
+        self._dataproc_region = offload_options.google_dataproc_region
+        self._dataproc_service_account = offload_options.google_dataproc_service_account
+        self._spark_files_csv = offload_options.offload_transport_spark_files
+        self._spark_jars_csv = offload_options.offload_transport_spark_jars
+
+        # The canary is unaware of any tables
+        self._target_table = None
+        self._rdbms_table = None
+        self._staging_format = None
+
+    ###########################################################################
+    # PUBLIC METHODS
+    ###########################################################################
+
+    def ping_source_rdbms(self):
+        return self._verify_rdbms_connectivity()
+
+
 class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
     """ Submit PySpark to Dataproc via gcloud to transport data.
     """
@@ -2875,11 +2939,11 @@ class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
 
 
 class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcloud):
-    """ Validate Spark Submit connectivity
+    """ Validate Dataproc connectivity
     """
     def __init__(self, offload_options, messages):
         """ CONSTRUCTOR
-            This does not call up the stack to parent constructor because we only want a subset of functionality
+            This does not call up the stack to parent constructor because we only want a subset of functionality.
         """
         self._offload_options = offload_options
         self._messages = messages

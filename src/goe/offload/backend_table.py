@@ -16,7 +16,7 @@ from typing import Callable, Optional
 
 from goe.data_governance.hadoop_data_governance import data_governance_register_new_db_step, \
     data_governance_register_new_table_step, \
-    data_governance_register_new_view_step, get_data_governance_register
+    get_data_governance_register
 from goe.data_governance.hadoop_data_governance_constants import DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_JOIN_VIEW, \
     DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_CONV_VIEW, DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_OFFLOAD_DB
 from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
@@ -1825,72 +1825,11 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._offload_step(command_steps.STEP_CREATE_TABLE, lambda: self.create_backend_table())
         post_register_data_gov_fn()
 
-    def create_conversion_view_step(self, column_tuples):
-        pre_register_data_gov_fn, post_register_data_gov_fn = get_data_governance_register(self._data_gov_client, \
-                lambda: data_governance_register_new_view_step(self._conv_view_db, self._conv_view_name, self._data_gov_client,
-                                                               self._messages, DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_CONV_VIEW, self._orchestration_config))
-        def step_fn():
-            self.drop_conversion_view()
-            self.create_conversion_view(column_tuples)
-
-        pre_register_data_gov_fn()
-        self._offload_step(command_steps.STEP_CREATE_CONV_VIEW, step_fn,
-                           command_type=orchestration_constants.COMMAND_PRESENT)
-        post_register_data_gov_fn()
-
-    def create_join_load_view_step(self, column_tuples, view_backend_columns, ansi_joined_tables, filter_clauses=None):
-        pre_register_data_gov_fn, post_register_data_gov_fn = get_data_governance_register(self._data_gov_client, \
-            lambda: data_governance_register_new_view_step(self._load_view_db_name, self.table_name, self._data_gov_client,
-                                                           self._messages, DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_JOIN_VIEW,
-                                                           self._orchestration_config))
-
-        def step_fn():
-            if self._db_api.view_exists(self._load_view_db_name, self._load_table_name):
-                self._db_api.drop_view(self._load_view_db_name, self._load_table_name)
-            self.create_backend_view(column_tuples, view_backend_columns, ansi_joined_tables,
-                                     filter_clauses=filter_clauses, db_name_override=self._load_view_db_name)
-
-        pre_register_data_gov_fn()
-        self._offload_step(command_steps.STEP_CREATE_JOIN_VIEW, step_fn)
-        post_register_data_gov_fn()
-
-    def create_join_view_step(self, column_tuples, view_backend_columns, ansi_joined_tables, filter_clauses=None):
-        pre_register_data_gov_fn, post_register_data_gov_fn = get_data_governance_register(self._data_gov_client, \
-            lambda: data_governance_register_new_view_step(self.db_name, self.table_name, self._data_gov_client,
-                                                           self._messages, DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_JOIN_VIEW,
-                                                           self._orchestration_config))
-
-        def step_fn():
-            if self.exists():
-                self.drop()
-            self.create_backend_view(column_tuples, view_backend_columns, ansi_joined_tables,
-                                     filter_clauses=filter_clauses)
-
-        pre_register_data_gov_fn()
-        self._offload_step(command_steps.STEP_CREATE_JOIN_VIEW, step_fn)
-        post_register_data_gov_fn()
-
-    def drop_backend_table_step(self, purge=False):
-        if self.table_exists():
-            self._offload_step(command_steps.STEP_DROP_TABLE, lambda: self.drop_table(purge=purge))
-
     def empty_staging_area_step(self, staging_file):
         self._offload_step(command_steps.STEP_STAGING_MINI_CLEANUP, lambda: self.empty_staging_area(staging_file))
 
     def load_final_table_step(self, sync=None):
         self._offload_step(command_steps.STEP_FINAL_LOAD, lambda: self.load_final_table(sync=sync))
-
-    def load_materialized_join_step(self, threshold_cols=None, gte_threshold_vals=None, lt_threshold_vals=None,
-                                    insert_predicates=None, sync=None):
-        self._offload_step(command_steps.STEP_MATERIALIZE_JOIN,
-                           lambda: self.load_materialized_join(threshold_cols=threshold_cols,
-                                                               gte_threshold_vals=gte_threshold_vals,
-                                                               lt_threshold_vals=lt_threshold_vals,
-                                                               insert_predicates=insert_predicates, sync=sync))
-
-    def setup_result_cache_area_step(self):
-        self._offload_step(command_steps.STEP_RESULT_CACHE_SETUP, lambda: self.setup_result_cache_area(),
-                           command_type=orchestration_constants.COMMAND_PRESENT)
 
     def setup_staging_area_step(self, staging_file):
         self._offload_step(command_steps.STEP_STAGING_SETUP, lambda: self.setup_staging_area(staging_file))

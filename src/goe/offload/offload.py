@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from optparse import OptionValueError
 import re
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 from goe.data_governance.hadoop_data_governance_constants import (
     DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_BASE_TABLE,
@@ -42,6 +43,7 @@ from goe.offload.offload_source_table import (
 )
 from goe.offload.operation.sort_columns import check_and_alter_backend_sort_columns
 from goe.offload.predicate_offload import GenericPredicate
+from goe.orchestration import command_steps
 from goe.persistence.orchestration_metadata import (
     hwm_column_names_from_predicates,
     INCREMENTAL_PREDICATE_TYPE_PREDICATE,
@@ -51,6 +53,12 @@ from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV,
 )
 from goe.util.misc_functions import format_list_for_logging, is_pos_int
+
+if TYPE_CHECKING:
+    from goe.offload.backend_table import BackendTableInterface
+    from goe.persistence.orchestration_repo_client import (
+        OrchestrationRepoClientInterface,
+    )
 
 
 OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT = "Column mismatch detected between the source and backend table. Resolve before offloading"
@@ -193,7 +201,7 @@ def check_table_structure(frontend_table, backend_table, messages: OffloadMessag
         )
 
 
-def create_final_backend_table(
+def create_final_backend_table_step(
     offload_target_table,
     offload_operation,
     gluent_object_type=DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_BASE_TABLE,
@@ -203,6 +211,24 @@ def create_final_backend_table(
         offload_target_table.create_backend_table_step(gluent_object_type)
     else:
         check_and_alter_backend_sort_columns(offload_target_table, offload_operation)
+
+
+def drop_backend_table_step(
+    owner: str,
+    table_name: str,
+    backend_table: "BackendTableInterface",
+    messages: OffloadMessages,
+    repo_client: "OrchestrationRepoClientInterface",
+    execute,
+    purge=False,
+):
+    def step_fn():
+        if backend_table.table_exists():
+            backend_table.drop_table(purge=purge)
+        # Also remove any metadata attached to the table
+        repo_client.drop_offload_metadata(owner, table_name)
+
+    messages.offload_step(command_steps.STEP_DROP_TABLE, step_fn, execute=execute)
 
 
 def get_current_offload_hv(

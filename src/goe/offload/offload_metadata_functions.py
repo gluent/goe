@@ -28,7 +28,9 @@ from goe.util.misc_functions import csv_split, nvl, unsurround
 
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
+    from goe.offload.backend_table import BackendTableInterface
     from goe.offload.offload_messages import OffloadMessages
+    from goe.offload.offload_source_table import OffloadSourceTableInterface
     from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )
@@ -61,6 +63,8 @@ METADATA_HYBRID_VIEW = "GLUENT_OFFLOAD_HYBRID_VIEW"
 def gen_offload_metadata(
     repo_client: "OrchestrationRepoClientInterface",
     offload_operation,
+    frontend_owner: str,
+    frontend_table_name: str,
     backend_owner: str,
     backend_table_name: str,
     threshold_cols,
@@ -87,9 +91,6 @@ def gen_offload_metadata(
         ), "{} is not of type list".format(
             type(offload_operation.offload_partition_functions)
         )
-
-    offloaded_owner = offload_operation.owner
-    offloaded_table = offload_operation.table_name
 
     incremental_predicate_type = None
     incremental_range = None
@@ -153,8 +154,8 @@ def gen_offload_metadata(
         backend_owner=backend_owner,
         backend_table=backend_table_name,
         offload_type=offload_operation.offload_type,
-        offloaded_owner=offloaded_owner,
-        offloaded_table=offloaded_table,
+        offloaded_owner=frontend_owner,
+        offloaded_table=frontend_table_name,
         incremental_key=incremental_key_csv,
         incremental_high_value=incremental_hv_csv,
         incremental_range=incremental_range,
@@ -174,8 +175,8 @@ def gen_and_save_offload_metadata(
     messages: "OffloadMessages",
     offload_operation,
     config: "OrchestrationConfig",
-    hadoop_owner: str,
-    hadoop_table_name: str,
+    offload_source_table: "OffloadSourceTableInterface",
+    offload_target_table: "BackendTableInterface",
     incremental_key_columns,
     incremental_high_values,
     incremental_predicate_values,
@@ -188,8 +189,10 @@ def gen_and_save_offload_metadata(
     goe_metadata = gen_offload_metadata(
         repo_client,
         offload_operation,
-        hadoop_owner,
-        hadoop_table_name,
+        offload_source_table.owner,
+        offload_source_table.table_name,
+        offload_target_table.db_name,
+        offload_target_table.table_name,
         incremental_key_columns,
         incremental_high_values,
         incremental_predicate_values,
@@ -376,7 +379,7 @@ def decode_metadata_incremental_high_values(
         return partition_columns, hv_real_vals, hv_indiv_vals
 
 
-def split_metadata_incremental_high_values(base_metadata, frontend_api):
+def split_metadata_incremental_high_values(base_metadata: OrchestrationMetadata, frontend_api):
     """Equivalent of decode_metadata_incremental_high_values() above but for when we don't have access
     to an RDBMS base table.
     This means we can only decode as far as string HVs, no conversion to real Python values.

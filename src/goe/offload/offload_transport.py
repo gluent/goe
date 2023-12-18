@@ -117,7 +117,7 @@ OFFLOAD_TRANSPORT_GCP_METHODS = [
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD
 ]
 
-YARN_TRANSPORT_NAME = 'GluentOffload'
+YARN_TRANSPORT_NAME = 'GOE'
 
 MISSING_ROWS_IMPORTED_WARNING = 'Unable to identify import record count'
 
@@ -2911,6 +2911,13 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
         self._target_table = None
         self._rdbms_table = None
         self._staging_format = None
+
+    def _get_batch_name_option(self) -> list:
+        # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
+        batch_name_opt = ['--batch={}'.format(
+            self._get_transport_app_name(sep='-', ts=True).lower()[:64]
+        )]
+        return batch_name_opt
 
     ###########################################################################
     # PUBLIC METHODS

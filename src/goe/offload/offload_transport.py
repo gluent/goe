@@ -2900,6 +2900,7 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
         self._rdbms_module = FRONTEND_TRACE_MODULE
         self._rdbms_action = self._rdbms_api.generate_transport_action()
 
+        self._offload_fs_container = offload_options.offload_fs_container
         self._dataproc_cluster = offload_options.google_dataproc_cluster
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account

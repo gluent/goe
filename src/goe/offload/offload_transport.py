@@ -2915,7 +2915,7 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
     def _get_batch_name_option(self) -> list:
         # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
         batch_name_opt = ['--batch={}'.format(
-            self._get_transport_app_name(sep='-', ts=True).lower()[:64]
+            self._get_transport_app_name(sep='-', ts=True, name_override='canary').lower()[:64]
         )]
         return batch_name_opt
 

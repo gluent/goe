@@ -296,17 +296,23 @@ def test_spark_gcloud(orchestration_config, messages):
         # no sense in more gcloud checks if this fails
         return
 
-    if is_spark_gcloud_dataproc_available(orchestration_config, None, messages=messages):
+    if is_spark_gcloud_dataproc_available(
+        orchestration_config, None, messages=messages
+    ):
         data_transport_client = spark_dataproc_jdbc_connectivity_checker(
             orchestration_config, messages
         )
-        verify_offload_transport_rdbms_connectivity(data_transport_client, "Spark Dataproc")
+        verify_offload_transport_rdbms_connectivity(
+            data_transport_client, "Spark Dataproc"
+        )
 
     if is_spark_gcloud_batches_available(orchestration_config, None, messages=messages):
         data_transport_client = spark_dataproc_jdbc_connectivity_checker(
             orchestration_config, messages
         )
-        verify_offload_transport_rdbms_connectivity(data_transport_client, "Spark Dataproc Batches")
+        verify_offload_transport_rdbms_connectivity(
+            data_transport_client, "Spark Dataproc Batches"
+        )
 
 
 def verify_offload_transport_rdbms_connectivity(data_transport_client, transport_type):

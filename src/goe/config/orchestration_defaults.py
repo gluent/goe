@@ -243,6 +243,10 @@ def google_kms_key_ring_name_default() -> Optional[str]:
     return os.environ.get("GOOGLE_KMS_KEY_RING_NAME")
 
 
+def google_kms_key_ring_project_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_KMS_KEY_RING_PROJECT")
+
+
 def hash_chars_default() -> int:
     return posint_option_from_string(
         "HYBRID_NAME_HASH_CHARACTERS",

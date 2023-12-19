@@ -45,7 +45,10 @@ EXPECTED_CONFIG_ARGS = [
     'frontend_odbc_driver_name',
     'google_dataproc_batches_version', 'google_dataproc_cluster',
     'google_dataproc_region', 'google_dataproc_service_account',
-    'google_kms_key_ring_location', 'google_kms_key_ring_name', 'google_kms_key_name',
+    'google_kms_key_ring_location',
+    'google_kms_key_ring_name',
+    'google_kms_key_ring_project',
+    'google_kms_key_name',
     'hadoop_host', 'hadoop_port', 'hadoop_ssh_user', 'webhdfs_verify_ssl', 'hiveserver2_auth_mechanism', 'hash_chars',
     'hdfs_data', 'hdfs_home', 'hdfs_host', 'hdfs_load', 'hdfs_db_path_suffix',
     'hive_max_dynamic_partitions', 'hive_max_dynamic_partitions_pernode',
@@ -110,6 +113,7 @@ class OrchestrationConfig:
     backend_odbc_driver_name: Optional[str]
     backend_session_parameters: Optional[str]
     bigquery_dataset_location: Optional[str]
+    bigquery_dataset_project: Optional[str]
     bin_dir: Optional[str]
     ca_cert: Optional[str]
     db_name_pattern: str
@@ -121,6 +125,7 @@ class OrchestrationConfig:
     frontend_odbc_driver_name: Optional[str]
     google_dataproc_region: Optional[str]
     google_dataproc_service_account: Optional[str]
+    google_kms_key_ring_project: Optional[str]
     google_kms_key_ring_location: Optional[str]
     google_kms_key_ring_name: Optional[str]
     google_kms_key_name: Optional[str]
@@ -252,6 +257,8 @@ class OrchestrationConfig:
                                                          orchestration_defaults.google_kms_key_ring_location_default()),
             google_kms_key_ring_name=config_dict.get('google_kms_key_ring_name',
                                                      orchestration_defaults.google_kms_key_ring_name_default()),
+            google_kms_key_ring_project=config_dict.get('google_kms_key_ring_project',
+                                                        orchestration_defaults.google_kms_key_ring_project_default()),
             google_kms_key_name=config_dict.get('google_kms_key_name',
                                                 orchestration_defaults.google_kms_key_name_default()),
             hadoop_host=config_dict.get('hadoop_host', orchestration_defaults.hadoop_host_default()),

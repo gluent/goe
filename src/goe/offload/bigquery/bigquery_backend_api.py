@@ -7,7 +7,6 @@
 """
 
 from datetime import datetime
-import decimal
 import logging
 from math import ceil
 import pprint
@@ -45,7 +44,7 @@ from goe.offload.bigquery.bigquery_column import BigQueryColumn, \
 from goe.offload.bigquery.bigquery_literal import BigQueryLiteral
 
 from goe.util.hive_table_stats import parse_stats_into_tab_col, transform_stats_as_tuples
-from goe.util.misc_functions import backtick_sandwich, bytes_to_human_size, format_list_for_logging
+from goe.util.misc_functions import backtick_sandwich, format_list_for_logging
 
 ###############################################################################
 # CONSTANTS
@@ -88,6 +87,7 @@ class BackendBigQueryApi(BackendApiInterface):
 
         self._google_kms_key_ring_location = connection_options.google_kms_key_ring_location or None
         self._google_kms_key_ring_name = connection_options.google_kms_key_ring_name or None
+        self._google_kms_key_ring_project = connection_options.google_kms_key_ring_project or None
         self._google_kms_key_name = connection_options.google_kms_key_name or None
 
         self._sql_engine_name = 'BigQuery'
@@ -1324,7 +1324,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
 
     def kms_key_name(self):
         if self._kms_client:
-            return self._kms_client.crypto_key_path(self._backend_project_name(),
+            return self._kms_client.crypto_key_path(self._google_kms_key_ring_project or self._backend_project_name(),
                                                     self._google_kms_key_ring_location,
                                                     self._google_kms_key_ring_name,
                                                     self._google_kms_key_name)

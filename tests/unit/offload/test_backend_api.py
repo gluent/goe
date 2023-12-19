@@ -808,6 +808,21 @@ class TestBackendApi(TestCase):
             except BackendApiException:
                 pass
 
+    def _test_google_kms_key_ring_unit(self):
+        if self.connect_to_backend:
+            return
+
+        # Unit test config defines a key.
+        self.assertIsNotNone(self.api.kms_key_name())
+        self.assertIn(self.config.google_kms_key_ring_location, self.api.kms_key_name())
+        self.assertIn(self.config.google_kms_key_ring_name, self.api.kms_key_name())
+        self.assertIn(self.config.google_kms_key_name, self.api.kms_key_name())
+
+        if self.config.google_kms_key_ring_project:
+            self.assertIn(
+                self.config.google_kms_key_ring_project, self.api.kms_key_name()
+            )
+
     def _test_identifier_contains_invalid_characters(self):
         self.api.identifier_contains_invalid_characters("some_name")
         self.api.identifier_contains_invalid_characters("some!name")
@@ -1353,6 +1368,7 @@ class TestBackendApi(TestCase):
         # Engine specific tests
         if self.target == DBTYPE_BIGQUERY:
             self._test_bigquery_dataset_project()
+            self._test_google_kms_key_ring_unit()
         if self.target == DBTYPE_SNOWFLAKE:
             self._test_snowflake_file_format_exists()
             self._test_snowflake_integration_exists()

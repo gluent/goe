@@ -34,7 +34,7 @@ logger.addHandler(logging.NullHandler())
 EXPECTED_CONFIG_ARGS = [
     'ansi',
     'backend_distribution', 'backend_identifier_case', 'backend_odbc_driver_name', 'backend_session_parameters',
-    'bin_dir', 'bigquery_dataset_location',
+    'bin_dir', 'bigquery_dataset_location', 'bigquery_dataset_project',
     'ca_cert', 'cloudera_navigator_hive_source_id',
     'connector_hive_server_host', 'connector_hive_server_http_path', 'connector_query_monitor_threshold',
     'connector_sql_engine',
@@ -214,6 +214,8 @@ class OrchestrationConfig:
                                                        orchestration_defaults.backend_session_parameters_default()),
             bigquery_dataset_location=config_dict.get('bigquery_dataset_location',
                                                       orchestration_defaults.bigquery_dataset_location_default()),
+            bigquery_dataset_project=config_dict.get('bigquery_dataset_project',
+                                                     orchestration_defaults.bigquery_dataset_project_default()),
             bin_dir=config_dict.get('bin_dir', orchestration_defaults.bin_dir_default()),
             ca_cert=config_dict.get('ca_cert', orchestration_defaults.ca_cert_default()),
             cloudera_navigator_hive_source_id=config_dict.get('cloudera_navigator_hive_source_id',

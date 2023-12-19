@@ -209,19 +209,16 @@ from goe.util.better_impyla import (
     HADOOP_TYPE_TINYINT,
     HADOOP_TYPE_VARCHAR,
 )
-
-
-class FakeOpts(object):
-    def __init__(self, db_type, target=None):
-        self.db_type = db_type
-        self.rdbms_dsn = "blah:blah;blah=blah"
-        self.ora_adm_user = None
-        self.ora_adm_pass = None
-        self.rdbms_app_user = None
-        self.rdbms_app_pass = None
-        self.target = target or os.environ.get("QUERY_ENGINE", "").lower()
-        self.backend_session_parameters = None
-        self.use_oracle_wallet = None
+from tests.unit.test_functions import (
+    build_mock_options,
+    FAKE_MSSQL_ENV,
+    FAKE_NETEZZA_ENV,
+    FAKE_ORACLE_BQ_ENV,
+    FAKE_ORACLE_HIVE_ENV,
+    FAKE_ORACLE_IMPALA_ENV,
+    FAKE_ORACLE_SNOWFLAKE_ENV,
+    FAKE_ORACLE_SYNAPSE_ENV,
+)
 
 
 class TestDataTypeMappings(TestCase):
@@ -366,7 +363,7 @@ class TestDataTypeMappings(TestCase):
 
 class TestOracleDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
-        self.options = FakeOpts(DBTYPE_ORACLE)
+        self.options = build_mock_options(FAKE_ORACLE_BQ_ENV)
         messages = OffloadMessages()
         self.test_table_object = OracleSourceTable(
             "no_user", "no_table", self.options, messages, do_not_connect=True
@@ -662,7 +659,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     def test_bigquery_to_oracle(self):
         backend_api = backend_api_factory(
             DBTYPE_BIGQUERY,
-            FakeOpts(DBTYPE_ORACLE, target=DBTYPE_BIGQUERY),
+            self.options,
             OffloadMessages(),
             do_not_connect=True,
         )
@@ -696,7 +693,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     def test_hive_to_oracle(self):
         backend_api = backend_api_factory(
             DBTYPE_HIVE,
-            FakeOpts(DBTYPE_ORACLE, target=DBTYPE_HIVE),
+            self.options,
             OffloadMessages(),
             do_not_connect=True,
         )
@@ -759,7 +756,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     def test_impala_to_oracle(self):
         backend_api = backend_api_factory(
             DBTYPE_IMPALA,
-            FakeOpts(DBTYPE_ORACLE, target=DBTYPE_IMPALA),
+            self.options,
             OffloadMessages(),
             do_not_connect=True,
         )
@@ -820,7 +817,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     def test_snowflake_to_oracle(self):
         backend_api = backend_api_factory(
             DBTYPE_SNOWFLAKE,
-            FakeOpts(DBTYPE_ORACLE, target=DBTYPE_SNOWFLAKE),
+            self.options,
             OffloadMessages(),
             do_not_connect=True,
         )
@@ -895,7 +892,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     def test_synapse_to_oracle(self):
         backend_api = backend_api_factory(
             DBTYPE_SYNAPSE,
-            FakeOpts(DBTYPE_ORACLE, target=DBTYPE_SYNAPSE),
+            self.options,
             OffloadMessages(),
             do_not_connect=True,
         )
@@ -1089,7 +1086,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
 
 class TestMSSQLDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
-        self.options = FakeOpts("mssql")
+        self.options = build_mock_options(FAKE_MSSQL_ENV)
         messages = OffloadMessages()
         self.test_table_object = MSSQLSourceTable(
             "no_user", "no_table", self.options, messages, do_not_connect=True
@@ -1348,7 +1345,7 @@ class TestMSSQLDataTypeMappings(TestDataTypeMappings):
 
 class TestNetezzaDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
-        self.options = FakeOpts("netezza")
+        self.options = build_mock_options(FAKE_NETEZZA_ENV)
         messages = OffloadMessages()
         self.test_table_object = NetezzaSourceTable(
             "no_user", "no_table", self.options, messages, do_not_connect=True
@@ -1533,7 +1530,7 @@ class TestNetezzaDataTypeMappings(TestDataTypeMappings):
 
 class TestBackendHiveDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
-        self.options = FakeOpts(DBTYPE_ORACLE, target=DBTYPE_HIVE)
+        self.options = build_mock_options(FAKE_ORACLE_HIVE_ENV)
         messages = OffloadMessages()
         self.test_api = backend_api_factory(
             self.options.target, self.options, messages, do_not_connect=True
@@ -1697,7 +1694,7 @@ class TestBackendHiveDataTypeMappings(TestDataTypeMappings):
 
 class TestBackendImpalaDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
-        self.options = FakeOpts(DBTYPE_ORACLE, target=DBTYPE_IMPALA)
+        self.options = build_mock_options(FAKE_ORACLE_IMPALA_ENV)
         messages = OffloadMessages()
         self.test_api = backend_api_factory(
             self.options.target, self.options, messages, do_not_connect=True
@@ -1853,7 +1850,7 @@ class TestBackendImpalaDataTypeMappings(TestDataTypeMappings):
 
 class TestBackendBigQueryDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
-        self.options = FakeOpts(DBTYPE_ORACLE, target=DBTYPE_BIGQUERY)
+        self.options = build_mock_options(FAKE_ORACLE_BQ_ENV)
         messages = OffloadMessages()
         self.test_api = backend_api_factory(
             self.options.target, self.options, messages, do_not_connect=True
@@ -2018,7 +2015,7 @@ class TestAvroDataTypeMappings(TestDataTypeMappings):
             self.column_assertions(staging_column, expected_column)
 
     def setUp(self):
-        self.options = FakeOpts(DBTYPE_ORACLE, target=DBTYPE_HIVE)
+        self.options = build_mock_options(FAKE_ORACLE_HIVE_ENV)
 
     def get_expected_staging_columns(self, target):
         stage_binary_as_string = bool(target in [DBTYPE_IMPALA, DBTYPE_SNOWFLAKE])
@@ -2164,7 +2161,7 @@ class TestParquetDataTypeMappings(TestDataTypeMappings):
             self.column_assertions(staging_column, expected_column)
 
     def setUp(self):
-        self.options = FakeOpts(DBTYPE_ORACLE, target=DBTYPE_SNOWFLAKE)
+        self.options = build_mock_options(FAKE_ORACLE_SNOWFLAKE_ENV)
 
     def get_expected_staging_columns(self, target):
         stage_binary_as_string = bool(target in [DBTYPE_SNOWFLAKE])
@@ -2278,7 +2275,7 @@ class TestParquetDataTypeMappings(TestDataTypeMappings):
 
 class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
-        self.options = FakeOpts(DBTYPE_ORACLE, target=DBTYPE_SNOWFLAKE)
+        self.options = build_mock_options(FAKE_ORACLE_SNOWFLAKE_ENV)
         messages = OffloadMessages()
         self.test_api = backend_api_factory(
             self.options.target, self.options, messages, do_not_connect=True
@@ -2451,7 +2448,7 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
 
 class TestBackendSynapseDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
-        self.options = FakeOpts(DBTYPE_ORACLE, target=DBTYPE_SYNAPSE)
+        self.options = build_mock_options(FAKE_ORACLE_SYNAPSE_ENV)
         messages = OffloadMessages()
         self.test_api = backend_api_factory(
             self.options.target, self.options, messages, do_not_connect=True

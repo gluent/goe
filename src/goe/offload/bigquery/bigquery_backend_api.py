@@ -82,30 +82,18 @@ class BackendBigQueryApi(BackendApiInterface):
         if dry_run:
             logger.info('* Dry run *')
 
-        # Some unit tests don't have all options hence the hasattr below
-        if hasattr(connection_options, 'bigquery_dataset_location') and connection_options.bigquery_dataset_location:
-            self._bigquery_dataset_location = connection_options.bigquery_dataset_location
-        else:
-            self._bigquery_dataset_location = None
-        if hasattr(connection_options,
-                   'google_kms_key_ring_location') and connection_options.google_kms_key_ring_location:
-            self._google_kms_key_ring_location = connection_options.google_kms_key_ring_location
-        else:
-            self._google_kms_key_ring_location = None
-        if hasattr(connection_options, 'google_kms_key_ring_name') and connection_options.google_kms_key_ring_name:
-            self._google_kms_key_ring_name = connection_options.google_kms_key_ring_name
-        else:
-            self._google_kms_key_ring_name = None
-        if hasattr(connection_options, 'google_kms_key_name') and connection_options.google_kms_key_name:
-            self._google_kms_key_name = connection_options.google_kms_key_name
-        else:
-            self._google_kms_key_name = None
+        self._client = None
+        self._bigquery_dataset_location = connection_options.bigquery_dataset_location or None
+        self._bigquery_dataset_project = connection_options.bigquery_dataset_project or None
+
+        self._google_kms_key_ring_location = connection_options.google_kms_key_ring_location or None
+        self._google_kms_key_ring_name = connection_options.google_kms_key_ring_name or None
+        self._google_kms_key_name = connection_options.google_kms_key_name or None
 
         self._sql_engine_name = 'BigQuery'
         self._log_query_id_tag = 'BigQuery Job ID'
         self._cached_bq_tables = {}
 
-        self._client = None
         if not do_not_connect:
             self._client = self._get_bq_client()
 
@@ -140,36 +128,40 @@ class BackendBigQueryApi(BackendApiInterface):
                 param_list.append(bigquery.ScalarQueryParameter(param_name, param_type, param_value))
             job_config.query_parameters = param_list
 
-    def _backend_capabilities(self):
+    def _backend_capabilities(self) -> dict:
         return BIGQUERY_BACKEND_CAPABILITIES
 
     def _backend_project_name(self):
         """ Get name of BigQuery project from client
         """
-        if self._client:
+        if self._bigquery_dataset_project:
+            return self._bigquery_dataset_project
+        elif self._client:
             return self._client.project
+        else:
+            return None
 
-    def _bq_dataset_id(self, db_name):
+    def _bq_dataset_id(self, db_name: str) -> str:
         """ Return a dataset id for a db name.
             Returns str() because dataset drop/exists calls were failing when passing in unicode.
         """
         assert db_name
-        if self._client:
-            return str('%s.%s' % (self._client.project, db_name))
+        if self._backend_project_name():
+            return str('%s.%s' % (self._backend_project_name(), db_name))
         else:
             # Non-connecting calls (for unit tests) will not have set _client
             return str('%s.%s' % ('a-test-project', db_name))
 
-    def _bq_table_id(self, db_name, table_name):
+    def _bq_table_id(self, db_name: str, table_name: str) -> str:
         assert db_name and table_name
         return self._bq_dataset_id(db_name) + '.' + table_name
 
-    def _check_kms_key_name(self, kms_key_name, key_type='job'):
+    def _check_kms_key_name(self, kms_key_name: str, key_type='job'):
         """ Use startswith() to verify custom key for key name.
             Example of custom key name:
-                projects/gluent-teamcity/locations/us-west3/keyRings/paypal/cryptoKeys/etldb5
+                projects/goe-teamcity/locations/us-west3/keyRings/krname/cryptoKeys/etl5
             Example of what we get from a query_job object:
-                projects/gluent-teamcity/locations/us-west3/keyRings/paypal/cryptoKeys/etldb5/cryptoKeyVersions/1
+                projects/goe-teamcity/locations/us-west3/keyRings/krname/cryptoKeys/etl5/cryptoKeyVersions/1
             It's worth noting that this has not always been the case, BigQuery behaviour has changed in the past.
         """
         if self._kms_key_name and not (kms_key_name or '').startswith(self._kms_key_name):
@@ -505,7 +497,7 @@ class BackendBigQueryApi(BackendApiInterface):
                                 WHERE  table_catalog = @project
                                 AND    table_schema = @db_name
                                 AND    table_name = @table_name""") % self._bq_dataset_id(db_name)
-        query_params = [('project', BIGQUERY_TYPE_STRING, self._client.project),
+        query_params = [('project', BIGQUERY_TYPE_STRING, self._backend_project_name()),
                         ('db_name', BIGQUERY_TYPE_STRING, db_name),
                         ('table_name', BIGQUERY_TYPE_STRING, table_name)]
         try:
@@ -1392,7 +1384,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             FROM   `%s`.INFORMATION_SCHEMA.ROUTINES
             WHERE  routine_catalog = @project
             AND    routine_schema = @db_name""") % self._bq_dataset_id(db_name)
-        query_params = [('project', BIGQUERY_TYPE_STRING, self._client.project),
+        query_params = [('project', BIGQUERY_TYPE_STRING, self._backend_project_name()),
                         ('db_name', BIGQUERY_TYPE_STRING, db_name)]
         if udf_name_filter:
             query_params.append(('udf_name', BIGQUERY_TYPE_STRING, udf_name_filter))
@@ -1408,7 +1400,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             FROM   `%s`.INFORMATION_SCHEMA.VIEWS
             WHERE  table_catalog = @project
             AND    table_schema = @db_name""") % self._bq_dataset_id(db_name)
-        query_params = [('project', BIGQUERY_TYPE_STRING, self._client.project),
+        query_params = [('project', BIGQUERY_TYPE_STRING, self._backend_project_name()),
                         ('db_name', BIGQUERY_TYPE_STRING, db_name)]
         rows = self.execute_query_fetch_all(sql, log_level=VVERBOSE, query_params=query_params)
         if not rows:
@@ -1626,7 +1618,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
                 AND    specific_schema = @db_name
                 AND    specific_name = @udf_name
                 ORDER BY ordinal_position""") % self._bq_dataset_id(db_name)
-        query_params = [('project', BIGQUERY_TYPE_STRING, self._client.project),
+        query_params = [('project', BIGQUERY_TYPE_STRING, self._backend_project_name()),
                         ('db_name', BIGQUERY_TYPE_STRING, db_name),
                         ('udf_name', BIGQUERY_TYPE_STRING, udf_name)]
         try:

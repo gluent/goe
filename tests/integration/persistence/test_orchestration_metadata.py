@@ -183,7 +183,11 @@ class TestOrchestrationMetadata(TestCase):
         )
 
     def _test_metadata(
-        self, test_metadata: OrchestrationMetadata, client=None, connection_options=None, messages=None
+        self,
+        test_metadata: OrchestrationMetadata,
+        client=None,
+        connection_options=None,
+        messages=None,
     ):
         """Tests we can get/change and delete OrchestrationMetadata"""
         execution_id = ExecutionId()

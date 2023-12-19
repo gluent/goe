@@ -61,6 +61,7 @@ FAKE_ORACLE_BQ_ENV = dict(FAKE_ORACLE_ENV)
 FAKE_ORACLE_BQ_ENV.update(
     {
         "BACKEND_DISTRIBUTION": "GCP",
+        "BIGQUERY_DATASET_PROJECT": "bq-project",
     }
 )
 

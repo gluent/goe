@@ -11,8 +11,6 @@ import re
 
 from numpy import datetime64
 
-from tests.integration.test_functions import get_default_test_user
-
 from goe.connect.connect_constants import (
     CONNECT_DETAIL,
     CONNECT_STATUS,
@@ -41,7 +39,6 @@ from goe.offload.offload_constants import (
     FILE_STORAGE_FORMAT_PARQUET,
 )
 from goe.offload.offload_messages import OffloadMessages
-from goe.persistence.orchestration_metadata import OrchestrationMetadata
 from goe.util.misc_functions import add_suffix_in_same_case
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
@@ -77,19 +74,6 @@ class TestBackendApi(TestCase):
             dry_run=True,
             do_not_connect=bool(not self.connect_to_backend),
         )
-        if self.connect_to_backend:
-            self.db, self.table = self._get_real_db_table("GL_TYPES")
-            if not self.table:
-                print(
-                    "Falling back to connect_to_backend=False because there are no test tables"
-                )
-                self.connect_to_backend = False
-                self.db = "any_db"
-                self.table = "some_table"
-            _, self.part_table = self._get_real_db_table("SALES")
-        else:
-            self.db = "any_db"
-            self.table = "some_table"
         self.test_api = backend_testing_api_factory(
             self.target,
             self.config,
@@ -97,6 +81,8 @@ class TestBackendApi(TestCase):
             dry_run=True,
             do_not_connect=bool(not self.connect_to_backend),
         )
+        self.db = "any_db"
+        self.table = "some_table"
 
     def _get_mock_config(self, mock_env: dict):
         return build_mock_options(mock_env)
@@ -109,23 +95,6 @@ class TestBackendApi(TestCase):
             data_length=10
             if self.test_api.data_type_accepts_length(string_type)
             else None,
-        )
-
-    def _get_real_db_table(self, hybrid_view):
-        # Try to find an GL_TYPES table via metadata
-        messages = OffloadMessages()
-        for hybrid_schema in [get_default_test_user(hybrid=True), "SH_H"]:
-            metadata = OrchestrationMetadata.from_name(
-                hybrid_schema,
-                hybrid_view,
-                connection_options=self.config,
-                messages=messages,
-            )
-            if metadata:
-                return metadata.backend_owner, metadata.backend_table
-        # We shouldn't get to here in a correctly configured environment
-        raise Exception(
-            f"{hybrid_view} test table is missing, please configure your environment"
         )
 
     def _get_udf_db(self):
@@ -150,6 +119,19 @@ class TestBackendApi(TestCase):
         if self.connect_to_backend:
             # Some backends do not expose a version so we cannot assert on this fn
             self.api.backend_version()
+
+    def _test_bigquery_dataset_project(self):
+        if self.config.bigquery_dataset_project:
+            self.assertEqual(
+                self.api._backend_project_name(), self.config.bigquery_dataset_project
+            )
+            self.assertIn(
+                self.config.bigquery_dataset_project, self.api._bq_dataset_id("some-db")
+            )
+        else:
+            if self.connect_to_backend:
+                # The project should still be set, it will come from the client default.
+                self.assertIsNotNone(self.api._backend_project_name())
 
     def _test_check_backend_supporting_objects(self):
         if self.connect_to_backend:
@@ -1080,7 +1062,7 @@ class TestBackendApi(TestCase):
     def _test_snowflake_file_format_exists(self):
         if self.connect_to_backend:
             self.assertFalse(
-                self.api.snowflake_file_format_exists(self.db, "no-ffs-were-given")
+                self.api.snowflake_file_format_exists(self.db, "test-no-ff")
             )
             file_format = add_suffix_in_same_case(
                 self.config.snowflake_file_format_prefix,
@@ -1090,14 +1072,16 @@ class TestBackendApi(TestCase):
 
     def _test_snowflake_integration_exists(self):
         if self.connect_to_backend:
-            self.assertFalse(self.api.snowflake_integration_exists("no-integration"))
+            self.assertFalse(
+                self.api.snowflake_integration_exists("test-no-integration")
+            )
             self.assertTrue(
                 self.api.snowflake_integration_exists(self.config.snowflake_integration)
             )
 
     def _test_snowflake_stage_exists(self):
         if self.connect_to_backend:
-            self.assertFalse(self.api.snowflake_stage_exists(self.db, "no-stage"))
+            self.assertFalse(self.api.snowflake_stage_exists(self.db, "test-no-stage"))
             # We cannot guarantee the stage exists when unit tests run therefore any bool is fine below
             self.assertIsInstance(
                 self.api.snowflake_stage_exists(self.db, self.config.snowflake_stage),
@@ -1347,13 +1331,6 @@ class TestBackendApi(TestCase):
             self._test_set_session_db()
         except NotImplementedError:
             pass
-        if self.target == DBTYPE_SNOWFLAKE:
-            self._test_snowflake_file_format_exists()
-            self._test_snowflake_integration_exists()
-            self._test_snowflake_stage_exists()
-        if self.target == DBTYPE_SYNAPSE:
-            self._test_synapse_external_data_source_exists()
-            self._test_synapse_file_format_exists()
         self._test_supported_backend_data_types()
         self._test_supported_partition_function_data_types()
         self._test_table_exists()
@@ -1373,6 +1350,16 @@ class TestBackendApi(TestCase):
         self._test_udf_installation_test()
         self._test_valid_staging_formats()
         self._test_view_exists()
+        # Engine specific tests
+        if self.target == DBTYPE_BIGQUERY:
+            self._test_bigquery_dataset_project()
+        if self.target == DBTYPE_SNOWFLAKE:
+            self._test_snowflake_file_format_exists()
+            self._test_snowflake_integration_exists()
+            self._test_snowflake_stage_exists()
+        if self.target == DBTYPE_SYNAPSE:
+            self._test_synapse_external_data_source_exists()
+            self._test_synapse_file_format_exists()
 
 
 class TestHiveBackendApi(TestBackendApi):

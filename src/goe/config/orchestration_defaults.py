@@ -12,18 +12,32 @@ import os
 from typing import Optional
 
 from goe.offload.offload_constants import (
-    BACKEND_DISTRO_CDH, BACKEND_DISTRO_GCP, BACKEND_DISTRO_SNOWFLAKE,
-    BACKEND_DISTRO_MSAZURE, DBTYPE_BIGQUERY, DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_MSSQL, DBTYPE_NETEZZA, DBTYPE_ORACLE,
-    DBTYPE_TERADATA, FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET,
-    HADOOP_BASED_BACKEND_DISTRIBUTIONS, HYBRID_EXT_TABLE_DEGREE_AUTO,
+    BACKEND_DISTRO_CDH,
+    BACKEND_DISTRO_GCP,
+    BACKEND_DISTRO_SNOWFLAKE,
+    BACKEND_DISTRO_MSAZURE,
+    DBTYPE_BIGQUERY,
+    DBTYPE_HIVE,
+    DBTYPE_IMPALA,
+    DBTYPE_MSSQL,
+    DBTYPE_NETEZZA,
+    DBTYPE_ORACLE,
+    DBTYPE_TERADATA,
+    FILE_STORAGE_FORMAT_AVRO,
+    FILE_STORAGE_FORMAT_PARQUET,
+    HADOOP_BASED_BACKEND_DISTRIBUTIONS,
+    HYBRID_EXT_TABLE_DEGREE_AUTO,
     LIVY_IDLE_SESSION_TIMEOUT,
     LIVY_MAX_SESSIONS,
-    NOT_NULL_PROPAGATION_AUTO, NUM_BUCKETS_AUTO, NUM_BUCKETS_FALLBACK,
+    NOT_NULL_PROPAGATION_AUTO,
+    NUM_BUCKETS_AUTO,
+    NUM_BUCKETS_FALLBACK,
     NUM_LOCATION_FILES_FALLBACK,
     OFFLOAD_STATS_METHOD_COPY,
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_TRANSPORT_AUTO,
-    PRESENT_OP_NAME, SORT_COLUMNS_NO_CHANGE
+    PRESENT_OP_NAME,
+    SORT_COLUMNS_NO_CHANGE,
 )
 from goe.util.misc_functions import is_pos_int
 
@@ -93,9 +107,9 @@ def ansi_default() -> bool:
 def backend_distribution_default():
     if os.environ.get("BACKEND_DISTRIBUTION"):
         return os.environ["BACKEND_DISTRIBUTION"].upper()
-    elif os.environ.get('QUERY_ENGINE', '').lower() == DBTYPE_IMPALA:
+    elif os.environ.get("QUERY_ENGINE", "").lower() == DBTYPE_IMPALA:
         return BACKEND_DISTRO_CDH
-    elif os.environ.get('QUERY_ENGINE', '').lower() == DBTYPE_BIGQUERY:
+    elif os.environ.get("QUERY_ENGINE", "").lower() == DBTYPE_BIGQUERY:
         return BACKEND_DISTRO_GCP
     else:
         return None
@@ -115,6 +129,10 @@ def backend_session_parameters_default() -> Optional[str]:
 
 def bigquery_dataset_location_default() -> Optional[str]:
     return os.environ.get("BIGQUERY_DATASET_LOCATION")
+
+
+def bigquery_dataset_project_default() -> Optional[str]:
+    return os.environ.get("BIGQUERY_DATASET_PROJECT")
 
 
 def bin_dir_default() -> Optional[str]:
@@ -194,7 +212,7 @@ def generate_dependent_views_default() -> bool:
 
 
 def get_load_db_pattern():
-    return '%s_load'
+    return "%s_load"
 
 
 def google_dataproc_batches_version_default() -> Optional[str]:
@@ -310,7 +328,9 @@ def offload_distribute_enabled_default():
 
 
 def not_null_propagation_default():
-    return (os.environ.get('OFFLOAD_NOT_NULL_PROPAGATION') or NOT_NULL_PROPAGATION_AUTO).upper()
+    return (
+        os.environ.get("OFFLOAD_NOT_NULL_PROPAGATION") or NOT_NULL_PROPAGATION_AUTO
+    ).upper()
 
 
 def offload_predicate_modify_hybrid_view_default():
@@ -931,6 +951,7 @@ def sqoop_queue_name_default() -> Optional[str]:
 
 # DATA GOVERNANCE DEFAULTS
 
+
 def data_governance_api_url_default():
     return os.environ.get("DATA_GOVERNANCE_API_URL")
 
@@ -1049,9 +1070,7 @@ def listener_redis_ssl_cert_default() -> Optional[str]:
 
 
 def listener_redis_use_ssl_default() -> bool:
-    return bool(
-        os.environ.get("OFFLOAD_LISTENER_REDIS_SSL", "false").lower() == "true"
-    )
+    return bool(os.environ.get("OFFLOAD_LISTENER_REDIS_SSL", "false").lower() == "true")
 
 
 def listener_redis_use_sentinel_default() -> int:

@@ -6,6 +6,7 @@ from goe.gluent import OffloadOperation
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
+from goe.orchestration.orchestration_runner import OrchestrationRunner
 
 from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
 
@@ -53,6 +54,12 @@ def cached_default_test_user():
 
 def get_default_test_user_pass():
     return os.environ.get("GOE_TEST_USER_PASS", "GOE_TEST")
+
+
+def run_offload(option_dict: dict) -> bool:
+    return OrchestrationRunner().offload(
+        option_dict,
+    )
 
 
 def run_setup_ddl(

@@ -1,32 +1,16 @@
 import pytest
 
-from goe.offload.column_metadata import (
-    match_table_column,
-    str_list_of_columns,
-)
 from goe.offload.offload_constants import (
     ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
-    DBTYPE_BIGQUERY,
-    DBTYPE_HIVE,
     DBTYPE_IMPALA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
-    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
-    OFFLOAD_STATS_METHOD_COPY,
-    OFFLOAD_STATS_METHOD_NATIVE,
-    PART_COL_GRANULARITY_DAY,
-    PART_COL_GRANULARITY_MONTH,
 )
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
 )
 from goe.offload.offload_messages import VVERBOSE
-from goe.offload.offload_metadata_functions import (
-    INCREMENTAL_PREDICATE_TYPE_LIST,
-    INCREMENTAL_PREDICATE_TYPE_RANGE,
-)
-from goe.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
 from goe.offload.offload_transport import (
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
@@ -41,28 +25,8 @@ from goe.offload.offload_transport import (
     is_sqoop_available,
     is_sqoop_by_query_available,
 )
-from goe.persistence.factory.orchestration_repo_client_factory import (
-    orchestration_repo_client_factory,
-)
-
-from tests.integration.test_sets.stories.story_setup_functions import (
-    SALES_BASED_FACT_HV_1,
-    SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-    SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
-    gen_truncate_sales_based_fact_partition_ddls,
-    partition_columns_if_supported,
-)
 
 from tests.integration.scenarios.assertion_functions import (
-    backend_column_exists,
-    backend_table_count,
-    backend_table_exists,
-    date_gl_part_column_name,
-    sales_based_fact_assertion,
-    standard_dimension_assertion,
-    text_in_events,
     text_in_log,
 )
 from tests.integration.scenarios.scenario_runner import (
@@ -70,7 +34,6 @@ from tests.integration.scenarios.scenario_runner import (
     run_setup,
 )
 from tests.integration.scenarios.setup_functions import (
-    drop_backend_test_load_table,
     drop_backend_test_table,
 )
 from tests.integration.test_functions import (

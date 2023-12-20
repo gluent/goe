@@ -74,8 +74,10 @@ EXPECTED_CONFIG_ARGS = [
     "execute",
     "error_on_token",
     "frontend_odbc_driver_name",
+    "google_dataproc_batches_subnet",
     "google_dataproc_batches_version",
     "google_dataproc_cluster",
+    "google_dataproc_project",
     "google_dataproc_region",
     "google_dataproc_service_account",
     "google_kms_key_ring_location",
@@ -249,6 +251,10 @@ class OrchestrationConfig:
     error_on_token: Optional[str]
     execute: bool
     frontend_odbc_driver_name: Optional[str]
+    google_dataproc_batches_subnet: Optional[str]
+    google_dataproc_batches_version: Optional[str]
+    google_dataproc_cluster: Optional[str]
+    google_dataproc_project: Optional[str]
     google_dataproc_region: Optional[str]
     google_dataproc_service_account: Optional[str]
     google_kms_key_ring_project: Optional[str]
@@ -428,6 +434,10 @@ class OrchestrationConfig:
                 "frontend_odbc_driver_name",
                 orchestration_defaults.frontend_odbc_driver_name_default(),
             ),
+            google_dataproc_batches_subnet=config_dict.get(
+                "google_dataproc_batches_subnet",
+                orchestration_defaults.google_dataproc_batches_subnet_default(),
+            ),
             google_dataproc_batches_version=config_dict.get(
                 "google_dataproc_batches_version",
                 orchestration_defaults.google_dataproc_batches_version_default(),
@@ -435,6 +445,10 @@ class OrchestrationConfig:
             google_dataproc_cluster=config_dict.get(
                 "google_dataproc_cluster",
                 orchestration_defaults.google_dataproc_cluster_default(),
+            ),
+            google_dataproc_project=config_dict.get(
+                "google_dataproc_project",
+                orchestration_defaults.google_dataproc_project_default(),
             ),
             google_dataproc_region=config_dict.get(
                 "google_dataproc_region",

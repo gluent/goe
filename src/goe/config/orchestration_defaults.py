@@ -215,12 +215,20 @@ def get_load_db_pattern():
     return "%s_load"
 
 
+def google_dataproc_batches_subnet_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_DATAPROC_BATCHES_SUBNET")
+
+
 def google_dataproc_batches_version_default() -> Optional[str]:
     return os.environ.get("GOOGLE_DATAPROC_BATCHES_VERSION")
 
 
 def google_dataproc_cluster_default() -> Optional[str]:
     return os.environ.get("GOOGLE_DATAPROC_CLUSTER")
+
+
+def google_dataproc_project_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_DATAPROC_PROJECT")
 
 
 def google_dataproc_region_default() -> Optional[str]:

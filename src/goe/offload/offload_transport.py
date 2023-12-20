@@ -2687,8 +2687,11 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._load_table_compression_pyspark_settings()
         self._offload_fs_container = offload_options.offload_fs_container
         self._dataproc_cluster = offload_options.google_dataproc_cluster
+        self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
+        self._google_dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._google_dataproc_batches_version = offload_options.google_dataproc_batches_version
 
     ###########################################################################
     # PRIVATE METHODS
@@ -2706,10 +2709,23 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
 
     def _gcloud_dataproc_command(self) -> list:
         gcloud_cmd = [OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE, 'dataproc', 'batches', 'submit', 'pyspark']
+        if self._dataproc_project:
+            gcloud_cmd.append(f'--project={self._dataproc_project}')
         if self._dataproc_region:
             gcloud_cmd.append(f'--region={self._dataproc_region}')
         if self._dataproc_service_account:
             gcloud_cmd.append(f'--service-account={self._dataproc_service_account}')
+        if self._google_dataproc_batches_version:
+            gcloud_cmd.append(f'--version={self._google_dataproc_batches_version}')
+        if self._google_dataproc_batches_subnet:
+            if not self._dataproc_project or not self._dataproc_region:
+                raise OffloadTransportException("GOOGLE_DATAPROC_PROJECT and GOOGLE_DATAPROC_REGION are required when using GOOGLE_DATAPROC_BATCHES_SUBNET")
+            subnet = "/".join(
+                ["projects", self._dataproc_project,
+                 "regions", self._dataproc_region,
+                 "subnetworks", self._google_dataproc_batches_subnet]
+            )
+            gcloud_cmd.append(f'--subnet={subnet}')
         gcloud_cmd.append(f'--deps-bucket={self._offload_fs_container}')
         return gcloud_cmd
 
@@ -2902,8 +2918,11 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
 
         self._offload_fs_container = offload_options.offload_fs_container
         self._dataproc_cluster = offload_options.google_dataproc_cluster
+        self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
+        self._google_dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._google_dataproc_batches_version = offload_options.google_dataproc_batches_version
         self._spark_files_csv = offload_options.offload_transport_spark_files
         self._spark_jars_csv = offload_options.offload_transport_spark_jars
 
@@ -2936,6 +2955,8 @@ class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
         if not self._dataproc_cluster:
             raise OffloadTransportException('Missing mandatory configuration: GOOGLE_DATAPROC_CLUSTER')
         gcloud_cmd.append(f'--cluster={self._dataproc_cluster}')
+        if self._dataproc_project:
+            gcloud_cmd.append(f'--project={self._dataproc_project}')
         if self._dataproc_region:
             gcloud_cmd.append(f'--region={self._dataproc_region}')
         if self._dataproc_service_account:
@@ -2978,6 +2999,7 @@ class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcl
         self._rdbms_action = self._rdbms_api.generate_transport_action()
 
         self._dataproc_cluster = offload_options.google_dataproc_cluster
+        self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
         self._spark_files_csv = offload_options.offload_transport_spark_files

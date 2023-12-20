@@ -414,7 +414,7 @@ class OracleFrontendApi(FrontendApiInterface):
             profile_dict = self._instrumentation_snap()
         t1 = datetime.now().replace(microsecond=0)
 
-        if self._dry_run and not_when_dry_running:
+        if (self._dry_run and not_when_dry_running) or self._db_conn is None:
             log_query()
             return None
 

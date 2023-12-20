@@ -6,6 +6,7 @@ from goe.config.orchestration_config import OrchestrationConfig
 
 FAKE_COMMON_ENV = {
     "DB_NAME_PREFIX": "x",
+    "OFFLOAD_HOME": "/opt/goe/offload",
     "OFFLOAD_LOG": "/tmp",
     "OFFLOAD_TRANSPORT_USER": "a",
     "OFFLOAD_TRANSPORT_CMD_HOST": "localhost",

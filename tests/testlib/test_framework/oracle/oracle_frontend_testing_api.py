@@ -58,15 +58,11 @@ from goe.offload.oracle.oracle_column import (
     ORACLE_TYPE_INTERVAL_YM,
 )
 from tests.testlib.setup import gen_test_data
-from tests.testlib.test_framework.test_constants import (
-    TEST_GEN_DATA_ASCII7_NONULL,
-    UNICODE_NAME_TOKEN,
-)
 from tests.testlib.test_framework.frontend_testing_api import (
     FrontendTestingApiInterface,
 )
 from tests.testlib.test_framework.test_value_generators import TestDecimal
-from tests.integration.test_sets.stories.story_setup_functions import (
+from tests.testlib.test_framework.test_constants import (
     SALES_BASED_FACT_PRE_HV,
     SALES_BASED_FACT_HV_1,
     SALES_BASED_FACT_HV_2,
@@ -99,6 +95,8 @@ from tests.integration.test_sets.stories.story_setup_functions import (
     SALES_BASED_LIST_PNAME_6,
     SALES_BASED_LIST_HV_7,
     SALES_BASED_LIST_PNAME_7,
+    TEST_GEN_DATA_ASCII7_NONULL,
+    UNICODE_NAME_TOKEN,
 )
 
 

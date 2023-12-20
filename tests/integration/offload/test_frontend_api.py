@@ -1,7 +1,5 @@
 from unittest import main
 
-from tests.unit.offload.unittest_functions import get_real_frontend_schema_and_table
-
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_messages import OffloadMessages
 from tests.integration.test_functions import (

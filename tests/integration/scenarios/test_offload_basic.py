@@ -30,16 +30,6 @@ from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
-from tests.integration.test_sets.stories.story_setup_functions import (
-    SALES_BASED_FACT_HV_1,
-    SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-    SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
-    gen_truncate_sales_based_fact_partition_ddls,
-    partition_columns_if_supported,
-)
-
 from tests.integration.scenarios.assertion_functions import (
     backend_column_exists,
     backend_table_count,
@@ -56,10 +46,19 @@ from tests.integration.scenarios.scenario_runner import (
 from tests.integration.scenarios.setup_functions import (
     drop_backend_test_load_table,
     drop_backend_test_table,
+    gen_truncate_sales_based_fact_partition_ddls,
+    partition_columns_if_supported,
 )
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
+)
+from tests.testlib.test_framework.test_constants import (
+    SALES_BASED_FACT_HV_1,
+    SALES_BASED_FACT_HV_2,
+    SALES_BASED_FACT_HV_3,
+    SALES_BASED_FACT_HV_4,
+    SALES_BASED_FACT_PRE_HV,
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,

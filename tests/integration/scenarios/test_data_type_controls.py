@@ -60,8 +60,6 @@ from tests.integration.test_functions import (
 from tests.integration.scenarios.setup_functions import (
     drop_backend_test_load_table,
     drop_backend_test_table,
-)
-from tests.integration.test_sets.stories.story_setup_functions import (
     no_query_import_transport_method,
 )
 from tests.testlib.test_framework.backend_testing_api import (

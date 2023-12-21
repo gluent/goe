@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase, main
 
 from goe.offload.bigquery.bigquery_column import (
@@ -48,7 +47,6 @@ from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
-    DBTYPE_ORACLE,
     DBTYPE_SNOWFLAKE,
     DBTYPE_SYNAPSE,
     FILE_STORAGE_FORMAT_AVRO,

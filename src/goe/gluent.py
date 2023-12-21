@@ -61,7 +61,7 @@ from goe.offload.offload_source_data import get_offload_type_for_config, \
 from goe.offload.offload_source_table import OffloadSourceTableInterface, \
     OFFLOAD_PARTITION_TYPE_RANGE, OFFLOAD_PARTITION_TYPE_LIST
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
-from goe.offload.offload_metadata_functions import incremental_key_csv_from_part_keys, gen_and_save_offload_metadata
+from goe.offload.offload_metadata_functions import gen_and_save_offload_metadata
 from goe.offload.offload_validation import BackendCountValidator, CrossDbValidator,\
     build_verification_clauses
 from goe.offload.offload_transport import choose_offload_transport_method, offload_transport_factory, \

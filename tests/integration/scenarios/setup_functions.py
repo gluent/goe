@@ -1,6 +1,4 @@
-from textwrap import dedent
-
-from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_TERADATA
+from goe.offload import offload_transport
 from goe.offload.offload_functions import convert_backend_identifier_case
 from goe.offload.offload_messages import VERBOSE
 
@@ -67,6 +65,15 @@ def gen_drop_sales_based_fact_partition_ddls(
         )
 
 
+def gen_truncate_sales_based_fact_partition_ddls(
+    schema, table_name, hv_string_list, frontend_api
+):
+    """hv_string_list in format YYYY-MM-DD"""
+    return gen_drop_sales_based_fact_partition_ddls(
+        schema, table_name, hv_string_list, frontend_api, truncate_instead_of_drop=True
+    )
+
+
 def get_sales_based_fact_partition_list(
     schema, table_name, hv_string_list, frontend_api
 ) -> list:
@@ -84,6 +91,22 @@ def get_sales_based_fact_partition_list(
     return partitions
 
 
+def no_query_import_transport_method(options, no_table_centric_sqoop=False):
+    if not options:
+        return offload_transport.OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
+    if offload_transport.is_spark_thrift_available(options, None):
+        return offload_transport.OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT
+    elif offload_transport.is_spark_submit_available(options, None):
+        return offload_transport.OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT
+    elif offload_transport.is_sqoop_available(None, options):
+        if no_table_centric_sqoop:
+            return offload_transport.OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY
+        else:
+            return offload_transport.OFFLOAD_TRANSPORT_METHOD_SQOOP
+    else:
+        return offload_transport.OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
+
+
 def sales_based_fact_partition_exists(schema, table_name, hv_string_list, frontend_api):
     """hv_string_list in format YYYY-MM-DD"""
     return bool(
@@ -91,3 +114,10 @@ def sales_based_fact_partition_exists(schema, table_name, hv_string_list, fronte
             schema, table_name, hv_string_list, frontend_api
         )
     )
+
+
+def partition_columns_if_supported(backend_api, offload_partition_columns):
+    if backend_api and backend_api.partition_by_column_supported():
+        return offload_partition_columns
+    else:
+        return None

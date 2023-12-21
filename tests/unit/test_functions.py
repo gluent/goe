@@ -6,9 +6,11 @@ from goe.config.orchestration_config import OrchestrationConfig
 
 FAKE_COMMON_ENV = {
     "DB_NAME_PREFIX": "x",
+    "OFFLOAD_HOME": "/opt/goe/offload",
     "OFFLOAD_LOG": "/tmp",
     "OFFLOAD_TRANSPORT_USER": "a",
     "OFFLOAD_TRANSPORT_CMD_HOST": "localhost",
+    "OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE": "spark-submit",
 }
 
 #
@@ -62,6 +64,11 @@ FAKE_ORACLE_BQ_ENV.update(
     {
         "BACKEND_DISTRIBUTION": "GCP",
         "BIGQUERY_DATASET_PROJECT": "bq-project",
+        "GOOGLE_DATAPROC_CLUSTER": "cluster-name",
+        "GOOGLE_DATAPROC_PROJECT": "dp-project",
+        "GOOGLE_DATAPROC_REGION": "us-central1",
+        "GOOGLE_DATAPROC_BATCHES_SUBNET": "my-subnet1",
+        "GOOGLE_DATAPROC_BATCHES_VERSION": "1.1",
         "GOOGLE_KMS_KEY_RING_PROJECT": "kms-project",
         "GOOGLE_KMS_KEY_RING_LOCATION": "US",
         "GOOGLE_KMS_KEY_RING_NAME": "ring-name",
@@ -138,3 +145,13 @@ def build_mock_options(mock_env: dict):
     c = OrchestrationConfig.from_dict({"verbose": False, "execute": False})
     k.stop()
     return c
+
+
+def build_mock_offload_operation():
+    fake_operation = mock.Mock()
+    fake_operation.execute = False
+    fake_operation.allow_floating_point_conversions = False
+    fake_operation.offload_transport_fetch_size = 100
+    fake_operation.offload_transport_spark_properties = {}
+    fake_operation.unicode_string_columns_csv = None
+    return fake_operation

@@ -52,10 +52,7 @@ from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
 )
-from tests.integration.test_sets.stories.story_setup_functions import (
-    SALES_BASED_FACT_HV_1,
-    SALES_BASED_FACT_HV_2,
-)
+from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
@@ -128,7 +125,7 @@ def offload_pbo_late_100_x_tests(
             hv_1 = chk_hv_1 = None
         else:
             test_id = "range_100_10"
-            hv_1 = chk_hv_1 = SALES_BASED_FACT_HV_2
+            hv_1 = chk_hv_1 = test_constants.SALES_BASED_FACT_HV_2
     elif table_name == LAR_TABLE_LATE_100_0:
         if config.db_type == DBTYPE_TERADATA:
             messages.log(
@@ -138,15 +135,15 @@ def offload_pbo_late_100_x_tests(
         inc_key = "YRMON"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE
         add_rows_fn = lambda: frontend_api.sales_based_list_fact_late_arriving_data_sql(
-            schema, table_name, OLD_HV_1, SALES_BASED_FACT_HV_1
+            schema, table_name, OLD_HV_1, test_constants.SALES_BASED_FACT_HV_1
         )
         if offload_pattern == OFFLOAD_PATTERN_100_0:
             test_id = "lar_100_0"
             hv_1 = chk_hv_1 = None
         else:
             test_id = "lar_100_10"
-            hv_1 = SALES_BASED_FACT_HV_2
-            chk_hv_1 = SALES_BASED_FACT_HV_1
+            hv_1 = test_constants.SALES_BASED_FACT_HV_2
+            chk_hv_1 = test_constants.SALES_BASED_FACT_HV_1
     else:
         raise NotImplementedError(f"Test table not implemented: {table_name}")
 
@@ -276,7 +273,7 @@ def offload_pbo_late_arriving_std_range_tests(
     if table_name == RANGE_TABLE_LATE:
         inc_key = "TIME_ID"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
-        hv_1 = chk_hv_1 = SALES_BASED_FACT_HV_1
+        hv_1 = chk_hv_1 = test_constants.SALES_BASED_FACT_HV_1
         hv_pred = "(column(time_id) = datetime(%s))" % OLD_HV_1
         add_row_fn = lambda: frontend_api.sales_based_fact_late_arriving_data_sql(
             schema, table_name, OLD_HV_1
@@ -284,14 +281,14 @@ def offload_pbo_late_arriving_std_range_tests(
     elif table_name == LAR_TABLE_LATE:
         inc_key = "YRMON"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE
-        chk_hv_1 = SALES_BASED_FACT_HV_1
-        hv_1 = SALES_BASED_FACT_HV_2
+        chk_hv_1 = test_constants.SALES_BASED_FACT_HV_1
+        hv_1 = test_constants.SALES_BASED_FACT_HV_2
         hv_pred = (
             "(column(yrmon) = datetime(%s)) and (column(time_id) = datetime(%s))"
-            % (SALES_BASED_FACT_HV_1, OLD_HV_1)
+            % (test_constants.SALES_BASED_FACT_HV_1, OLD_HV_1)
         )
         add_row_fn = lambda: frontend_api.sales_based_list_fact_late_arriving_data_sql(
-            schema, table_name, OLD_HV_1, SALES_BASED_FACT_HV_1
+            schema, table_name, OLD_HV_1, test_constants.SALES_BASED_FACT_HV_1
         )
     elif table_name == MCOL_TABLE_LATE:
         inc_key = "TIME_YEAR, TIME_MONTH, TIME_ID"
@@ -308,7 +305,7 @@ def offload_pbo_late_arriving_std_range_tests(
         inc_key = "TIME_ID"
         offload_by_subpartition = True
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
-        hv_1 = chk_hv_1 = SALES_BASED_FACT_HV_1
+        hv_1 = chk_hv_1 = test_constants.SALES_BASED_FACT_HV_1
         hv_pred = "(column(time_id) = datetime(%s))" % OLD_HV_1
         # add_row_fn = lambda: gen_insert_late_arriving_sales_based_data(frontend_api, schema, table_name, OLD_HV_1)
         expected_incremental_range = "SUBPARTITION"

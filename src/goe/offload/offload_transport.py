@@ -10,7 +10,6 @@ import logging
 import os
 import re
 from socket import gethostname
-import sys
 from textwrap import dedent
 import time
 import traceback
@@ -1641,7 +1640,8 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
 
         pyspark_body += dedent("""\
             # GOE Spark Transport
-            """)
+            # Gluent Inc (c) 2015-%s
+            """) % datetime.now().strftime('%Y')
 
         if self._base64_staged_columns():
             pyspark_body += dedent("""\

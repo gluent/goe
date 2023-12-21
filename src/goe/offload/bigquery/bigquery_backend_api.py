@@ -20,7 +20,7 @@ from numpy import datetime64
 
 from goe.connect.connect_constants import CONNECT_DETAIL, CONNECT_STATUS, CONNECT_TEST
 from goe.offload.column_metadata import CanonicalColumn, ColumnMetadataInterface, ColumnPartitionInfo, \
-    match_table_column, str_list_of_columns, valid_column_list, \
+    is_safe_mapping, match_table_column, str_list_of_columns, valid_column_list, \
     CANONICAL_CHAR_SEMANTICS_CHAR, \
     GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY, \
     GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, \

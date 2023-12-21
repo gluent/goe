@@ -2,7 +2,7 @@ from functools import lru_cache
 import os
 from typing import TYPE_CHECKING
 
-from goe.gluent import OffloadOperation
+from goe.goe import OffloadOperation
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
@@ -60,6 +60,12 @@ def run_offload(option_dict: dict) -> bool:
     return OrchestrationRunner().offload(
         option_dict,
     )
+
+
+def get_offload_home():
+    offload_home = os.environ.get("OFFLOAD_HOME")
+    assert offload_home, "OFFLOAD_HOME must be set in order to run tests"
+    return offload_home
 
 
 def run_setup_ddl(

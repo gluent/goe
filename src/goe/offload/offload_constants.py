@@ -1,4 +1,4 @@
-""" Constants for use in both gluentlib modules and gluent.py
+""" Constants for use in both goelib modules and goe.py
     We needed a new home that would avoid circular dependencies
     LICENSE_TEXT
 """
@@ -91,7 +91,6 @@ RDBMS_MAX_DESCRIPTOR_LENGTH = 30
 
 SORT_COLUMNS_NO_CHANGE = "NONE"
 
-HYBRID_EXT_TABLE_DEGREE_AUTO = "AUTO"
 PRESENT_OP_NAME = "present"
 
 NOT_NULL_PROPAGATION_AUTO = "AUTO"
@@ -104,7 +103,7 @@ OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED = -1
 LIVY_IDLE_SESSION_TIMEOUT = 600
 LIVY_MAX_SESSIONS = 10
 OFFLOAD_TRANSPORT_AUTO = "AUTO"
-OFFLOAD_TRANSPORT_GLUENT = "GLUENT"
+OFFLOAD_TRANSPORT_GOE = "GOE"
 OFFLOAD_TRANSPORT_GCP = "GCP"
 OFFLOAD_TRANSPORT_SQOOP = "SQOOP"
 
@@ -125,6 +124,7 @@ IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT = (
     "--offload-predicate-type is not valid for a first time predicate-based offload"
 )
 IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT = "Missing --offload-predicate option. This option is mandatory to offload tables with an INCREMENTAL_PREDICATE_TYPE configuration of PREDICATE"
+MISSING_METADATA_EXCEPTION_TEMPLATE = "Missing metadata for table %s.%s. Offload with --reset-backend-table to overwrite table data"
 OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT = "Switching to offload type INCREMENTAL for LIST partitioned table requires --equal-to-values/--partition-names"
 OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT = (
     "Switching to INCREMENTAL for LIST partitioned table"
@@ -198,52 +198,52 @@ CAPABILITY_FS_SCHEME_WASB = "fs_schema_wasb"
     If this feature is completed in the future and we revisit Synapse we may choose to split the constant into
     multiple constants for different transformation keywords.
 """
-CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS = "gluent_column_transformations"
-CAPABILITY_GLUENT_JOIN_PUSHDOWN = "gluent_join_pushdown"
-CAPABILITY_GLUENT_LIST_PARTITION_APPEND = "gluent_list_partition_append"
-""" CAPABILITY_GLUENT_MATERIALIZED_JOIN
+CAPABILITY_GOE_COLUMN_TRANSFORMATIONS = "goe_column_transformations"
+CAPABILITY_GOE_JOIN_PUSHDOWN = "goe_join_pushdown"
+CAPABILITY_GOE_LIST_PARTITION_APPEND = "goe_list_partition_append"
+""" CAPABILITY_GOE_MATERIALIZED_JOIN
         Can we create a table in the backend that is a materialized join generated using our
         Offload or Present join pushdown functionality. This is only used for enabling/disabling
         tests per backend
 """
-CAPABILITY_GLUENT_MATERIALIZED_JOIN = "gluent_mat_join"
-""" CAPABILITY_GLUENT_PARTITION_FUNCTIONS
+CAPABILITY_GOE_MATERIALIZED_JOIN = "goe_mat_join"
+""" CAPABILITY_GOE_PARTITION_FUNCTIONS
         Does the backend support our Partition Functions feature:
             - User creates a SQL UDF to convert source partition column data to synthetic partition
                 column values.
-            - User provides the name of the SQL UDF to Gluent Data Platform with a new
+            - User provides the name of the SQL UDF to GOE with a new
                 --partition-functions=<UDF_NAME> option.
-            - Both Offload and Smart Connector will use the UDF when generating SQL statements/predicates
+            - Offload will use the UDF when generating SQL statements/predicates
                 involving the natural and synthetic partition columns.
 """
-CAPABILITY_GLUENT_PARTITION_FUNCTIONS = "gluent_partition_functions"
-""" CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY
+CAPABILITY_GOE_PARTITION_FUNCTIONS = "goe_partition_functions"
+""" CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY
         Does the frontend system support IPA by composite partition.
 """
-CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY = "gluent_multi_column_incremental_key"
-CAPABILITY_GLUENT_OFFLOAD_STATUS_REPORT = "gluent_offload_status_report"
-CAPABILITY_GLUENT_SCHEMA_SYNC = "gluent_schema_sync"
-""" CAPABILITY_GLUENT_SEQ_TABLE
-        Does the backend require the Gluent sequence table.
+CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY = "goe_multi_column_incremental_key"
+CAPABILITY_GOE_OFFLOAD_STATUS_REPORT = "goe_offload_status_report"
+CAPABILITY_GOE_SCHEMA_SYNC = "goe_schema_sync"
+""" CAPABILITY_GOE_SEQ_TABLE
+        Does the backend require the GOE sequence table.
 
         Cloudera Data Hub versions earlier than 5.10.x contain a performance issue with Impala queries
         that contain a large number of constants in an in-list (refer to IMPALA-4302 for details).
-        Gluent Data Platform includes an optimization that overcomes this by transforming large in-lists
+        GOE includes an optimization that overcomes this by transforming large in-lists
         into a semi-join using a sequence table.
 
         Only currently required on Cloudera Data Hub versions earlier than 5.10.x.
 """
-CAPABILITY_GLUENT_SEQ_TABLE = "gluent_seq_table"
-""" CAPABILITY_GLUENT_UDFS
-        Does the backend require the Gluent User-defined Functions (UDFs).
+CAPABILITY_GOE_SEQ_TABLE = "goe_seq_table"
+""" CAPABILITY_GOE_UDFS
+        Does the backend require the GOE User-defined Functions (UDFs).
 
         For Impala-supported backends, these are used for performance optimization reasons and are recommended,
         but not mandatory.
 """
-CAPABILITY_GLUENT_UDFS = "gluent_udfs"
+CAPABILITY_GOE_UDFS = "goe_udfs"
 """ CAPABILITY_INCREMENTAL_UPDATE
     CAPABILITY_INCREMENTAL_UPDATE_COMPACTION
-        Does the backend support Gluent Data Platform's Incremental Update functionality.
+        Does the backend support GOE's Incremental Update functionality.
         If so, does the implementation of that functionality require delta table compaction.
 """
 CAPABILITY_INCREMENTAL_UPDATE = "incremental_update"
@@ -326,8 +326,8 @@ CAPABILITY_SQL_MICROSECOND_PREDICATE = "sql_pred_microseconds"
 """
 CAPABILITY_SYNTHETIC_BUCKETING = "synthetic_bucketing"
 """ CAPABILITY_SYNTHETIC_PARTITIONING
-        Does the backend support GOE's synthetic partition keys (e.g. GL_PART_M_TIME_ID or
-        GL_PART_U0_SOURCE_CODE) which are used internally by Gluent Query Engine to generate
+        Does the backend support GOE's synthetic partition keys (e.g. GOE_PART_M_TIME_ID or
+        GOE_PART_U0_SOURCE_CODE) which are used internally by Smart Connector to generate
         partition-pruning predicates in hybrid queries and by Offload to ensure that the backend
         partition columns remain consistent across multiple (Sub)Partition-Based Offload operations.
 
@@ -346,7 +346,7 @@ CAPABILITY_TABLE_STATS_GET = "table_stats_get"
 CAPABILITY_TABLE_STATS_SET = "table_stats_set"
 
 # Frontend capabilities
-CAPABILITY_GDP_HAS_DB_CODE_COMPONENT = "gdp_has_db_code_component"
+CAPABILITY_GOE_HAS_DB_CODE_COMPONENT = "goe_has_db_code_component"
 CAPABILITY_HYBRID_SCHEMA = "hybrid_schema"
 
 HIVE_BACKEND_CAPABILITIES = {
@@ -365,12 +365,12 @@ HIVE_BACKEND_CAPABILITIES = {
     CAPABILITY_FS_SCHEME_INHERIT: True,
     CAPABILITY_FS_SCHEME_S3A: True,
     CAPABILITY_FS_SCHEME_WASB: True,
-    CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS: True,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN: True,
-    CAPABILITY_GLUENT_MATERIALIZED_JOIN: True,
-    CAPABILITY_GLUENT_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GLUENT_SEQ_TABLE: False,
-    CAPABILITY_GLUENT_UDFS: False,
+    CAPABILITY_GOE_COLUMN_TRANSFORMATIONS: True,
+    CAPABILITY_GOE_JOIN_PUSHDOWN: True,
+    CAPABILITY_GOE_MATERIALIZED_JOIN: True,
+    CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
+    CAPABILITY_GOE_SEQ_TABLE: False,
+    CAPABILITY_GOE_UDFS: False,
     CAPABILITY_INCREMENTAL_UPDATE: False,
     CAPABILITY_INCREMENTAL_UPDATE_COMPACTION: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
@@ -406,7 +406,7 @@ IMPALA_BACKEND_CAPABILITIES.update(
         CAPABILITY_DROP_COLUMN: True,
         CAPABILITY_FS_SCHEME_ABFS: True,
         CAPABILITY_FS_SCHEME_WASB: False,
-        CAPABILITY_GLUENT_SEQ_TABLE: True,
+        CAPABILITY_GOE_SEQ_TABLE: True,
         CAPABILITY_NOT_NULL_COLUMN: False,
         CAPABILITY_RANGER: True,
         CAPABILITY_REFRESH_FUNCTIONS: True,
@@ -435,12 +435,12 @@ BIGQUERY_BACKEND_CAPABILITIES = {
     CAPABILITY_FS_SCHEME_INHERIT: False,
     CAPABILITY_FS_SCHEME_S3A: False,
     CAPABILITY_FS_SCHEME_WASB: False,
-    CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS: True,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN: True,
-    CAPABILITY_GLUENT_MATERIALIZED_JOIN: True,
-    CAPABILITY_GLUENT_PARTITION_FUNCTIONS: True,
-    CAPABILITY_GLUENT_SEQ_TABLE: False,
-    CAPABILITY_GLUENT_UDFS: False,
+    CAPABILITY_GOE_COLUMN_TRANSFORMATIONS: True,
+    CAPABILITY_GOE_JOIN_PUSHDOWN: True,
+    CAPABILITY_GOE_MATERIALIZED_JOIN: True,
+    CAPABILITY_GOE_PARTITION_FUNCTIONS: True,
+    CAPABILITY_GOE_SEQ_TABLE: False,
+    CAPABILITY_GOE_UDFS: False,
     CAPABILITY_INCREMENTAL_UPDATE: False,
     CAPABILITY_INCREMENTAL_UPDATE_COMPACTION: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
@@ -481,12 +481,12 @@ SNOWFLAKE_BACKEND_CAPABILITIES = {
     CAPABILITY_FS_SCHEME_INHERIT: False,
     CAPABILITY_FS_SCHEME_S3A: True,
     CAPABILITY_FS_SCHEME_WASB: True,
-    CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS: True,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN: True,
-    CAPABILITY_GLUENT_MATERIALIZED_JOIN: True,
-    CAPABILITY_GLUENT_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GLUENT_SEQ_TABLE: False,
-    CAPABILITY_GLUENT_UDFS: False,
+    CAPABILITY_GOE_COLUMN_TRANSFORMATIONS: True,
+    CAPABILITY_GOE_JOIN_PUSHDOWN: True,
+    CAPABILITY_GOE_MATERIALIZED_JOIN: True,
+    CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
+    CAPABILITY_GOE_SEQ_TABLE: False,
+    CAPABILITY_GOE_UDFS: False,
     CAPABILITY_INCREMENTAL_UPDATE: False,
     CAPABILITY_INCREMENTAL_UPDATE_COMPACTION: False,
     CAPABILITY_LOAD_DB_TRANSPORT: False,
@@ -527,12 +527,12 @@ SYNAPSE_BACKEND_CAPABILITIES = {
     CAPABILITY_FS_SCHEME_INHERIT: False,
     CAPABILITY_FS_SCHEME_S3A: False,
     CAPABILITY_FS_SCHEME_WASB: True,
-    CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS: False,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN: True,
-    CAPABILITY_GLUENT_MATERIALIZED_JOIN: True,
-    CAPABILITY_GLUENT_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GLUENT_SEQ_TABLE: False,
-    CAPABILITY_GLUENT_UDFS: False,
+    CAPABILITY_GOE_COLUMN_TRANSFORMATIONS: False,
+    CAPABILITY_GOE_JOIN_PUSHDOWN: True,
+    CAPABILITY_GOE_MATERIALIZED_JOIN: True,
+    CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
+    CAPABILITY_GOE_SEQ_TABLE: False,
+    CAPABILITY_GOE_UDFS: False,
     CAPABILITY_INCREMENTAL_UPDATE: False,
     CAPABILITY_INCREMENTAL_UPDATE_COMPACTION: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
@@ -563,19 +563,19 @@ MSSQL_FRONTEND_CAPABILITIES = {
     CAPABILITY_CANONICAL_TIME: True,
     # This may actually be actually true but we don't support it
     CAPABILITY_CASE_SENSITIVE: False,
-    CAPABILITY_GDP_HAS_DB_CODE_COMPONENT: False,
+    CAPABILITY_GOE_HAS_DB_CODE_COMPONENT: False,
     CAPABILITY_HYBRID_SCHEMA: False,
     CAPABILITY_INCREMENTAL_UPDATE: False,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN: False,
-    CAPABILITY_GLUENT_LIST_PARTITION_APPEND: False,
-    CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY: False,
-    CAPABILITY_GLUENT_OFFLOAD_STATUS_REPORT: False,
+    CAPABILITY_GOE_JOIN_PUSHDOWN: False,
+    CAPABILITY_GOE_LIST_PARTITION_APPEND: False,
+    CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY: False,
+    CAPABILITY_GOE_OFFLOAD_STATUS_REPORT: False,
     CAPABILITY_LOW_HIGH_VALUE_FROM_STATS: False,
     CAPABILITY_NAN: True,
     CAPABILITY_PARAMETERIZED_QUERIES: False,
     # Once we support Schema Sync we can enable these attributes.
     CAPABILITY_SCHEMA_EVOLUTION: False,
-    CAPABILITY_GLUENT_SCHEMA_SYNC: False,
+    CAPABILITY_GOE_SCHEMA_SYNC: False,
 }
 
 NETEZZA_FRONTEND_CAPABILITIES = {
@@ -584,19 +584,19 @@ NETEZZA_FRONTEND_CAPABILITIES = {
     CAPABILITY_CANONICAL_TIME: True,
     # This may actually be actually true but we don't support it
     CAPABILITY_CASE_SENSITIVE: False,
-    CAPABILITY_GDP_HAS_DB_CODE_COMPONENT: False,
+    CAPABILITY_GOE_HAS_DB_CODE_COMPONENT: False,
     CAPABILITY_HYBRID_SCHEMA: False,
     CAPABILITY_INCREMENTAL_UPDATE: False,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN: False,
-    CAPABILITY_GLUENT_LIST_PARTITION_APPEND: False,
-    CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY: False,
-    CAPABILITY_GLUENT_OFFLOAD_STATUS_REPORT: False,
+    CAPABILITY_GOE_JOIN_PUSHDOWN: False,
+    CAPABILITY_GOE_LIST_PARTITION_APPEND: False,
+    CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY: False,
+    CAPABILITY_GOE_OFFLOAD_STATUS_REPORT: False,
     CAPABILITY_LOW_HIGH_VALUE_FROM_STATS: False,
     CAPABILITY_NAN: True,
     CAPABILITY_PARAMETERIZED_QUERIES: False,
     # Once we support Schema Sync we can enable these attributes.
     CAPABILITY_SCHEMA_EVOLUTION: False,
-    CAPABILITY_GLUENT_SCHEMA_SYNC: False,
+    CAPABILITY_GOE_SCHEMA_SYNC: False,
 }
 
 ORACLE_FRONTEND_CAPABILITIES = {
@@ -605,18 +605,18 @@ ORACLE_FRONTEND_CAPABILITIES = {
     CAPABILITY_CANONICAL_TIME: False,
     # This is actually true but we don't support it
     CAPABILITY_CASE_SENSITIVE: False,
-    CAPABILITY_GDP_HAS_DB_CODE_COMPONENT: True,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN: False,
-    CAPABILITY_GLUENT_LIST_PARTITION_APPEND: True,
-    CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY: True,
-    CAPABILITY_GLUENT_OFFLOAD_STATUS_REPORT: True,
+    CAPABILITY_GOE_HAS_DB_CODE_COMPONENT: True,
+    CAPABILITY_GOE_JOIN_PUSHDOWN: False,
+    CAPABILITY_GOE_LIST_PARTITION_APPEND: True,
+    CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY: True,
+    CAPABILITY_GOE_OFFLOAD_STATUS_REPORT: True,
     CAPABILITY_HYBRID_SCHEMA: False,
     CAPABILITY_INCREMENTAL_UPDATE: False,
     CAPABILITY_LOW_HIGH_VALUE_FROM_STATS: True,
     CAPABILITY_NAN: True,
     CAPABILITY_PARAMETERIZED_QUERIES: True,
     CAPABILITY_SCHEMA_EVOLUTION: True,
-    CAPABILITY_GLUENT_SCHEMA_SYNC: True,
+    CAPABILITY_GOE_SCHEMA_SYNC: True,
 }
 
 TERADATA_FRONTEND_CAPABILITIES = {
@@ -624,11 +624,11 @@ TERADATA_FRONTEND_CAPABILITIES = {
     CAPABILITY_CANONICAL_FLOAT: True,
     CAPABILITY_CANONICAL_TIME: True,
     CAPABILITY_CASE_SENSITIVE: False,
-    CAPABILITY_GDP_HAS_DB_CODE_COMPONENT: False,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN: False,
-    CAPABILITY_GLUENT_LIST_PARTITION_APPEND: False,
-    CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY: False,
-    CAPABILITY_GLUENT_OFFLOAD_STATUS_REPORT: False,
+    CAPABILITY_GOE_HAS_DB_CODE_COMPONENT: False,
+    CAPABILITY_GOE_JOIN_PUSHDOWN: False,
+    CAPABILITY_GOE_LIST_PARTITION_APPEND: False,
+    CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY: False,
+    CAPABILITY_GOE_OFFLOAD_STATUS_REPORT: False,
     CAPABILITY_HYBRID_SCHEMA: False,
     CAPABILITY_INCREMENTAL_UPDATE: False,
     CAPABILITY_LOW_HIGH_VALUE_FROM_STATS: False,
@@ -636,5 +636,5 @@ TERADATA_FRONTEND_CAPABILITIES = {
     CAPABILITY_PARAMETERIZED_QUERIES: True,
     # Once we support Schema Sync we can enable these attributes.
     CAPABILITY_SCHEMA_EVOLUTION: False,
-    CAPABILITY_GLUENT_SCHEMA_SYNC: False,
+    CAPABILITY_GOE_SCHEMA_SYNC: False,
 }

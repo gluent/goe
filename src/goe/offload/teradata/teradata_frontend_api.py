@@ -15,7 +15,7 @@ import pyodbc
 from numpy import datetime64
 from pydantic import UUID4
 
-# Gluent
+# GOE
 from goe.offload.column_metadata import match_table_column
 from goe.offload.frontend_api import (
     FETCH_ACTION_ALL,
@@ -509,10 +509,10 @@ class TeradataFrontendApi(FrontendApiInterface):
     def _frontend_capabilities(self):
         return TERADATA_FRONTEND_CAPABILITIES
 
-    def _gdp_db_component_version(self):
+    def _goe_db_component_version(self):
         # We don't have an installed objects on Teradata so this method should never be called
         raise NotImplementedError(
-            "_gdp_db_component_version() is not implemented for Teradata"
+            "_goe_db_component_version() is not implemented for Teradata"
         )
 
     def _open_cursor(self):

@@ -9,7 +9,7 @@ from goe.offload.offload import OffloadOptionError
 
 check_cli_path()
 
-from goe.gluent import (
+from goe.goe import (
     get_log_fh_name,
     get_offload_options,
     get_options,
@@ -23,7 +23,7 @@ from goe.gluent import (
     get_log_fh,
 )
 from goe.orchestration.cli_entry_points import offload_by_cli
-from goe.util.gluent_log import log_exception
+from goe.util.goe_log import log_exception
 
 
 if __name__ == "__main__":

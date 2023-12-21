@@ -4,7 +4,7 @@ LICENSE_TEXT
 """
 
 from goe.listener import exceptions
-from goe.util.orchestration_lock import (
+from goe.orchestration.orchestration_lock import (
     OrchestrationLockTimeout,
     orchestration_lock_for_table,
 )

@@ -3,7 +3,7 @@
     Offload predicate specialisations for Synapse SQL dialect.
 
     Includes transformer for inserting synthetic partition predicates.
-    Gluent Inc (c) 2015-2021
+    LICENSE_TEXT
 """
 
 import numpy as np

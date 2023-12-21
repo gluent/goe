@@ -1,7 +1,7 @@
 """
 TestCommandSteps: Unit test constants in command_steps are sound.
     1) Within the module.
-    2) When compared to Gluent Repo data.
+    2) When compared to GOE Repo data.
 """
 from unittest import main
 
@@ -22,7 +22,7 @@ from tests.unit.orchestration.test_command_steps import (
 
 class TestCommandStepsIntegration(TestCommandSteps):
     """
-    TestCommandSteps: Unit test constants in command_steps are sound when compared to Gluent Repo data.
+    TestCommandSteps: Unit test constants in command_steps are sound when compared to GOE Repo data.
     """
 
     def test_command_steps_repo(self):
@@ -30,7 +30,9 @@ class TestCommandStepsIntegration(TestCommandSteps):
         try:
             config = cached_current_options()
             messages = get_test_messages(config, "TestCommandStepsIntegration")
-            client = orchestration_repo_client_factory(config, messages)
+            client = orchestration_repo_client_factory(
+                config, messages, trace_action="repo_client(test_command_steps_repo)"
+            )
             codes = client.get_command_step_codes()
             step_constants = self._get_step_constants()
             missing_rows = set(step_constants) - set(codes)

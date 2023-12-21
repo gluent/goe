@@ -116,15 +116,15 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
             self._rdbms_app_conn.close()
         self._rdbms_app_conn = None
 
-    def _get_fixed_gluent_parameters(self):
-        if self._fixed_gluent_parameters is None:
+    def _get_fixed_goe_parameters(self):
+        if self._fixed_goe_parameters is None:
             # GOE-1375
             ora_conn = self._get_adm_connection()
             if oracle_version_supports_exadata(ora_conn.version):
-                self._fixed_gluent_parameters = {'CELL_OFFLOAD_PROCESSING': 'FALSE'}
+                self._fixed_goe_parameters = {'CELL_OFFLOAD_PROCESSING': 'FALSE'}
             else:
-                self._fixed_gluent_parameters = {}
-        return self._fixed_gluent_parameters
+                self._fixed_goe_parameters = {}
+        return self._fixed_goe_parameters
 
     def _get_fixed_sqoop_parameters(self, max_ts_scale):
         # These are defined to match parameters set by Sqoop/Oraoop
@@ -183,20 +183,20 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
             non-overlapping ranges for splitting IOT tables between transport processes.
             partition_chunk: Used to restrict the MIN/MAX query to a single partition IF chunk is for single partition.
             The query is structured specifically to take advantage of Oracle's MIN/MAX optimization, e.g.:
-                ---------------------------------------------------------------
-                | Id  | Operation                     | Name                  |
-                ---------------------------------------------------------------
-                |   0 | SELECT STATEMENT              |                       |
-                |   1 |  NESTED LOOPS                 |                       |
-                |   2 |   VIEW                        |                       |
-                |   3 |    SORT AGGREGATE             |                       |
-                |   4 |     PARTITION RANGE SINGLE    |                       |
-                |   5 |      INDEX FULL SCAN (MIN/MAX)| GL_RANGE_IOT_MONTH_PK |
-                |   6 |   VIEW                        |                       |
-                |   7 |    SORT AGGREGATE             |                       |
-                |   8 |     PARTITION RANGE SINGLE    |                       |
-                |   9 |      INDEX FULL SCAN (MIN/MAX)| GL_RANGE_IOT_MONTH_PK |
-                ---------------------------------------------------------------
+                ----------------------------------------------------------------
+                | Id  | Operation                     | Name                   |
+                ----------------------------------------------------------------
+                |   0 | SELECT STATEMENT              |                        |
+                |   1 |  NESTED LOOPS                 |                        |
+                |   2 |   VIEW                        |                        |
+                |   3 |    SORT AGGREGATE             |                        |
+                |   4 |     PARTITION RANGE SINGLE    |                        |
+                |   5 |      INDEX FULL SCAN (MIN/MAX)| GOE_RANGE_IOT_MONTH_PK |
+                |   6 |   VIEW                        |                        |
+                |   7 |    SORT AGGREGATE             |                        |
+                |   8 |     PARTITION RANGE SINGLE    |                        |
+                |   9 |      INDEX FULL SCAN (MIN/MAX)| GOE_RANGE_IOT_MONTH_PK |
+                ----------------------------------------------------------------
         """
         min_max_row = None
         min_max_qry = """SELECT min_v.val, max_v.val
@@ -315,7 +315,7 @@ FROM  (
             commands.extend(self._oracle_alter_session_statements(fixed_sqoop_parameters, for_plsql=for_plsql,
                                                                   include_semi_colons=include_semi_colons,
                                                                   escape_semi_colons=escape_semi_colons))
-        commands.extend(self._oracle_alter_session_statements(self._get_fixed_gluent_parameters(), for_plsql=for_plsql,
+        commands.extend(self._oracle_alter_session_statements(self._get_fixed_goe_parameters(), for_plsql=for_plsql,
                                                               include_semi_colons=include_semi_colons,
                                                               escape_semi_colons=escape_semi_colons))
         commands.extend(self._oracle_alter_session_statements(custom_session_parameters, for_plsql=for_plsql,
@@ -348,7 +348,7 @@ FROM  (
 
         assert type(custom_session_parameters) is dict
         opt_param_hints = (to_opt_param(self._get_fixed_sqoop_parameters(max_ts_scale)) + ' ' +
-                           to_opt_param(self._get_fixed_gluent_parameters()) + ' ' +
+                           to_opt_param(self._get_fixed_goe_parameters()) + ' ' +
                            to_opt_param(custom_session_parameters)).strip()
         return f'/*+ NO_PARALLEL {opt_param_hints} */'
 

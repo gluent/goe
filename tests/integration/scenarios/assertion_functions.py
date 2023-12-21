@@ -325,9 +325,6 @@ def check_metadata(
         metadata, incremental_predicate_value, "incremental_predicate_value"
     ):
         return False
-    if not getattr(metadata, "offload_version"):
-        messages.log("OFFLOAD_VERSION missing from metadata")
-        return False
     if check_fn:
         messages.log("Checking metadata by fn", detail=VERBOSE)
         if not check_fn(metadata):
@@ -368,7 +365,7 @@ def synthetic_part_col_name(
     ).upper()
 
 
-def date_gl_part_column_name(backend_api, source_col_name, granularity_override=None):
+def date_goe_part_column_name(backend_api, source_col_name, granularity_override=None):
     """Return a synthetic partition column name based on backend defaults.
     I feel this is a bit short term because we have some data types that result
     in native partitioning rather than synthetic columns but at least the
@@ -397,7 +394,7 @@ def standard_dimension_assertion(
     story_id="",
     split_type=None,
     partition_functions=None,
-):
+) -> bool:
     data_db = backend_db or data_db
     backend_table = backend_table or table_name
     data_db, backend_table = convert_backend_identifier_case(
@@ -412,7 +409,6 @@ def standard_dimension_assertion(
         hadoop_owner=data_db,
         hadoop_table=backend_table,
         offload_partition_functions=partition_functions,
-        check_fn=lambda mt: bool(mt.offload_version),
     ):
         messages.log("check_metadata(%s.%s) == False" % (schema, table_name))
         return False
@@ -448,6 +444,7 @@ def sales_based_fact_assertion(
     incremental_range=None,
     story_id="",
     split_type=None,
+    check_hwm_in_metadata=True,
     ipa_predicate_type="RANGE",
     incremental_key_type=None,
     incremental_predicate_value=None,
@@ -497,6 +494,9 @@ def sales_based_fact_assertion(
                     % (meta_check_literal, mt.incremental_high_value, match)
                 )
             return match
+
+    if not check_hwm_in_metadata:
+        check_fn = None
 
     if not backend_table_exists(config, backend_api, messages, data_db, backend_table):
         messages.log("backend_table_exists() == False")

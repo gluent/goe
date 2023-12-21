@@ -98,4 +98,4 @@ def check_and_alter_backend_sort_columns(offload_target_table, offload_operation
     if sort_columns_have_changed(offload_target_table, offload_operation):
         if not offload_target_table.sorted_table_modify_supported():
             raise OffloadSortColumnsException(SORT_COLUMN_NO_MODIFY_EXCEPTION_TEXT)
-        offload_target_table.alter_table_sort_columns()
+        offload_target_table.alter_table_sort_columns_step()

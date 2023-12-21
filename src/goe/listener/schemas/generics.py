@@ -4,7 +4,7 @@ from typing import Generic, List, TypeVar
 # Third Party Libraries
 from pydantic.generics import GenericModel
 
-# Gluent
+# GOE
 from goe.listener.schemas.base import BaseSchema
 
 BaseSchemaType = TypeVar("BaseSchemaType", bound=BaseSchema)

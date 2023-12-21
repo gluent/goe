@@ -9,7 +9,7 @@ redis_conn = redis.Redis(charset="utf-8", decode_responses=True)
 
 def sub(name: str):
     pubsub = redis_conn.pubsub()
-    pubsub.subscribe("gdp_log")
+    pubsub.subscribe("goe_log")
     for message in pubsub.listen():
         print(message)
 

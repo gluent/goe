@@ -37,13 +37,13 @@ class BackendImpalaTable(BackendHadoopTable):
     """
 
     def __init__(self, db_name, table_name, backend_type, orchestration_options, messages, orchestration_operation=None,
-                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None):
+                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None, do_not_connect=False):
         """ CONSTRUCTOR
         """
         super(BackendImpalaTable, self).__init__(db_name, table_name, backend_type, orchestration_options, messages,
                                                  orchestration_operation=orchestration_operation,
                                                  hybrid_metadata=hybrid_metadata, data_gov_client=data_gov_client,
-                                                 dry_run=dry_run, existing_backend_api=existing_backend_api)
+                                                 dry_run=dry_run, existing_backend_api=existing_backend_api, do_not_connect=do_not_connect)
 
         logger.info('BackendImpalaTable setup: (%s, %s)' % (db_name, table_name))
         if dry_run:

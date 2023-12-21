@@ -31,19 +31,6 @@ from tests.integration.scenarios.setup_functions import (
     gen_drop_sales_based_fact_partition_ddls,
     sales_based_fact_partition_exists,
 )
-from tests.integration.test_sets.stories.story_setup_functions import (
-    SALES_BASED_FACT_HV_1,
-    SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-    SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
-    SALES_BASED_FACT_HV_1_NUM,
-    SALES_BASED_FACT_HV_2_NUM,
-    SALES_BASED_FACT_HV_3_NUM,
-    SALES_BASED_FACT_HV_4_NUM,
-    SALES_BASED_FACT_HV_7_NUM,
-    SALES_BASED_FACT_PRE_HV_NUM,
-)
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
@@ -64,6 +51,8 @@ RPA_FACT_TABLE_STR = "RPA_STR"
 RPA_FACT_TABLE_STR_UDF = "RPA_USTR"
 RPA_FACT_TABLE_NSTR = "RPA_NSTR"
 RPA_ALPHA_FACT_TABLE = "RPA_ALPHA"
+NOSEG_FACT = "RPA_NOSEG"
+FACT_MCOL_MAXVAL = "RPA_MCOL_MAXVAL"
 
 
 @pytest.fixture
@@ -96,11 +85,11 @@ def offload_range_ipa_standard_tests(
 ):
     canonical_int_8 = frontend_api.test_type_canonical_int_8()
     canonical_string = frontend_api.test_type_canonical_string()
-    hv_0 = SALES_BASED_FACT_PRE_HV_NUM
-    hv_1 = SALES_BASED_FACT_HV_1_NUM
-    hv_2 = SALES_BASED_FACT_HV_2_NUM
-    hv_3 = SALES_BASED_FACT_HV_3_NUM
-    hv_4 = SALES_BASED_FACT_HV_4_NUM
+    hv_0 = test_constants.SALES_BASED_FACT_PRE_HV_NUM
+    hv_1 = test_constants.SALES_BASED_FACT_HV_1_NUM
+    hv_2 = test_constants.SALES_BASED_FACT_HV_2_NUM
+    hv_3 = test_constants.SALES_BASED_FACT_HV_3_NUM
+    hv_4 = test_constants.SALES_BASED_FACT_HV_4_NUM
     less_than_option = "less_than_value"
     lower_value = None
     upper_value = None
@@ -120,8 +109,8 @@ def offload_range_ipa_standard_tests(
             table_name = RPA_FACT_TABLE_NUM
         granularity = "100"
         different_granularity = "1000"
-        lower_value = SALES_BASED_FACT_PRE_HV_NUM
-        upper_value = SALES_BASED_FACT_HV_7_NUM
+        lower_value = test_constants.SALES_BASED_FACT_PRE_HV_NUM
+        upper_value = test_constants.SALES_BASED_FACT_HV_7_NUM
         if config.target in [DBTYPE_IMPALA, DBTYPE_HIVE]:
             synthetic_partition_digits = 15
             different_partition_digits = 16
@@ -133,8 +122,8 @@ def offload_range_ipa_standard_tests(
             synthetic_partition_column_expected = True
             granularity = "100"
             different_granularity = "1000"
-            lower_value = SALES_BASED_FACT_PRE_HV_NUM
-            upper_value = SALES_BASED_FACT_HV_7_NUM
+            lower_value = test_constants.SALES_BASED_FACT_PRE_HV_NUM
+            upper_value = test_constants.SALES_BASED_FACT_HV_7_NUM
         else:
             table_name = RPA_FACT_TABLE_STR
             granularity = "4"
@@ -148,11 +137,11 @@ def offload_range_ipa_standard_tests(
             table_name = RPA_FACT_TABLE_TS
         else:
             table_name = RPA_FACT_TABLE_DATE
-        hv_0 = SALES_BASED_FACT_PRE_HV
-        hv_1 = SALES_BASED_FACT_HV_1
-        hv_2 = SALES_BASED_FACT_HV_2
-        hv_3 = SALES_BASED_FACT_HV_3
-        hv_4 = SALES_BASED_FACT_HV_4
+        hv_0 = test_constants.SALES_BASED_FACT_PRE_HV
+        hv_1 = test_constants.SALES_BASED_FACT_HV_1
+        hv_2 = test_constants.SALES_BASED_FACT_HV_2
+        hv_3 = test_constants.SALES_BASED_FACT_HV_3
+        hv_4 = test_constants.SALES_BASED_FACT_HV_4
         less_than_option = "older_than_date"
         granularity = "M"
         different_granularity = "Y"
@@ -163,16 +152,16 @@ def offload_range_ipa_standard_tests(
         offload3_opt_name = less_than_option
         offload3_opt_value = hv_3
 
-    expected_gl_part_name = None
+    expected_goe_part_name = None
     if synthetic_partition_column_expected:
-        expected_gl_part_name = synthetic_part_col_name(
+        expected_goe_part_name = synthetic_part_col_name(
             granularity,
             "time_id",
             partition_function=udf,
             synthetic_partition_digits=synthetic_partition_digits,
         )
-        expected_gl_part_name = convert_backend_identifier_case(
-            config, expected_gl_part_name
+        expected_goe_part_name = convert_backend_identifier_case(
+            config, expected_goe_part_name
         )
 
     backend_name = convert_backend_identifier_case(config, table_name)
@@ -217,6 +206,7 @@ def offload_range_ipa_standard_tests(
         "offload_partition_lower_value": lower_value,
         "offload_partition_upper_value": upper_value,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -233,7 +223,7 @@ def offload_range_ipa_standard_tests(
         incremental_key_type=part_key_type,
         backend_table=backend_name,
         partition_functions=udf,
-        synthetic_partition_column_name=expected_gl_part_name,
+        synthetic_partition_column_name=expected_goe_part_name,
     )
 
     # RANGE Offload 2nd Partition.
@@ -259,7 +249,7 @@ def offload_range_ipa_standard_tests(
         hv_2,
         incremental_key_type=part_key_type,
         partition_functions=udf,
-        synthetic_partition_column_name=expected_gl_part_name,
+        synthetic_partition_column_name=expected_goe_part_name,
     )
 
     # RANGE Offload 3rd Partition - Verification.
@@ -282,7 +272,7 @@ def offload_range_ipa_standard_tests(
         hv_2,
         incremental_key_type=part_key_type,
         partition_functions=udf,
-        synthetic_partition_column_name=expected_gl_part_name,
+        synthetic_partition_column_name=expected_goe_part_name,
     )
 
     # RANGE Offload With Multiple Partition Names - Expect Exception.
@@ -443,7 +433,9 @@ def test_offload_rpa_int8(config, schema, data_db):
         )
         return
 
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -455,6 +447,8 @@ def test_offload_rpa_int8(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_int_8(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_date(config, schema, data_db):
@@ -462,7 +456,9 @@ def test_offload_rpa_date(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -474,6 +470,8 @@ def test_offload_rpa_date(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_date(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_timestamp(config, schema, data_db):
@@ -481,7 +479,9 @@ def test_offload_rpa_timestamp(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -493,6 +493,8 @@ def test_offload_rpa_timestamp(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_timestamp(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_string(config, schema, data_db):
@@ -506,7 +508,9 @@ def test_offload_rpa_string(config, schema, data_db):
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -518,6 +522,8 @@ def test_offload_rpa_string(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_string(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_nvarchar2(config, schema, data_db):
@@ -532,7 +538,9 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -544,6 +552,8 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
         repo_client,
         ORACLE_TYPE_NVARCHAR2,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_udf_int8(config, schema, data_db):
@@ -551,9 +561,9 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         messages.log(
-            f"Skipping {id} partition function tests due to gluent_partition_functions_supported() == False"
+            f"Skipping {id} partition function tests due to goe_partition_functions_supported() == False"
         )
         return
 
@@ -567,7 +577,9 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         )
         return
 
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     backend_api.create_test_partition_functions(
         data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
@@ -584,6 +596,8 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         frontend_api.test_type_canonical_int_8(),
         partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_udf_string(config, schema, data_db):
@@ -591,14 +605,16 @@ def test_offload_rpa_udf_string(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         messages.log(
-            f"Skipping {id} partition function tests due to gluent_partition_functions_supported() == False"
+            f"Skipping {id} partition function tests due to goe_partition_functions_supported() == False"
         )
         return
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     backend_api.create_test_partition_functions(
         data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING
@@ -615,6 +631,8 @@ def test_offload_rpa_udf_string(config, schema, data_db):
         frontend_api.test_type_canonical_string(),
         partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_alpha(config, schema, data_db):
@@ -628,11 +646,13 @@ def test_offload_rpa_alpha(config, schema, data_db):
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     canonical_string = frontend_api.test_type_canonical_string()
 
-    # Setup - drop oldest partition from fact.
+    # Setup
     run_setup(
         frontend_api,
         backend_api,
@@ -669,6 +689,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
         "less_than_value": "U",
         "offload_partition_granularity": "1",
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -706,3 +727,84 @@ def test_offload_rpa_alpha(config, schema, data_db):
         incremental_key="STR",
         incremental_key_type=canonical_string,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def test_offload_rpa_empty_partitions(config, schema, data_db):
+    """Tests ensuring empty partitions are offloaded correctly."""
+    id = "test_offload_rpa_empty_partitions"
+    messages = get_test_messages(config, id)
+
+    if config.db_type == DBTYPE_TERADATA:
+        messages.log(
+            f"Skipping {id} for {config.db_type} because empty partitions are not a thing"
+        )
+        return
+
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
+
+    # Setup, create a partitioned table with one populated partition and a series of empty ones
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+            schema,
+            NOSEG_FACT,
+            simple_partition_names=True,
+            extra_pred="AND time_id = TO_DATE('2012-01-01','YYYY-MM-DD')",
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, NOSEG_FACT
+            ),
+        ],
+    )
+
+    # Offload first partition of fact, this one is populated.
+    options = {
+        "owner_table": schema + "." + NOSEG_FACT,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+        "reset_backend_table": True,
+        "create_backend_db": True,
+    }
+    run_offload(options, config, messages)
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        NOSEG_FACT,
+        test_constants.SALES_BASED_FACT_HV_2,
+    )
+
+    # Offload remaining empty partitions, metadata should still reflect this.
+    options = {
+        "owner_table": schema + "." + NOSEG_FACT,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_5,
+        "max_offload_chunk_count": 1,
+    }
+    run_offload(options, config, messages)
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        NOSEG_FACT,
+        test_constants.SALES_BASED_FACT_HV_5,
+    )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

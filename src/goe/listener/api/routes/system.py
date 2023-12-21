@@ -2,9 +2,9 @@
 import orjson as json
 from fastapi import APIRouter, status
 
-# Gluent
+# GOE
 from goe.listener import schemas, services, utils
-from gluentlib_contrib.asyncer import asyncify
+from goelib_contrib.asyncer import asyncify
 
 STATUS_OK = "OK"
 

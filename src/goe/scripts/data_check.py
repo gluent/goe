@@ -20,7 +20,7 @@ from goe.util.password_tools import PasswordTools
 
 
 # -----------------------------------------------------------------------
-# EXCEPTIONS 
+# EXCEPTIONS
 # -----------------------------------------------------------------------
 class DataCheckException(Exception): pass
 
@@ -30,7 +30,7 @@ class DataCheckException(Exception): pass
 # -----------------------------------------------------------------------
 
 PROG_BANNER = "data_check: (randomnly) Test data consistency between oracle and hive/impala"
-COPYRIGHT_MSG = "Gluent Inc (c) 2015-2016"
+COPYRIGHT_MSG = "LICENSE_TEXT"
 
 # For non-partitioned tables: max table size
 # Tables >= than this will not be considered for a check
@@ -182,7 +182,7 @@ def main():
     process_all_databases(args)
 
     sys.exit(0)
-        
+
 
 #### MAIN PROGRAM BEGINS HERE
 if __name__ == "__main__":

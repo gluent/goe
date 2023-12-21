@@ -7,7 +7,7 @@ def validate_config():
     """"""
     try:
 
-        # Gluent
+        # GOE
         from goe.config.config_checks import check_cli_path  # noqa: WPS433 F401
 
         check_cli_path()
@@ -20,7 +20,7 @@ def validate_config():
 
 async def validate_cache():
     """"""
-    # Gluent
+    # GOE
     from goe.listener import utils  # noqa: WPS433 F401
     from goe.listener.config import settings  # noqa: WPS433 F401
     from goe.listener.config.logging import Logger  # noqa: WPS433 F401
@@ -46,9 +46,9 @@ def prestart() -> None:
     from tenacity import retry  # noqa: WPS433 F401
     from tenacity import wait_fixed  # noqa: WPS433 F401
 
-    # Gluent
+    # GOE
     from goe.listener.config.logging import Logger  # noqa: WPS433 F401
-    from gluentlib_contrib.asyncer import runnify  # noqa: WPS433 F401
+    from goelib_contrib.asyncer import runnify  # noqa: WPS433 F401
 
     logger = Logger.configure_logger()
     # max_tries = 60

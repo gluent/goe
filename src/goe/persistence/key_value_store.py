@@ -35,10 +35,10 @@ class KeyValueStore(object):
 
 
 HDFS_FILEPATH_FLAVOR = "hdfs_filepath"
-GLUENT_REPO_FLAVOR = "gluent_repo"
+GOE_REPO_FLAVOR = "goe_repo"
 # PICKLE_FLAVOR is only for test purposes (not Monster Munch)
 PICKLE_FLAVOR = "pickle_flavor"
-SUPPORTED_KV_STORE_FLAVORS = [HDFS_FILEPATH_FLAVOR, GLUENT_REPO_FLAVOR]
+SUPPORTED_KV_STORE_FLAVORS = [HDFS_FILEPATH_FLAVOR, GOE_REPO_FLAVOR]
 
 
 def build_kv_store(
@@ -72,24 +72,6 @@ def build_kv_store(
         )
         return HdfsFilepathKeyValueStore(
             location_for_dataset, hdfs_client_factory, dry_run=dry_run
-        )
-    elif kv_store_flavor == GLUENT_REPO_FLAVOR:
-        assert db and table_name
-        assert orchestration_config, "{} kv store requires orchestration_config".format(
-            kv_store_flavor
-        )
-        assert messages, "{} kv store requires messages object".format(kv_store_flavor)
-        from .gluent_repo_key_value_store import GluentRepoKeyValueStore
-
-        # db and table_name are hybrid_owner/view for Gluent Repo persistence
-        return GluentRepoKeyValueStore(
-            db,
-            table_name,
-            orchestration_config,
-            messages,
-            dry_run=dry_run,
-            repo_client=repo_client,
-            execution_id=execution_id,
         )
     elif kv_store_flavor == PICKLE_FLAVOR:
         from .pickle_key_value_store import PickleKeyValueStore

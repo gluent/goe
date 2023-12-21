@@ -35,7 +35,6 @@ METADATA_DICT_TEST_DEFAULTS = {
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
     "INCREMENTAL_PREDICATE_VALUE": ["column(OBJECT_ID) < numeric(100)"],
     "OFFLOAD_BUCKET_COLUMN": "SOME_COLUMN",
-    "OFFLOAD_VERSION": "6.0.0",
     "OFFLOAD_SORT_COLUMNS": "SOME_COLUMN1,SOME_COLUMN2",
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": "UDF1,UDF2",
@@ -53,7 +52,6 @@ EXAMPLE_CHANNELS_METADATA_DICT = {
     "INCREMENTAL_PREDICATE_TYPE": None,
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
@@ -72,26 +70,26 @@ EXAMPLE_SALES_METADATA_DICT = {
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
     "COMMAND_EXECUTION": "UUID",
 }
+EXAMPLE_SALES_METADATA_DICT_HV2 = "TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
+EXAMPLE_SALES_METADATA_DICT_HV3 = "TO_DATE(' 2012-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
 
-EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
+EXAMPLE_GOE_LIST_RANGE_DAY_DT_METADATA_DICT = {
     "OFFLOAD_TYPE": "INCREMENTAL",
     "HADOOP_OWNER": "SH_TEST",
-    "HADOOP_TABLE": "GL_LIST_RANGE_DAY_DT",
+    "HADOOP_TABLE": "GOE_LIST_RANGE_DAY_DT",
     "OFFLOADED_OWNER": "SH_TEST",
-    "OFFLOADED_TABLE": "GL_LIST_RANGE_DAY_DT",
+    "OFFLOADED_TABLE": "GOE_LIST_RANGE_DAY_DT",
     "OFFLOAD_SNAPSHOT": 69472864,
     "INCREMENTAL_KEY": "DT",
     "INCREMENTAL_HIGH_VALUE": "TO_DATE(' 2015-01-31 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "SUBPARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
@@ -110,7 +108,6 @@ EXAMPLE_STORY_PBO_DIM_METADATA_DICT = {
     "INCREMENTAL_PREDICATE_TYPE": "PREDICATE",
     "INCREMENTAL_PREDICATE_VALUE": ['column(PROD_SUBCATEGORY) = string("Camcorders")'],
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
@@ -131,7 +128,6 @@ EXAMPLE_STORY_PBO_R_INTRA_METADATA_DICT = {
         "((column(TIME_ID) >= datetime(2012-02-01) AND column(TIME_ID) < datetime(2012-03-01)) AND column(CHANNEL_ID) = numeric(2))"
     ],
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
@@ -222,7 +218,7 @@ class TestOrchestrationMetadata(TestCase):
 
         # Test that the save function updates changes
         # Change by attribute:
-        test_metadata.offload_snapshot = -1
+        test_metadata.incremental_high_value = EXAMPLE_SALES_METADATA_DICT_HV2
         test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
@@ -239,7 +235,7 @@ class TestOrchestrationMetadata(TestCase):
         )
         # Change by dict:
         test_metadata_dict = test_metadata.as_dict()
-        test_metadata_dict["OFFLOAD_SNAPSHOT"] = -2
+        test_metadata_dict["INCREMENTAL_HIGH_VALUE"] = EXAMPLE_SALES_METADATA_DICT_HV3
         test_metadata = OrchestrationMetadata(
             test_metadata_dict, client=test_metadata.client
         )
@@ -275,7 +271,11 @@ class TestOrchestrationMetadata(TestCase):
         """Tests we can interact with OrchestrationMetadata by client.
         This is more efficient as it will re-use a connection.
         """
-        client = orchestration_repo_client_factory(self.config, self.messages)
+        client = orchestration_repo_client_factory(
+            self.config,
+            self.messages,
+            trace_action="repo_client(test_metadata_by_client)",
+        )
         self._test_metadata(self._gen_test_metadata(), client=client)
 
     def test_metadata_direct(self):
@@ -316,13 +316,13 @@ class TestOrchestrationMetadata(TestCase):
         self.assertIsInstance(sales_metadata.is_subpartition_offload(), bool)
         self.assertEqual(sales_metadata.is_subpartition_offload(), False)
 
-        gl_list_range_day_dt_metadata = OrchestrationMetadata(
-            EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT
+        goe_list_range_day_dt_metadata = OrchestrationMetadata(
+            EXAMPLE_GOE_LIST_RANGE_DAY_DT_METADATA_DICT
         )
         self.assertIsInstance(
-            gl_list_range_day_dt_metadata.is_subpartition_offload(), bool
+            goe_list_range_day_dt_metadata.is_subpartition_offload(), bool
         )
-        self.assertEqual(gl_list_range_day_dt_metadata.is_subpartition_offload(), True)
+        self.assertEqual(goe_list_range_day_dt_metadata.is_subpartition_offload(), True)
 
     def test_is_hwm_in_hybrid_view(self):
         channels_metadata = OrchestrationMetadata(EXAMPLE_CHANNELS_METADATA_DICT)
@@ -365,23 +365,23 @@ class TestOrchestrationMetadata(TestCase):
         )
 
         # Offload by subpartition
-        gl_list_range_day_dt_metadata = OrchestrationMetadata(
-            EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT
+        goe_list_range_day_dt_metadata = OrchestrationMetadata(
+            EXAMPLE_GOE_LIST_RANGE_DAY_DT_METADATA_DICT
         )
         self.assertIsInstance(
-            gl_list_range_day_dt_metadata.incremental_data_append_feature(), str
+            goe_list_range_day_dt_metadata.incremental_data_append_feature(), str
         )
         self.assertIn(
             "partition",
-            gl_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
+            goe_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
         )
         self.assertIn(
             "sub",
-            gl_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
+            goe_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
         )
         self.assertNotIn(
             "predicate",
-            gl_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
+            goe_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
         )
 
         # Offload by predicate

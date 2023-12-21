@@ -18,12 +18,12 @@ from goe.offload.offload_constants import (
     CAPABILITY_CANONICAL_FLOAT,
     CAPABILITY_CANONICAL_TIME,
     CAPABILITY_CASE_SENSITIVE,
-    CAPABILITY_GDP_HAS_DB_CODE_COMPONENT,
-    CAPABILITY_GLUENT_JOIN_PUSHDOWN,
-    CAPABILITY_GLUENT_LIST_PARTITION_APPEND,
-    CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY,
-    CAPABILITY_GLUENT_OFFLOAD_STATUS_REPORT,
-    CAPABILITY_GLUENT_SCHEMA_SYNC,
+    CAPABILITY_GOE_HAS_DB_CODE_COMPONENT,
+    CAPABILITY_GOE_JOIN_PUSHDOWN,
+    CAPABILITY_GOE_LIST_PARTITION_APPEND,
+    CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY,
+    CAPABILITY_GOE_OFFLOAD_STATUS_REPORT,
+    CAPABILITY_GOE_SCHEMA_SYNC,
     CAPABILITY_HYBRID_SCHEMA,
     CAPABILITY_INCREMENTAL_UPDATE,
     CAPABILITY_LOW_HIGH_VALUE_FROM_STATS,
@@ -51,8 +51,8 @@ FETCH_ACTION_ALL = 'all'
 FETCH_ACTION_ONE = 'one'
 FETCH_ACTION_CURSOR = 'cursor'
 
-FRONTEND_TRACE_ID = 'GLUENT'
-FRONTEND_TRACE_MODULE = 'Gluent Offload Engine'
+FRONTEND_TRACE_ID = 'GOE'
+FRONTEND_TRACE_MODULE = 'GOE'
 FRONTEND_TRACE_ACTION = 'Main'
 
 GET_DDL_TYPE_TABLE = 'TABLE'
@@ -96,7 +96,7 @@ class FrontendApiInterface(metaclass=ABCMeta):
                  existing_connection=None, dry_run=False, do_not_connect=False, trace_action=None):
         """ Abstract base class which acts as an interface for RDBMS specific sub-classes
             conn_user_name: An override for the user to connect as. connection_options may contain details for more
-                            than one account because GDP may have multiple RDBMS accounts, for example the admin user
+                            than one account because GOE may have multiple RDBMS accounts, for example the admin user
                             vs the hybrid schema. conn_user_name can be used if the non-default user should be active.
             dry_run: Read only mode
             do_not_connect: Prevents the object from automatically connecting, required for unit tests
@@ -183,8 +183,8 @@ class FrontendApiInterface(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def _gdp_db_component_version(self):
-        """ Return version of any in-database GDP code """
+    def _goe_db_component_version(self):
+        """ Return version of any in-database GOE code """
 
     @abstractmethod
     def _to_native_query_params(self, query_params):
@@ -577,10 +577,10 @@ class FrontendApiInterface(metaclass=ABCMeta):
         # Assume no table level default unless an implementation overrides.
         return None
 
-    def gdp_db_component_version(self):
-        """ Return version of any in-database GDP code """
-        if self.gdp_has_db_code_component():
-            return self._gdp_db_component_version()
+    def goe_db_component_version(self):
+        """ Return version of any in-database GOE code """
+        if self.goe_has_db_code_component():
+            return self._goe_db_component_version()
         else:
             return None
 
@@ -642,24 +642,24 @@ class FrontendApiInterface(metaclass=ABCMeta):
         """ Does the frontend have case sensitive db/table name identifiers """
         return self.is_capability_supported(CAPABILITY_CASE_SENSITIVE)
 
-    def gdp_has_db_code_component(self) -> bool:
-        """ Does the frontend have any in-database GDP code """
-        return self.is_capability_supported(CAPABILITY_GDP_HAS_DB_CODE_COMPONENT)
+    def goe_has_db_code_component(self) -> bool:
+        """ Does the frontend have any in-database GOE code """
+        return self.is_capability_supported(CAPABILITY_GOE_HAS_DB_CODE_COMPONENT)
 
-    def gluent_join_pushdown_supported(self) -> bool:
-        return self.is_capability_supported(CAPABILITY_GLUENT_JOIN_PUSHDOWN)
+    def goe_join_pushdown_supported(self) -> bool:
+        return self.is_capability_supported(CAPABILITY_GOE_JOIN_PUSHDOWN)
 
-    def gluent_lpa_supported(self) -> bool:
-        return self.is_capability_supported(CAPABILITY_GLUENT_LIST_PARTITION_APPEND)
+    def goe_lpa_supported(self) -> bool:
+        return self.is_capability_supported(CAPABILITY_GOE_LIST_PARTITION_APPEND)
 
-    def gluent_offload_status_report_supported(self) -> bool:
-        return self.is_capability_supported(CAPABILITY_GLUENT_OFFLOAD_STATUS_REPORT)
+    def goe_offload_status_report_supported(self) -> bool:
+        return self.is_capability_supported(CAPABILITY_GOE_OFFLOAD_STATUS_REPORT)
 
-    def gluent_schema_sync_supported(self) -> bool:
-        return self.is_capability_supported(CAPABILITY_GLUENT_SCHEMA_SYNC)
+    def goe_schema_sync_supported(self) -> bool:
+        return self.is_capability_supported(CAPABILITY_GOE_SCHEMA_SYNC)
 
     def hybrid_schema_supported(self) -> bool:
-        """ Does GDP create/maintain a hybrid schema for this frontend  """
+        """ Does GOE create/maintain a hybrid schema for this frontend  """
         return self.is_capability_supported(CAPABILITY_HYBRID_SCHEMA)
 
     def incremental_update_supported(self) -> bool:
@@ -668,8 +668,8 @@ class FrontendApiInterface(metaclass=ABCMeta):
     def low_high_value_from_stats_supported(self) -> bool:
         return self.is_capability_supported(CAPABILITY_LOW_HIGH_VALUE_FROM_STATS)
 
-    def gluent_multi_column_incremental_key_supported(self) -> bool:
-        return self.is_capability_supported(CAPABILITY_GLUENT_MULTI_COLUMN_INCREMENTAL_KEY)
+    def goe_multi_column_incremental_key_supported(self) -> bool:
+        return self.is_capability_supported(CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY)
 
     def nan_supported(self) -> bool:
         return self.is_capability_supported(CAPABILITY_NAN)

@@ -6,7 +6,7 @@ import os
 import traceback
 from datetime import datetime
 
-from goe.gluent import version
+from goe.goe import version
 
 divider = '=' * 100
 sub_divider = '-' * 100
@@ -25,8 +25,8 @@ class SchemaSyncCommandFile(object):
         try:
             with open(self._command_file, 'w') as cmd_file:
                 cmd_file.write('\n%s' % divider)
-                cmd_file.write('\nGluent Schema Sync v%s Command File' % version())
-                cmd_file.write('\nCopyright 2015-%s Gluent Inc. All rights reserved.' % datetime.now().strftime('%Y'))
+                cmd_file.write('\Schema Sync v%s Command File' % version())
+                cmd_file.write('\nLICENSE_TEXT' % datetime.now().strftime('%Y'))
                 cmd_file.write('\n%s\n' % divider)
         except IOError as exc:
             raise SchemaSyncCommandFileException('Unable to create command file "%s"\n%s' % (self._command_file, traceback.format_exc()))

@@ -14,8 +14,8 @@ from tests.testlib.test_framework.test_functions import get_test_messages
 from tests.unit.offload.test_frontend_api import TestFrontendApi
 
 
-DIM_NAME = "INTEGRATION_FAPI_DIM_TABLE"
-FACT_NAME = "INTEGRATION_FAPI_FACT_TABLE"
+DIM_NAME = "INTEG_FRONTEND_API_DIM"
+FACT_NAME = "INTEG_FRONTEND_API_FACT"
 
 
 class TestCurrentFrontendApi(TestFrontendApi):
@@ -38,6 +38,7 @@ class TestCurrentFrontendApi(TestFrontendApi):
             messages,
             dry_run=False,
             do_not_connect=bool(not self.connect_to_frontend),
+            trace_action="frontend_api(TestCurrentFrontendApi)",
         )
 
         self.db = get_default_test_user()

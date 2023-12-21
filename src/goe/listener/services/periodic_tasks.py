@@ -5,13 +5,13 @@ import logging
 import anyio
 from pydantic import UUID3
 
-# Gluent
+# GOE
 from goe.listener import schemas, utils
 from goe.listener.config import settings
 from goe.listener.services.system import system
 from goe.orchestration.execution_id import ExecutionId
-from gluentlib_contrib.asyncer import asyncify
-from gluentlib_contrib.worker import monitored_job
+from goelib_contrib.asyncer import asyncify
+from goelib_contrib.worker import monitored_job
 
 group_id: UUID3 = system.generate_listener_group_id()
 endpoint_id: UUID3 = system.generate_listener_endpoint_id()
@@ -24,7 +24,7 @@ async def publish_heartbeat(context) -> None:
     endpoint_id: UUID3 = context["endpoint_id"]
     local_ip: str = utils.system.get_ip_address()
     await utils.cache.set(
-        f"gluent:listener:endpoints:{listener_group_id}:{endpoint_id}",
+        f"goe:listener:endpoints:{listener_group_id}:{endpoint_id}",
         f"{'https' if settings.ssl_enabled else 'http'}://{local_ip}:{settings.port}",
         settings.heartbeat_interval * 2,
     )
@@ -32,7 +32,7 @@ async def publish_heartbeat(context) -> None:
 
 
 async def publish_schemas(context) -> None:
-    """Offload the environment to the Gluent Listener.
+    """Offload the environment to the GOE Listener.
 
     Args:
         environment_id (int): The id of the environment to offload.
@@ -45,7 +45,7 @@ async def publish_schemas(context) -> None:
     offloadable_schemas = await asyncify(system.get_schemas)()
 
     await utils.cache.set(
-        f"gluent:listener:metadata:{listener_group_id}:schemas",
+        f"goe:listener:metadata:{listener_group_id}:schemas",
         schemas.OffloadableSchemas.parse_obj(
             {"count": len(offloadable_schemas), "results": offloadable_schemas}
         ).json(),
@@ -64,7 +64,7 @@ async def publish_schemas(context) -> None:
 # all functions take in context dict and kwargs
 @monitored_job
 async def publish_schema_tables(context) -> None:
-    """Offload the environment to the Gluent Listener.
+    """Offload the environment to the GOE Listener.
 
     Args:
         environment_id (int): The id of the environment to offload.
@@ -77,7 +77,7 @@ async def publish_schema_tables(context) -> None:
     offloadable_schemas = await asyncify(system.get_schemas)()
 
     await utils.cache.set(
-        f"gluent:listener:metadata:{listener_group_id}:schemas",
+        f"goe:listener:metadata:{listener_group_id}:schemas",
         schemas.OffloadableSchemas.parse_obj(
             {"count": len(offloadable_schemas), "results": offloadable_schemas}
         ).json(),
@@ -97,7 +97,7 @@ async def publish_schema_tables(context) -> None:
 
 
 async def publish_command_executions(context) -> None:
-    """Offload the environment to the Gluent Listener.
+    """Offload the environment to the GOE Listener.
 
     Args:
         environment_id (int): The id of the environment to offload.
@@ -125,7 +125,7 @@ async def publish_command_executions(context) -> None:
             }
         )
     await utils.cache.set(
-        f"gluent:listener:metadata:{listener_group_id}:command-executions",
+        f"goe:listener:metadata:{listener_group_id}:command-executions",
         schemas.CommandExecutions.parse_obj(
             {"count": len(command_executions), "results": command_executions}
         ).json(),
@@ -141,7 +141,7 @@ async def _publish_schema(
     async with concurrency_limit:
         schema_tables = await asyncify(system.get_schema_tables)(schema_name)
         await utils.cache.set(
-            f"gluent:listener:metadata:{listener_group_id}:schemas:{schema_name}",
+            f"goe:listener:metadata:{listener_group_id}:schemas:{schema_name}",
             schemas.TableDetails.parse_obj(
                 {"count": len(schema_tables), "results": schema_tables}
             ).json(),
@@ -161,7 +161,7 @@ async def _publish_schema_tables(
         )
 
         await utils.cache.set(
-            f"gluent:listener:metadata:{listener_group_id}:schemas:{schema_name}:{table_name}:columns",
+            f"goe:listener:metadata:{listener_group_id}:schemas:{schema_name}:{table_name}:columns",
             schemas.ColumnDetails.parse_obj(
                 {"count": len(schema_table_columns), "results": schema_table_columns}
             ).json(),
@@ -171,7 +171,7 @@ async def _publish_schema_tables(
             schema_name, table_name
         )
         await utils.cache.set(
-            f"gluent:listener:metadata:{listener_group_id}:schemas:{schema_name}:{table_name}:partitions",
+            f"goe:listener:metadata:{listener_group_id}:schemas:{schema_name}:{table_name}:partitions",
             schemas.PartitionDetails.parse_obj(
                 {
                     "count": len(schema_table_partitions),

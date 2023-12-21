@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" S3Store: Gluent s3/hive 'file tree' abstractions
+""" S3Store: GOE s3/hive 'file tree' abstractions
 
     Represents 's3 bucket:prefix' as a 'hive table' file list
     with some limited query capabilities
@@ -13,7 +13,7 @@ import re
 import boto3
 import botocore
 
-from goe.cloud.gluent_layout import GluentHdfsLayout
+from goe.cloud.goe_layout import GOEHdfsLayout
 
 from goe.util.jmespath_search import JMESPathSearch
 from goe.util.misc_functions import end_by, chunk_list
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
-class S3Store(GluentHdfsLayout, JMESPathSearch, object):
+class S3Store(GOEHdfsLayout, JMESPathSearch, object):
     """ S3Store: Generic S3 store abstraction:
             File tree (flattened to {'full_name': {<file properties>}}
             starting from specific 'bucket:prefix'
@@ -217,7 +217,7 @@ class S3Store(GluentHdfsLayout, JMESPathSearch, object):
 
     def _get_file_data(self, keys):
         """ GENERATOR: Emit 'file data' for each 'key'
-        
+
             Emits: {'key': ..., 'size': ..., 'timestamp': ..., 'last_modified': ...},
         """
         for key in keys:
@@ -225,14 +225,14 @@ class S3Store(GluentHdfsLayout, JMESPathSearch, object):
             file_key = key['Key'].replace(end_by(self._prefix, '/'), '')
             file_properties['key_name'] = file_key
 
-            # Add gluent timestamp if possible
-            file_properties = self.add_gluentts(file_properties, file_key)
+            # Add GOE timestamp if possible
+            file_properties = self.add_goets(file_properties, file_key)
             # Mine for 'partitions'
             file_properties = self.add_partitions(file_properties, file_key)
-            
+
             logger.debug("Key: %s properties: %s" % (file_key, file_properties))
             yield file_properties
-    
+
 
     def _get_contents(self, stream=True):
         """ Get list of keys for self._bucket/self._prefix
@@ -314,7 +314,7 @@ class S3Store(GluentHdfsLayout, JMESPathSearch, object):
         logger.debug('Reading S3 note: %s:%s' % (self._bucket, key_name))
 
         s3_object = self._s3.Object(self._bucket, key_name)
-        
+
         return s3_object.get()['Body'].read()
 
 
@@ -325,7 +325,7 @@ class S3Store(GluentHdfsLayout, JMESPathSearch, object):
             delete_objects = {
                 'Objects': [ {'Key': end_by(self._prefix, '/') + _} for _ in record_range]
             }
-        
+
             # S3 batch delete
             logger.info("Delete S3 batch: %s" % delete_objects)
             self._s3_bucket.delete_objects(Delete=delete_objects)
@@ -334,8 +334,8 @@ class S3Store(GluentHdfsLayout, JMESPathSearch, object):
 if __name__ == "__main__":
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging
-    from goe.util.config_file import GluentRemoteConfig
+    from goe.util.misc_functions import set_goelib_logging
+    from goe.util.config_file import GOERemoteConfig
 
     def usage(prog_name):
         print("%s: section prefix [debug level]" % prog_name)
@@ -351,9 +351,9 @@ if __name__ == "__main__":
         section, prefix = sys.argv[1:3]
 
         log_level = sys.argv[3].upper() if len(sys.argv) > 3 else 'CRITICAL'
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
-        cfg = GluentRemoteConfig()
+        cfg = GOERemoteConfig()
 
         s3 = S3Store(cfg, section, prefix)
         print("Using client: %s" % repr(s3))

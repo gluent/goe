@@ -41,6 +41,12 @@ from numpy import datetime64
 from impala.dbapi import connect
 from impala.error import HiveServer2Error
 
+from goe.offload.hadoop.hadoop_column import (
+    HADOOP_TYPE_CHAR, HADOOP_TYPE_STRING, HADOOP_TYPE_VARCHAR,
+    HADOOP_TYPE_TINYINT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_INT, HADOOP_TYPE_BIGINT, HADOOP_TYPE_DECIMAL,
+    HADOOP_TYPE_FLOAT, HADOOP_TYPE_DOUBLE, HADOOP_TYPE_REAL, HADOOP_TYPE_DATE, HADOOP_TYPE_TIMESTAMP,
+    HADOOP_TYPE_BINARY
+)
 from goe.offload.offload_messages import OffloadMessagesMixin, VERBOSE
 from goe.offload.offload_constants import DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_SPARK
 
@@ -66,43 +72,22 @@ logger.addHandler(logging.NullHandler()) # Disabling logging by default
 ###############################################################################
 
 # Size as reported by impala (i.e. show partitions)
-REGEX_IMPALA_SIZE = re.compile('^([\d.]+)(\w+)$')
+REGEX_IMPALA_SIZE = re.compile(r'^([\d.]+)(\w+)$')
 # Extract SQL 'FROM' contents
-REGEX_FROM_CLAUSE = re.compile('^.*FROM\s+(.*?)(WHERE|GROUP BY|ORDER BY|LIMIT|;|$)', re.I)
+REGEX_FROM_CLAUSE = re.compile(r'^.*FROM\s+(.*?)(WHERE|GROUP BY|ORDER BY|LIMIT|;|$)', re.I)
 # Split tables in the JOIN
-REGEX_JOIN = re.compile('(?:INNER\s+JOIN|(LEFT|RIGHT|FULL)\s+OUTER\sJOIN|(LEFT|RIGHT)\s+SEMI\s+JOIN|(LEFT|RIGHT)\s+ANTI\s+JOIN)', re.I)
+REGEX_JOIN = re.compile(r'(?:INNER\s+JOIN|(LEFT|RIGHT|FULL)\s+OUTER\sJOIN|(LEFT|RIGHT)\s+SEMI\s+JOIN|(LEFT|RIGHT)\s+ANTI\s+JOIN)', re.I)
 # Parse out table and alias
 REGEX_DB_TABLE = re.compile('^(\S+)\s*(\S+)?\s*(ON\s+)?.*$', re.I)
 # Drop 'create view ... as' from view ddl
-REGEX_CREATE_VIEW = re.compile('CREATE\s+VIEW\s+.*?\s+AS\s+', re.I)
+REGEX_CREATE_VIEW = re.compile(r'CREATE\s+VIEW\s+.*?\s+AS\s+', re.I)
 # The constant used by HDFS for NULL partition keys
 HDFS_NULL_PART_KEY_CONSTANT='__HIVE_DEFAULT_PARTITION__'
 
-# Data types
-HADOOP_TYPE_BOOLEAN = 'BOOLEAN'
-HADOOP_TYPE_CHAR = 'CHAR'
-HADOOP_TYPE_STRING = 'STRING'
-HADOOP_TYPE_VARCHAR = 'VARCHAR'
-HADOOP_TYPE_BINARY = 'BINARY'
-HADOOP_TYPE_TINYINT = 'TINYINT'
-HADOOP_TYPE_SMALLINT = 'SMALLINT'
-HADOOP_TYPE_INT = 'INT'
-HADOOP_TYPE_BIGINT = 'BIGINT'
-HADOOP_TYPE_DATE = 'DATE'
-HADOOP_TYPE_DECIMAL = 'DECIMAL'
-HADOOP_TYPE_FLOAT = 'FLOAT'
-HADOOP_TYPE_DOUBLE = 'DOUBLE'
-HADOOP_TYPE_DOUBLE_PRECISION = 'DOUBLE_PRECISION'
-HADOOP_TYPE_REAL = 'REAL'
-HADOOP_TYPE_DATE = 'DATE'
-HADOOP_TYPE_TIMESTAMP = 'TIMESTAMP'
-HADOOP_TYPE_INTERVAL_DS = 'INTERVAL_DAY_TIME'
-HADOOP_TYPE_INTERVAL_YM = 'INTERVAL_YEAR_MONTH'
 
 ###############################################################################
 # CLASS: HiveConnection
 ###############################################################################
-
 
 class HiveConnection(OffloadMessagesMixin, object):
     """ Impyla library connection/cursor object with a few enhancements
@@ -1541,7 +1526,7 @@ def to_hadoop_literal(py_val, target):
 if __name__ == "__main__":
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
 
     def usage(prog_name):
         print("%s: db.table <operation> [parameters] [debug level]" % prog_name)
@@ -1561,7 +1546,7 @@ if __name__ == "__main__":
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level='CRITICAL'
 
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         hive_conn = HiveConnection.fromdefault()
         hive_table = HiveTable(db_name, table_name, hive_conn)

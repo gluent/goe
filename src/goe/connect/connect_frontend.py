@@ -18,7 +18,7 @@ from goe.connect.connect_functions import (
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_ORACLE
 
-from goe.gluent import (
+from goe.goe import (
     comp_ver_check,
     nls_lang_exists,
     nls_lang_has_charset,
@@ -88,7 +88,7 @@ def test_oracle_connectivity(orchestration_config):
     test_name = "Oracle connectivity"
     test_header(test_name)
     try:
-        for user_type, gluent_user, connection_fn in [
+        for user_type, goe_user, connection_fn in [
             (
                 "app user",
                 orchestration_config.rdbms_app_user,
@@ -99,7 +99,7 @@ def test_oracle_connectivity(orchestration_config):
             if orchestration_config.use_oracle_wallet:
                 display_text = "using Oracle Wallet"
             else:
-                display_text = gluent_user.upper()
+                display_text = goe_user.upper()
             detail("Testing %s (%s)" % (user_type, display_text))
             cx = connection_fn(orchestration_config)
     except DatabaseError as exc:
@@ -107,7 +107,7 @@ def test_oracle_connectivity(orchestration_config):
         failure(test_name)
         raise FatalTestFailure
 
-    # success -> cx is a gluent_adm connection
+    # success -> cx is a goe_adm connection
     success(test_name)
     return cx
 

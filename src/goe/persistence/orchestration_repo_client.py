@@ -12,7 +12,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
-# Gluent
+# GOE
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_source_data import OffloadSourcePartition
@@ -72,6 +72,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         connection_options: "OrchestrationConfig",
         messages: "OffloadMessages",
         dry_run: bool = False,
+        trace_action: str = None,
     ):
         """Abstract base class which acts as an interface for frontend specific sub-classes for
         get/put of orchestration metadata.
@@ -83,6 +84,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         self._messages = messages
         self._dry_run = dry_run
         self._frontend_client: "Optional[FrontendApiInterface]" = None
+        self._trace_action = trace_action or self.__class__.__name__
 
     def __del__(self):
         self.close()
@@ -206,7 +208,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
                 self._connection_options,
                 self._messages,
                 dry_run=self._dry_run,
-                trace_action=self.__class__.__name__,
+                trace_action=self._trace_action,
             )
         return self._frontend_client
 
@@ -242,10 +244,16 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
     # PUBLIC METHODS
     ###########################################################################
 
-    def close(self):
+    def close(self, force=False):
         """Free up any resources currently held"""
         if self._frontend_client:
-            self._frontend_client.close()
+            if force:
+                try:
+                    self._frontend_client.close()
+                except:
+                    pass
+            else:
+                self._frontend_client.close()
 
     #
     # OFFLOAD METADATA
@@ -268,41 +276,14 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def set_offload_metadata(
-        self, metadata: Union[dict, OrchestrationMetadata],
+        self,
+        metadata: Union[dict, OrchestrationMetadata],
     ):
         """Persist metadata"""
 
     @abstractmethod
     def drop_offload_metadata(self, frontend_owner: str, frontend_name: str):
         """Remove metadata"""
-
-    #
-    # INCREMENTAL UPDATE EXTRACTION METADATA
-    #
-    def get_incremental_update_extraction_metadata(
-        self, hybrid_owner: str, hybrid_name: str
-    ) -> dict:
-        """Get Incremental Update extraction metadata for a hybrid view"""
-        offload_metadata = self.get_offload_metadata(hybrid_owner, hybrid_name)
-        return {
-            "last_scn": offload_metadata.iu_extraction_scn,
-            "ts": offload_metadata.iu_extraction_time,
-        }
-
-    def save_incremental_update_extraction_metadata(
-        self,
-        hybrid_owner: str,
-        hybrid_name: str,
-        extraction_metadata: dict,
-        execution_id: ExecutionId,
-    ):
-        """Save Incremental Update extraction metadata for a hybrid view"""
-        assert isinstance(extraction_metadata, dict)
-        assert isinstance(execution_id, ExecutionId)
-        offload_metadata = self.get_offload_metadata(hybrid_owner, hybrid_name)
-        offload_metadata.iu_extraction_scn = int(extraction_metadata["last_scn"])
-        offload_metadata.iu_extraction_time = int(extraction_metadata["ts"])
-        offload_metadata.save(execution_id)
 
     #
     # COMMAND EXECUTION LOGGING METHODS
@@ -319,7 +300,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         Record the start of an orchestration command in the repo.
         Returns the numeric identifier of the history record.
         execution_id: The UUID identifying the command execution.
-        command_type: Valid code from GLUENT_REPO.COMMAND_TYPES.
+        command_type: Valid code from GOE_REPO.COMMAND_TYPES.
         command_input: Command line or API JSON. The user provided input.
         parameters: Full set of operational parameters as a dictionary.
         """
@@ -329,7 +310,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         """
         Record the end of an orchestration command along with its status.
         command_execution_id: The identifier returned from start_command, not the higher level execution id.
-        status: Valid status code from GLUENT_REPO.STATUS table.
+        status: Valid status code from GOE_REPO.STATUS table.
         """
 
     @abstractmethod
@@ -340,8 +321,8 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         Record the start of a discrete step of an orchestration command in the repo.
         Returns the numeric identifier of the history record for use in end_command_step().
         execution_id: The UUID identifying the command execution.
-        command_type: Valid code from GLUENT_REPO.COMMAND_TYPE.
-        command_step: Valid code from GLUENT_REPO.COMMAND_STEP.
+        command_type: Valid code from GOE_REPO.COMMAND_TYPE.
+        command_step: Valid code from GOE_REPO.COMMAND_STEP.
         """
 
     @abstractmethod
@@ -352,7 +333,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         Record the end of an orchestration command step along with its status.
         command_step_id: The identifier returned from start_command_step.
         step_details: A dictionary of key/value pairs used to record step outcomes.
-        status: Valid status code from GLUENT_REPO.STATUS table.
+        status: Valid status code from GOE_REPO.STATUS table.
         """
 
     @abstractmethod
@@ -398,7 +379,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
     #
     @abstractmethod
     def get_offloadable_schemas(self):
-        """Returns a dict of all schemas in the database (excluding Gluent-created ones)
+        """Returns a dict of all schemas in the database (excluding GOE-created ones)
         and whether they currently have a hybrid schema created.
         """
 

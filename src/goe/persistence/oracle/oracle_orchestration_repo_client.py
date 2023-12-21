@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 # Third Party Libraries
 import cx_Oracle
 
-# Gluent
+# GOE
 from goe.listener.schemas.system import (
     ColumnDetail,
     PartitionDetail,
@@ -39,7 +39,6 @@ from goe.persistence.orchestration_metadata import (
     OFFLOAD_SNAPSHOT,
     OFFLOAD_SORT_COLUMNS,
     OFFLOAD_TYPE,
-    OFFLOAD_VERSION,
     OFFLOADED_OWNER,
     OFFLOADED_TABLE,
     COMMAND_EXECUTION,
@@ -87,8 +86,11 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         connection_options: "OrchestrationConfig",
         messages: "OffloadMessages",
         dry_run: bool = False,
+        trace_action: str = None,
     ):
-        super().__init__(connection_options, messages, dry_run=dry_run)
+        super().__init__(
+            connection_options, messages, dry_run=dry_run, trace_action=trace_action
+        )
         self._repo_user = self._connection_options.ora_repo_user
 
     ###########################################################################
@@ -177,7 +179,6 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             OFFLOAD_PARTITION_FUNCTIONS
         ]
         metadata_obj.COMMAND_EXECUTION = metadata_dict[COMMAND_EXECUTION].as_bytes()
-        metadata_obj.OFFLOAD_VERSION = metadata_dict[OFFLOAD_VERSION]
         return metadata_obj
 
     def _ora_object_to_metadata_dict(self, metadata_obj):
@@ -200,7 +201,6 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             if metadata_obj.OFFLOAD_PREDICATE_VALUE
             else None,
             OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_HASH_COLUMN or None,
-            OFFLOAD_VERSION: metadata_obj.OFFLOAD_VERSION,
             OFFLOAD_SORT_COLUMNS: metadata_obj.OFFLOAD_SORT_COLUMNS or None,
             OFFLOAD_SNAPSHOT: metadata_obj.OFFLOAD_SNAPSHOT or None,
             OFFLOAD_PARTITION_FUNCTIONS: metadata_obj.OFFLOAD_PARTITION_FUNCTIONS
@@ -466,7 +466,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
                 AND owner NOT IN (
                     SELECT grantee
                     FROM dba_role_privs
-                    WHERE granted_role = 'GLUENT_OFFLOAD_ROLE'
+                    WHERE granted_role = 'GOE_OFFLOAD_ROLE'
                     AND grantee LIKE '%\_H' escape '\\'
                 )
                 AND owner NOT IN (
@@ -502,7 +502,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
                         */
                     s.owner
                 ,      CASE
-                        WHEN EXISTS( SELECT 1 FROM dba_role_privs WHERE granted_role = 'GLUENT_OFFLOAD_ROLE' AND grantee = owner || '_H' ) THEN 'True'
+                        WHEN EXISTS( SELECT 1 FROM dba_role_privs WHERE granted_role = 'GOE_OFFLOAD_ROLE' AND grantee = owner || '_H' ) THEN 'True'
                         ELSE 'False'
                     END hybrid_schema_exists
                 ,      vs.table_count
@@ -539,7 +539,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
 
     def get_schema_tables(self, schema_name):
         backend = self._connection_options.backend_distribution
-        # Unsupported column name pattern number to take from gluent_adv_table_data...
+        # Relevant unsupported column name pattern number to inject into the SQL...
         if backend == BACKEND_DISTRO_CDH:
             unsupported_column_pattern = "1"
         elif backend == BACKEND_DISTRO_GCP:
@@ -772,7 +772,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
                         THEN 4
                         WHEN t.nested = 'YES'
                         THEN 5
-                        WHEN t.table_name LIKE 'GLUENT_ADV%'
+                        WHEN t.table_name LIKE 'GOE_ADV%'
                         THEN 6
                         WHEN EXISTS (SELECT NULL
                                         FROM   dba_mviews    mv
@@ -819,7 +819,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
                         {self._repo_user}.offload_metadata om
                     ON (    om.offloaded_owner              = t.owner
                         AND om.offloaded_table              = t.table_name
-                        AND om.hybrid_view_type             = 'GLUENT_OFFLOAD_HYBRID_VIEW')
+                        AND om.hybrid_view_type             = 'GOE_OFFLOAD_HYBRID_VIEW')
                 WHERE  1=1
                 AND    t.owner = UPPER( :schema_name)
                 AND   (t.owner, t.table_name) NOT IN (SELECT et.owner, et.table_name FROM dba_external_tables et)
@@ -872,7 +872,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
                WHEN 5
                THEN 'Nested Table'
                WHEN 6
-               THEN 'Gluent Advisor Table'
+               THEN 'GOE Table'
                WHEN 7
                THEN 'Materialized View'
                WHEN 8
@@ -1001,12 +1001,12 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
                     CE.COMMAND_LOG_PATH    AS COMMAND_LOG_PATH,
                     CE.COMMAND_INPUT       AS COMMAND_INPUT,
                     CE.COMMAND_PARAMETERS  AS COMMAND_PARAMETERS,
-                    GV.VERSION             AS GLUENT_VERSION,
-                    GV.BUILD               AS GLUENT_BUILD
+                    GV.VERSION             AS GOE_VERSION,
+                    GV.BUILD               AS GOE_BUILD
             FROM {self._repo_user}.COMMAND_EXECUTION CE
             JOIN {self._repo_user}.STATUS S on S.ID = CE.STATUS_ID
             JOIN {self._repo_user}.COMMAND_TYPE CT on CT.ID = CE.COMMAND_TYPE_ID
-            JOIN {self._repo_user}.GDP_VERSION GV on GV.ID = CE.GDP_VERSION_ID
+            JOIN {self._repo_user}.GOE_VERSION GV on GV.ID = CE.GOE_VERSION_ID
         """  # noqa: W605 W291
         return self._frontend_api.execute_query_fetch_all(
             sql,
@@ -1029,12 +1029,12 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
                     CE.COMMAND_LOG_PATH    AS COMMAND_LOG_PATH,
                     CE.COMMAND_INPUT       AS COMMAND_INPUT,
                     CE.COMMAND_PARAMETERS  AS COMMAND_PARAMETERS,
-                    GV.VERSION             AS GLUENT_VERSION,
-                    GV.BUILD               AS GLUENT_BUILD
+                    GV.VERSION             AS GOE_VERSION,
+                    GV.BUILD               AS GOE_BUILD
             FROM {self._repo_user}.COMMAND_EXECUTION CE
             JOIN {self._repo_user}.STATUS S on S.ID = CE.STATUS_ID
             JOIN {self._repo_user}.COMMAND_TYPE CT on CT.ID = CE.COMMAND_TYPE_ID
-            JOIN {self._repo_user}.GDP_VERSION GV on GV.ID = CE.GDP_VERSION_ID
+            JOIN {self._repo_user}.GOE_VERSION GV on GV.ID = CE.GOE_VERSION_ID
             WHERE CE.UUID = :execution_id
         """  # noqa: W605 W291
         return self._frontend_api.execute_query_fetch_one(

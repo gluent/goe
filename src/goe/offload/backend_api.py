@@ -28,9 +28,8 @@
 
 from abc import ABCMeta, abstractmethod
 import logging
-from textwrap import TextWrapper
 
-from goe.filesystem.gluent_dfs import OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_WASB, \
+from goe.filesystem.goe_dfs import OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_WASB, \
     OFFLOAD_FS_SCHEME_WASBS, OFFLOAD_FS_SCHEME_ADL, OFFLOAD_FS_SCHEME_ABFS, OFFLOAD_FS_SCHEME_ABFSS,\
     OFFLOAD_FS_SCHEME_HDFS, OFFLOAD_FS_SCHEME_INHERIT, OFFLOAD_FS_SCHEME_GS
 from goe.offload.column_metadata import ColumnMetadataInterface,\
@@ -40,9 +39,9 @@ from goe.offload.offload_constants import CAPABILITY_BUCKET_HASH_COLUMN, CAPABIL
     CAPABILITY_CANONICAL_FLOAT, CAPABILITY_CANONICAL_TIME, CAPABILITY_CASE_SENSITIVE, CAPABILITY_COLUMN_STATS_SET,\
     CAPABILITY_CREATE_DB, CAPABILITY_DROP_COLUMN, CAPABILITY_FS_SCHEME_ABFS, CAPABILITY_FS_SCHEME_ADL,\
     CAPABILITY_FS_SCHEME_S3A, CAPABILITY_FS_SCHEME_GS, CAPABILITY_FS_SCHEME_HDFS, CAPABILITY_FS_SCHEME_INHERIT,\
-    CAPABILITY_FS_SCHEME_WASB, CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS, CAPABILITY_GLUENT_JOIN_PUSHDOWN,\
-    CAPABILITY_GLUENT_MATERIALIZED_JOIN, CAPABILITY_GLUENT_PARTITION_FUNCTIONS, CAPABILITY_GLUENT_SEQ_TABLE,\
-    CAPABILITY_GLUENT_UDFS, CAPABILITY_INCREMENTAL_UPDATE, CAPABILITY_INCREMENTAL_UPDATE_COMPACTION,\
+    CAPABILITY_FS_SCHEME_WASB, CAPABILITY_GOE_COLUMN_TRANSFORMATIONS, CAPABILITY_GOE_JOIN_PUSHDOWN,\
+    CAPABILITY_GOE_MATERIALIZED_JOIN, CAPABILITY_GOE_PARTITION_FUNCTIONS, CAPABILITY_GOE_SEQ_TABLE,\
+    CAPABILITY_GOE_UDFS, CAPABILITY_INCREMENTAL_UPDATE, CAPABILITY_INCREMENTAL_UPDATE_COMPACTION,\
     CAPABILITY_LOAD_DB_TRANSPORT, CAPABILITY_NAN, CAPABILITY_NANOSECONDS, CAPABILITY_NOT_NULL_COLUMN, \
     CAPABILITY_PARAMETERIZED_QUERIES, CAPABILITY_PARTITION_BY_COLUMN, CAPABILITY_PARTITION_BY_STRING, \
     CAPABILITY_QUERY_SAMPLE_CLAUSE, CAPABILITY_RANGER, CAPABILITY_SCHEMA_EVOLUTION, \
@@ -276,9 +275,9 @@ class BackendApiInterface(metaclass=ABCMeta):
     def _decrypt_password(self, password):
         if self._connection_options.password_key_file:
             pass_tool = PasswordTools()
-            gl_key = pass_tool.get_password_key_from_key_file(self._connection_options.password_key_file)
+            goe_key = pass_tool.get_password_key_from_key_file(self._connection_options.password_key_file)
             self._log('Decrypting %s password' % self.backend_db_name(), detail=VVERBOSE)
-            clear_password = pass_tool.b64decrypt(password, gl_key)
+            clear_password = pass_tool.b64decrypt(password, goe_key)
             return clear_password
         else:
             return password
@@ -364,62 +363,6 @@ class BackendApiInterface(metaclass=ABCMeta):
             assert isinstance(partition_expr_tuples[0], tuple), '%s is not tuple' % type(partition_expr_tuples[0])
         if filter_clauses:
             assert isinstance(filter_clauses, list)
-
-    def _gen_sample_stats_sql_text_common(self, db_name, table_name, sample_perc=None):
-        """ Generate query to estimate table & column stats.
-            The SQL is to return a list as described in hive_table_stats.parse_stats_into_tab_col().
-        """
-        def generic_string_type(data_length=None):
-            cast_str_type = self.generic_string_data_type()
-            if self.data_type_accepts_length(self.generic_string_data_type()):
-                # 40 is long enough to cater for 38 precision decimal with decimal place and sign.
-                data_length = data_length or 40
-                cast_str_type += f'({data_length})'
-            return cast_str_type
-
-        def string_cast(col, cast_source=None):
-            cast_source = cast_source or self.enclose_identifier(col.name)
-            if col.is_string_based():
-                # Just return the column name with no CAST
-                return cast_source
-            else:
-                return 'CAST(%s AS %s)' % (cast_source, generic_string_type(data_length=col.data_length))
-
-        self._log('Generating stats scan SQL for: %s.%s' % (db_name, table_name), detail=VVERBOSE)
-        projection = ['COUNT(*)']
-        for col in self.get_non_synthetic_columns(db_name, table_name):
-            hybrid_byte_size = self.to_canonical_column(col).estimate_hybrid_schema_byte_size()
-            self._log('Estimated byte size of %s: %s' % (col.name, hybrid_byte_size), detail=VVERBOSE)
-
-            if hybrid_byte_size:
-                avg_col_size = max_col_size = str(hybrid_byte_size)
-            else:
-                length_expression = self.length_sql_expression(string_cast(col))
-                avg_col_size = 'AVG(%s)' % length_expression
-                max_col_size = 'MAX(%s)' % length_expression
-
-            min_value = string_cast(col, cast_source='MIN(%s)' % self.enclose_identifier(col.name))
-            max_value = string_cast(col, cast_source='MAX(%s)' % self.enclose_identifier(col.name))
-            col_set = ("'%(col_name)s', APPROX_COUNT_DISTINCT(%(col)s), COUNT(*)-COUNT(%(col)s), %(avg_size)s, " +
-                       "%(min_value)s, %(max_value)s, %(max_size)s") \
-                       % {'col_name': col.name,
-                          'col': self.enclose_identifier(col.name),
-                          'avg_size': avg_col_size,
-                          'min_value': min_value,
-                          'max_value': max_value,
-                          'max_size': max_col_size,
-                          'str_type': self.generic_string_data_type()}
-            projection.append(col_set)
-
-        sample_clause = self._gen_sample_stats_sql_sample_clause(db_name, table_name, sample_perc=sample_perc)
-        if sample_clause:
-            sample_clause = ' ' + sample_clause
-        else:
-            sample_clause = ''
-        sql = "SELECT %s\nFROM   %s%s" % ('\n,      '.join(projection),
-                                          self.enclose_object_reference(db_name, table_name),
-                                          sample_clause)
-        return sql
 
     def _gen_sql_text_common(self, db_name, table_name, column_names=None, filter_clauses=None, measures=None, agg_fns=None):
         """ Generate a SQL statement appropriate for running in the backend.
@@ -1249,8 +1192,8 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
     @abstractmethod
     def is_valid_partitioning_data_type(self, data_type):
         """ Checks if a data type is valid for use as a backend partition column.
-            This is not saying what the backend supports, it is what Gluent support, some
-            data types may end up being converted to something else via a GL_PART column.
+            This is not saying what the backend supports, it is what GOE support, some
+            data types may end up being converted to something else via a GOE_PART column.
         """
 
     @abstractmethod
@@ -1407,22 +1350,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
         pass
 
     @abstractmethod
-    def sample_table_stats_partitionwise(self, db_name, table_name, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        """ Scan a selection of partitions from a table and estimate statistics.
-            Used when a backend object doesn't have stats but we want something representative
-            for the hybrid schema external table.
-        """
-        pass
-
-    @abstractmethod
-    def sample_table_stats_scan(self, db_name, table_name, as_dict=False, sample_perc=None):
-        """ Scan a table/view and estimate statistics.
-            Used when a backend object doesn't have stats but we want something representative
-            for the hybrid schema external table.
-        """
-        pass
-
-    @abstractmethod
     def sequence_table_max(self, db_name, table_name):
         pass
 
@@ -1562,7 +1489,7 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
         """ Present has a number of options for overriding the default canonical mapping in to_canonical_column().
             This method validates the override.
             column: the source backend column object.
-            canonical_override: either a canonical column object or a GLUENT_TYPE_... data type.
+            canonical_override: either a canonical column object or a GOE_TYPE_... data type.
         """
         pass
 
@@ -1576,13 +1503,13 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
 
     @abstractmethod
     def to_canonical_column(self, column):
-        """ Translate a backend column to an internal Gluent column.
+        """ Translate a backend column to an internal GOE column.
         """
         pass
 
     @abstractmethod
     def from_canonical_column(self, column, decimal_padding_digits=0):
-        """ Translate an internal Gluent column to a backend column.
+        """ Translate an internal GOE column to a backend column.
         """
         pass
 
@@ -1654,23 +1581,23 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
     def filesystem_scheme_wasb_supported(self):
         return self.is_capability_supported(CAPABILITY_FS_SCHEME_WASB)
 
-    def gluent_column_transformations_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS)
+    def goe_column_transformations_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_COLUMN_TRANSFORMATIONS)
 
-    def gluent_join_pushdown_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_JOIN_PUSHDOWN)
+    def goe_join_pushdown_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_JOIN_PUSHDOWN)
 
-    def gluent_materialized_join_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_MATERIALIZED_JOIN)
+    def goe_materialized_join_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_MATERIALIZED_JOIN)
 
-    def gluent_partition_functions_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_PARTITION_FUNCTIONS)
+    def goe_partition_functions_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_PARTITION_FUNCTIONS)
 
-    def gluent_sequence_table_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_SEQ_TABLE)
+    def goe_sequence_table_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_SEQ_TABLE)
 
-    def gluent_udfs_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_UDFS)
+    def goe_udfs_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_UDFS)
 
     def incremental_update_supported(self):
         """ Note that there is an Impala version specific override for this """

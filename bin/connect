@@ -8,9 +8,6 @@ if not os.environ.get("OFFLOAD_HOME"):
     print("OFFLOAD_HOME environment variable missing")
     print("You should source environment variables first, eg: . ../conf/offload.env")
     sys.exit(1)
-elif os.path.split(sys.exec_prefix)[-1] != "offload":
-    print("Python path is unexpected, have you sourced ../conf/offload.env?")
-    print()
 
 from goe.connect.connect import connect
 

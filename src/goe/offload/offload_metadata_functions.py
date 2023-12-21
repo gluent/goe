@@ -52,7 +52,7 @@ HYBRID_VIEW_IPA_HWM_TOKEN_RDBMS_END = "--ENDRDBMSHWM"
 HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_BEGIN = "--BEGINREMOTEHWM"
 HYBRID_VIEW_IPA_HWM_TOKEN_REMOTE_END = "--ENDREMOTEHWM"
 
-METADATA_HYBRID_VIEW = "GLUENT_OFFLOAD_HYBRID_VIEW"
+METADATA_HYBRID_VIEW = "GOE_OFFLOAD_HYBRID_VIEW"
 
 
 ###########################################################################
@@ -99,7 +99,6 @@ def gen_offload_metadata(
         # Some attributes should not be changed for data append operations.
         bucket_hash_column = pre_offload_metadata.offload_bucket_column
         offload_snapshot = pre_offload_metadata.offload_snapshot
-        offload_version = pre_offload_metadata.offload_version
         incremental_range = pre_offload_metadata.incremental_range
         incremental_predicate_type = pre_offload_metadata.incremental_predicate_type
         if pre_offload_metadata.offload_partition_functions:
@@ -108,7 +107,6 @@ def gen_offload_metadata(
             )
     else:
         bucket_hash_column = offload_operation.bucket_hash_col
-        offload_version = offload_operation.goe_version
 
     # Predicate type might be changing so need to take it from the currently-executing operation...
     incremental_predicate_type = (
@@ -162,7 +160,6 @@ def gen_offload_metadata(
         incremental_predicate_type=incremental_predicate_type,
         incremental_predicate_value=incremental_predicate_value,
         offload_bucket_column=bucket_hash_column,
-        offload_version=offload_version,
         offload_sort_columns=offload_sort_csv,
         offload_snapshot=offload_snapshot,
         offload_partition_functions=offload_partition_functions_csv,

@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ OrchestrationDefaults: Library of functions providing default values for command line options.
-    This is a temporary measure in order to get the code out of gluent.py and into a single location, in the
+    This is a temporary measure in order to get the code out of goe.py and into a single location, in the
     future we expect to refactor all option processing, including defaults, and this module will hopefully become
     redundant at that time.
     LICENSE_TEXT
@@ -26,7 +26,6 @@ from goe.offload.offload_constants import (
     FILE_STORAGE_FORMAT_AVRO,
     FILE_STORAGE_FORMAT_PARQUET,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
-    HYBRID_EXT_TABLE_DEGREE_AUTO,
     LIVY_IDLE_SESSION_TIMEOUT,
     LIVY_MAX_SESSIONS,
     NOT_NULL_PROPAGATION_AUTO,
@@ -84,7 +83,7 @@ def time_in_seconds_from_string(opt_name, opt_val: str):
 
 
 ###########################################################################
-# GDP DEFAULTS
+# GOE DEFAULTS
 ###########################################################################
 
 
@@ -135,10 +134,6 @@ def bigquery_dataset_project_default() -> Optional[str]:
     return os.environ.get("BIGQUERY_DATASET_PROJECT")
 
 
-def bin_dir_default() -> Optional[str]:
-    return os.environ.get("OFFLOAD_BIN")
-
-
 def ca_cert_default() -> Optional[str]:
     return os.environ.get("SSL_TRUSTED_CERTS")
 
@@ -153,10 +148,6 @@ def data_sample_parallelism_default():
 
 def data_sample_pct_default() -> str:
     return "AUTO"
-
-
-def date_fns_default() -> str:
-    return "MIN,MAX,COUNT"
 
 
 def db_name_pattern_default() -> str:
@@ -177,10 +168,6 @@ def dev_log_level_default() -> str:
 
 def execute_default() -> bool:
     return False
-
-
-def ext_readsize_default() -> str:
-    return "64K"
 
 
 def force_default():
@@ -207,12 +194,12 @@ def frontend_odbc_driver_name_default() -> Optional[str]:
     return os.environ.get("FRONTEND_ODBC_DRIVER_NAME")
 
 
-def generate_dependent_views_default() -> bool:
-    return True
-
-
 def get_load_db_pattern():
     return "%s_load"
+
+
+def google_dataproc_batches_subnet_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_DATAPROC_BATCHES_SUBNET")
 
 
 def google_dataproc_batches_version_default() -> Optional[str]:
@@ -221,6 +208,10 @@ def google_dataproc_batches_version_default() -> Optional[str]:
 
 def google_dataproc_cluster_default() -> Optional[str]:
     return os.environ.get("GOOGLE_DATAPROC_CLUSTER")
+
+
+def google_dataproc_project_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_DATAPROC_PROJECT")
 
 
 def google_dataproc_region_default() -> Optional[str]:
@@ -247,13 +238,6 @@ def google_kms_key_ring_project_default() -> Optional[str]:
     return os.environ.get("GOOGLE_KMS_KEY_RING_PROJECT")
 
 
-def hash_chars_default() -> int:
-    return posint_option_from_string(
-        "HYBRID_NAME_HASH_CHARACTERS",
-        os.environ.get("HYBRID_NAME_HASH_CHARACTERS") or "4",
-    )
-
-
 def hdfs_data_default() -> Optional[str]:
     return os.environ.get("HDFS_DATA")
 
@@ -266,20 +250,8 @@ def hdfs_home_default() -> Optional[str]:
     return os.environ.get("HDFS_HOME")
 
 
-def hybrid_ext_table_degree_default():
-    return os.environ.get("HYBRID_EXT_TABLE_DEGREE") or HYBRID_EXT_TABLE_DEGREE_AUTO
-
-
 def load_db_name_pattern_default():
     return get_load_db_pattern()
-
-
-def lob_data_length_default():
-    return "32K"
-
-
-def log_dir_default():
-    return os.environ.get("OFFLOAD_LOG")
 
 
 def log_level_default():
@@ -321,10 +293,6 @@ def num_location_files_default():
 
 def num_bytes_fudge_default():
     return 0.25
-
-
-def numeric_fns_default():
-    return "AVG,MIN,MAX,COUNT,SUM"
 
 
 def offload_distribute_enabled_default():
@@ -401,10 +369,6 @@ def suppress_stdout_default():
 
 def synthetic_partition_digits_default():
     return 15
-
-
-def string_fns_default():
-    return "COUNT"
 
 
 def ver_check_default():
@@ -938,7 +902,7 @@ def sqoop_disable_direct_default() -> bool:
 
 
 def sqoop_outdir_default() -> Optional[str]:
-    return os.environ.get("SQOOP_OUTDIR") or ".glsqoop"
+    return os.environ.get("SQOOP_OUTDIR") or ".goesqoop"
 
 
 def sqoop_overrides_default() -> Optional[str]:
@@ -997,25 +961,6 @@ def data_governance_custom_properties_default():
 ###########################################################################
 
 
-def connector_hive_server_host_default() -> Optional[str]:
-    return os.environ.get("CONNECTOR_HIVE_SERVER_HOST")
-
-
-def connector_hive_server_http_path_default() -> Optional[str]:
-    return os.environ.get("CONNECTOR_HIVE_SERVER_HTTP_PATH")
-
-
-def connector_query_monitor_threshold_default() -> str:
-    return os.environ.get("QUERY_MONITOR_THRESHOLD") or "5"
-
-
-def connector_sql_engine_default() -> str:
-    # Including QUERY_ENGINE as a fallback for backwards compatibility
-    return (
-        os.environ.get("CONNECTOR_SQL_ENGINE") or os.environ.get("QUERY_ENGINE") or ""
-    ).lower()
-
-
 def spark_thrift_host_default() -> Optional[str]:
     return os.environ.get("SPARK_THRIFT_HOST")
 
@@ -1025,7 +970,7 @@ def spark_thrift_port_default() -> Optional[str]:
 
 
 ###########################################################################
-# GDP LISTENER DEFAULTS
+# GOE LISTENER DEFAULTS
 ###########################################################################
 
 

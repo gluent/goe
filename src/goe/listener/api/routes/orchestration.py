@@ -9,10 +9,10 @@ from fastapi import APIRouter
 from pydantic import UUID4
 from starlette import status
 
-# Gluent
+# GOE
 from goe.listener import exceptions, schemas, services, utils
 from goe.orchestration.execution_id import ExecutionId
-from gluentlib_contrib.asyncer import asyncify, run_and_detach
+from goelib_contrib.asyncer import asyncify, run_and_detach
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default

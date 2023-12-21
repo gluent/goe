@@ -1,0 +1,33 @@
+{% from 'offload_status_report/goe_components.html' import table_summary_schema_row, table_detail_header, table_detail_row, table_metadata_modal %}
+
+{%- for schema, schema_values in data.items()|sort if not schema.startswith('_') -%}
+<div id="schemas_{{loop.index}}_search" class="bucket-schema" osr-section="schemas">
+    {{ table_summary_schema_row(schema, schema_values['_OFFLOADED_TABLES'], schema_values['_OFFLOADED_BYTES'], schema_values['_RETAINED_BYTES'], schema_values['_RECLAIMABLE_BYTES'], loop.index) }}
+
+    <div id="schemas_{{loop.index}}_data" class="collapse out bucket-schema-data">
+        <div class="row-search-filter">
+            <div class="col-md-6 bucket-schema-search">
+                <div class="input-group">
+                    <span class="input-group-addon">Search</span>
+                    <input type="text" class="form-control search center-block" placeholder="Begin typing...">
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-striped bucket-data-table">
+            {{ table_detail_header(metadata['output_level']) }}
+            <tbody id="tbody_{{loop.index}}" class="list">
+                {%- for table, table_values in schema_values.items()|sort if not table.startswith('_') %}
+                    {{ table_detail_row(schema, table, table_values['OFFLOAD_TYPE'], table_values['_OFFLOADED_PARTS'], table_values['_OFFLOADED_BYTES'], table_values['_RETAINED_PARTS'], table_values['_RETAINED_BYTES'], table_values['_RECLAIMABLE_PARTS'], table_values['_RECLAIMABLE_BYTES'], metadata['output_level']) }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {%- if metadata['output_level']|upper == 'DETAIL' -%}
+        {%- for table, table_values in schema_values.items()|sort if not table.startswith('_') -%}
+            {{ table_metadata_modal(schema, table, table_values) }}
+        {% endfor %}
+    {%- endif -%}
+</div>
+{% endfor %}

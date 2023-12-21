@@ -2,16 +2,16 @@
 from fastapi import Security
 from fastapi.security.api_key import APIKeyHeader
 
-# Gluent
+# GOE
 from goe.listener.config import settings
 from goe.listener.exceptions.errors import CredentialValidationError
 
 # Note: By default, nginx silently drops headers with underscores. Use hyphens instead.
-API_KEY_NAME = "x-gluent-console-key"
+API_KEY_NAME = "x-goe-console-key"
 
 
 api_token_auth = APIKeyHeader(
-    name=API_KEY_NAME, scheme_name="Gluent Listener Token", auto_error=False
+    name=API_KEY_NAME, scheme_name="GOE Listener Token", auto_error=False
 )
 
 

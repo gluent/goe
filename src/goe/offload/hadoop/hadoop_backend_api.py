@@ -37,8 +37,8 @@ import traceback
 from impala.hiveserver2 import TTransportException
 
 from goe.connect.connect_constants import CONNECT_DETAIL, CONNECT_STATUS, CONNECT_TEST
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
-from goe.filesystem.gluent_dfs import get_scheme_from_location_uri,\
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
+from goe.filesystem.goe_dfs import get_scheme_from_location_uri,\
     OFFLOAD_FS_SCHEME_S3A, OFFLOAD_NON_HDFS_FS_SCHEMES
 from goe.offload.backend_api import BackendApiInterface, BackendApiException, BackendApiConnectionException,\
     FETCH_ACTION_ALL, FETCH_ACTION_CURSOR, FETCH_ACTION_ONE, SORT_COLUMNS_UNLIMITED,\
@@ -46,11 +46,11 @@ from goe.offload.backend_api import BackendApiInterface, BackendApiException, Ba
     REPORT_ATTR_BACKEND_DISPLAY_NAME, REPORT_ATTR_BACKEND_HOST_INFO_TYPE, REPORT_ATTR_BACKEND_HOST_INFO
 from goe.offload.column_metadata import CanonicalColumn, \
     is_safe_mapping, match_table_column, valid_column_list,\
-    GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY, \
-    GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, \
-    GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, \
-    GLUENT_TYPE_DOUBLE, GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, \
-    GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_BOOLEAN, \
+    GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING, GOE_TYPE_BINARY, \
+    GOE_TYPE_LARGE_BINARY, GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4, \
+    GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38, GOE_TYPE_DECIMAL, GOE_TYPE_FLOAT, \
+    GOE_TYPE_DOUBLE, GOE_TYPE_DATE, GOE_TYPE_TIME, GOE_TYPE_TIMESTAMP, \
+    GOE_TYPE_TIMESTAMP_TZ, GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM, GOE_TYPE_BOOLEAN, \
     ALL_CANONICAL_TYPES, DATE_CANONICAL_TYPES, NUMERIC_CANONICAL_TYPES, STRING_CANONICAL_TYPES
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_HIVE, FILE_STORAGE_COMPRESSION_CODEC_GZIP,\
@@ -58,13 +58,15 @@ from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_HIVE, FILE_STORA
     EMPTY_BACKEND_TABLE_STATS_LIST, EMPTY_BACKEND_TABLE_STATS_DICT, EMPTY_BACKEND_COLUMN_STATS_LIST, \
     EMPTY_BACKEND_COLUMN_STATS_DICT, FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_ORC, FILE_STORAGE_FORMAT_PARQUET, \
     PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH, PART_COL_GRANULARITY_YEAR
-from goe.offload.hadoop.hadoop_column import HadoopColumn
-from goe.util.better_impyla import HiveConnection, HiveTable, HiveServer2Error, BetterImpylaException, \
-    HADOOP_TYPE_CHAR, HADOOP_TYPE_STRING, HADOOP_TYPE_VARCHAR, \
-    HADOOP_TYPE_BINARY, HADOOP_TYPE_TINYINT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_INT, \
-    HADOOP_TYPE_BIGINT, HADOOP_TYPE_DECIMAL, HADOOP_TYPE_FLOAT, HADOOP_TYPE_DOUBLE, \
-    HADOOP_TYPE_DOUBLE_PRECISION, HADOOP_TYPE_REAL, HADOOP_TYPE_DATE, HADOOP_TYPE_TIMESTAMP, \
-    HADOOP_TYPE_INTERVAL_DS, HADOOP_TYPE_INTERVAL_YM, HADOOP_TYPE_BOOLEAN
+from goe.offload.hadoop.hadoop_column import (
+    HadoopColumn,
+    HADOOP_TYPE_CHAR, HADOOP_TYPE_STRING, HADOOP_TYPE_VARCHAR,
+    HADOOP_TYPE_BINARY, HADOOP_TYPE_TINYINT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_INT,
+    HADOOP_TYPE_BIGINT, HADOOP_TYPE_DECIMAL, HADOOP_TYPE_FLOAT, HADOOP_TYPE_DOUBLE,
+    HADOOP_TYPE_DOUBLE_PRECISION, HADOOP_TYPE_REAL, HADOOP_TYPE_DATE, HADOOP_TYPE_TIMESTAMP,
+    HADOOP_TYPE_INTERVAL_DS, HADOOP_TYPE_INTERVAL_YM, HADOOP_TYPE_BOOLEAN,
+)
+from goe.util.better_impyla import HiveConnection, HiveTable, HiveServer2Error, BetterImpylaException
 from goe.util.hive_table_stats import HiveTableStats
 from goe.util.hs2_connection import hs2_connection, HS2_OPTIONS
 from goe.util.misc_functions import backtick_sandwich
@@ -88,7 +90,7 @@ HADOOP_DATA_TYPE_DECODE_RE = re.compile(r'^([a-z0-9_]+)[\(]?([0-9]*)?[\,]?([0-9]
 # Regular expression matching invalid identifier characters, constant to ensure compiled only once
 HADOOP_INVALID_IDENTIFIER_CHARS_RE = re.compile(r'[^A-Z0-9_]', re.I)
 
-HIVE_UDF_LIB = 'gluent_hive_udf.jar'
+HIVE_UDF_LIB = 'goe_hive_udf.jar'
 IMPALA_UDF_LIB = 'to_internal.so'
 
 IMPALA_PROFILE_LOG_LENGTH = 1024 * 32
@@ -1095,18 +1097,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
         """ No roles in Hadoop """
         pass
 
-    def sample_table_stats_partitionwise(self, db_name, table_name, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        hive_stats = self._get_hive_stats_table(db_name, table_name)
-        tab_stats, col_stats = hive_stats.sample_partitions(percent=sample_stats_perc, as_dict=as_dict,
-                                                            num_bytes_fudge=num_bytes_fudge)
-        return tab_stats, col_stats
-
-    def sample_table_stats_scan(self, db_name, table_name, as_dict=False, sample_perc=None):
-        """ Hadoop implementation calls out to HiveStats module, sample_perc ignored. """
-        hive_stats = self._get_hive_stats_table(db_name, table_name)
-        tab_stats, col_stats = hive_stats.scan(as_dict=as_dict)
-        return tab_stats, col_stats
-
     def set_column_stats(self, db_name, table_name, new_column_stats, ndv_cap, num_null_factor):
         if not self.table_stats_get_supported():
             return
@@ -1193,7 +1183,7 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
                 raise
 
     def udf_installation_sql(self, create_udf_db, udf_db=None):
-        if not self.gluent_udfs_supported():
+        if not self.goe_udfs_supported():
             self._messages.log('Skipping installation of UDFs due to backend: %s' % self._backend_type)
             return None
 
@@ -1209,7 +1199,7 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
         return cmds
 
     def udf_installation_test(self, udf_db=None):
-        if not self.gluent_udfs_supported():
+        if not self.goe_udfs_supported():
             self._messages.log('Skipping test of UDFs due to backend: %s' % self._backend_type)
             return None
 
@@ -1233,27 +1223,27 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
             target_type = canonical_override
         if column.is_number_based():
             if column.data_type in [HADOOP_TYPE_DOUBLE, HADOOP_TYPE_FLOAT]:
-                return bool(target_type in [GLUENT_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE, GLUENT_TYPE_FLOAT])
+                return bool(target_type in [GOE_TYPE_DECIMAL, GOE_TYPE_DOUBLE, GOE_TYPE_FLOAT])
             else:
                 return target_type in NUMERIC_CANONICAL_TYPES
         elif column.is_date_based():
             return bool(target_type in DATE_CANONICAL_TYPES)
         elif column.is_string_based():
             if column.data_type == HADOOP_TYPE_CHAR:
-                return bool(target_type == GLUENT_TYPE_FIXED_STRING)
+                return bool(target_type == GOE_TYPE_FIXED_STRING)
             else:
                 return bool(target_type in STRING_CANONICAL_TYPES or
-                            target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY] or
-                            target_type in [GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM])
+                            target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY] or
+                            target_type in [GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM])
         elif target_type not in ALL_CANONICAL_TYPES:
             self._log('Unknown canonical type in mapping: %s' % target_type, detail=VVERBOSE)
             return False
         elif column.data_type not in self.supported_backend_data_types():
             return False
         elif column.data_type == HADOOP_TYPE_BOOLEAN:
-            return bool(target_type == GLUENT_TYPE_BOOLEAN)
+            return bool(target_type == GOE_TYPE_BOOLEAN)
         elif column.data_type == HADOOP_TYPE_BINARY:
-            return bool(target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY])
+            return bool(target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY])
         return False
 
     def valid_staging_formats(self):
@@ -1263,7 +1253,7 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
         return self.exists(db_name, view_name)
 
     def to_canonical_column(self, column):
-        """ Translate a Hive/Impala column to an internal Gluent column.
+        """ Translate a Hive/Impala column to an internal GOE column.
         """
 
         def new_column(col, data_type, data_precision=None, data_scale=None, safe_mapping=None):
@@ -1278,48 +1268,48 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
         assert isinstance(column, HadoopColumn)
 
         if column.data_type == HADOOP_TYPE_CHAR:
-            return new_column(column, GLUENT_TYPE_FIXED_STRING)
+            return new_column(column, GOE_TYPE_FIXED_STRING)
         elif column.data_type in (HADOOP_TYPE_STRING, HADOOP_TYPE_VARCHAR):
-            return new_column(column, GLUENT_TYPE_VARIABLE_STRING)
+            return new_column(column, GOE_TYPE_VARIABLE_STRING)
         elif column.data_type == HADOOP_TYPE_BINARY:
-            return new_column(column, GLUENT_TYPE_BINARY)
+            return new_column(column, GOE_TYPE_BINARY)
         elif column.data_type in (HADOOP_TYPE_TINYINT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_INT, HADOOP_TYPE_BIGINT) \
           or (column.data_type == HADOOP_TYPE_DECIMAL and column.data_scale == 0):
             if column.data_type == HADOOP_TYPE_TINYINT or (1 <= (column.data_precision or 0) <= 2):
-                integral_type = GLUENT_TYPE_INTEGER_1
+                integral_type = GOE_TYPE_INTEGER_1
             elif column.data_type == HADOOP_TYPE_SMALLINT or (3 <= (column.data_precision or 0) <= 4):
-                integral_type = GLUENT_TYPE_INTEGER_2
+                integral_type = GOE_TYPE_INTEGER_2
             elif column.data_type == HADOOP_TYPE_INT or (5 <= (column.data_precision or 0) <= 9):
-                integral_type = GLUENT_TYPE_INTEGER_4
+                integral_type = GOE_TYPE_INTEGER_4
             elif column.data_type == HADOOP_TYPE_BIGINT or (10 <= (column.data_precision or 0) <= 18):
-                integral_type = GLUENT_TYPE_INTEGER_8
+                integral_type = GOE_TYPE_INTEGER_8
             elif column.data_type == HADOOP_TYPE_BIGINT or (19 <= (column.data_precision or 0) <= 38):
-                integral_type = GLUENT_TYPE_INTEGER_38
+                integral_type = GOE_TYPE_INTEGER_38
             else:
-                return new_column(column, GLUENT_TYPE_INTEGER_38, data_precision=column.data_precision, data_scale=0)
+                return new_column(column, GOE_TYPE_INTEGER_38, data_precision=column.data_precision, data_scale=0)
             return new_column(column, integral_type)
         elif column.data_type == HADOOP_TYPE_DECIMAL:
-            return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=column.data_precision, data_scale=column.data_scale)
+            return new_column(column, GOE_TYPE_DECIMAL, data_precision=column.data_precision, data_scale=column.data_scale)
         elif column.data_type == HADOOP_TYPE_FLOAT:
-            return new_column(column, GLUENT_TYPE_FLOAT)
+            return new_column(column, GOE_TYPE_FLOAT)
         elif column.data_type in (HADOOP_TYPE_DOUBLE, HADOOP_TYPE_DOUBLE_PRECISION, HADOOP_TYPE_REAL):
-            return new_column(column, GLUENT_TYPE_DOUBLE)
+            return new_column(column, GOE_TYPE_DOUBLE)
         elif column.data_type == HADOOP_TYPE_DATE:
-            return new_column(column, GLUENT_TYPE_DATE)
+            return new_column(column, GOE_TYPE_DATE)
         elif column.data_type == HADOOP_TYPE_TIMESTAMP:
             data_scale = column.data_scale if column.data_scale is not None else self.max_datetime_scale()
-            return new_column(column, GLUENT_TYPE_TIMESTAMP, data_scale=data_scale)
+            return new_column(column, GOE_TYPE_TIMESTAMP, data_scale=data_scale)
         elif column.data_type == HADOOP_TYPE_INTERVAL_DS:
-            return new_column(column, GLUENT_TYPE_INTERVAL_DS)
+            return new_column(column, GOE_TYPE_INTERVAL_DS)
         elif column.data_type == HADOOP_TYPE_INTERVAL_YM:
-            return new_column(column, GLUENT_TYPE_INTERVAL_YM)
+            return new_column(column, GOE_TYPE_INTERVAL_YM)
         elif column.data_type == HADOOP_TYPE_BOOLEAN:
-            return new_column(column, GLUENT_TYPE_BOOLEAN)
+            return new_column(column, GOE_TYPE_BOOLEAN)
         else:
             raise NotImplementedError('Unsupported backend data type: %s' % column.data_type)
 
     def from_canonical_column(self, column, decimal_padding_digits=0):
-        """ Translate an internal Gluent column to a Hadoop column.
+        """ Translate an internal GOE column to a Hadoop column.
             Note that Impala has its own override.
         """
         def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, safe_mapping=None):
@@ -1333,35 +1323,35 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
         assert column
         assert isinstance(column, CanonicalColumn), '%s is not instance of CanonicalColumn' % type(column)
 
-        if column.data_type == GLUENT_TYPE_FIXED_STRING:
+        if column.data_type == GOE_TYPE_FIXED_STRING:
             return new_column(column, HADOOP_TYPE_STRING, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_LARGE_STRING:
+        elif column.data_type == GOE_TYPE_LARGE_STRING:
             return new_column(column, HADOOP_TYPE_STRING, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_VARIABLE_STRING:
+        elif column.data_type == GOE_TYPE_VARIABLE_STRING:
             return new_column(column, HADOOP_TYPE_STRING, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_BINARY:
+        elif column.data_type == GOE_TYPE_BINARY:
             return new_column(column, HADOOP_TYPE_BINARY, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_LARGE_BINARY:
+        elif column.data_type == GOE_TYPE_LARGE_BINARY:
             return new_column(column, HADOOP_TYPE_BINARY, safe_mapping=True)
-        elif column.data_type in (GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2,
-                                  GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8):
+        elif column.data_type in (GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2,
+                                  GOE_TYPE_INTEGER_4, GOE_TYPE_INTEGER_8):
             if column.from_override:
                 # Honour the canonical type because it is from a user override or a staging file
-                if column.data_type == GLUENT_TYPE_INTEGER_1:
+                if column.data_type == GOE_TYPE_INTEGER_1:
                     return new_column(column, HADOOP_TYPE_TINYINT, safe_mapping=True)
-                elif column.data_type == GLUENT_TYPE_INTEGER_2:
+                elif column.data_type == GOE_TYPE_INTEGER_2:
                     return new_column(column, HADOOP_TYPE_SMALLINT, safe_mapping=True)
-                elif column.data_type == GLUENT_TYPE_INTEGER_4:
+                elif column.data_type == GOE_TYPE_INTEGER_4:
                     return new_column(column, HADOOP_TYPE_INT, safe_mapping=True)
                 else:
                     return new_column(column, HADOOP_TYPE_BIGINT, safe_mapping=True)
             else:
                 # On Hadoop all 4 native integer types map to BIGINT
                 return new_column(column, HADOOP_TYPE_BIGINT, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_38:
+        elif column.data_type == GOE_TYPE_INTEGER_38:
             return new_column(column, HADOOP_TYPE_DECIMAL, data_precision=self.max_decimal_precision(),
                               data_scale=0, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_DECIMAL:
+        elif column.data_type == GOE_TYPE_DECIMAL:
             if column.data_precision is None and column.data_scale is None:
                 new_col = self.gen_default_numeric_column(column.name)
             else:
@@ -1381,25 +1371,25 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
                 new_col = new_column(column, HADOOP_TYPE_DECIMAL, data_precision=new_precision, data_scale=new_scale,
                                      safe_mapping=False)
             return new_col
-        elif column.data_type == GLUENT_TYPE_FLOAT:
+        elif column.data_type == GOE_TYPE_FLOAT:
             return new_column(column, HADOOP_TYPE_FLOAT, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_DOUBLE:
+        elif column.data_type == GOE_TYPE_DOUBLE:
             return new_column(column, HADOOP_TYPE_DOUBLE, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_DATE and not self.canonical_date_supported():
+        elif column.data_type == GOE_TYPE_DATE and not self.canonical_date_supported():
             return new_column(column, HADOOP_TYPE_TIMESTAMP)
-        elif column.data_type == GLUENT_TYPE_DATE:
+        elif column.data_type == GOE_TYPE_DATE:
             return new_column(column, HADOOP_TYPE_DATE)
-        elif column.data_type == GLUENT_TYPE_TIME:
+        elif column.data_type == GOE_TYPE_TIME:
             return new_column(column, HADOOP_TYPE_STRING, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP:
+        elif column.data_type == GOE_TYPE_TIMESTAMP:
             return new_column(column, HADOOP_TYPE_TIMESTAMP, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP_TZ:
+        elif column.data_type == GOE_TYPE_TIMESTAMP_TZ:
             return new_column(column, HADOOP_TYPE_TIMESTAMP, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_DS:
+        elif column.data_type == GOE_TYPE_INTERVAL_DS:
             return new_column(column, HADOOP_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_YM:
+        elif column.data_type == GOE_TYPE_INTERVAL_YM:
             return new_column(column, HADOOP_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_BOOLEAN:
+        elif column.data_type == GOE_TYPE_BOOLEAN:
             return new_column(column, HADOOP_TYPE_BOOLEAN, safe_mapping=True)
         else:
-            raise NotImplementedError('Unsupported Gluent data type: %s' % column.data_type)
+            raise NotImplementedError('Unsupported GOE data type: %s' % column.data_type)

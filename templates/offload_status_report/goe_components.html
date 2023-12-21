@@ -1,0 +1,446 @@
+{% import"offload_status_report/macros.jinja" as macros %}
+
+{%- macro table_summary_schema_row(schema_name, offloaded_tables, offloaded_bytes, retained_bytes, reclaimable_bytes, target_index) -%}
+<div class="row">
+    <div class="col-md-4 schema-name text-ellipsis">
+        <span class="schema-name-text">
+            <button class="btn bucket-schema-button" data-toggle="collapse" data-target="#schemas_{{target_index}}_data" id="schemas_{{target_index}}_data_button">
+                <i class="fa fa-caret-right"></i>
+            </button>
+            <abbr title="{{schema_name}}">
+                {{ schema_name }}
+            </abbr>
+        </span>
+    </div>
+    <div class="col-md-2">
+        <span class="label pull-left schema-tables-text">TABLES</span>
+        <span class="badge pull-right schema-tables-badge">{{ offloaded_tables }}</span>
+    </div>
+    <div class="col-md-2 no-left-padding">
+        <span class="label pull-left schema-text">RETAINED</span>
+        <span class="badge pull-right schema-badge background-retain">{{"{:,.2f} GB".format(macros.gb(retained_bytes)|float) }}</span>
+    </div>
+    <div class="col-md-2 no-left-padding">
+        <span class="label pull-left schema-text">RECLAIMABLE</span>
+        <span class="badge pull-right schema-tables-badge">{{"{:,.2f} GB".format(macros.gb(reclaimable_bytes)|float) }}</span>
+    </div>
+    <div class="col-md-2 no-left-padding">
+        <span class="label pull-left schema-text">OFFLOADED</span>
+        <span class="badge pull-right schema-badge background-offload">{{"{:,.2f} GB".format(macros.gb(offloaded_bytes)|float) }}</span>
+    </div>
+</div>
+{%- endmacro %}
+
+{%- macro table_detail_header(output_level) -%}
+<thead>
+    <tr>
+        <th class="text-left">Table Name
+            <span class="sort cursor-hand" data-sort="table_name"><i class="fa fa-fw fa-sort"></i></span>
+        </th>
+        {%- if output_level|upper == 'DETAIL' -%}
+        <th class="text-center">&nbsp;</th>
+        <th class="text-left">Offload Type
+            <span class="sort cursor-hand" data-sort="offload_type"><i class="fa fa-fw fa-sort"></i></span>
+        </th>
+        {%- endif -%}
+        <th class="text-right">Retained<br>Segments
+            <span class="sort cursor-hand" data-sort="retain_partitions"><i class="fa fa-fw fa-sort"></i></span>
+        </th>
+        <th class="text-right">Retained<br>GB
+            <span class="sort cursor-hand" data-sort="retain_gbytes"><i class="fa fa-fw fa-sort"></i></span>
+        </th>
+        <th class="text-right">Reclaimable<br>Segments
+            <span class="sort cursor-hand" data-sort="reclaim_partitions"><i class="fa fa-fw fa-sort"></i></span>
+        </th>
+        <th class="text-right">Reclaimable<br>GB
+            <span class="sort cursor-hand" data-sort="reclaim_gbytes"><i class="fa fa-fw fa-sort"></i></span>
+        </th>
+        <th class="text-right">Offloaded<br>Segments
+            <span class="sort cursor-hand" data-sort="offload_partitions"><i class="fa fa-fw fa-sort"></i></span>
+        </th>
+        <th class="text-right">Offloaded<br>GB
+            <span class="sort cursor-hand" data-sort="offload_gbytes"><i class="fa fa-fw fa-sort"></i></span>
+        </th>
+    </tr>
+</thead>
+{%- endmacro %}
+
+{%- macro table_detail_row(schema, table_name, offload_type, offloaded_partitions, offloaded_bytes, retained_partitions, retained_bytes, reclaimable_partitions, reclaimable_bytes, output_level) -%}
+<tr>
+    <td class="text-left table_name word-break-break-word" data-table_name="{{ table_name }}">{{ table_name }}</td>
+    {%- if output_level|upper == 'DETAIL' -%}
+    <td class="text-center">
+        <button class="btn btn-xs popup-button" data-toggle="modal" data-target="#{{ schema }}_{{ table_name }}_modal" id="{{ schema }}_{{ table_name }}_modal_button">
+            <i class="fa fa-info-circle fa-lg"></i>
+        </button>
+    </td>
+    <td class="text-left offload_type" data-offload_type="{{ offload_type }}">{{ offload_type }}</td>
+    {%- endif -%}
+    <td class="text-right retain_partitions" data-retain_partitions="{{ retained_partitions }}">{{"{:,d}".format(retained_partitions|int) }}</td>
+    <td class="text-right retain_gbytes" data-retain_gbytes="{{ retained_bytes }}">{{"{:,.2f} GB".format(macros.gb(retained_bytes)|float) }}</td>
+    <td class="text-right reclaim_partitions" data-reclaim_partitions="{{ reclaimable_partitions }}">{{"{:,d}".format(reclaimable_partitions|int) }}</td>
+    <td class="text-right reclaim_gbytes" data-reclaim_gbytes="{{ reclaimable_bytes }}">{{"{:,.2f} GB".format(macros.gb(reclaimable_bytes)|float) }}</td>
+    <td class="text-right offload_partitions" data-offload_partitions="{{ offloaded_partitions }}">{{"{:,d}".format(offloaded_partitions|int) }}</td>
+    <td class="text-right offload_gbytes" data-offload_gbytes="{{offloaded_bytes}}">{{"{:,.2f} GB".format(macros.gb(offloaded_bytes)|float) }}</td>
+</tr>
+{%- endmacro %}
+
+{%- macro schema_summary_row(schema, offloaded_bytes, retained_bytes, reclaimable_bytes) -%}
+<div class="row">
+    <div class="col-md-3 text-left schema-summary-label text-ellipsis">
+        <abbr title="{{schema}}">
+            <span class="label schema-summary-label-span">{{schema}}</span>
+        </abbr>
+    </div>
+    <div class="col-md-5 text-center">
+        <div class="progress" data-toggle="popover" data-placement="top" data-content='{{"{:,.2f} GB".format(macros.gb(reclaimable_bytes)|float + macros.gb(retained_bytes)|float) }}' data-trigger="click hover focus">
+            <div class="progress-bar background-retain" style="width: {{macros.pct(reclaimable_bytes, retained_bytes, 'yes')}}%; min-width: {{macros.progress_widths(retained_bytes, reclaimable_bytes, 'retained', 'min')}}%; max-width: {{macros.progress_widths(retained_bytes, reclaimable_bytes, 'retained', 'max')}}%;" schema_name="{{schema}}" category="retained">
+                <span class="retained-display" schema_name="{{schema}}">{{"{:,.2f} GB".format(macros.gb(retained_bytes)|float) }}</span>
+            </div>
+            <div class="progress-bar background-reclaim" style="width: {{macros.pct(reclaimable_bytes, retained_bytes, 'no')}}%; min-width: {{macros.progress_widths(retained_bytes, reclaimable_bytes, 'reclaimed', 'min')}}%; max-width: {{macros.progress_widths(retained_bytes, reclaimable_bytes, 'reclaimed', 'max')}}%;" schema_name="{{schema}}" category="reclaimable">
+                <span class="reclaimable-display" schema_name="{{schema}}">{{"{:,.2f} GB".format(macros.gb(reclaimable_bytes)|float) }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="progress">
+            <div class="progress-bar background-offload width-100-pct" schema_name="{{schema}}" category="offloaded">
+                <span class="offloaded-display" schema_name="{{schema}}">{{"{:,.2f} GB".format(macros.gb(offloaded_bytes)|float) }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{%- endmacro %}
+
+{%- macro table_metadata_modal(schema, table_name, table_values) -%}
+<div class="modal fade" id="{{ schema }}_{{ table_name }}_modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-custom" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title text-ellipsis">
+                    <abbr title="{{ schema }}.{{ table_name }}">
+                        <strong>{{ schema }}.{{ table_name }}</strong>
+                    </abbr>
+                </h4>
+            </div>
+            <div class="modal-body">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="active"><a href="#{{ schema }}_{{ table_name }}_modal_summary" role="tab" data-toggle="tab">Summary</a></li>
+                    <li><a href="#{{ schema }}_{{ table_name }}_modal_details" role="tab" data-toggle="tab">Details</a></li>
+                    <li><a href="#{{ schema }}_{{ table_name }}_modal_parameters" role="tab" data-toggle="tab">Parameters</a></li>
+                    {%- if table_values['DEPENDENT_OBJECTS'] -%}
+                    <li><a href="#{{ schema }}_{{ table_name }}_modal_dependent" role="tab" data-toggle="tab">Dependent Objects</a></li>
+                    {%- endif -%} {%- if table_values['AAPD_OBJECTS'] -%}
+                    <li><a href="#{{ schema }}_{{ table_name }}_modal_aapd" role="tab" data-toggle="tab">Aggregation Pushdown Objects</a></li>
+                    {%- endif -%} {%- if table_values['JOIN_OBJECTS_RDBMS'] or table_values['JOIN_OBJECTS_OFFLOAD'] -%}
+                    <li><a href="#{{ schema }}_{{ table_name }}_modal_join" role="tab" data-toggle="tab">Join Pushdown Objects</a></li>
+                    {%- endif -%} {%- if table_values['INCREMENTAL_UPDATE_OBJECTS_RDBMS'] or table_values['INCREMENTAL_UPDATE_OBJECTS_OFFLOAD'] -%}
+                    <li><a href="#{{ schema }}_{{ table_name }}_modal_iu" role="tab" data-toggle="tab">Incremental Update Objects</a></li>
+                    {%- endif -%}
+                </ul>
+                <!-- Tab panes -->
+                <div class="tab-content">
+
+                    <div class="tab-pane active" id="{{ schema }}_{{ table_name }}_modal_summary">
+                        <div class="row">
+                            <div class="col-md-12 word-break-break-all">
+                                <p class="col-md-12-desc">Data distribution summary <sup>1</sup> for {{ schema }}.{{ table_name }}.</p>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-6 bg-primary">
+                                <h4><span class="label table-detail-header-label">Type</span></h4>
+                            </div>
+                            <div class="col-md-2 text-right bg-primary table-detail-left-border">
+                                <h4><span class="label table-detail-header-label">Size (GB)</span></h4>
+                            </div>
+                            <div class="col-md-2 text-right bg-primary table-detail-left-border">
+                                <h4><span class="label table-detail-header-label">Segments</span></h4>
+                            </div>
+                            <div class="col-md-2 text-right bg-primary table-detail-left-border">
+                                <h4><span class="label table-detail-header-label"">Rows (From Stats)</span></h4>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-6">
+                                <p class="table-detail-content">Offloaded</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{ macros.gb(table_values['_OFFLOADED_BYTES']) }}</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{"{:,d}".format(table_values['_OFFLOADED_PARTS']) }}</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{"{:,d}".format(table_values['_OFFLOADED_ROWS']) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-6">
+                                <p class="table-detail-content">Retained (RDBMS)</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{ macros.gb(table_values['_RETAINED_BYTES']) }}</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{"{:,d}".format(table_values['_RETAINED_PARTS']) }}</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{"{:,d}".format(table_values['_RETAINED_ROWS']) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-6">
+                                <p class="table-detail-content">Reclaimable (RDBMS)</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{ macros.gb(table_values['_RECLAIMABLE_BYTES']) }}</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{"{:,d}".format(table_values['_RECLAIMABLE_PARTS']) }}</p>
+                            </div>
+                            <div class="col-md-2 text-right table-detail-left-border">
+                                <p class="table-detail-content">{{"{:,d}".format(table_values['_RECLAIMABLE_ROWS']) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p class="col-md-12-desc-2"><sup>1</sup> See <strong>Database Summary</strong> help for an explanation of the Offloaded, Retained and Reclaimable statistics for the Size, Segments and Rows dimensions.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="{{ schema }}_{{ table_name }}_modal_details">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p class="col-md-12-desc">Overview of the main source, hybrid and offloaded tables and views.</p>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-3 bg-primary">
+                                <h4><span class="label table-detail-header-label">Name</span></h4>
+                            </div>
+                            <div class="col-md-9 bg-primary table-detail-left-border">
+                                <h4><span class="label table-detail-header-label">Value</span></h4>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-3 word-break-keep-all">
+                                <p class="table-detail-content">Source table</p>
+                            </div>
+                            <div class="col-md-9 table-detail-left-border word-break-break-word">
+                                <p class="table-detail-content">{{ table_values['SOURCE_OWNER'] }}.{{ table_values['SOURCE_TABLE'] }}</p>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-3 word-break-keep-all">
+                                <p class="table-detail-content">Hybrid view</p>
+                            </div>
+                            <div class="col-md-9 table-detail-left-border word-break-break-word">
+                                <p class="table-detail-content">{{ table_values['HYBRID_OWNER'] }}.{{ table_values['HYBRID_VIEW'] }}</p>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-3 word-break-keep-all">
+                                <p class="table-detail-content">Hybrid external table</p>
+                            </div>
+                            <div class="col-md-9 table-detail-left-border word-break-break-word">
+                                <p class="table-detail-content">{{ table_values['HYBRID_OWNER'] }}.{{ table_values['HYBRID_EXTERNAL_TABLE'] }}</p>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-3 word-break-keep-all">
+                                <p class="table-detail-content">Offloaded table</p>
+                            </div>
+                            <div class="col-md-9 table-detail-left-border word-break-break-word">
+                                {%- if table_values['OFFLOAD_TABLE_EXISTS'] -%}
+                                    <p class="table-detail-content">{{ table_values['OFFLOAD_OWNER'] }}.{{ table_values['OFFLOAD_TABLE'] }}</p>
+                                {%- else -%}
+                                    <p class="table-detail-content">Offloaded table not found ({{ table_values['OFFLOAD_OWNER'] }}.{{ table_values['OFFLOAD_TABLE'] }})</p>
+                                {%- endif -%}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="{{ schema }}_{{ table_name }}_modal_parameters">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p class="col-md-12-desc">Overview of the main offload parameters and partitioning characteristics for the source and offloaded tables.</p>
+                            </div>
+                        </div>
+
+                        <div class="row table-detail-row">
+                            <div class="col-md-3 bg-primary">
+                                <h4><span class="label table-detail-header-label">Name</span></h4>
+                            </div>
+                            <div class="col-md-9 bg-primary table-detail-left-border">
+                                <h4><span class="label table-detail-header-label">Value</span></h4>
+                            </div>
+                        </div>
+
+                        {%- for display, key in [
+                            ('Offload type','OFFLOAD_TYPE'),
+                            ('Offload predicate type','OFFLOAD_PREDICATE_TYPE'),
+                            ('Offload high water mark','INCREMENTAL_HIGH_VALUE'),
+                            ('Offload predicates','INCREMENTAL_PREDICATE_VALUE'),
+                            ('Partition columns (RDBMS)','INCREMENTAL_KEY'),
+                            ('Partition columns (offloaded)','OFFLOAD_PART_KEY'),
+                            ('Partition functions','OFFLOAD_PARTITION_FUNCTIONS'),
+                            ('Partition offload level','INCREMENTAL_RANGE'),
+                            ('Incremental Update enabled','INCREMENTAL_UPDATE_METHOD'),
+                            ('Incremental Update method','INCREMENTAL_UPDATE_METHOD'),
+                            ('Offload version','OFFLOAD_VERSION'),
+                            ('Offload bucket count','OFFLOAD_BUCKET_COUNT'),
+                            ('Offload bucket column','OFFLOAD_BUCKET_COLUMN'),
+                            ('Offload bucket method','OFFLOAD_BUCKET_METHOD'),
+                            ('Offload sort columns','OFFLOAD_SORT_COLUMNS')] -%}
+
+                            {%- if table_values[key] is defined -%}
+                                {%- if table_values[key] or (key == 'INCREMENTAL_UPDATE_METHOD' and display == 'Incremental Update enabled') -%}
+                                <div class="row table-detail-row">
+                                    <div class="col-md-3 word-break-keep-all">
+                                        <p class="table-detail-content">{{ display }}</p>
+                                    </div>
+                                    <div class="col-md-9 table-detail-left-border word-break-break-word">
+                                        {%- if key == 'INCREMENTAL_UPDATE_METHOD' and display == 'Incremental Update enabled' -%}
+                                            {%- if table_values[key] -%}
+                                                <p class="table-detail-content">Yes</p>
+                                            {%- else -%}
+                                                {%- if table_values['OFFLOAD_TABLE_EXISTS'] -%}
+                                                    <p class="table-detail-content">No</p>
+                                                {%- else -%}
+                                                    <p class="table-detail-content">Unknown</p>
+                                                {%- endif -%}
+                                            {%- endif -%}
+                                        {%- elif key == 'INCREMENTAL_PREDICATE_VALUE' -%}
+                                            <p class="table-detail-content">{{ table_values[key]|join('<br>') }}</p>
+                                        {%- else -%}
+                                            <p class="table-detail-content">{{ table_values[key] }}</p>
+                                        {%- endif -%}
+                                    </div>
+                                </div>
+                                {%- endif -%}
+                            {%- endif -%}
+                        {% endfor %}
+                    </div>
+
+                    {%- if table_values['AAPD_OBJECTS'] -%}
+                        {{ object_section(schema, table_name, 'aapd', 'Aggregation Pushdown', table_values['AAPD_OBJECTS'], None, None, 'Overview of additional database objects created to support Advanced Aggregation Pushdown.', None) }}
+                    {%- endif -%}
+                    {%- if table_values['JOIN_OBJECTS_RDBMS'] or table_values['JOIN_OBJECTS_OFFLOAD'] -%}
+                        {{ object_section(schema, table_name, 'join', 'Join Pushdown', table_values['JOIN_OBJECTS_RDBMS'], 'Join Pushdown', table_values['JOIN_OBJECTS_OFFLOAD'], 'Overview of additional database objects created to support Join Pushdown.', None) }}
+                    {%- endif -%}
+                    {%- if table_values['INCREMENTAL_UPDATE_OBJECTS_RDBMS'] or table_values['INCREMENTAL_UPDATE_OBJECTS_OFFLOAD'] -%}
+                        {{ object_section(schema, table_name, 'iu', 'Incremental Update', table_values['INCREMENTAL_UPDATE_OBJECTS_RDBMS'], 'Incremental Update', table_values['INCREMENTAL_UPDATE_OBJECTS_OFFLOAD'], 'Overview of additional database objects created to support Incremental Update.', None) }}
+                    {%- endif -%}
+                    {%- if table_values['DEPENDENT_OBJECTS'] -%}
+                        {{ object_section(schema, table_name, 'dependent', 'Dependent', table_values['DEPENDENT_OBJECTS'], None, None, 'Overview of other dependent objects created when the source application table was offloaded.', None) }}
+                    {%- endif -%}
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal"">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{%- endmacro %}
+
+{%- macro object_section(schema, table_name, tab_ref, rdbms_data_type, rdbms_data, hive_data_type, hive_data, description, footnote) -%}
+<div class="tab-pane" id="{{ schema }}_{{ table_name }}_modal_{{ tab_ref }}">
+    <div class="row">
+        <div class="col-md-12">
+            <p class="col-md-12-desc-2">{{ description }}</p>
+        </div>
+    </div>
+
+    {%- if rdbms_data -%}
+    <div class="row">
+        <div class="col-md-12">
+            <h3><small><strong>RDBMS</strong></small></h3>
+        </div>
+    </div>
+    <div class="row table-detail-row">
+        <div class="col-md-3 bg-primary">
+            <h4><span class="label table-detail-header-label">{{ rdbms_data_type|title }} Object Type</span></h4>
+        </div>
+        <div class="col-md-6 bg-primary table-detail-left-border">
+            <h4><span class="label table-detail-header-label">Object Name</span></h4>
+        </div>
+        <div class="col-md-3 bg-primary table-detail-left-border">
+            <h4><span class="label table-detail-header-label">Object Type</span></h4>
+        </div>
+    </div>
+
+    {%- for value in rdbms_data|sort(attribute="OBJECT_NAME") -%}
+    <div class="row table-detail-row">
+        <div class="col-md-3 word-break-keep-all">
+            <p class="table-detail-content">{{ value['OBJECT_TYPE_GOE']|replace('_', ' ')|capitalize }}</p>
+        </div>
+        <div class="col-md-6 table-detail-left-border word-break-break-word">
+            <p class="table-detail-content">{{ value['OBJECT_OWNER'] }}.{{ value['OBJECT_NAME'] }}</p>
+        </div>
+        <div class="col-md-3 table-detail-left-border word-break-keep-all">
+            <p class="table-detail-content">{{ value['OBJECT_TYPE_DB'] }}</p>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {%- if hive_data -%}
+    <div class="row">
+        <div class="col-md-12">
+            <h3><small><strong>Offloaded</strong></small></h3>
+        </div>
+    </div>
+    <div class="row table-detail-row">
+        <div class="col-md-3 bg-primary">
+            <h4><span class="label table-detail-header-label">{{ hive_data_type|title }} Object Type</span></h4>
+        </div>
+        <div class="col-md-6 bg-primary table-detail-left-border">
+            <h4><span class="label table-detail-header-label">Object Name</span></h4>
+        </div>
+        <div class="col-md-3 bg-primary table-detail-left-border">
+            <h4><span class="label table-detail-header-label">Object Type</span></h4>
+        </div>
+    </div>
+
+    {%- for value in hive_data|sort(attribute="OBJECT_NAME") -%}
+    <div class="row table-detail-row">
+        <div class="col-md-3 word-break-keep-all">
+            <p class="table-detail-content">{{ value['OBJECT_TYPE_GOE']|replace('_', ' ')|capitalize }}</p>
+        </div>
+        <div class="col-md-6 table-detail-left-border word-break-break-word">
+            <p class="table-detail-content">{{ value['OBJECT_OWNER'] }}.{{ value['OBJECT_NAME'] }}</p>
+        </div>
+        <div class="col-md-3 table-detail-left-border word-break-keep-all">
+            <p class="table-detail-content">{{ value['OBJECT_TYPE_DB'] }}</p>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {%- if footnote -%}
+    <div class="row">
+        <div class="col-md-12">
+            <p class="col-md-12-desc-2">{{ footnote }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{%- endmacro %}

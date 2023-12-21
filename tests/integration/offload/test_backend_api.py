@@ -1,7 +1,7 @@
 from unittest import main
 
-
 from goe.offload.factory.backend_api_factory import backend_api_factory
+from goe.offload.offload import OffloadException
 from goe.offload.offload_constants import DBTYPE_SPARK
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
@@ -24,8 +24,8 @@ from tests.testlib.test_framework.test_functions import get_test_messages
 from tests.unit.offload.test_backend_api import TestBackendApi
 
 
-DIM_NAME = "INTEGRATION_BAPI_DIM_TABLE"
-FACT_NAME = "INTEGRATION_BAPI_FACT_TABLE"
+DIM_NAME = "INTEG_BACKEND_API_DIM"
+FACT_NAME = "INTEG_BACKEND_API_FACT"
 
 
 class TestCurrentBackendApi(TestBackendApi):
@@ -66,6 +66,7 @@ class TestCurrentBackendApi(TestBackendApi):
             self.config,
             messages,
             dry_run=False,
+            trace_action="frontend_api(TestCurrentBackendApi)",
         )
         # Setup non-partitioned table
         run_setup_ddl(
@@ -75,7 +76,22 @@ class TestCurrentBackendApi(TestBackendApi):
             frontend_api.standard_dimension_frontend_ddl(self.schema, DIM_NAME),
         )
         # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
-        run_offload({"owner_table": self.schema + "." + self.table})
+        try:
+            run_offload(
+                {
+                    "owner_table": self.schema + "." + self.table,
+                    "create_backend_db": True,
+                }
+            )
+        except OffloadException:
+            # If this one fails then we let the exception bubble up.
+            run_offload(
+                {
+                    "owner_table": self.schema + "." + self.table,
+                    "reset_backend_table": True,
+                    "create_backend_db": True,
+                }
+            )
 
         # Setup partitioned table
         run_setup_ddl(
@@ -87,7 +103,16 @@ class TestCurrentBackendApi(TestBackendApi):
             ),
         )
         # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
-        run_offload({"owner_table": self.schema + "." + FACT_NAME})
+        try:
+            run_offload({"owner_table": self.schema + "." + self.part_table})
+        except OffloadException:
+            # If this one fails then we let the exception bubble up.
+            run_offload(
+                {
+                    "owner_table": self.schema + "." + self.part_table,
+                    "reset_backend_table": True,
+                }
+            )
 
     def test_full_api_on_current_backend(self):
         self._create_test_tables()

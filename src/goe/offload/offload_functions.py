@@ -1,10 +1,10 @@
 #! /usr/bin/env python3
-""" offload_functions: Library of functions used in gluent.py and other offload related modules
+""" offload_functions: Library of functions used in goe.py and other offload related modules
     LICENSE_TEXT
 """
 
 # NOTE: the idea of this module is to avoid dependency loops so be careful when importing
-#       from other gluentlib modules
+#       from other goelib modules
 
 from datetime import datetime, date
 import inspect
@@ -394,11 +394,6 @@ def get_hybrid_predicate_clauses(offload_predicates, table_object, columns_overr
         return remote_clause, exclude_clause
     else:
         return '', ''
-
-
-def prefix_column_with_alias(alias, real_name, hash_chars, max_identifier_length, force_append_hash=False):
-    return trunc_with_hash(('%s_%s' % (alias, real_name)).lower(), hash_chars, max_identifier_length,
-                           force_append_hash=force_append_hash)
 
 
 def hybrid_view_combine_hv_and_pred_clauses(hv_clause, pred_clause, join_term):

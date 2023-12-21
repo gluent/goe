@@ -14,10 +14,10 @@ import os
 import sys
 import traceback
 
-from goe.util.config_file import GluentRemoteConfig, ConfigException
+from goe.util.config_file import GOERemoteConfig, ConfigException
 from goe.util.misc_functions import timedelta_to_str, disable_terminal_colors, check_offload_env, \
     check_remote_offload_env, bytes_to_human_size
-from goe.util.gluent_log import log, init_default_log, get_default_log, close_default_log
+from goe.util.goe_log import log, init_default_log, get_default_log, close_default_log
 
 from goe.cloud.hive_cloud_present import HiveCloudPresent
 from goe.cloud.cloud_sync_tools import get_databases_and_tables, make_older_than_jmespath
@@ -26,7 +26,7 @@ from goe.offload.offload_messages import OffloadMessages
 
 
 # -----------------------------------------------------------------------
-# EXCEPTIONS 
+# EXCEPTIONS
 # -----------------------------------------------------------------------
 class CloudPresentException(Exception): pass
 
@@ -36,7 +36,7 @@ class CloudPresentException(Exception): pass
 # -----------------------------------------------------------------------
 
 PROG_BANNER = "cloud_present: 'Remap' impala table between HDFS and S3 locations"
-COPYRIGHT_MSG = "Gluent Inc (c) 2015-2016"
+COPYRIGHT_MSG = "GOE Inc (c) 2015-2016"
 
 # "Source" and "target" are sections in offload configuration file:
 # $OFFLOAD_CONF/offload.conf
@@ -111,7 +111,7 @@ def report_present_summary(pre, db_name, table_name, args, changes_made):
     for section in report:
         if 'total' != section:
             print_section_subreport(report, section)
-    
+
 
 def report_projection(pre, section, section_type, filters, args):
     """ Report projected changes for either HDFS or S3
@@ -131,7 +131,7 @@ def report_projection(pre, section, section_type, filters, args):
 
 
 def process_all_databases(cfg, args, messages):
-    """ Process all matching 
+    """ Process all matching
     """
     if args.project:
         messages.warning("Execution mode is OFF. The tool will only project table changes", ansi_code="red")
@@ -208,7 +208,7 @@ def do_cloud_present(db_name, table_name, cfg, args, messages):
 
     report_status(db_name, table_name, status, elapsed, args)
 
- 
+
 def set_logging(cfg, args):
     """ Set "global" logging parameters
     """
@@ -288,7 +288,7 @@ Example local ('hdfs') section:
 hdfs_root: %(HDFS_DATA)s
 webhdfs_url: http://localhost:50070
 hdfs_url: hdfs://localhost:8020
-hdfs_user: gluent
+hdfs_user: goe
 hdfs_newdir_permissions: 755
 hadoop_host: localhost
 hadoop_port: 21050
@@ -297,8 +297,8 @@ target: impala
 Example remote ('cloud' (S3)) section:
 
 [s3-backup]
-s3_bucket: gluent.backup
-s3_prefix: user/gluent/backup
+s3_bucket: goe.backup
+s3_prefix: user/goe/backup
 server_side_encryption: AES256
 storage_class: REDUCED_REDUNDANCY
 max_concurrency: 1
@@ -360,7 +360,7 @@ Important: If you do NOT specify -x/--execute parameter, the tool only 'projects
     else:
         args.project = False
         args.remap = True
-    args.execute = True  # Legacy gluent compatibility reasons
+    args.execute = True  # Legacy goe compatibility reasons
 
     # Adjust configuration based on user's input
     cfg.set('logging', 'log_level', args.dev_log_level)
@@ -376,7 +376,7 @@ def main():
     check_remote_offload_env()
 
     # Grab configuration from $OFFLOAD_CONF/offload.conf and read user input
-    cfg = GluentRemoteConfig()
+    cfg = GOERemoteConfig()
     args = parse_args(cfg)
 
     # Print tool header, set logging, etc

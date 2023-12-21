@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" ColumnMetadataInterface: Base interface for Gluent column metadata.
+""" ColumnMetadataInterface: Base interface for GOE column metadata.
     Other classes will build upon this basic model.
     LICENSE_TEXT
 """
@@ -23,89 +23,89 @@ class ColumnMetadataException(Exception):
 # CONSTANTS
 ###############################################################################
 
-GLUENT_TYPE_FIXED_STRING = 'FIXED_STRING'
-GLUENT_TYPE_LARGE_STRING = 'LARGE_STRING'
-GLUENT_TYPE_VARIABLE_STRING = 'VARIABLE_STRING'
-GLUENT_TYPE_BINARY = 'BINARY'
-GLUENT_TYPE_LARGE_BINARY = 'LARGE_BINARY'
-GLUENT_TYPE_INTEGER_1 = 'INTEGER_1'
-GLUENT_TYPE_INTEGER_2 = 'INTEGER_2'
-GLUENT_TYPE_INTEGER_4 = 'INTEGER_4'
-GLUENT_TYPE_INTEGER_8 = 'INTEGER_8'
-GLUENT_TYPE_INTEGER_38 = 'INTEGER_38'
-GLUENT_TYPE_DECIMAL = 'DECIMAL'
-GLUENT_TYPE_FLOAT = 'FLOAT'
-GLUENT_TYPE_DOUBLE = 'DOUBLE'
-GLUENT_TYPE_DATE = 'DATE'
-GLUENT_TYPE_TIME = 'TIME'
-GLUENT_TYPE_TIMESTAMP = 'TIMESTAMP'
-GLUENT_TYPE_TIMESTAMP_TZ = 'TIMESTAMP_TZ'
-GLUENT_TYPE_INTERVAL_DS = 'INTERVAL_DS'
-GLUENT_TYPE_INTERVAL_YM = 'INTERVAL_YM'
-GLUENT_TYPE_BOOLEAN = 'BOOLEAN'
+GOE_TYPE_FIXED_STRING = 'FIXED_STRING'
+GOE_TYPE_LARGE_STRING = 'LARGE_STRING'
+GOE_TYPE_VARIABLE_STRING = 'VARIABLE_STRING'
+GOE_TYPE_BINARY = 'BINARY'
+GOE_TYPE_LARGE_BINARY = 'LARGE_BINARY'
+GOE_TYPE_INTEGER_1 = 'INTEGER_1'
+GOE_TYPE_INTEGER_2 = 'INTEGER_2'
+GOE_TYPE_INTEGER_4 = 'INTEGER_4'
+GOE_TYPE_INTEGER_8 = 'INTEGER_8'
+GOE_TYPE_INTEGER_38 = 'INTEGER_38'
+GOE_TYPE_DECIMAL = 'DECIMAL'
+GOE_TYPE_FLOAT = 'FLOAT'
+GOE_TYPE_DOUBLE = 'DOUBLE'
+GOE_TYPE_DATE = 'DATE'
+GOE_TYPE_TIME = 'TIME'
+GOE_TYPE_TIMESTAMP = 'TIMESTAMP'
+GOE_TYPE_TIMESTAMP_TZ = 'TIMESTAMP_TZ'
+GOE_TYPE_INTERVAL_DS = 'INTERVAL_DS'
+GOE_TYPE_INTERVAL_YM = 'INTERVAL_YM'
+GOE_TYPE_BOOLEAN = 'BOOLEAN'
 
 ALL_CANONICAL_TYPES = [
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_VARIABLE_STRING,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_TIME,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
-    GLUENT_TYPE_BOOLEAN
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_DATE,
+    GOE_TYPE_TIME,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
+    GOE_TYPE_BOOLEAN
 ]
 
-DATE_CANONICAL_TYPES = [GLUENT_TYPE_DATE, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ]
-NUMERIC_CANONICAL_TYPES = [GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8,
-                           GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE]
-STRING_CANONICAL_TYPES = [GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING]
+DATE_CANONICAL_TYPES = [GOE_TYPE_DATE, GOE_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ]
+NUMERIC_CANONICAL_TYPES = [GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4, GOE_TYPE_INTEGER_8,
+                           GOE_TYPE_INTEGER_38, GOE_TYPE_DECIMAL, GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE]
+STRING_CANONICAL_TYPES = [GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING]
 
 CANONICAL_TYPE_OPTION_NAMES = {
-    GLUENT_TYPE_BINARY: '--binary-columns',
-    GLUENT_TYPE_DATE: '--date-columns',
-    GLUENT_TYPE_DECIMAL: '--decimal-columns',
-    GLUENT_TYPE_DOUBLE: '--double-columns',
-    GLUENT_TYPE_INTEGER_1: '--integer-1-columns',
-    GLUENT_TYPE_INTEGER_2: '--integer-2-columns',
-    GLUENT_TYPE_INTEGER_4: '--integer-4-columns',
-    GLUENT_TYPE_INTEGER_8: '--integer-8-columns',
-    GLUENT_TYPE_INTEGER_38: '--integer-38-columns',
-    GLUENT_TYPE_LARGE_STRING: '--large-string-columns',
-    GLUENT_TYPE_LARGE_BINARY: '--large-binary-columns',
-    GLUENT_TYPE_VARIABLE_STRING: '--variable-string-columns',
-    GLUENT_TYPE_INTERVAL_DS: '--interval-ds-columns',
-    GLUENT_TYPE_INTERVAL_YM: '--interval-ym-columns',
-    GLUENT_TYPE_TIMESTAMP_TZ: '--timestamp-tz-columns',
+    GOE_TYPE_BINARY: '--binary-columns',
+    GOE_TYPE_DATE: '--date-columns',
+    GOE_TYPE_DECIMAL: '--decimal-columns',
+    GOE_TYPE_DOUBLE: '--double-columns',
+    GOE_TYPE_INTEGER_1: '--integer-1-columns',
+    GOE_TYPE_INTEGER_2: '--integer-2-columns',
+    GOE_TYPE_INTEGER_4: '--integer-4-columns',
+    GOE_TYPE_INTEGER_8: '--integer-8-columns',
+    GOE_TYPE_INTEGER_38: '--integer-38-columns',
+    GOE_TYPE_LARGE_STRING: '--large-string-columns',
+    GOE_TYPE_LARGE_BINARY: '--large-binary-columns',
+    GOE_TYPE_VARIABLE_STRING: '--variable-string-columns',
+    GOE_TYPE_INTERVAL_DS: '--interval-ds-columns',
+    GOE_TYPE_INTERVAL_YM: '--interval-ym-columns',
+    GOE_TYPE_TIMESTAMP_TZ: '--timestamp-tz-columns',
 }
 
-CANONICAL_TYPE_BYTE_LENGTHS = {GLUENT_TYPE_INTEGER_1: 1,
-                               GLUENT_TYPE_INTEGER_2: 2,
-                               GLUENT_TYPE_INTEGER_4: 4,
-                               GLUENT_TYPE_INTEGER_8: 8,
-                               GLUENT_TYPE_FLOAT: 4,
-                               GLUENT_TYPE_DOUBLE: 8}
+CANONICAL_TYPE_BYTE_LENGTHS = {GOE_TYPE_INTEGER_1: 1,
+                               GOE_TYPE_INTEGER_2: 2,
+                               GOE_TYPE_INTEGER_4: 4,
+                               GOE_TYPE_INTEGER_8: 8,
+                               GOE_TYPE_FLOAT: 4,
+                               GOE_TYPE_DOUBLE: 8}
 
 CANONICAL_CHAR_SEMANTICS_BYTE = 'BYTE'
 CANONICAL_CHAR_SEMANTICS_CHAR = 'CHAR'
 CANONICAL_CHAR_SEMANTICS_UNICODE = 'UNICODE'
 
-# Substitution template for GL_PART_ column names
-SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE = 'GL_PART_%s_%s'
+# Substitution template for GOE_PART_ column names
+SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE = 'GOE_PART_%s_%s'
 
 # Regular expression extracting granularity/source name from synthetic partition column name.
-SYNTHETIC_PARTITION_COLUMN_NAME_RE = re.compile(r'(^GL_PART_)(Y|M|D|\d+|U\d+)_([A-Z0-9$#_]+$)', re.I)
+SYNTHETIC_PARTITION_COLUMN_NAME_RE = re.compile(r'(^GOE_PART_)(Y|M|D|\d+|U\d+)_([A-Z0-9$#_]+$)', re.I)
 
 # A column name replacement for when the source columns contain special characters.
 STAGING_FILE_SIMPLIFIED_NAME_TOKEN = '_GOE_SPECIAL_CHAR_COLUMN'
@@ -565,10 +565,10 @@ class CanonicalColumn(ColumnMetadataInterface):
 
     def has_time_element(self):
         """ Does the column data contain a time element """
-        return bool(self.data_type in [GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ])
+        return bool(self.data_type in [GOE_TYPE_TIME, GOE_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ])
 
     def is_binary(self):
-        return bool(self.data_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY])
+        return bool(self.data_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY])
 
     def is_nan_capable(self):
         # We should never need to this for a canonical column
@@ -583,7 +583,7 @@ class CanonicalColumn(ColumnMetadataInterface):
         return bool(self.data_type in DATE_CANONICAL_TYPES)
 
     def is_interval(self):
-        return bool(self.data_type in [GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM])
+        return bool(self.data_type in [GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM])
 
     def is_string_based(self):
         """ Is the column string based in class """
@@ -591,7 +591,7 @@ class CanonicalColumn(ColumnMetadataInterface):
 
     def is_time_zone_based(self):
         """ Does the column contain time zone data """
-        return bool(self.data_type == GLUENT_TYPE_TIMESTAMP_TZ)
+        return bool(self.data_type == GOE_TYPE_TIMESTAMP_TZ)
 
     def estimate_hybrid_schema_byte_size(self):
         """ Returns an estimate of the Hybrid Schema byte size of a canonical column based on the data type.
@@ -604,17 +604,17 @@ class CanonicalColumn(ColumnMetadataInterface):
         """
         if self.data_type in CANONICAL_TYPE_BYTE_LENGTHS:
             byte_size = CANONICAL_TYPE_BYTE_LENGTHS[self.data_type]
-        elif self.data_type == GLUENT_TYPE_DECIMAL:
+        elif self.data_type == GOE_TYPE_DECIMAL:
             if self.data_precision:
                 byte_size = math.ceil(self.data_precision/2)
             else:
                 byte_size = 4
             byte_size = 1
-        elif self.data_type == GLUENT_TYPE_DATE:
+        elif self.data_type == GOE_TYPE_DATE:
             byte_size = 7
-        elif self.data_type == GLUENT_TYPE_TIMESTAMP:
+        elif self.data_type == GOE_TYPE_TIMESTAMP:
             byte_size = 11
-        elif self.data_type == GLUENT_TYPE_TIMESTAMP_TZ:
+        elif self.data_type == GOE_TYPE_TIMESTAMP_TZ:
             byte_size = 13
         else:
             byte_size = None

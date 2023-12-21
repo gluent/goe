@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Union
 import pyodbc
 from numpy import datetime64
 
-# Gluent
+# GOE
 from goe.offload.frontend_api import (
     FETCH_ACTION_ALL,
     FETCH_ACTION_CURSOR,
@@ -289,7 +289,7 @@ class NetezzaFrontendApi(FrontendApiInterface):
     def _frontend_capabilities(self):
         return NETEZZA_FRONTEND_CAPABILITIES
 
-    def _gdp_db_component_version(self):
+    def _goe_db_component_version(self):
         return None
 
     def _open_cursor(self):

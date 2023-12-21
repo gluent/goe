@@ -40,7 +40,11 @@ class TestOrchestrationRepoClient(TestCase):
         messages = get_test_messages(
             config, "test_orchestration_command_logging_cli", execution_id=execution_id
         )
-        client = orchestration_repo_client_factory(config, messages)
+        client = orchestration_repo_client_factory(
+            config,
+            messages,
+            trace_action="repo_client(test_orchestration_command_logging_cli)",
+        )
 
         offload_partitions = [
             OffloadSourcePartition(
@@ -169,7 +173,11 @@ class TestOrchestrationRepoClient(TestCase):
         messages = get_test_messages(
             config, "test_orchestration_command_logging_api", execution_id=execution_id
         )
-        client = orchestration_repo_client_factory(config, messages)
+        client = orchestration_repo_client_factory(
+            config,
+            messages,
+            trace_action="repo_client(test_orchestration_command_logging_api)",
+        )
         # Start an API based Offload
         cid = client.start_command(
             execution_id,

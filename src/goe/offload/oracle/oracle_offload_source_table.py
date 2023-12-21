@@ -15,11 +15,11 @@ from numpy import datetime64
 from goe.offload import offload_constants
 from goe.offload.column_metadata import CanonicalColumn,\
     get_partition_columns, is_safe_mapping, CANONICAL_CHAR_SEMANTICS_UNICODE, \
-    GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY,\
-    GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4,\
-    GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE,\
-    GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ,\
-    GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, CANONICAL_CHAR_SEMANTICS_CHAR, \
+    GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING, GOE_TYPE_BINARY,\
+    GOE_TYPE_LARGE_BINARY, GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4,\
+    GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38, GOE_TYPE_DECIMAL, GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE,\
+    GOE_TYPE_DATE, GOE_TYPE_TIME, GOE_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ,\
+    GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM, CANONICAL_CHAR_SEMANTICS_CHAR, \
     ALL_CANONICAL_TYPES, DATE_CANONICAL_TYPES, NUMERIC_CANONICAL_TYPES, STRING_CANONICAL_TYPES
 from goe.offload.frontend_api import QueryParameter
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
@@ -1031,7 +1031,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
         return subs_by_hwm
 
     def to_canonical_column(self, column):
-        """ Translate an Oracle column to an internal Gluent column """
+        """ Translate an Oracle column to an internal GOE column """
 
         def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, safe_mapping=None):
             """ Wrapper that carries name, nullable, data_default and usually char_semantics forward from RDBMS
@@ -1053,19 +1053,19 @@ class OracleSourceTable(OffloadSourceTableInterface):
         assert isinstance(column, OracleColumn)
 
         if column.data_type in (ORACLE_TYPE_CHAR, ORACLE_TYPE_NCHAR):
-            return new_column(column, GLUENT_TYPE_FIXED_STRING, data_length=column.data_length, safe_mapping=True)
+            return new_column(column, GOE_TYPE_FIXED_STRING, data_length=column.data_length, safe_mapping=True)
         elif column.data_type in (ORACLE_TYPE_CLOB, ORACLE_TYPE_NCLOB, ORACLE_TYPE_LONG):
-            return new_column(column, GLUENT_TYPE_LARGE_STRING)
+            return new_column(column, GOE_TYPE_LARGE_STRING)
         elif column.data_type in (ORACLE_TYPE_VARCHAR2, ORACLE_TYPE_NVARCHAR2):
-            return new_column(column, GLUENT_TYPE_VARIABLE_STRING, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_VARIABLE_STRING, data_length=column.data_length)
         elif column.data_type == ORACLE_TYPE_RAW:
-            return new_column(column, GLUENT_TYPE_BINARY, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_BINARY, data_length=column.data_length)
         elif column.data_type in (ORACLE_TYPE_BLOB, ORACLE_TYPE_LONG_RAW):
-            return new_column(column, GLUENT_TYPE_LARGE_BINARY)
+            return new_column(column, GOE_TYPE_LARGE_BINARY)
         elif column.data_type == ORACLE_TYPE_FLOAT:
             # FLOAT is an anomaly because precision is specified in bits. We could convert it but scale is unknown
             # and NUMBER(p, *) is not possible. Best thing for now is to wipe out precision matching NUMBER(*,*)
-            return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=None, safe_mapping=False)
+            return new_column(column, GOE_TYPE_DECIMAL, data_precision=None, safe_mapping=False)
         elif column.data_type == ORACLE_TYPE_NUMBER:
             data_precision = column.data_precision
             data_scale = column.data_scale
@@ -1084,33 +1084,33 @@ class OracleSourceTable(OffloadSourceTableInterface):
             else:
                 # If precision & scale are None then this is unsafe, otherwise leave it None to let new_column() logic take over
                 safe_mapping = False if data_precision is None and data_scale is None else None
-                return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale,
+                return new_column(column, GOE_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale,
                                   safe_mapping=safe_mapping)
         elif column.data_type == ORACLE_TYPE_BINARY_FLOAT:
-            return new_column(column, GLUENT_TYPE_FLOAT)
+            return new_column(column, GOE_TYPE_FLOAT)
         elif column.data_type == ORACLE_TYPE_BINARY_DOUBLE:
-            return new_column(column, GLUENT_TYPE_DOUBLE)
+            return new_column(column, GOE_TYPE_DOUBLE)
         elif column.data_type == ORACLE_TYPE_DATE:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP)
+            return new_column(column, GOE_TYPE_TIMESTAMP)
         elif column.data_type == ORACLE_TYPE_TIMESTAMP:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP, data_scale=column.data_scale)
+            return new_column(column, GOE_TYPE_TIMESTAMP, data_scale=column.data_scale)
         elif column.data_type == ORACLE_TYPE_TIMESTAMP_TZ:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale)
+            return new_column(column, GOE_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale)
         elif column.data_type == ORACLE_TYPE_TIMESTAMP_LOCAL_TZ:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale)
+            return new_column(column, GOE_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale)
         elif column.data_type == ORACLE_TYPE_INTERVAL_DS:
-            return new_column(column, GLUENT_TYPE_INTERVAL_DS, data_precision=column.data_precision,
+            return new_column(column, GOE_TYPE_INTERVAL_DS, data_precision=column.data_precision,
                               data_scale=column.data_scale)
         elif column.data_type == ORACLE_TYPE_INTERVAL_YM:
-            return new_column(column, GLUENT_TYPE_INTERVAL_YM, data_precision=column.data_precision,
+            return new_column(column, GOE_TYPE_INTERVAL_YM, data_precision=column.data_precision,
                               data_scale=column.data_scale)
         elif column.data_type == ORACLE_TYPE_XMLTYPE:
-            return new_column(column, GLUENT_TYPE_LARGE_STRING, data_scale=column.data_scale)
+            return new_column(column, GOE_TYPE_LARGE_STRING, data_scale=column.data_scale)
         else:
             raise NotImplementedError('Unsupported Oracle data type: %s' % column.data_type)
 
     def from_canonical_column(self, column):
-        """ Translate an internal Gluent column to an Oracle column """
+        """ Translate an internal GOE column to an Oracle column """
 
         def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, char_length=None,
                        safe_mapping=None):
@@ -1133,7 +1133,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
         assert column
         assert isinstance(column, CanonicalColumn)
 
-        if column.data_type == GLUENT_TYPE_FIXED_STRING:
+        if column.data_type == GOE_TYPE_FIXED_STRING:
             max_length = 1000 if column.char_semantics == CANONICAL_CHAR_SEMANTICS_UNICODE else 2000
             if column.data_length or column.char_length:
                 data_length = column.data_length
@@ -1146,9 +1146,9 @@ class OracleSourceTable(OffloadSourceTableInterface):
             else:
                 return new_column(column, nchar_or_char(ORACLE_TYPE_CHAR, column.char_semantics),
                                   data_length=data_length, char_length=char_length)
-        elif column.data_type == GLUENT_TYPE_LARGE_STRING:
+        elif column.data_type == GOE_TYPE_LARGE_STRING:
             return new_column(column, nchar_or_char(ORACLE_TYPE_CLOB, column.char_semantics))
-        elif column.data_type == GLUENT_TYPE_VARIABLE_STRING:
+        elif column.data_type == GOE_TYPE_VARIABLE_STRING:
             max_length = 2000 if column.char_semantics == CANONICAL_CHAR_SEMANTICS_UNICODE else 4000
             if column.data_length or column.char_length:
                 data_length = column.data_length
@@ -1161,55 +1161,55 @@ class OracleSourceTable(OffloadSourceTableInterface):
             else:
                 return new_column(column, nchar_or_char(ORACLE_TYPE_VARCHAR2, column.char_semantics),
                                   data_length=data_length, char_length=char_length)
-        elif column.data_type == GLUENT_TYPE_BINARY:
+        elif column.data_type == GOE_TYPE_BINARY:
             data_length = column.data_length or 2000
             if data_length > 2000:
                 return new_column(column, ORACLE_TYPE_BLOB)
             else:
                 return new_column(column, ORACLE_TYPE_RAW, data_length=data_length)
-        elif column.data_type == GLUENT_TYPE_LARGE_BINARY:
+        elif column.data_type == GOE_TYPE_LARGE_BINARY:
             return new_column(column, ORACLE_TYPE_BLOB)
-        elif column.data_type in (GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4,
-                                  GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38):
+        elif column.data_type in (GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4,
+                                  GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38):
             data_length = column.data_length or 22
             # These are all integrals:
             data_scale = 0
             return new_column(column, ORACLE_TYPE_NUMBER, data_precision=column.data_precision,
                               data_scale=data_scale, data_length=data_length)
-        elif column.data_type == GLUENT_TYPE_DECIMAL:
+        elif column.data_type == GOE_TYPE_DECIMAL:
             data_length = column.data_length or 22
             data_precision, data_scale = column.data_precision, column.data_scale
             if column.data_precision and column.data_precision > 38:
-                # If an incoming Gluent DECIMAL has precision > 38 then we need to fall back on the flexibility
+                # If an incoming GOE DECIMAL has precision > 38 then we need to fall back on the flexibility
                 # provided by NUMBER with no precision or scale
                 data_precision, data_scale = None, None
             return new_column(column, ORACLE_TYPE_NUMBER, data_precision=data_precision,
                               data_scale=data_scale, data_length=data_length)
-        elif column.data_type == GLUENT_TYPE_FLOAT:
+        elif column.data_type == GOE_TYPE_FLOAT:
             return new_column(column, ORACLE_TYPE_BINARY_FLOAT, data_length=4)
-        elif column.data_type == GLUENT_TYPE_DOUBLE:
+        elif column.data_type == GOE_TYPE_DOUBLE:
             return new_column(column, ORACLE_TYPE_BINARY_DOUBLE, data_length=8)
-        elif column.data_type == GLUENT_TYPE_DATE:
+        elif column.data_type == GOE_TYPE_DATE:
             return new_column(column, ORACLE_TYPE_DATE, data_length=7)
-        elif column.data_type == GLUENT_TYPE_TIME:
+        elif column.data_type == GOE_TYPE_TIME:
             return new_column(column, ORACLE_TYPE_VARCHAR2, data_length=18)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP:
+        elif column.data_type == GOE_TYPE_TIMESTAMP:
             data_scale = column.data_scale if column.data_scale is not None else self.max_datetime_scale()
             if data_scale == 0:
                 return new_column(column, ORACLE_TYPE_DATE, data_length=7)
             else:
                 return new_column(column, ORACLE_TYPE_TIMESTAMP, data_scale=data_scale, data_length=11)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP_TZ:
+        elif column.data_type == GOE_TYPE_TIMESTAMP_TZ:
             data_scale = column.data_scale if column.data_scale is not None else self.max_datetime_scale()
             return new_column(column, ORACLE_TYPE_TIMESTAMP_TZ, data_scale=data_scale, data_length=13)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_DS:
+        elif column.data_type == GOE_TYPE_INTERVAL_DS:
             return new_column(column, ORACLE_TYPE_INTERVAL_DS, data_precision=column.data_precision,
                               data_scale=column.data_scale)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_YM:
+        elif column.data_type == GOE_TYPE_INTERVAL_YM:
             return new_column(column, ORACLE_TYPE_INTERVAL_YM, data_precision=column.data_precision,
                               data_scale=column.data_scale)
         else:
-            raise NotImplementedError('Unsupported Gluent data type: %s' % column.data_type)
+            raise NotImplementedError('Unsupported GOE data type: %s' % column.data_type)
 
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, OracleColumn)
@@ -1218,30 +1218,30 @@ class OracleSourceTable(OffloadSourceTableInterface):
         else:
             target_type = canonical_override
         if column.data_type in [ORACLE_TYPE_CHAR, ORACLE_TYPE_NCHAR]:
-            return bool(target_type == GLUENT_TYPE_FIXED_STRING)
+            return bool(target_type == GOE_TYPE_FIXED_STRING)
         elif column.data_type in [ORACLE_TYPE_CLOB, ORACLE_TYPE_NCLOB]:
-            return bool(target_type == GLUENT_TYPE_LARGE_STRING)
+            return bool(target_type == GOE_TYPE_LARGE_STRING)
         elif column.data_type in [ORACLE_TYPE_VARCHAR, ORACLE_TYPE_VARCHAR2, ORACLE_TYPE_NVARCHAR2]:
-            return bool(target_type == GLUENT_TYPE_VARIABLE_STRING)
+            return bool(target_type == GOE_TYPE_VARIABLE_STRING)
         elif column.data_type == ORACLE_TYPE_RAW:
-            return bool(target_type == GLUENT_TYPE_BINARY)
+            return bool(target_type == GOE_TYPE_BINARY)
         elif column.data_type == ORACLE_TYPE_BLOB:
-            return bool(target_type == GLUENT_TYPE_LARGE_BINARY)
+            return bool(target_type == GOE_TYPE_LARGE_BINARY)
         elif column.data_type == ORACLE_TYPE_BINARY_FLOAT:
-            return bool(target_type in [GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE])
+            return bool(target_type in [GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE])
         elif column.data_type == ORACLE_TYPE_BINARY_DOUBLE:
-            return bool(target_type == GLUENT_TYPE_DOUBLE)
+            return bool(target_type == GOE_TYPE_DOUBLE)
         elif column.is_number_based():
             return target_type in NUMERIC_CANONICAL_TYPES
         elif column.is_date_based() and column.is_time_zone_based():
-            return bool(target_type == GLUENT_TYPE_TIMESTAMP_TZ)
+            return bool(target_type == GOE_TYPE_TIMESTAMP_TZ)
         elif column.is_date_based():
             return bool(target_type in DATE_CANONICAL_TYPES or
                         target_type in STRING_CANONICAL_TYPES)
         elif column.data_type == ORACLE_TYPE_INTERVAL_DS:
-            return bool(target_type == GLUENT_TYPE_INTERVAL_DS)
+            return bool(target_type == GOE_TYPE_INTERVAL_DS)
         elif column.data_type == ORACLE_TYPE_INTERVAL_YM:
-            return bool(target_type == GLUENT_TYPE_INTERVAL_YM)
+            return bool(target_type == GOE_TYPE_INTERVAL_YM)
         elif target_type not in ALL_CANONICAL_TYPES:
             self._messages.log('Unknown canonical type in mapping: %s' % target_type, detail=VVERBOSE)
             return False

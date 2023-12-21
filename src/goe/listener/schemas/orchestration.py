@@ -9,7 +9,7 @@ from uuid import UUID
 # Third Party Libraries
 from pydantic import UUID4, Field, Json, PositiveInt, validator
 
-# Gluent
+# GOE
 import goe.config.orchestration_defaults as defaults
 from goe.listener.schemas.base import BaseSchema, TotaledResults
 from goe.orchestration.execution_id import ExecutionId
@@ -70,8 +70,8 @@ class CommandExecution(BaseSchema):
     command_log_path: str
     command_input: str
     command_parameters: Json
-    gluent_version: str
-    gluent_build: str
+    goe_version: str
+    goe_build: str
     steps: Optional[List["CommandExecutionStep"]] = []
 
     @validator("execution_id")
@@ -234,12 +234,6 @@ class OffloadOptions(BaseSchema):
         description="CSV list of columns to treat as date columns",
         cli=("--date-columns"),
     )
-    date_fns: Optional[List[str]] = Field(
-        default=["MIN", "MAX", "COUNT"],
-        title="Date functions",
-        description="CSV list of date functions to use for date columns",
-        cli=("--date-fns"),
-    )
     decimal_columns_csv_list: Optional[List[str]] = Field(
         default=None,
         title="Decimal columns",
@@ -279,24 +273,6 @@ class OffloadOptions(BaseSchema):
             "This option can be included multiple times to match multiple partitions."
         ),
         cli=("--equal-to-values"),
-    )
-    hybrid_ext_table_degree: Optional[str] = Field(
-        default=defaults.hybrid_ext_table_degree_default(),
-        title="Hybrid external table degree",
-        description="Hybrid external table degree",
-        cli=("--ext-table-degree"),
-    )
-    ext_table_name: Optional[str] = Field(
-        default=None,
-        title="External table name",
-        description="Override external table name in hybrid schema",
-        cli=("--ext-table-name"),
-    )
-    ext_readsize: Optional[str] = Field(
-        default="64K",
-        title="External table read size",
-        description="Override external table read size in hybrid schema",
-        cli=("--ext-readsize"),
     )
     force: Optional[bool] = Field(
         default=False,
@@ -349,16 +325,6 @@ class OffloadOptions(BaseSchema):
         description=("Offload partitions with high water mark less than this value. "),
         cli=("--less-than-value"),
     )
-    lob_data_length: Optional[str] = Field(
-        default="32K",
-        title="LOB data length",
-        description=(
-            "Expected length of LOB data. e.g Accepts either a string such "
-            " as 8K, 1.5M or an integer for number of bytes."
-        ),
-        cli=("--lob-data-length"),
-        regex=r"^(?P<value>[\d+\.?]*[KMGT]?[\d]?)$",
-    )
     max_offload_chunk_count: Optional[PositiveInt] = Field(
         default=try_cast_int(defaults.max_offload_chunk_count_default(), 100),
         title="Max offload chunk count",
@@ -385,15 +351,6 @@ class OffloadOptions(BaseSchema):
         description="Use ANSI SQL syntax",
         cli=("--no-ansi"),
         no_api=True,
-    )
-    generate_dependent_views: Optional[bool] = Field(
-        default=True,
-        title="Generate dependent views",
-        description=(
-            "Any application views dependent on offloaded data "
-            "will not be re-generated in to the hybrid schema"
-        ),
-        cli=("--no-generate-dependent-views"),
     )
     offload_predicate_modify_hybrid_view: Optional[bool] = Field(
         default=True,
@@ -446,12 +403,6 @@ class OffloadOptions(BaseSchema):
         else:
             raise ValueError("Number of buckets must be a positive integer or 'AUTO'")
 
-    numeric_fns: Optional[str] = Field(
-        default=None,
-        title="Numeric functions",
-        description="CSV list of functions to apply to the aggregated (numeric) projection",
-        cli=("--numeric-fns"),
-    )
     num_location_files: Optional[int] = Field(
         default=None,
         title="Number of location files",
@@ -846,14 +797,6 @@ class OffloadOptions(BaseSchema):
         cli=("--storage-format"),
         regex=r"^(PARQUET|ORC)$",
     )
-    string_fns: Optional[str] = Field(
-        default=None,
-        title="String functions",
-        description=(
-            "CSV list of functions to apply to the aggregated (string) projection"
-        ),
-        cli=("--string-fns"),
-    )
 
     target_owner_name: Optional[str] = Field(
         default=None,
@@ -920,7 +863,6 @@ class OffloadOptions(BaseSchema):
     )
 
     @validator(
-        "date_fns",
         "decimal_columns_csv_list",
         "decimal_columns_type_list",
         "equal_to_values",

@@ -3,7 +3,7 @@
     be either:
       1) The target of an offload
       2) The source of a present
-    Gluent Inc (c) 2015-2020
+    LICENSE_TEXT
 """
 
 import logging
@@ -12,7 +12,7 @@ from textwrap import dedent
 
 from goe.data_governance.hadoop_data_governance import data_governance_register_new_table_step, \
     get_data_governance_register
-from goe.data_governance.hadoop_data_governance_constants import DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_LOAD_TABLE
+from goe.data_governance.hadoop_data_governance_constants import DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE
 from goe.offload.microsoft.synapse_column import SynapseColumn, SYNAPSE_TYPE_BIGINT,\
     SYNAPSE_TYPE_DATETIME2, SYNAPSE_TYPE_FLOAT, SYNAPSE_TYPE_INT,\
     SYNAPSE_TYPE_NCHAR, SYNAPSE_TYPE_NVARCHAR, SYNAPSE_TYPE_REAL, SYNAPSE_TYPE_TIME, SYNAPSE_TYPE_VARBINARY
@@ -47,13 +47,13 @@ class BackendSynapseTable(BackendTableInterface):
     """
 
     def __init__(self, db_name, table_name, backend_type, orchestration_options, messages, orchestration_operation=None,
-                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None):
+                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None, do_not_connect=False):
         """ CONSTRUCTOR
         """
         super(BackendSynapseTable, self).__init__(db_name, table_name, backend_type, orchestration_options, messages,
                                                   orchestration_operation=orchestration_operation,
                                                   hybrid_metadata=hybrid_metadata, data_gov_client=data_gov_client,
-                                                  dry_run=dry_run, existing_backend_api=existing_backend_api)
+                                                  dry_run=dry_run, existing_backend_api=existing_backend_api, do_not_connect=do_not_connect)
 
         self._ext_table_location = os.path.join(self._orchestration_config.offload_fs_prefix, self._load_db_name,
                                                 self._load_table_name)
@@ -226,7 +226,7 @@ class BackendSynapseTable(BackendTableInterface):
         #     Therefore SQL statement below is terminated with ; to avoid:
         #         [SQL Server]Parse error at line: 10, column: 1: Incorrect syntax near ')'. (103010) (SQLExecDirectW)
         #     Also note:
-        #         MERGE only supports DISTRIBUTION = HASH tables, GDP also supports ROUND_ROBIN.
+        #         MERGE only supports DISTRIBUTION = HASH tables, GOE also supports ROUND_ROBIN.
         # """
         # return dedent("""\
         #     MERGE INTO {base_table} {base_alias}
@@ -467,7 +467,7 @@ class BackendSynapseTable(BackendTableInterface):
         pre_register_data_gov_fn, post_register_data_gov_fn = get_data_governance_register(
             self._data_gov_client,
             lambda: data_governance_register_new_table_step(self._load_db_name, self.table_name, self._data_gov_client,
-                                                            self._messages, DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_LOAD_TABLE,
+                                                            self._messages, DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE,
                                                             self._orchestration_config)
         )
         pre_register_data_gov_fn()

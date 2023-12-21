@@ -11,25 +11,25 @@ from typing import Optional, Union
 
 from goe.offload.column_metadata import (
     CanonicalColumn,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_TIME,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_DATE,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_TIME,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_VARIABLE_STRING,
 )
 from goe.offload.microsoft.mssql_column import (
     MSSQLColumn,
@@ -107,14 +107,14 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
             data_type = column_or_type
         return bool(data_type in (MSSQL_TYPE_DECIMAL, MSSQL_TYPE_NUMERIC))
 
-    def _gl_chars_column_definitions(
+    def _goe_chars_column_definitions(
         self, ascii_only=False, all_chars_notnull=False, supported_canonical_types=None
     ) -> list:
         raise NotImplementedError(
-            "MSSQL _gl_chars_column_definitions() not yet implemented"
+            "MSSQL _goe_chars_column_definitions() not yet implemented"
         )
 
-    def _gl_type_mapping_column_definitions(
+    def _goe_type_mapping_column_definitions(
         self,
         max_backend_precision,
         max_backend_scale,
@@ -122,10 +122,10 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         filter_column=None,
     ):
         raise NotImplementedError(
-            "MSSQL _gl_type_mapping_column_definitions() not yet implemented"
+            "MSSQL _goe_type_mapping_column_definitions() not yet implemented"
         )
 
-    def _gl_types_column_definitions(
+    def _goe_types_column_definitions(
         self,
         all_chars_ascii7=False,
         all_chars_notnull=False,
@@ -133,10 +133,10 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         include_interval_columns=True,
     ) -> list:
         raise NotImplementedError(
-            "MSSQL _gl_types_column_definitions() not yet implemented"
+            "MSSQL _goe_types_column_definitions() not yet implemented"
         )
 
-    def _gl_wide_column_definitions(
+    def _goe_wide_column_definitions(
         self,
         ascii_only=False,
         all_chars_notnull=False,
@@ -144,7 +144,7 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         backend_max_test_column_count=None,
     ) -> list:
         raise NotImplementedError(
-            "MSSQL _gl_wide_column_definitions() not yet implemented"
+            "MSSQL _goe_wide_column_definitions() not yet implemented"
         )
 
     def _populate_generated_test_table(
@@ -182,65 +182,65 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
                 self._log("Drop table exception: {}".format(str(exc)), detail=VERBOSE)
                 raise
 
-    def expected_channels_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate"""
+    def expected_std_dim_offload_predicates(self):
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate"""
         # TODO this has been lifted from one of other frontends so may need adjusting.
         return [
             (
-                "(column(CHANNEL_ID) = numeric(10)) AND (column(CHANNEL_ID) < numeric(2.2))",
-                '("CHANNEL_ID" = 10 AND "CHANNEL_ID" < 2.2)',
+                "(column(ID) = numeric(10)) AND (column(ID) < numeric(2.2))",
+                '("ID" = 10 AND "ID" < 2.2)',
             ),
             (
-                "(column(CHANNEL_ID) IS NULL) AND (column(CHANNEL_ID) IS NOT NULL)",
-                '("CHANNEL_ID" IS NULL AND "CHANNEL_ID" IS NOT NULL)',
+                "(column(ID) IS NULL) AND (column(ID) IS NOT NULL)",
+                '("ID" IS NULL AND "ID" IS NOT NULL)',
             ),
             (
-                "(column(CHANNEL_ID) is null) AND (column(CHANNEL_ID) is not null)",
-                '("CHANNEL_ID" IS NULL AND "CHANNEL_ID" IS NOT NULL)',
+                "(column(ID) is null) AND (column(ID) is not null)",
+                '("ID" IS NULL AND "ID" IS NOT NULL)',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(1234567890123456789012345))",
-                '"CHANNEL_ID" = 1234567890123456789012345',
+                "(column(ID) = numeric(1234567890123456789012345))",
+                '"ID" = 1234567890123456789012345',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(-1234567890123456789012345))",
-                '"CHANNEL_ID" = -1234567890123456789012345',
+                "(column(ID) = numeric(-1234567890123456789012345))",
+                '"ID" = -1234567890123456789012345',
             ),
             (
-                "(column(channel_id) = numeric(0.00000000000000000001))",
-                '"CHANNEL_ID" = 0.00000000000000000001',
+                "(column(id) = numeric(0.00000000000000000001))",
+                '"ID" = 0.00000000000000000001',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(-0.00000000000000000001))",
-                '"CHANNEL_ID" = -0.00000000000000000001',
+                "(column(ID) = numeric(-0.00000000000000000001))",
+                '"ID" = -0.00000000000000000001',
             ),
             (
-                "(column(CHANNEL_ID) in (numeric(-10),numeric(0),numeric(10)))",
-                '"CHANNEL_ID" IN (-10, 0, 10)',
+                "(column(ID) in (numeric(-10),numeric(0),numeric(10)))",
+                '"ID" IN (-10, 0, 10)',
             ),
             (
-                'column(CHANNEL_DESC) = string("Internet")',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                'column(TXN_DESC) = string("Internet")',
+                "\"TXN_DESC\" = 'Internet'",
             ),
             (
-                '(column(CHANNEL_DESC) = string("Internet"))',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                '(column(TXN_DESC) = string("Internet"))',
+                "\"TXN_DESC\" = 'Internet'",
             ),
             (
-                '(column(ALIAS.CHANNEL_DESC) = string("Internet"))',
-                '"ALIAS"."CHANNEL_DESC" = \'Internet\'',
+                '(column(ALIAS.TXN_DESC) = string("Internet"))',
+                '"ALIAS"."TXN_DESC" = \'Internet\'',
             ),
             (
-                'column(CHANNEL_DESC) = string("column(CHANNEL_DESC)")',
-                "\"CHANNEL_DESC\" = 'column(CHANNEL_DESC)'",
+                'column(TXN_DESC) = string("column(TXN_DESC)")',
+                "\"TXN_DESC\" = 'column(TXN_DESC)'",
             ),
             (
-                'column(CHANNEL_DESC) NOT IN (string("A"),string("B"),string("C"))',
-                "\"CHANNEL_DESC\" NOT IN ('A', 'B', 'C')",
+                'column(TXN_DESC) NOT IN (string("A"),string("B"),string("C"))',
+                "\"TXN_DESC\" NOT IN ('A', 'B', 'C')",
             ),
             (
-                '(column(CHANNEL_DESC) = string("Internet"))',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                '(column(TXN_DESC) = string("Internet"))',
+                "\"TXN_DESC\" = 'Internet'",
             ),
         ]
 
@@ -264,7 +264,7 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
     def get_test_table_owner(self, expected_schema: str, table_name: str) -> str:
         raise NotImplementedError("MSSQL get_test_table_owner() not yet implemented")
 
-    def gl_type_mapping_generated_table_col_specs(
+    def goe_type_mapping_generated_table_col_specs(
         self,
         max_backend_precision,
         max_backend_scale,
@@ -273,7 +273,7 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         ascii_only=False,
     ):
         raise NotImplementedError(
-            "MSSQL gl_type_mapping_generated_table_col_specs() not yet implemented"
+            "MSSQL goe_type_mapping_generated_table_col_specs() not yet implemented"
         )
 
     def host_compare_sql_projection(self, column_list: list) -> str:
@@ -363,7 +363,11 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         )
 
     def sales_based_fact_late_arriving_data_sql(
-        self, schema: str, table_name: str, time_id_literal: str
+        self,
+        schema: str,
+        table_name: str,
+        time_id_literal: str,
+        channel_id_literal: int = 1,
     ):
         raise NotImplementedError(
             "MSSQL sales_based_fact_late_arriving_data_sql() pending implementation"
@@ -398,6 +402,20 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
     ) -> list:
         raise NotImplementedError(
             "MSSQL sales_based_list_fact_late_arriving_data_sql() pending implementation"
+        )
+
+    def sales_based_multi_col_fact_create_ddl(
+        self, schema: str, table_name: str, maxval_partition=False
+    ) -> list:
+        raise NotImplementedError(
+            "MSSQL sales_based_multi_col_fact_create_ddl() not implemented"
+        )
+
+    def sales_based_subpartitioned_fact_ddl(
+        self, schema: str, table_name: str, top_level="LIST", rowdependencies=False
+    ) -> list:
+        raise NotImplementedError(
+            "MSSQL sales_based_subpartitioned_fact_ddl() not implemented"
         )
 
     def select_grant_exists(

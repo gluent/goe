@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ offload_logic: Compare SRC and DST "storage objects" and generate symmetric difference
-    
+
     LICENSE_TEXT
 """
 
@@ -9,7 +9,7 @@ import re
 
 from itertools import groupby
 
-from goe.util.config_file import GluentRemoteConfig, SECTION_TYPE_S3, SECTION_TYPE_HDFS
+from goe.util.config_file import GOERemoteConfig, SECTION_TYPE_S3, SECTION_TYPE_HDFS
 from goe.util.misc_functions import end_by, to_str
 
 from goe.cloud.s3_store import S3Store
@@ -144,7 +144,7 @@ class XferSetupRaw(object):
         for s in target:
             if s not in source:
                 target_s = target[s]
-                target_s['name'] = end_by(self.target_url, '/') + s 
+                target_s['name'] = end_by(self.target_url, '/') + s
                 source_s = {'name': end_by(self.source_url, '/') + s}
                 result.append(
                     {
@@ -258,7 +258,7 @@ class XferSetupRaw(object):
 	        'target' is stripped '2 directories up' (typically, to 'offload_bucket')
 	        'source' is stripped '1 directory up' (typicallly, to 'timestamp')
 	    	     and then 'grouped by' target
-       
+
 	    This is a bit of a hack
 	    to force semi-efficient distcp sync of only relevant files,
 	    while not making 'single file' distcp runs
@@ -363,7 +363,7 @@ class XferSetupRaw(object):
 
     @property
     def offloadable_distcp(self):
-        """ Return offloadable difference suitable to 'file tree' distcp copies 
+        """ Return offloadable difference suitable to 'file tree' distcp copies
 
             Specifically, a list of:
             ([source key1, source key2, ...], target) tuples
@@ -429,7 +429,7 @@ class XferSetupRaw(object):
 
     @property
     def deletable_distcp(self):
-        """ Return deletable difference suitable to 'file tree' distcp copies 
+        """ Return deletable difference suitable to 'file tree' distcp copies
 
             Specifically, a list of:
             ([source key1, source key2, ...], target) tuples
@@ -538,10 +538,10 @@ class XferSetup(XferSetupRaw):
         """ CONSTRUCTOR
 
         """
-        assert source and target and source_db_table and (not cfg or isinstance(cfg, GluentRemoteConfig))
+        assert source and target and source_db_table and (not cfg or isinstance(cfg, GOERemoteConfig))
 
         # Configuration object
-        self._cfg = cfg or GluentRemoteConfig()
+        self._cfg = cfg or GOERemoteConfig()
 
         # Source/target sections, their types, components etc
         self._source_section_name = source
@@ -573,7 +573,7 @@ class XferSetup(XferSetupRaw):
                 'type': s3, hdfs...,
                 'db_path_suffix': ...,
                 'base_url': url adjusted for 'distcp', based on type,
-                s3: {'bucket': ..., 'prefix': ...} 
+                s3: {'bucket': ..., 'prefix': ...}
                 hdfs: {'webhdfs_url': ..., 'root': ...}
             }
         """
@@ -629,19 +629,19 @@ class XferSetup(XferSetupRaw):
     def _parse_section_hdfs(self, section):
         """ Validates HDFS section and parses it into: webhdfs_url, root, base_url
 
-            i.e.: 
+            i.e.:
 
             [<section>]
 
-            hdfs_root: /user/gluent/offload
+            hdfs_root: /user/goe/offload
             hdfs_url: hdfs://localhost:8020
             webhdfs_url: http://localhost:50070
 
-            into: 
+            into:
             {
-                webhdfs_url: http://localhost:50070, 
-                root: /user/gluent/offload,
-                base_url: hdfs://localhost:8020/user/gluent/offload
+                webhdfs_url: http://localhost:50070,
+                root: /user/goe/offload,
+                base_url: hdfs://localhost:8020/user/goe/offload
             }
         """
         assert self._cfg
@@ -650,7 +650,7 @@ class XferSetup(XferSetupRaw):
         for component in ('hdfs_root', 'hdfs_url', 'webhdfs_url'):
             if not self._cfg.has_option(section, component):
                 raise OffloadLogicException("Required components: '%s' is missing in HDFS section: %s" % \
-                    (component, section)) 
+                    (component, section))
 
         hdfs_root = self._cfg.get(section, 'hdfs_root')
         if not hdfs_root.startswith('/'):
@@ -678,14 +678,14 @@ class XferSetup(XferSetupRaw):
 
             [<section>]
 
-            s3_bucket: gluent.backup
-            s3_prefix: user/gluent/offload
+            s3_bucket: goe.backup
+            s3_prefix: user/goe/offload
 
             into:
             {
-                bucket: gluent.backup
-                prefix: user/gluent/offload
-                base_url: s3n://gluent.backup/user/gluent/offload
+                bucket: goe.backup
+                prefix: user/goe/offload
+                base_url: s3n://goe.backup/user/goe/offload
             }
         """
         assert self._cfg
@@ -806,7 +806,7 @@ if __name__ == "__main__":
     import sys
     import inspect
 
-    from goe.util.misc_functions import set_gluentlib_logging, options_list_to_namespace
+    from goe.util.misc_functions import set_goelib_logging, options_list_to_namespace
 
     def usage(prog_name):
         print("%s: property src src_db_table dst dst_db_table [lite=True|False] [debug level]" % prog_name)
@@ -822,14 +822,14 @@ if __name__ == "__main__":
         log_level = sys.argv[-1:][0].upper()
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level = 'CRITICAL'
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         prop, source, source_db_table, destination, destination_db_table = sys.argv[1:6]
         args = [_ for _ in sys.argv[6:] if _.upper() != log_level]
         user_options=vars(options_list_to_namespace(args))
         lite=user_options.get('lite', False)
 
-        setup = XferSetup(source, destination, source_db_table, destination_db_table, GluentRemoteConfig())
+        setup = XferSetup(source, destination, source_db_table, destination_db_table, GOERemoteConfig())
         setup.evaluate(lite=lite)
 
         obj = getattr(setup, prop)

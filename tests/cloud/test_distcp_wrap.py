@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" Test module for gluentlib.cloud.distcp_wrap
+""" Test module for goelib.cloud.distcp_wrap
 """
 
 import unittest
@@ -21,15 +21,15 @@ class TestDistcpWrap(unittest.TestCase):
 
     def test_args_not_supplied(self):
         with self.assertRaises(TypeError):
-            self.distcp.prepare() 
+            self.distcp.prepare()
         with self.assertRaises(TypeError):
-            self.distcp.prepare(source='source') 
+            self.distcp.prepare(source='source')
         with self.assertRaises(AssertionError):
-            self.distcp.prepare(source='source', destination="") 
+            self.distcp.prepare(source='source', destination="")
         with self.assertRaises(TypeError):
-            self.distcp.prepare(destination='destination') 
+            self.distcp.prepare(destination='destination')
         with self.assertRaises(AssertionError):
-            self.distcp.prepare(source="", destination='destination') 
+            self.distcp.prepare(source="", destination='destination')
 
 
     def test_invalid_destinations(self):
@@ -67,10 +67,10 @@ class TestDistcpWrap(unittest.TestCase):
     def test_non_default_input(self):
         with DistcpWrap() as distcp:
             distcp.prepare(source="hdfs://valid/source", destination="s3n://valid/destination", \
-                user="gluent", update=False, delete=True)
+                user="goe", update=False, delete=True)
             self.assertEqual(distcp.source, "hdfs://valid/source")
             self.assertEqual(distcp.destination, "s3n://valid/destination")
-            self.assertEqual(distcp.user, "gluent")
+            self.assertEqual(distcp.user, "goe")
             self.assertFalse(distcp.update_flag)
             self.assertTrue(distcp.delete_flag)
 

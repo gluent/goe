@@ -6,17 +6,16 @@
 """
 
 import logging
-import random
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from typing import Optional, Union
 
 from goe.offload.column_metadata import (
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
 )
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
@@ -91,18 +90,18 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def _canonical_integer_precision(self, data_type):
         assert data_type
         precision_map = {
-            GLUENT_TYPE_INTEGER_1: 2,
-            GLUENT_TYPE_INTEGER_2: 4,
-            GLUENT_TYPE_INTEGER_4: 9,
-            GLUENT_TYPE_INTEGER_8: 18,
-            GLUENT_TYPE_INTEGER_38: 38,
+            GOE_TYPE_INTEGER_1: 2,
+            GOE_TYPE_INTEGER_2: 4,
+            GOE_TYPE_INTEGER_4: 9,
+            GOE_TYPE_INTEGER_8: 18,
+            GOE_TYPE_INTEGER_38: 38,
         }
         return precision_map.get(data_type)
 
     def _create_generated_test_table(self, schema, table_name, columns):
         """This method creates frontend objects. It is expected to be called from an SH_TEST connection
         and not an ADM or APP one.
-        columns: List of dicts of the format described in _gl_type_mapping_column_definitions() docstring.
+        columns: List of dicts of the format described in _goe_type_mapping_column_definitions() docstring.
         """
         column_list = [_["column"] for _ in columns]
         self._db_api.create_table(schema, table_name, column_list)
@@ -115,27 +114,27 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         supported_canonical_types=None,
         backend_max_test_column_count=None,
     ) -> list:
-        """Returns column definitions for the format described in _gl_type_mapping_column_definitions() docstring."""
-        if table_name == test_constants.GL_CHARS:
-            return self._gl_chars_column_definitions(
+        """Returns column definitions for the format described in _goe_type_mapping_column_definitions() docstring."""
+        if table_name == test_constants.GOE_CHARS:
+            return self._goe_chars_column_definitions(
                 ascii_only=ascii_only, all_chars_notnull=all_chars_notnull
             )
-        elif table_name == test_constants.GL_TYPES:
-            return self._gl_types_column_definitions(
+        elif table_name == test_constants.GOE_TYPES:
+            return self._goe_types_column_definitions(
                 ascii_only=ascii_only,
                 all_chars_notnull=all_chars_notnull,
                 supported_canonical_types=supported_canonical_types,
                 include_interval_columns=True,
             )
-        elif table_name == test_constants.GL_TYPES_QI:
-            return self._gl_types_column_definitions(
+        elif table_name == test_constants.GOE_TYPES_QI:
+            return self._goe_types_column_definitions(
                 ascii_only=ascii_only,
                 all_chars_notnull=all_chars_notnull,
                 supported_canonical_types=supported_canonical_types,
                 include_interval_columns=False,
             )
-        elif table_name == test_constants.GL_WIDE:
-            return self._gl_wide_column_definitions(
+        elif table_name == test_constants.GOE_WIDE:
+            return self._goe_wide_column_definitions(
                 ascii_only=ascii_only,
                 all_chars_notnull=all_chars_notnull,
                 backend_max_test_column_count=backend_max_test_column_count,
@@ -147,15 +146,15 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     def _generated_table_row_count(self, table_name) -> int:
         """Allows fluctuations in desired row count by frontend. Individual frontends can override."""
-        if table_name == test_constants.GL_CHARS:
+        if table_name == test_constants.GOE_CHARS:
             return 512
-        elif table_name == test_constants.GL_TYPE_MAPPING:
+        elif table_name == test_constants.GOE_TYPE_MAPPING:
             return 100
-        elif table_name == test_constants.GL_TYPES:
+        elif table_name == test_constants.GOE_TYPES:
             return 10000
-        elif table_name == test_constants.GL_TYPES_QI:
+        elif table_name == test_constants.GOE_TYPES_QI:
             return 100
-        elif table_name == test_constants.GL_WIDE:
+        elif table_name == test_constants.GOE_WIDE:
             return 100
         else:
             raise NotImplementedError(
@@ -175,7 +174,7 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _gl_type_mapping_column_definitions(
+    def _goe_type_mapping_column_definitions(
         self,
         max_backend_precision,
         max_backend_scale,
@@ -185,7 +184,7 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         supported_canonical_types=None,
         filter_column=None,
     ):
-        """Returns a dict of dicts defining columns for GL_TYPE_MAPPING test table.
+        """Returns a dict of dicts defining columns for GOE_TYPE_MAPPING test table.
         Supported dictionary keys:
             {'column': ColumnObject(...),                        # Column object used to create the frontend table
              'expected_canonical_column': CanonicalColumn(...),  # Expected canonical column
@@ -199,13 +198,13 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def _gl_chars_column_definitions(
+    def _goe_chars_column_definitions(
         self, ascii_only=False, all_chars_notnull=False, supported_canonical_types=None
     ) -> list:
         pass
 
     @abstractmethod
-    def _gl_types_column_definitions(
+    def _goe_types_column_definitions(
         self,
         ascii_only=False,
         all_chars_notnull=False,
@@ -215,7 +214,7 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _gl_wide_column_definitions(
+    def _goe_wide_column_definitions(
         self, ascii_only=False, all_chars_notnull=False, supported_canonical_types=None
     ) -> list:
         pass
@@ -278,7 +277,7 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         self._debug(t.show())
         self.collect_table_stats(schema, table_name)
 
-    def create_gl_type_mapping(
+    def create_goe_type_mapping(
         self,
         schema: str,
         ascii_only=False,
@@ -288,12 +287,12 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         max_decimal_integral_magnitude=None,
         supported_canonical_types=None,
     ):
-        """Create and populate GL_TYPE_MAPPING"""
-        table_name = test_constants.GL_TYPE_MAPPING
+        """Create and populate GOE_TYPE_MAPPING"""
+        table_name = test_constants.GOE_TYPE_MAPPING
         self._log(f"Dropping {schema}.{table_name}")
         self.drop_table(schema, table_name)
         self._log(f"Creating {schema}.{table_name}")
-        column_spec_dict = self._gl_type_mapping_column_definitions(
+        column_spec_dict = self._goe_type_mapping_column_definitions(
             max_backend_precision=max_backend_precision,
             max_backend_scale=max_backend_scale,
             max_decimal_integral_magnitude=max_decimal_integral_magnitude,
@@ -433,13 +432,13 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def get_view_ddl(self, schema, view_name):
         return self._db_api.get_object_ddl(schema, view_name, GET_DDL_TYPE_VIEW)
 
-    def gl_type_mapping_expected_canonical_cols(
+    def goe_type_mapping_expected_canonical_cols(
         self, max_backend_precision, max_backend_scale, max_decimal_integral_magnitude
     ):
         """Return a list of tuples containing expected column/type mappings and any user override, e.g.:
         [(column name, CanonicalColumn(...), {'integer_1_columns_csv': 'column name'}), ... ]
         """
-        definitions = self._gl_type_mapping_column_definitions(
+        definitions = self._goe_type_mapping_column_definitions(
             max_backend_precision, max_backend_scale, max_decimal_integral_magnitude
         )
         canonical_type_mappings = []
@@ -454,11 +453,11 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
             )
         return canonical_type_mappings
 
-    def gl_type_mapping_offload_options(
+    def goe_type_mapping_offload_options(
         self, max_backend_precision, max_backend_scale, max_decimal_integral_magnitude
     ) -> dict:
         """Return a dictionary of offload datatype control options/values for testing purposes."""
-        definitions = self._gl_type_mapping_column_definitions(
+        definitions = self._goe_type_mapping_column_definitions(
             max_backend_precision, max_backend_scale, max_decimal_integral_magnitude
         )
         offload_options = {"data_sample_pct": 0}
@@ -476,7 +475,7 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
                         offload_options[opt] = opts[opt]
         return offload_options
 
-    def gl_wide_max_test_column_count(self):
+    def goe_wide_max_test_column_count(self):
         return 800
 
     def max_table_name_length(self):
@@ -501,20 +500,20 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def canonical_date_supported(self):
         return self._db_api.canonical_date_supported()
 
-    def gluent_join_pushdown_supported(self):
-        return self._db_api.gluent_join_pushdown_supported()
+    def goe_join_pushdown_supported(self):
+        return self._db_api.goe_join_pushdown_supported()
 
-    def gluent_lpa_supported(self):
-        return self._db_api.gluent_lpa_supported()
+    def goe_lpa_supported(self):
+        return self._db_api.goe_lpa_supported()
 
-    def gluent_multi_column_incremental_key_supported(self) -> bool:
-        return self._db_api.gluent_multi_column_incremental_key_supported()
+    def goe_multi_column_incremental_key_supported(self) -> bool:
+        return self._db_api.goe_multi_column_incremental_key_supported()
 
-    def gluent_offload_status_report_supported(self):
-        return self._db_api.gluent_offload_status_report_supported()
+    def goe_offload_status_report_supported(self):
+        return self._db_api.goe_offload_status_report_supported()
 
-    def gluent_schema_sync_supported(self) -> bool:
-        return self._db_api.gluent_schema_sync_supported()
+    def goe_schema_sync_supported(self) -> bool:
+        return self._db_api.goe_schema_sync_supported()
 
     def hybrid_schema_supported(self):
         return self._db_api.hybrid_schema_supported()
@@ -534,6 +533,9 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     def nan_supported(self) -> bool:
         return self._db_api.nan_supported()
+
+    def nanoseconds_supported(self) -> bool:
+        return self._db_api.nanoseconds_supported()
 
     def schema_evolution_supported(self) -> bool:
         return self._db_api.schema_evolution_supported()
@@ -599,18 +601,18 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def drop_table(self, schema, table_name):
-        """Obviously this is dangerous, that's why it is in this TestIngApi only."""
+        """Obviously this is dangerous, that's why it is in this TestingApi only."""
 
     @abstractmethod
-    def expected_channels_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate
+    def expected_std_dim_offload_predicates(self):
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate
         tuple format:
             (predicate_dsl, expected_sql)
         """
 
     @abstractmethod
     def expected_sales_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate.
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate.
         tuple format:
             (predicate_dsl, expected_sql, expected_bind_sql, expected_binds)
         or if binds are not relevant:
@@ -635,7 +637,7 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         """Return the schema of a test table. Useful because in Teamcity test schemas can have v tag appended."""
 
     @abstractmethod
-    def gl_type_mapping_generated_table_col_specs(
+    def goe_type_mapping_generated_table_col_specs(
         self,
         max_backend_precision,
         max_backend_scale,
@@ -721,7 +723,11 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def sales_based_fact_late_arriving_data_sql(
-        self, schema: str, table_name: str, time_id_literal: str
+        self,
+        schema: str,
+        table_name: str,
+        time_id_literal: str,
+        channel_id_literal: int = 1,
     ) -> list:
         pass
 
@@ -744,6 +750,18 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def sales_based_list_fact_add_partition_ddl(
         self, schema: str, table_name: str, next_ym_override: Optional[tuple] = None
+    ) -> list:
+        pass
+
+    @abstractmethod
+    def sales_based_multi_col_fact_create_ddl(
+        self, schema: str, table_name: str, maxval_partition=False
+    ) -> list:
+        pass
+
+    @abstractmethod
+    def sales_based_subpartitioned_fact_ddl(
+        self, schema: str, table_name: str, top_level="LIST", rowdependencies=False
     ) -> list:
         pass
 

@@ -13,7 +13,7 @@ from anyio.abc import CancelScope
 from pydantic import UUID3
 from redis.exceptions import RedisError
 
-# Gluent
+# GOE
 from goe.listener import utils
 from goe.listener.config import settings
 from goe.listener.services.system import system
@@ -86,7 +86,7 @@ class ListenerHeartbeat(object):
         while cls._running:
             try:
                 await utils.cache.set(
-                    f"gluent:listener:endpoints:{cls.group_id}:{cls.endpoint_id}",
+                    f"goe:listener:endpoints:{cls.group_id}:{cls.endpoint_id}",
                     f"{'https' if settings.ssl_enabled else 'http'}://{cls.local_ip}:{settings.port}",
                     settings.heartbeat_interval * 2,
                 )

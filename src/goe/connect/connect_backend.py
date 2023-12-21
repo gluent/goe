@@ -25,13 +25,12 @@ from goe.connect.connect_functions import (
     warning,
 )
 from goe.filesystem.cli_hdfs import CliHdfs
-from goe.filesystem.gluent_dfs import (
+from goe.filesystem.goe_dfs import (
     OFFLOAD_NON_HDFS_FS_SCHEMES,
     get_scheme_from_location_uri,
     uri_component_split,
 )
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
-from goe.filesystem.web_hdfs import WebHdfs
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import BackendApiConnectionException
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
 from goe.offload.factory.backend_api_factory import backend_api_factory
@@ -39,8 +38,8 @@ from goe.offload.offload_constants import (
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
     BACKEND_DISTRO_GCP,
 )
-from goe.util.better_impyla import BetterImpylaException
-from goe.gluent import get_log_fh, verbose
+#from goe.util.better_impyla import BetterImpylaException
+from goe.goe import get_log_fh, verbose
 
 
 def static_backend_name(orchestration_config):
@@ -203,43 +202,46 @@ def test_webhdfs_config(orchestration_config, messages):
         )
         detail("Utilizing WebHDFS will reduce latency of Offload operations")
         warning(test_name)
-    else:
-        webhdfs_security = (
-            ["Kerberos"] if orchestration_config.kerberos_service else []
-        ) + ([] if orchestration_config.webhdfs_verify_ssl is None else ["SSL"])
-        webhdfs_security = (
-            ("using " + " and ".join(webhdfs_security))
-            if webhdfs_security
-            else "unsecured"
-        )
-        detail(
-            "HDFS operations will use WebHDFS (%s:%s) %s"
-            % (
-                orchestration_config.webhdfs_host,
-                orchestration_config.webhdfs_port,
-                webhdfs_security,
-            )
-        )
-        success(test_name)
+        return
 
-        hdfs = WebHdfs(
+    webhdfs_security = (
+        ["Kerberos"] if orchestration_config.kerberos_service else []
+    ) + ([] if orchestration_config.webhdfs_verify_ssl is None else ["SSL"])
+    webhdfs_security = (
+        ("using " + " and ".join(webhdfs_security))
+        if webhdfs_security
+        else "unsecured"
+    )
+    detail(
+        "HDFS operations will use WebHDFS (%s:%s) %s"
+        % (
             orchestration_config.webhdfs_host,
             orchestration_config.webhdfs_port,
-            orchestration_config.hadoop_ssh_user,
-            True if orchestration_config.kerberos_service else False,
-            orchestration_config.webhdfs_verify_ssl,
-            dry_run=not orchestration_config.execute,
-            messages=messages,
-            db_path_suffix=orchestration_config.hdfs_db_path_suffix,
-            hdfs_data=orchestration_config.hdfs_data,
+            webhdfs_security,
         )
-        test_hdfs_dirs(
-            orchestration_config,
-            messages,
-            hdfs=hdfs,
-            test_host=orchestration_config.webhdfs_host,
-            service_name=TEST_HDFS_DIRS_SERVICE_WEBHDFS,
-        )
+    )
+    success(test_name)
+
+    # Lazy import of WebHdfs to avoid pulling in dependencies unnecessarily.
+    from goe.filesystem.web_hdfs import WebHdfs
+    hdfs = WebHdfs(
+        orchestration_config.webhdfs_host,
+        orchestration_config.webhdfs_port,
+        orchestration_config.hadoop_ssh_user,
+        True if orchestration_config.kerberos_service else False,
+        orchestration_config.webhdfs_verify_ssl,
+        dry_run=not orchestration_config.execute,
+        messages=messages,
+        db_path_suffix=orchestration_config.hdfs_db_path_suffix,
+        hdfs_data=orchestration_config.hdfs_data,
+    )
+    test_hdfs_dirs(
+        orchestration_config,
+        messages,
+        hdfs=hdfs,
+        test_host=orchestration_config.webhdfs_host,
+        service_name=TEST_HDFS_DIRS_SERVICE_WEBHDFS,
+    )
 
 
 def test_sentry_privs(orchestration_config, backend_api, messages):
@@ -284,7 +286,7 @@ def test_sentry_privs(orchestration_config, backend_api, messages):
                         if chk_uri.startswith((r[uri_pos], hdfs_path)):
                             uris_left_to_check.remove(chk_uri)
                             detail(
-                                "Gluent target URI %s is covered by this privilege"
+                                "GOE target URI %s is covered by this privilege"
                                 % chk_uri
                             )
     except BetterImpylaException as exc:
@@ -388,7 +390,7 @@ def test_ranger_privs(orchestration_config, backend_api, messages):
         # We have ALL ON SERVER so can do what we need to
         detail("Able to perform all required operations")
     else:
-        # Can we create Gluent Data Platform databases
+        # Can we create GOE databases
         detail("\nDatabase Creation")
         db_required = [
             {"privilege": "create", "database": "*", "table": "*", "column": "*"}
@@ -416,7 +418,7 @@ def test_ranger_privs(orchestration_config, backend_api, messages):
     if passed:
         success(test_name)
     else:
-        test_hint = "Refer to Gluent Data Platform documentation for the required Ranger privileges"
+        test_hint = "Refer to GOE documentation for the required Ranger privileges"
         warning(test_name, test_hint)
 
 

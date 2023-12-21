@@ -37,13 +37,13 @@ class BackendHiveTable(BackendHadoopTable):
     """
 
     def __init__(self, db_name, table_name, backend_type, orchestration_options, messages, orchestration_operation=None,
-                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None):
+                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None, do_not_connect=False):
         """ CONSTRUCTOR
         """
         super(BackendHiveTable, self).__init__(db_name, table_name, backend_type, orchestration_options, messages,
                                                orchestration_operation=orchestration_operation,
                                                hybrid_metadata=hybrid_metadata, data_gov_client=data_gov_client,
-                                               dry_run=dry_run, existing_backend_api=existing_backend_api)
+                                               dry_run=dry_run, existing_backend_api=existing_backend_api, do_not_connect=do_not_connect)
 
         logger.info('BackendHiveTable setup: (%s, %s)' % (db_name, table_name))
         if dry_run:
@@ -134,7 +134,7 @@ class BackendHiveTable(BackendHadoopTable):
     def _tzoffset_to_timestamp_sql_expression(self, col_name):
         """ Hive tzoffset SQL expression """
         udf_db_prefix = self.enclose_identifier(self._udf_db) + '.' if self._udf_db else ''
-        return '%(udf_db_prefix)sGLUENT_TZOFFSET_TO_TIMESTAMP(%(tstz)s)' % {'udf_db_prefix': udf_db_prefix, 'tstz': col_name}
+        return '%(udf_db_prefix)sGOE_TZOFFSET_TO_TIMESTAMP(%(tstz)s)' % {'udf_db_prefix': udf_db_prefix, 'tstz': col_name}
 
     def _validate_staged_data_query_options(self):
         """ Hive override facilitating Load Table stats.

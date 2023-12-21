@@ -17,9 +17,9 @@ from typing import Callable, Optional
 from goe.data_governance.hadoop_data_governance import data_governance_register_new_db_step, \
     data_governance_register_new_table_step, \
     get_data_governance_register
-from goe.data_governance.hadoop_data_governance_constants import DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_JOIN_VIEW, \
-    DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_CONV_VIEW, DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_OFFLOAD_DB
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
+from goe.data_governance.hadoop_data_governance_constants import DATA_GOVERNANCE_GOE_OBJECT_TYPE_JOIN_VIEW, \
+    DATA_GOVERNANCE_GOE_OBJECT_TYPE_CONV_VIEW, DATA_GOVERNANCE_GOE_OBJECT_TYPE_OFFLOAD_DB
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import VALID_REMOTE_DB_TYPES
 from goe.offload.column_metadata import ColumnMetadataInterface, ColumnBucketInfo, ColumnPartitionInfo, \
     get_column_names, get_partition_columns, invalid_column_list_message, \
@@ -34,7 +34,7 @@ from goe.offload.offload_functions import get_hybrid_threshold_clauses, hvs_to_b
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 from goe.orchestration import command_steps, orchestration_constants
-from goe.util.better_impyla import HADOOP_TYPE_STRING
+from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
 
 
@@ -56,7 +56,7 @@ TYPICAL_DATE_GRANULARITY_TERMS = {PART_COL_GRANULARITY_YEAR: 'YEAR',
                                   PART_COL_GRANULARITY_DAY: 'DAY'}
 
 # Used for test assertions
-BACKEND_DB_COMMENT_TEMPLATE = '{db_name_type} {db_name_label} for Gluent Data Platform'
+BACKEND_DB_COMMENT_TEMPLATE = '{db_name_type} {db_name_label} for GOE'
 CAST_VALIDATION_EXCEPTION_TEXT = 'Data type conversion issue in load data'
 DATA_VALIDATION_SCALE_EXCEPTION_TEXT = 'Include --allow-decimal-scale-rounding option to proceed with the offload'
 DATA_VALIDATION_NOT_NULL_EXCEPTION_TEXT = 'NOT NULL column has NULL values'
@@ -88,7 +88,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     """
 
     def __init__(self, db_name, table_name, backend_type, orchestration_options, messages, orchestration_operation=None,
-                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None):
+                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None, do_not_connect=False):
         assert db_name and table_name
         assert orchestration_options
         assert backend_type in VALID_REMOTE_DB_TYPES, '%s not in %s' % (backend_type, VALID_REMOTE_DB_TYPES)
@@ -111,7 +111,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         if existing_backend_api:
             self._db_api = existing_backend_api
         else:
-            self._db_api = backend_api_factory(backend_type, self._connection_options, self._messages, dry_run=dry_run)
+            self._db_api = backend_api_factory(backend_type, self._connection_options, self._messages, dry_run=dry_run, do_not_connect=do_not_connect)
         self._dfs_client = None
         self._backend_dfs = None
 
@@ -140,7 +140,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         # Pickup some orchestration_operation/offload_options attributes
         self._offload_staging_format = getattr(self._orchestration_config, 'offload_staging_format', None)
         self._udf_db = getattr(self._orchestration_config, 'udf_db', None)
-        self._trunc_name_hash_chars = getattr(self._orchestration_config, 'hash_chars', None)
         # If orchestration_operation is not set then we are not doing anything significant by way of offload/present
         self._ipa_predicate_type = None
         self._offload_distribute_enabled = None
@@ -194,6 +193,9 @@ class BackendTableInterface(metaclass=ABCMeta):
     # PRIVATE METHODS
     ###########################################################################
 
+    def _alter_table_sort_columns(self):
+        return self._db_api.alter_sort_columns(self.db_name, self._base_table_name, self._sort_columns or [])
+
     def _cast_validation_columns(self, staging_columns: list):
         """ Method returning columns and casts to be checked. That's both data type conversion
             casts and those used to generate synthetic partition columns.
@@ -219,7 +221,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         return {}
 
     def _check_partition_info_function(self, source_backend_column, partition_info):
-        """ Validate that any partition function is compatible with GDP and compatible with the source column.
+        """ Validate that any partition function is compatible with GOE and compatible with the source column.
             Returns data type returned by the function.
         """
         if not partition_info.function:
@@ -281,9 +283,9 @@ class BackendTableInterface(metaclass=ABCMeta):
                                properties={'location': location, 'transient': True})
 
     def _derive_partition_info(self, column, partition_columns):
-        """ Derive Gluent partition attributes from an existing partition column.
-            A Gluent partition column can come in two forms:
-                1) A synthetic GL_PART_ column. We rely on pattern matching for these.
+        """ Derive GOE partition attributes from an existing partition column.
+            A GOE partition column can come in two forms:
+                1) A synthetic GOE_PART_ column. We rely on pattern matching for these.
                 2) A genuine backend column that is both a real column and a partition column.
                    We rely on backend metadata for these.
             We accept partition_columns as a parameter because this may also need to work from
@@ -356,7 +358,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         return partition_info
 
     def _derive_bucket_info(self, backend_column):
-        """ Derive Gluent bucket attributes from an existing partition column """
+        """ Derive GOE bucket attributes from an existing partition column """
         assert isinstance(backend_column, ColumnMetadataInterface)
         bucket_info = None
         return bucket_info
@@ -442,8 +444,8 @@ class BackendTableInterface(metaclass=ABCMeta):
             hence why it is hidden.
             Returns a list of filter clauses, each containing the SQL expression used to identify the chunk and a
             literal for the chunk, e.g.:
-               ['GLUENT_BUCKET(CAST(`ID` AS DECIMAL(38,0)),2) = 0',
-                'GLUENT_BUCKET(CAST(`ID` AS DECIMAL(38,0)),2) = 1']
+               ['GOE_BUCKET(CAST(`ID` AS DECIMAL(38,0)),2) = 0',
+                'GOE_BUCKET(CAST(`ID` AS DECIMAL(38,0)),2) = 1']
         """
         chunk_col = [_ for _ in self.get_partition_columns()
                      if _.partition_info
@@ -1119,7 +1121,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         return self._backend_type
 
     def check_partition_function(self, db_name, udf_name):
-        """ Check that a partition function is compatible with GDP.
+        """ Check that a partition function is compatible with GOE.
             i.e. it has only a single argument, is not overloaded and returns a supported data type.
             Returns the valid UDFs details for convenience.
         """
@@ -1620,14 +1622,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         if data_gov_client:
             self.set_data_gov_client(data_gov_client)
 
-    def sample_table_stats_partitionwise(self, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        return self._db_api.sample_table_stats_partitionwise(self.db_name, self._base_table_name, sample_stats_perc,
-                                                             num_bytes_fudge, as_dict=as_dict)
-
-    def sample_table_stats_scan(self, as_dict=False, sample_perc=None):
-        return self._db_api.sample_table_stats_scan(self.db_name, self._base_table_name,
-                                                    as_dict=as_dict, sample_perc=sample_perc)
-
     def set_column_stats(self, new_column_stats, ndv_cap, num_null_factor):
         self._db_api.set_column_stats(self.db_name, self._base_table_name, new_column_stats, ndv_cap, num_null_factor)
 
@@ -1684,7 +1678,7 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def to_canonical_column_with_overrides(self, backend_column, canonical_overrides,
                                            detect_sizes=False, max_rdbms_time_scale=None):
-        """ Translate a backend column to an internal Gluent column but only after considering user overrides
+        """ Translate a backend column to an internal GOE column but only after considering user overrides
             canonical_overrides: Brings user defined overrides into play, they take precedence over default rules
             detect_sizes: Interrogates columns of certain types to check on size of data
         """
@@ -1792,9 +1786,9 @@ class BackendTableInterface(metaclass=ABCMeta):
     # PUBLIC METHODS - HIGH LEVEL STEP METHODS AND SUPPORTING ABSTRACT METHODS
     ###########################################################################
 
-    def alter_table_sort_columns(self):
+    def alter_table_sort_columns_step(self):
         def step_fn():
-            return self._db_api.alter_sort_columns(self.db_name, self._base_table_name, self._sort_columns or [])
+            return self._alter_table_sort_columns()
         return self._offload_step(command_steps.STEP_ALTER_TABLE, step_fn)
 
     def cleanup_staging_area_step(self):
@@ -1811,16 +1805,16 @@ class BackendTableInterface(metaclass=ABCMeta):
         if self.create_database_supported() and self._user_requested_create_backend_db:
             pre_register_data_gov_fn, post_register_data_gov_fn = get_data_governance_register(self._data_gov_client, \
                 lambda: data_governance_register_new_db_step(self.db_name, self._data_gov_client, self._messages,
-                                                             DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_OFFLOAD_DB,
+                                                             DATA_GOVERNANCE_GOE_OBJECT_TYPE_OFFLOAD_DB,
                                                              self._orchestration_config))
             pre_register_data_gov_fn()
             self._offload_step(command_steps.STEP_CREATE_DB, lambda: self.create_db())
             post_register_data_gov_fn()
 
-    def create_backend_table_step(self, gluent_object_type):
+    def create_backend_table_step(self, goe_object_type):
         pre_register_data_gov_fn, post_register_data_gov_fn = get_data_governance_register(self._data_gov_client, \
                 lambda: data_governance_register_new_table_step(self.db_name, self.table_name, self._data_gov_client,
-                                                                self._messages, gluent_object_type, self._orchestration_config))
+                                                                self._messages, goe_object_type, self._orchestration_config))
         pre_register_data_gov_fn()
         self._offload_step(command_steps.STEP_CREATE_TABLE, lambda: self.create_backend_table())
         post_register_data_gov_fn()
@@ -1916,20 +1910,20 @@ class BackendTableInterface(metaclass=ABCMeta):
     def create_database_supported(self):
         return self._db_api.create_database_supported()
 
-    def gluent_column_transformations_supported(self):
-        return self._db_api.gluent_column_transformations_supported()
+    def goe_column_transformations_supported(self):
+        return self._db_api.goe_column_transformations_supported()
 
-    def gluent_join_pushdown_supported(self):
-        return self._db_api.gluent_join_pushdown_supported()
+    def goe_join_pushdown_supported(self):
+        return self._db_api.goe_join_pushdown_supported()
 
-    def gluent_materialized_join_supported(self):
-        return self._db_api.gluent_materialized_join_supported()
+    def goe_materialized_join_supported(self):
+        return self._db_api.goe_materialized_join_supported()
 
-    def gluent_partition_functions_supported(self):
-        return self._db_api.gluent_partition_functions_supported()
+    def goe_partition_functions_supported(self):
+        return self._db_api.goe_partition_functions_supported()
 
-    def gluent_udfs_supported(self):
-        return self._db_api.gluent_udfs_supported()
+    def goe_udfs_supported(self):
+        return self._db_api.goe_udfs_supported()
 
     def incremental_update_supported(self):
         return self._db_api.incremental_update_supported()

@@ -16,7 +16,7 @@ from typing import Optional
 import cx_Oracle as cxo
 from numpy import datetime64
 
-# Gluent
+# GOE
 from goe.offload import offload_constants
 from goe.offload.column_metadata import match_table_column
 from goe.offload.frontend_api import (
@@ -208,6 +208,8 @@ class OracleFrontendApi(FrontendApiInterface):
         self._db_conn.module = FRONTEND_TRACE_MODULE
         self._db_conn.action = self._trace_action
         self._db_conn.outputtypehandler = self._connection_output_type_handler
+        # Ping updates the module/action in the session.
+        self._db_conn.ping()
         return made_new_connection
 
     def _create_table_sql_text(
@@ -414,7 +416,7 @@ class OracleFrontendApi(FrontendApiInterface):
             profile_dict = self._instrumentation_snap()
         t1 = datetime.now().replace(microsecond=0)
 
-        if self._dry_run and not_when_dry_running:
+        if (self._dry_run and not_when_dry_running) or self._db_conn is None:
             log_query()
             return None
 
@@ -543,8 +545,8 @@ class OracleFrontendApi(FrontendApiInterface):
     def _frontend_capabilities(self):
         return offload_constants.ORACLE_FRONTEND_CAPABILITIES
 
-    def _gdp_db_component_version(self):
-        logger.debug("Fetching GDP DB component version")
+    def _goe_db_component_version(self):
+        logger.debug("Fetching GOE DB component version")
         return self._execute_plsql_function("offload.version", return_type=str)
 
     def _get_ddl(

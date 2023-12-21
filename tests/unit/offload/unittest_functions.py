@@ -3,9 +3,6 @@
     Helper functions for other unit test modules.
 """
 
-import os
-from unittest import mock
-
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
@@ -13,8 +10,6 @@ from goe.offload.offload_constants import (
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
 )
-from goe.offload.offload_messages import OffloadMessages
-from goe.persistence.orchestration_metadata import OrchestrationMetadata
 
 
 def build_non_connecting_options(db_type):
@@ -64,24 +59,3 @@ def build_non_connecting_options(db_type):
             }
         )
     return OrchestrationConfig.from_dict(base_dict)
-
-
-def get_real_frontend_schema_and_table(
-    hybrid_view, orchestration_config, messages=None
-):
-    """Try to find an offloaded hybrid_view via metadata"""
-    if not messages:
-        messages = OffloadMessages()
-    for hybrid_schema in [get_default_test_user(hybrid=True), "SH_H"]:
-        metadata = OrchestrationMetadata.from_name(
-            hybrid_schema,
-            hybrid_view,
-            connection_options=orchestration_config,
-            messages=messages,
-        )
-        if metadata:
-            return metadata.offloaded_owner, metadata.offloaded_table
-    # We shouldn't get to here in a correctly configured environment
-    raise Exception(
-        f"{hybrid_view} test table is missing, please configure your environment"
-    )

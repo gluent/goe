@@ -86,13 +86,13 @@ class XferXfer(OffloadMessagesMixin, object):
                 client = self._get_client(section),
                 section = section,
                 cfg = self._cfg,
-                bucket = self._cfg.get(section, 's3_bucket'), 
+                bucket = self._cfg.get(section, 's3_bucket'),
                 prefix = "%s%s" % (end_by(self._cfg.get(section, 's3_prefix'), '/'), filename)
             )
         elif DST_HDFS == section_type:
             return HdfsXferFile(
                 client = self._get_client(section),
-                section = section, 
+                section = section,
                 cfg = self._cfg,
                 hdfs_path = "%s%s" % (end_by(self._cfg.get(section, 'hdfs_root'), '/'), filename)
             )
@@ -156,7 +156,7 @@ class XferXfer(OffloadMessagesMixin, object):
 
 
     def multicopy(self, copy_pairs, parallel=1, kill_on_first_error=False, force=False):
-        """ Destination agnostic "file copy" routine 
+        """ Destination agnostic "file copy" routine
             that accepts multiple "copy pairs" and copies them in parallel
 
             "copy pair": (source_obj, destination_obj)
@@ -171,7 +171,7 @@ class XferXfer(OffloadMessagesMixin, object):
 
         status = all(
             self._executor.execute_in_threads(
-                parallel, 
+                parallel,
                 (emit_job(job_id, file_item) for job_id, file_item in enumerate(copy_pairs)),
                 kill_on_first_error=kill_on_first_error
             )
@@ -205,9 +205,9 @@ class XferXfer(OffloadMessagesMixin, object):
 if __name__ == "__main__":
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging, options_list_to_namespace
+    from goe.util.misc_functions import set_goelib_logging, options_list_to_namespace
     from goe.offload.offload_messages import OffloadMessages
-    from goe.util.config_file import GluentRemoteConfig
+    from goe.util.config_file import GOERemoteConfig
 
     def usage(prog_name):
         print("usage: %s hdfs_section s3_section <file_name> [option=value ...] ['log_level']" % prog_name)
@@ -221,7 +221,7 @@ if __name__ == "__main__":
         log_level = sys.argv[-1:][0].upper()
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level = 'CRITICAL'
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         src, dst, filename = sys.argv[1:4]
         args = [_ for _ in sys.argv[4:] if _.upper() != log_level]
@@ -230,7 +230,7 @@ if __name__ == "__main__":
         if messages:
             messages = OffloadMessages(messages)
 
-        cfg = GluentRemoteConfig()
+        cfg = GOERemoteConfig()
 
         xfer = XferXfer(cfg, messages=messages)
         xfer.listcopy(src, dst, [filename])

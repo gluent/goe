@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ DistcpWrap: Abstraction over 'hadoop distcp'
-    
+
     LICENSE_TEXT
 """
 
@@ -64,7 +64,7 @@ class DistcpWrap(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._remove_source_file()
-    
+
 
     ###########################################################################
     # PRIVATE ROUTINES
@@ -91,7 +91,7 @@ class DistcpWrap(object):
         """ Create 'temporary file' with a list of files to copy
         """
 
-        temp_src = "%s/gluent.distcp.filelist.%s" % \
+        temp_src = "%s/goe.distcp.filelist.%s" % \
             (tempfile.gettempdir(), datetime.datetime.now().strftime("%Y.%m.%d.%H.%M.%S.%f"))
         # Saving it, so that we can remove it later
         self._tmp_src = temp_src
@@ -127,7 +127,7 @@ class DistcpWrap(object):
         if not dest_valid(destination, self.VALID_DESTINATIONS):
             raise DistcpWrapException("Destination: %s is invalid. Supported destinations: %s" % \
                 (destination, self.VALID_DESTINATIONS))
-        
+
 
     def _construct_distcp_command(self, source, destination, update, delete):
         """ Construct and return distcp command
@@ -153,7 +153,7 @@ class DistcpWrap(object):
         # Clean extra spaces
         cmd = re.sub(' +', ' ', cmd)
         logger.debug("Hadoop distcp command: %s" % cmd)
-      
+
         return cmd
 
 
@@ -224,16 +224,16 @@ class DistcpWrap(object):
 
             Both source and destination can be either hdfs or s3n
             i.e.
-                hdfs://localhost:8020/user/gluent/offload
-                hdfs://server1.domain:8020/user/gluent/offload
-                s3n://gluent.backup/user/gluent/backup
+                hdfs://localhost:8020/user/goe/offload
+                hdfs://server1.domain:8020/user/goe/offload
+                s3n://goe.backup/user/goe/backup
 
             'source' can either be a string, in which case it is treated as a 'source url'
                 or a list, in which case it is treated as a 'list of files to copy'
             Full path with 'type prefix' is expected for each 'file' in the list, i.e.:
 
-            hdfs://localhost:8020/user/gluent/offload/offload_bucket_id=0/data.0.parq
-            s3n://gluent.backup/user/gluent/backup/offload_bucket_id=0/data.0.parq
+            hdfs://localhost:8020/user/goe/offload/offload_bucket_id=0/data.0.parq
+            s3n://goe.backup/user/goe/backup/offload_bucket_id=0/data.0.parq
 
             or, if None, everything under <source> is copied
 
@@ -265,7 +265,7 @@ class DistcpWrap(object):
         self._dst = destination
         self._user = user
         self._update = update
-        self._delete = delete 
+        self._delete = delete
 
         # Construct distcp command
         self._cmd = self._construct_distcp_command(self._src, self._dst, self._update, self._delete)

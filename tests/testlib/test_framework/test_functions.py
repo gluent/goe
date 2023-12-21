@@ -5,11 +5,8 @@
 """
 
 import re
-import threading
-import time
 
-from goe.gluent import (
-    get_log_fh,
+from goe.goe import (
     get_log_fh_name,
     get_offload_options,
     get_options,
@@ -20,18 +17,11 @@ from goe.gluent import (
     verbose,
     vverbose,
 )
-from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.column_metadata import match_table_column
 from goe.offload.offload_constants import DBTYPE_ORACLE
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.util.misc_functions import substitute_in_same_case
-from tests.integration.test_functions import (
-    get_default_test_user,
-    get_default_test_user_pass,
-)
-from tests.integration.test_sets.stories.story_globals import STORY_SET_ALL
-from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )
@@ -39,63 +29,6 @@ from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
     frontend_testing_api_factory,
 )
 from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
-
-
-_QUOTE = {
-    "'": "|'",
-    "|": "||",
-    "\n": "|n",
-    "\r": "|r",
-    "[": "|[",
-    "]": "|]",
-    "\x1b": "|0x001B",
-}
-
-
-def add_common_test_options(opt_object):
-    """Options common to test runs and test setup.
-    Trivial but keeps help text/defaults consistent between old 'test' script and new scripts.
-    """
-    opt_object.add_option("--filter", dest="filter", default=".*")
-    opt_object.add_option(
-        "--test-user",
-        dest="test_user",
-        default=get_default_test_user(),
-        help=f"Defaults to {get_default_test_user()}",
-    )
-    opt_object.add_option(
-        "--test-pass", dest="test_pass", default=get_default_test_user_pass()
-    )
-
-
-def add_story_test_options(opt_object):
-    """Trivial but keeps help text/defaults consistent between old 'test' script and new scripts."""
-    opt_object.add_option(
-        "--story",
-        dest="story",
-        default=None,
-        help="Use in combination with --set=stories: %s, or csv of stories"
-        % "|".join(_ for _ in sorted(STORY_SET_ALL)),
-    )
-    opt_object.add_option(
-        "--list-stories",
-        dest="list_stories",
-        action="store_true",
-        default=False,
-        help="View a list of stories",
-    )
-
-
-def add_test_set_options(opt_object, sets=None):
-    """Trivial but keeps help text/defaults consistent between old 'test' script and new scripts."""
-    if sets is None:
-        sets = test_constants.ALL_TEST_SETS
-    opt_object.add_option(
-        "--set",
-        dest="test_set",
-        help="%s, or csv of sets, or leave unset for full"
-        % "|".join(_ for _ in sorted(sets)),
-    )
 
 
 def get_backend_db_table_name_from_metadata(hybrid_schema, hybrid_view, repo_client):
@@ -201,18 +134,18 @@ def get_test_set_sql_path(directory_name, db_type=None):
     return f"test_sets/{directory_name}/sql/{db_type}"
 
 
-def gl_wide_max_columns(frontend_api, backend_api_or_count):
+def goe_wide_max_columns(frontend_api, backend_api_or_count):
     if backend_api_or_count:
         if isinstance(backend_api_or_count, (int, float)):
             backend_count = backend_api_or_count
         else:
-            backend_count = backend_api_or_count.gl_wide_max_test_column_count()
+            backend_count = backend_api_or_count.goe_wide_max_test_column_count()
         if backend_count:
-            return min(backend_count, frontend_api.gl_wide_max_test_column_count())
+            return min(backend_count, frontend_api.goe_wide_max_test_column_count())
         else:
-            return frontend_api.gl_wide_max_test_column_count()
+            return frontend_api.goe_wide_max_test_column_count()
     else:
-        return frontend_api.gl_wide_max_test_column_count()
+        return frontend_api.goe_wide_max_test_column_count()
 
 
 def log(line: str, detail: int = normal, ansi_code=None):
@@ -442,15 +375,6 @@ def test_data_host_compare_no_hybrid_schema(
             + ") for SQL:\n"
             + backend_sql,
         )
-
-
-def to_hybrid_schema(base_schema):
-    # Don't modify the text case coming out of this function, it is used for sh_test pwd which is case sensitive.
-    m = re.search("_H$", base_schema.upper())
-    if m is not None:
-        return base_schema
-    else:
-        return substitute_in_same_case("%s_H", base_schema if base_schema else "")
 
 
 def text_in_events(messages, message_token):

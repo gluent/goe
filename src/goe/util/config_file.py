@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
-""" config_file: Gluent extensions for configparser
-    
+""" config_file: GOE extensions for configparser
+
     LICENSE_TEXT
 """
 
@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
-class GluentConfig(SafeConfigParser):
-    """ configparser.SafeConfigParser() configuration file with Gluent extensions
+class GOEConfig(SafeConfigParser):
+    """ configparser.SafeConfigParser() configuration file with GOE extensions
     """
 
     def __init__(self, config_file, with_environment=False):
@@ -49,7 +49,7 @@ class GluentConfig(SafeConfigParser):
         self._config_file = config_file
 
         # Invoke parent's constructor
-        super(GluentConfig, self).__init__(os.environ if with_environment else {}, inline_comment_prefixes='#')
+        super(GOEConfig, self).__init__(os.environ if with_environment else {}, inline_comment_prefixes='#')
 
         self._config_file_exists = False
         if os.path.isfile(self._config_file):
@@ -58,7 +58,7 @@ class GluentConfig(SafeConfigParser):
             self.readfp(io.StringIO(cfg_txt))
             self._config_file_exists = True
 
-        logger.debug("Initialized GluentConfig() object with config: %s. Exists: %s" % \
+        logger.debug("Initialized GOEConfig() object with config: %s. Exists: %s" % \
             (self._config_file, self._config_file_exists))
 
 
@@ -105,7 +105,7 @@ class GluentConfig(SafeConfigParser):
                 return 'missing_replacement' rather than throw exceptions
             Otherwise, behave exactly like SafeConfigParser.get()
         """
-    
+
         if not self.has_section(section):
             logger.debug("Config Section: %s does NOT exist. get() returns 'replacement': %s" % \
                 (section, missing_replacement))
@@ -116,7 +116,7 @@ class GluentConfig(SafeConfigParser):
                 (section, option, missing_replacement))
             return missing_replacement
 
-        val = super(GluentConfig, self).get(section, option, **kwargs)
+        val = super(GOEConfig, self).get(section, option, **kwargs)
         logger.debug("Config Option: %s.%s exists. Return: %s" % (section, option, val))
         return val
 
@@ -128,7 +128,7 @@ class GluentConfig(SafeConfigParser):
                 return 'missing_replacement' rather than throw exceptions
             Otherwise, behave exactly like SafeConfigParser.getint()
         """
-    
+
         if not self.has_section(section):
             logger.debug("Config Section: %s does NOT exist. getint() returns 'replacement': %s" % \
                 (section, missing_replacement))
@@ -139,7 +139,7 @@ class GluentConfig(SafeConfigParser):
                 (section, option, missing_replacement))
             return missing_replacement
 
-        val = super(GluentConfig, self).get(section, option)
+        val = super(GOEConfig, self).get(section, option)
         if not val.isdigit():
             raise ConfigException("Config Option: %s.%s is not a number" % (section, missing_replacement))
 
@@ -162,10 +162,10 @@ class GluentConfig(SafeConfigParser):
             self.add_section(section)
 
         logger.debug("Config Set %s.%s to: %s" % (section, option, value))
-        super(GluentConfig, self).set(section, option, value)
+        super(GOEConfig, self).set(section, option, value)
 
 
-class GluentRemoteConfig(GluentConfig):
+class GOERemoteConfig(GOEConfig):
     """ 'Remote (a.k.a. backup) configuration' file
 
         Usually, pointed out by $REMOTE_OFFLOAD_CONF and located at: ~/offload/conf/remote-offload.conf
@@ -180,12 +180,12 @@ class GluentRemoteConfig(GluentConfig):
         """
 
         if not config_file:
-            config_file = GluentRemoteConfig.default_config()
+            config_file = GOERemoteConfig.default_config()
 
         # Invoke parent's constructor
-        super(GluentRemoteConfig, self).__init__(config_file)
+        super(GOERemoteConfig, self).__init__(config_file)
 
-        logger.debug("Initialized GluentRemoteConfig() object with config: %s. Exists: %s" % \
+        logger.debug("Initialized GOERemoteConfig() object with config: %s. Exists: %s" % \
             (self.config_file, self.config_file_exists))
 
 
@@ -206,7 +206,7 @@ class GluentRemoteConfig(GluentConfig):
     ###########################################################################
 
     def section_type(self, section):
-        """ Determine section type: s3, hdfs etc 
+        """ Determine section type: s3, hdfs etc
         """
         assert section
 
@@ -264,7 +264,7 @@ class GluentRemoteConfig(GluentConfig):
 
     def db_url(self, section, db_name):
         """ Return 'db url', i.e.: sh.db/ for specific section
-        """ 
+        """
         assert section and db_name
 
         return "%s%s/" % (db_name.strip('/'), self.get(section, 'db_path_suffix', ""))
@@ -272,7 +272,7 @@ class GluentRemoteConfig(GluentConfig):
 
     def table_url(self, section, db_table):
         """ Return 'db table url', i.e.: sh.db/sales for specific section
-        """ 
+        """
         assert section and db_table
 
         if 1 != db_table.count('.'):
@@ -286,7 +286,7 @@ class GluentRemoteConfig(GluentConfig):
         """ Return 'file url' for specific section, db_table and key
 
             i.e. hdfs, sh.times, offload_bucket_id=0/324b311ba26ded23.0.parq ->
-            hdfs://localhost:8020/user/gluent/offload/sh.db/times/offload_bucket_id=0/324b311ba26ded23.0.parq
+            hdfs://localhost:8020/user/goe/offload/sh.db/times/offload_bucket_id=0/324b311ba26ded23.0.parq
         """
         return "%s%s%s" % (self.base_url(section), self.table_url(section, db_table), key_name)
 
@@ -294,7 +294,7 @@ class GluentRemoteConfig(GluentConfig):
 if __name__ == "__main__":
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
 
     def usage(prog_name):
         print("usage: %s section operation [parameters] [log_level]" % prog_name)
@@ -310,14 +310,14 @@ if __name__ == "__main__":
         log_level = sys.argv[-1:][0].upper()
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level = 'CRITICAL'
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         section, operation = sys.argv[1:3]
         args = [_ for _ in sys.argv[3:] if _.upper() != log_level]
 
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
-        cfg = GluentRemoteConfig()
+        cfg = GOERemoteConfig()
         print(getattr(cfg, operation)(section, *args))
 
 

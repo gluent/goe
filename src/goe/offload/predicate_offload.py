@@ -95,7 +95,7 @@ from goe.offload.column_metadata import ColumnMetadataInterface, \
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 
 
-dev_log = logging.getLogger('gluent')
+dev_log = logging.getLogger('goe')
 
 # usage hints provided in the OptionValueError error text for expected but missing tokens
 RULE_HINT = {

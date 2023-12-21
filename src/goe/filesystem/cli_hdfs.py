@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" CliHdfs: Command line hdfs implementation of GluentDfs
+""" CliHdfs: Command line hdfs implementation of GOEDfs
     LICENSE_TEXT
 """
 
@@ -15,9 +15,9 @@ from subprocess import PIPE, STDOUT
 from google.api_core import retry
 
 from goe.config.orchestration_defaults import backend_distribution_default
-from goe.filesystem.gluent_dfs import GluentDfs, GluentDfsDeleteNotComplete, GluentDfsException,\
+from goe.filesystem.goe_dfs import GOEDfs, GOEDfsDeleteNotComplete, GOEDfsException,\
     gen_fs_uri,\
-    DFS_RETRY_TIMEOUT, DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, GLUENT_DFS_SSH, OFFLOAD_FS_SCHEMES_REQUIRING_CONTAINER,\
+    DFS_RETRY_TIMEOUT, DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, GOE_DFS_SSH, OFFLOAD_FS_SCHEMES_REQUIRING_CONTAINER,\
     OFFLOAD_FS_SCHEME_INHERIT
 from goe.offload.offload_constants import BACKEND_DISTRO_MAPR
 from goe.util.misc_functions import is_number
@@ -44,8 +44,8 @@ logger.addHandler(logging.NullHandler())
 # CliHdfs
 ###############################################################################
 
-class CliHdfs(GluentDfs):
-    """ A Gluent wrapper over ssh calls to 'hdfs dfs'
+class CliHdfs(GOEDfs):
+    """ A GOE wrapper over ssh calls to 'hdfs dfs'
         dry_run: Do not make changes. stat() continues to function though
         do_not_connect: Do not even connect, used for unit testing.
     """
@@ -63,7 +63,7 @@ class CliHdfs(GluentDfs):
         self._tmp_dir = tmp_dir
         self._dry_run = dry_run
         self._do_not_connect = do_not_connect
-        self.dfs_mechanism = GLUENT_DFS_SSH
+        self.dfs_mechanism = GOE_DFS_SSH
         self.backend_dfs = 'HDFS'
 
     def __str__(self):
@@ -90,14 +90,14 @@ class CliHdfs(GluentDfs):
             return ['scp', from_path, to_path]
         return ['scp', from_path, '%s@%s:%s' % (ssh_user, host, to_path)]
 
-    def _temp_file(self, base_file='gl_temp'):
+    def _temp_file(self, base_file='goe_temp'):
         return '%s/%s.%s' % (self._tmp_dir, base_file, datetime.now().strftime('%y%j%H%M%S%f'))
 
     def _check_returncode(self, returncode, output):
         self.debug('Return code: %s' % returncode)
         if returncode:
             self.log('Output: %s' % output)
-            raise GluentDfsException('Required shell command failed with return code "%s"\n%s'
+            raise GOEDfsException('Required shell command failed with return code "%s"\n%s'
                                      % (returncode, b'\n'.join(output)))
 
     def _run_cmd(self, cmd, force_run=False):
@@ -160,7 +160,7 @@ class CliHdfs(GluentDfs):
         returncode, output = self._run_cmd(cmd)
         self._check_returncode(returncode, output)
 
-    @retry.Retry(predicate=retry.if_exception_type(GluentDfsDeleteNotComplete), deadline=DFS_RETRY_TIMEOUT)
+    @retry.Retry(predicate=retry.if_exception_type(GOEDfsDeleteNotComplete), deadline=DFS_RETRY_TIMEOUT)
     def delete(self, dfs_path, recursive=False):
         """ Delete a file or directory and contents.
         """
@@ -182,7 +182,7 @@ class CliHdfs(GluentDfs):
             self._post_cloud_delete_wait(scheme)
             if scheme in OFFLOAD_FS_SCHEMES_REQUIRING_CONTAINER and self.stat(dfs_path):
                 self.debug('%s delete incomplete, retrying' % scheme)
-                raise GluentDfsDeleteNotComplete
+                raise GOEDfsDeleteNotComplete
         return True
 
     def rename(self, hdfs_src_path, hdfs_dst_path):
@@ -321,7 +321,7 @@ class CliHdfs(GluentDfs):
             hadoop_temp_file = self._temp_file(base_file)
 
         if file_exists(local_path) and not overwrite:
-            raise GluentDfsException('Cannot copy file over existing file: %s' % local_path)
+            raise GOEDfsException('Cannot copy file over existing file: %s' % local_path)
 
         try:
             # Phase 1: copy to local storage on Hadoop node
@@ -421,7 +421,7 @@ class CliHdfs(GluentDfs):
         if isinstance(sudo_prefix, str):
             # turn the string in to a list of args
             if self.command_contains_injection_concerns(sudo_prefix):
-                raise GluentDfsException('Malformed command prefix: %s' % sudo_prefix)
+                raise GOEDfsException('Malformed command prefix: %s' % sudo_prefix)
             sudo_prefix = sudo_prefix.split()
         assert isinstance(sudo_prefix, (list, tuple))
         cmd = self._ssh(self._ssh_user, self._hdfs_host) + sudo_prefix + ['hdfs', 'dfs', '-createSnapshot', snapshot_path]

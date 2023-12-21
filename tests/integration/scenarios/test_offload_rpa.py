@@ -31,19 +31,6 @@ from tests.integration.scenarios.setup_functions import (
     gen_drop_sales_based_fact_partition_ddls,
     sales_based_fact_partition_exists,
 )
-from tests.integration.test_sets.stories.story_setup_functions import (
-    SALES_BASED_FACT_HV_1,
-    SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-    SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
-    SALES_BASED_FACT_HV_1_NUM,
-    SALES_BASED_FACT_HV_2_NUM,
-    SALES_BASED_FACT_HV_3_NUM,
-    SALES_BASED_FACT_HV_4_NUM,
-    SALES_BASED_FACT_HV_7_NUM,
-    SALES_BASED_FACT_PRE_HV_NUM,
-)
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
@@ -96,11 +83,11 @@ def offload_range_ipa_standard_tests(
 ):
     canonical_int_8 = frontend_api.test_type_canonical_int_8()
     canonical_string = frontend_api.test_type_canonical_string()
-    hv_0 = SALES_BASED_FACT_PRE_HV_NUM
-    hv_1 = SALES_BASED_FACT_HV_1_NUM
-    hv_2 = SALES_BASED_FACT_HV_2_NUM
-    hv_3 = SALES_BASED_FACT_HV_3_NUM
-    hv_4 = SALES_BASED_FACT_HV_4_NUM
+    hv_0 = test_constants.SALES_BASED_FACT_PRE_HV_NUM
+    hv_1 = test_constants.SALES_BASED_FACT_HV_1_NUM
+    hv_2 = test_constants.SALES_BASED_FACT_HV_2_NUM
+    hv_3 = test_constants.SALES_BASED_FACT_HV_3_NUM
+    hv_4 = test_constants.SALES_BASED_FACT_HV_4_NUM
     less_than_option = "less_than_value"
     lower_value = None
     upper_value = None
@@ -120,8 +107,8 @@ def offload_range_ipa_standard_tests(
             table_name = RPA_FACT_TABLE_NUM
         granularity = "100"
         different_granularity = "1000"
-        lower_value = SALES_BASED_FACT_PRE_HV_NUM
-        upper_value = SALES_BASED_FACT_HV_7_NUM
+        lower_value = test_constants.SALES_BASED_FACT_PRE_HV_NUM
+        upper_value = test_constants.SALES_BASED_FACT_HV_7_NUM
         if config.target in [DBTYPE_IMPALA, DBTYPE_HIVE]:
             synthetic_partition_digits = 15
             different_partition_digits = 16
@@ -133,8 +120,8 @@ def offload_range_ipa_standard_tests(
             synthetic_partition_column_expected = True
             granularity = "100"
             different_granularity = "1000"
-            lower_value = SALES_BASED_FACT_PRE_HV_NUM
-            upper_value = SALES_BASED_FACT_HV_7_NUM
+            lower_value = test_constants.SALES_BASED_FACT_PRE_HV_NUM
+            upper_value = test_constants.SALES_BASED_FACT_HV_7_NUM
         else:
             table_name = RPA_FACT_TABLE_STR
             granularity = "4"
@@ -148,11 +135,11 @@ def offload_range_ipa_standard_tests(
             table_name = RPA_FACT_TABLE_TS
         else:
             table_name = RPA_FACT_TABLE_DATE
-        hv_0 = SALES_BASED_FACT_PRE_HV
-        hv_1 = SALES_BASED_FACT_HV_1
-        hv_2 = SALES_BASED_FACT_HV_2
-        hv_3 = SALES_BASED_FACT_HV_3
-        hv_4 = SALES_BASED_FACT_HV_4
+        hv_0 = test_constants.SALES_BASED_FACT_PRE_HV
+        hv_1 = test_constants.SALES_BASED_FACT_HV_1
+        hv_2 = test_constants.SALES_BASED_FACT_HV_2
+        hv_3 = test_constants.SALES_BASED_FACT_HV_3
+        hv_4 = test_constants.SALES_BASED_FACT_HV_4
         less_than_option = "older_than_date"
         granularity = "M"
         different_granularity = "Y"

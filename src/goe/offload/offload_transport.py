@@ -10,7 +10,6 @@ import logging
 import os
 import re
 from socket import gethostname
-import sys
 from textwrap import dedent
 import time
 import traceback
@@ -157,8 +156,8 @@ POLLING_VALIDATION_TEXT = 'Calculating offload transport source row counts from 
 # 21/08/16 14:07:27 INFO GOETaskListener: {"taskInfo.id":"0.0","taskInfo.taskId":0,"taskInfo.launchTime":1629122840224,"taskInfo.finishTime":1629122847797,"duration":7573,"recordsWritten":145,"executorRunTime":6191}
 SPARK_LOG_ROW_COUNT_PATTERN = r'^.* GOETaskListener: .*"recordsWritten":(\d+).*}\r?$'
 
-GLUENT_LISTENER_NAME = 'GOETaskListener'
-GLUENT_LISTENER_JAR = 'goe-spark-listener.jar'
+GOE_LISTENER_NAME = 'GOETaskListener'
+GOE_LISTENER_JAR = 'goe-spark-listener.jar'
 
 TRANSPORT_CXT_BYTES = 'staged_bytes'
 TRANSPORT_CXT_ROWS = 'staged_rows'
@@ -865,8 +864,8 @@ class OffloadTransport(object, metaclass=ABCMeta):
             Search is case-insensitive but returns the config name in correct case.
         """
         for k, v in self._spark_config_properties.items():
-            if k.lower() == 'spark.extralisteners' and isinstance(v, str) and GLUENT_LISTENER_NAME in v:
-                self.log('%s configured: %s: %s' % (GLUENT_LISTENER_NAME, k, v), detail=VVERBOSE)
+            if k.lower() == 'spark.extralisteners' and isinstance(v, str) and GOE_LISTENER_NAME in v:
+                self.log('%s configured: %s: %s' % (GOE_LISTENER_NAME, k, v), detail=VVERBOSE)
                 return k
         return None
 
@@ -1561,7 +1560,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
         if canary_query:
             custom_schema_clause = ''
             rdbms_source_query = canary_query
-            transport_app_name = 'Gluent Connect'
+            transport_app_name = 'GOE Connect'
             load_db_name, load_table_name = '', ''
         else:
             split_row_source_by = self._get_transport_split_type(partition_chunk)
@@ -1640,9 +1639,8 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                    """)
 
         pyspark_body += dedent("""\
-            # Gluent Offload Engine Spark Transport
-            # Gluent Inc (c) 2015-%s
-            """) % datetime.now().strftime('%Y')
+            # GOE Spark Transport
+            """)
 
         if self._base64_staged_columns():
             pyspark_body += dedent("""\
@@ -1759,7 +1757,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
         """ Returns path to GOETaskListener jar file in $OFFLOAD_HOME/lib directory """
         offload_home = os.environ.get('OFFLOAD_HOME')
         assert offload_home, 'OFFLOAD_HOME is not set, environment is not correct'
-        jar_path = os.path.join(offload_home, 'lib', GLUENT_LISTENER_JAR)
+        jar_path = os.path.join(offload_home, 'lib', GOE_LISTENER_JAR)
         # We should never be missing the JAR file as it is bundled with the code that we are part of.
         assert os.path.exists(jar_path), f'{jar_path} cannot be found, environment is not correct'
         return jar_path
@@ -1877,7 +1875,7 @@ class OffloadTransportSparkThrift(OffloadTransportSpark):
     OPTIONS (
       driver '%(rdbms_jdbc_driver_name)s',
       url '%(rdbms_jdbc_url)s',%(rdbms_app_user_opt)s%(rdbms_app_pass_opt)s
-      sessionInitStatement 'BEGIN %(session_init_statements)s END\;',
+      sessionInitStatement 'BEGIN %(session_init_statements)s END\\;',
       dbtable '%(rdbms_source_query)s'
     )""" % params
         else:
@@ -1886,7 +1884,7 @@ class OffloadTransportSparkThrift(OffloadTransportSpark):
     OPTIONS (
       driver '%(rdbms_jdbc_driver_name)s',
       url '%(rdbms_jdbc_url)s',%(rdbms_app_user_opt)s%(rdbms_app_pass_opt)s
-      sessionInitStatement 'BEGIN %(session_init_statements)s END\;',
+      sessionInitStatement 'BEGIN %(session_init_statements)s END\\;',
       dbtable '%(rdbms_source_query)s',
       fetchSize '%(fetch_size)s',
       partitionColumn '%(batch_col)s',
@@ -2136,11 +2134,11 @@ class OffloadTransportSparkSubmit(OffloadTransportSpark):
         py_rm_commands, options_file_remote_path = self._remote_copy_spark_control_file(options_file_local_path,
                                                                                         suffix='py')
         if self._spark_listener_included_in_config():
-            gluent_listener_jar_local_path = self._local_gluent_listener_jar()
-            gluent_listener_jar_remote_path = self._remote_copy_transport_file(gluent_listener_jar_local_path,
-                                                                               self._offload_transport_cmd_host)
+            spark_listener_jar_local_path = self._local_gluent_listener_jar()
+            spark_listener_jar_remote_path = self._remote_copy_transport_file(spark_listener_jar_local_path,
+                                                                              self._offload_transport_cmd_host)
         else:
-            gluent_listener_jar_remote_path = None
+            spark_listener_jar_remote_path = None
         self.log('Written PySpark file: %s' % options_file_remote_path, detail=VVERBOSE)
 
         remote_spark_files_csv = self._remote_copy_transport_file_csv(
@@ -2152,11 +2150,11 @@ class OffloadTransportSparkSubmit(OffloadTransportSpark):
             self._offload_transport_cmd_host
         )
 
-        if gluent_listener_jar_remote_path:
+        if spark_listener_jar_remote_path:
             if remote_spark_jars_csv:
-                remote_spark_jars_csv = f'{gluent_listener_jar_remote_path},{remote_spark_jars_csv}'
+                remote_spark_jars_csv = f'{spark_listener_jar_remote_path},{remote_spark_jars_csv}'
             else:
-                remote_spark_jars_csv = gluent_listener_jar_remote_path
+                remote_spark_jars_csv = spark_listener_jar_remote_path
 
         spark_submit_binary = self._derive_spark_submit_cmd_arg()
         spark_master = self._offload_transport_spark_submit_master_url if self._standalone_spark() else SPARK_SUBMIT_SPARK_YARN_MASTER
@@ -2375,20 +2373,20 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
     def _copy_gluent_listener_jar_to_dfs(self):
         """ Copies the jar file to HDFS and returns the remote DFS location """
         self.debug('_copy_gluent_listener_jar_to_dfs()')
-        gluent_listener_jar_local_path = self._local_gluent_listener_jar()
+        spark_listener_jar_local_path = self._local_gluent_listener_jar()
         if self._standalone_spark():
             # Ensure jar file is on transport host local filesystem
-            gluent_listener_jar_remote_path = self._remote_copy_transport_file(gluent_listener_jar_local_path,
-                                                                               self._offload_transport_cmd_host)
+            spark_listener_jar_remote_path = self._remote_copy_transport_file(spark_listener_jar_local_path,
+                                                                              self._offload_transport_cmd_host)
         else:
             # Ensure jar file is copied to DFS
-            gluent_listener_jar_remote_path = os.path.join(self._offload_options.hdfs_home, GLUENT_LISTENER_JAR)
+            spark_listener_jar_remote_path = os.path.join(self._offload_options.hdfs_home, GOE_LISTENER_JAR)
             self.log_dfs_cmd('copy_from_local("%s", "%s")'
-                             % (gluent_listener_jar_local_path, gluent_listener_jar_remote_path))
+                             % (spark_listener_jar_local_path, spark_listener_jar_remote_path))
             if not self._dry_run:
-                self._dfs_client.copy_from_local(gluent_listener_jar_local_path, gluent_listener_jar_remote_path,
+                self._dfs_client.copy_from_local(spark_listener_jar_local_path, spark_listener_jar_remote_path,
                                                  overwrite=True)
-        return gluent_listener_jar_remote_path
+        return spark_listener_jar_remote_path
 
     def _create_livy_session(self):
         """ Create a Livy session via REST API post
@@ -2687,8 +2685,11 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._load_table_compression_pyspark_settings()
         self._offload_fs_container = offload_options.offload_fs_container
         self._dataproc_cluster = offload_options.google_dataproc_cluster
+        self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
+        self._google_dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._google_dataproc_batches_version = offload_options.google_dataproc_batches_version
 
     ###########################################################################
     # PRIVATE METHODS
@@ -2706,10 +2707,23 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
 
     def _gcloud_dataproc_command(self) -> list:
         gcloud_cmd = [OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE, 'dataproc', 'batches', 'submit', 'pyspark']
+        if self._dataproc_project:
+            gcloud_cmd.append(f'--project={self._dataproc_project}')
         if self._dataproc_region:
             gcloud_cmd.append(f'--region={self._dataproc_region}')
         if self._dataproc_service_account:
             gcloud_cmd.append(f'--service-account={self._dataproc_service_account}')
+        if self._google_dataproc_batches_version:
+            gcloud_cmd.append(f'--version={self._google_dataproc_batches_version}')
+        if self._google_dataproc_batches_subnet:
+            if not self._dataproc_project or not self._dataproc_region:
+                raise OffloadTransportException("GOOGLE_DATAPROC_PROJECT and GOOGLE_DATAPROC_REGION are required when using GOOGLE_DATAPROC_BATCHES_SUBNET")
+            subnet = "/".join(
+                ["projects", self._dataproc_project,
+                 "regions", self._dataproc_region,
+                 "subnetworks", self._google_dataproc_batches_subnet]
+            )
+            gcloud_cmd.append(f'--subnet={subnet}')
         gcloud_cmd.append(f'--deps-bucket={self._offload_fs_container}')
         return gcloud_cmd
 
@@ -2735,11 +2749,11 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         py_rm_commands, options_file_remote_path = self._remote_copy_spark_control_file(options_file_local_path,
                                                                                         suffix='py')
         if self._spark_listener_included_in_config():
-            gluent_listener_jar_local_path = self._local_gluent_listener_jar()
-            gluent_listener_jar_remote_path = self._remote_copy_transport_file(gluent_listener_jar_local_path,
-                                                                               self._offload_transport_cmd_host)
+            spark_listener_jar_local_path = self._local_gluent_listener_jar()
+            spark_listener_jar_remote_path = self._remote_copy_transport_file(spark_listener_jar_local_path,
+                                                                              self._offload_transport_cmd_host)
         else:
-            gluent_listener_jar_remote_path = None
+            spark_listener_jar_remote_path = None
         self.log('Written PySpark file: %s' % options_file_remote_path, detail=VVERBOSE)
 
         remote_spark_files_csv = self._remote_copy_transport_file_csv(
@@ -2751,11 +2765,11 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             self._offload_transport_cmd_host
         )
 
-        if gluent_listener_jar_remote_path:
+        if spark_listener_jar_remote_path:
             if remote_spark_jars_csv:
-                remote_spark_jars_csv = f'{gluent_listener_jar_remote_path},{remote_spark_jars_csv}'
+                remote_spark_jars_csv = f'{spark_listener_jar_remote_path},{remote_spark_jars_csv}'
             else:
-                remote_spark_jars_csv = gluent_listener_jar_remote_path
+                remote_spark_jars_csv = spark_listener_jar_remote_path
 
         gcloud_cmd = self._gcloud_dataproc_command()
 
@@ -2902,8 +2916,11 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
 
         self._offload_fs_container = offload_options.offload_fs_container
         self._dataproc_cluster = offload_options.google_dataproc_cluster
+        self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
+        self._google_dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._google_dataproc_batches_version = offload_options.google_dataproc_batches_version
         self._spark_files_csv = offload_options.offload_transport_spark_files
         self._spark_jars_csv = offload_options.offload_transport_spark_jars
 
@@ -2936,6 +2953,8 @@ class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
         if not self._dataproc_cluster:
             raise OffloadTransportException('Missing mandatory configuration: GOOGLE_DATAPROC_CLUSTER')
         gcloud_cmd.append(f'--cluster={self._dataproc_cluster}')
+        if self._dataproc_project:
+            gcloud_cmd.append(f'--project={self._dataproc_project}')
         if self._dataproc_region:
             gcloud_cmd.append(f'--region={self._dataproc_region}')
         if self._dataproc_service_account:
@@ -2978,6 +2997,7 @@ class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcl
         self._rdbms_action = self._rdbms_api.generate_transport_action()
 
         self._dataproc_cluster = offload_options.google_dataproc_cluster
+        self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
         self._spark_files_csv = offload_options.offload_transport_spark_files
@@ -3110,13 +3130,3 @@ class OffloadTransportQueryImport(OffloadTransport):
 
     def ping_source_rdbms(self):
         raise NotImplementedError('ping_source_rdbms not implemented for QueryImport')
-
-
-if __name__ == "__main__":
-    from goe.util.misc_functions import set_gluentlib_logging
-
-    log_level = sys.argv[-1:][0].upper()
-    if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
-        log_level = 'CRITICAL'
-
-    set_gluentlib_logging(log_level)

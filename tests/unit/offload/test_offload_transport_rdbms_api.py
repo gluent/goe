@@ -4,12 +4,6 @@
 
 from unittest import TestCase, main
 
-from goe.offload.offload_constants import (
-    DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
-    DBTYPE_ORACLE,
-    DBTYPE_TERADATA,
-)
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.factory.offload_transport_rdbms_api_factory import (
     offload_transport_rdbms_api_factory,

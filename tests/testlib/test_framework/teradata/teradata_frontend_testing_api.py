@@ -65,7 +65,7 @@ from goe.offload.teradata.teradata_frontend_api import (
     teradata_get_primary_partition_expression,
 )
 from pyodbc import SQL_WVARCHAR
-from tests.integration.test_sets.stories.story_setup_functions import (
+from tests.testlib.test_framework.test_constants import (
     SALES_BASED_FACT_HV_1,
     SALES_BASED_FACT_HV_2,
     SALES_BASED_FACT_HV_3,
@@ -89,9 +89,9 @@ from tests.integration.test_sets.stories.story_setup_functions import (
     SALES_BASED_LIST_HV_6,
     SALES_BASED_LIST_HV_7,
     SALES_BASED_LIST_PRE_HV,
+    UNICODE_NAME_TOKEN,
 )
 from tests.testlib.setup import gen_test_data
-from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.frontend_testing_api import (
     FrontendTestingApiException,
     FrontendTestingApiInterface,
@@ -375,20 +375,20 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 "ascii_only": ascii_only,
                 "notnull": all_chars_notnull,
             },
-            name(TERADATA_TYPE_CHAR, "3", test_constants.UNICODE_NAME_TOKEN): {
+            name(TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_CHAR, "3", test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN),
                     TERADATA_TYPE_CHAR,
                     data_length=3,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_CHAR, "3", test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN),
                     GLUENT_TYPE_FIXED_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "offload_options": {
                     "unicode_string_columns_csv": name(
-                        TERADATA_TYPE_CHAR, "3", test_constants.UNICODE_NAME_TOKEN
+                        TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN
                     )
                 },
                 "ascii_only": ascii_only,
@@ -404,19 +404,19 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 # Keep row size small for mapping table
                 "literals": ["lob-a", "lob-b", "lob-c"],
             },
-            name(TERADATA_TYPE_CLOB, test_constants.UNICODE_NAME_TOKEN): {
+            name(TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_CLOB, test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN),
                     TERADATA_TYPE_CLOB,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_CLOB, test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN),
                     GLUENT_TYPE_LARGE_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "offload_options": {
                     "unicode_string_columns_csv": name(
-                        TERADATA_TYPE_CLOB, test_constants.UNICODE_NAME_TOKEN
+                        TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN
                     )
                 },
                 "ascii_only": ascii_only,
@@ -1092,19 +1092,19 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 "ascii_only": ascii_only,
                 "notnull": all_chars_notnull,
             },
-            name(TERADATA_TYPE_VARCHAR, test_constants.UNICODE_NAME_TOKEN): {
+            name(TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_VARCHAR, test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN),
                     TERADATA_TYPE_VARCHAR,
                     data_length=30,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_VARCHAR, test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN),
                     GLUENT_TYPE_VARIABLE_STRING,
                 ),
                 "offload_options": {
                     "unicode_string_columns_csv": name(
-                        TERADATA_TYPE_VARCHAR, test_constants.UNICODE_NAME_TOKEN
+                        TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN
                     )
                 },
                 "ascii_only": ascii_only,

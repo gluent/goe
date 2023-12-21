@@ -2688,8 +2688,8 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
-        self._google_dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
-        self._google_dataproc_batches_version = offload_options.google_dataproc_batches_version
+        self._dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._dataproc_batches_version = offload_options.google_dataproc_batches_version
 
     ###########################################################################
     # PRIVATE METHODS
@@ -2713,15 +2713,15 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             gcloud_cmd.append(f'--region={self._dataproc_region}')
         if self._dataproc_service_account:
             gcloud_cmd.append(f'--service-account={self._dataproc_service_account}')
-        if self._google_dataproc_batches_version:
-            gcloud_cmd.append(f'--version={self._google_dataproc_batches_version}')
-        if self._google_dataproc_batches_subnet:
+        if self._dataproc_batches_version:
+            gcloud_cmd.append(f'--version={self._dataproc_batches_version}')
+        if self._dataproc_batches_subnet:
             if not self._dataproc_project or not self._dataproc_region:
                 raise OffloadTransportException("GOOGLE_DATAPROC_PROJECT and GOOGLE_DATAPROC_REGION are required when using GOOGLE_DATAPROC_BATCHES_SUBNET")
             subnet = "/".join(
                 ["projects", self._dataproc_project,
                  "regions", self._dataproc_region,
-                 "subnetworks", self._google_dataproc_batches_subnet]
+                 "subnetworks", self._dataproc_batches_subnet]
             )
             gcloud_cmd.append(f'--subnet={subnet}')
         gcloud_cmd.append(f'--deps-bucket={self._offload_fs_container}')
@@ -2919,8 +2919,8 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
         self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
-        self._google_dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
-        self._google_dataproc_batches_version = offload_options.google_dataproc_batches_version
+        self._dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._dataproc_batches_version = offload_options.google_dataproc_batches_version
         self._spark_files_csv = offload_options.offload_transport_spark_files
         self._spark_jars_csv = offload_options.offload_transport_spark_jars
 

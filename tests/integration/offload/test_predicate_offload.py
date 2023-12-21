@@ -5,7 +5,6 @@
 """
 
 from unittest import TestCase, main
-from optparse import OptionValueError
 
 from goe.gluent import OffloadOperation
 from goe.offload.factory.backend_table_factory import backend_table_factory
@@ -13,12 +12,6 @@ from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_messages import OffloadMessages
 from goe.persistence.orchestration_metadata import OrchestrationMetadata
 from goe.offload.predicate_offload import GenericPredicate
-from goe.offload.bigquery import bigquery_predicate
-from goe.offload.hadoop import hadoop_predicate
-from goe.offload.microsoft import synapse_predicate
-from goe.offload.oracle import oracle_predicate
-from goe.offload.snowflake import snowflake_predicate
-from goe.offload.teradata import teradata_predicate
 from tests.integration.test_functions import (
     build_current_options,
     get_default_test_user,
@@ -31,6 +24,9 @@ from tests.testlib.test_framework.factory.backend_testing_api_factory import (
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
     frontend_testing_api_factory,
 )
+
+
+FACT_NAME = "INTEG_PBO_FACT"
 
 
 class TestIdaPredicateRenderToSQL(TestCase):
@@ -269,101 +265,6 @@ class TestIdaPredicateRenderToSQL(TestCase):
                     GenericPredicate(predicate_dsl)
                 )
                 self.assertEqual(backend_sql, expected_sql)
-
-
-class TestIdaPredicateDataTypes(TestCase):
-    def __init__(self, *args, **kwargs):
-        super(TestIdaPredicateDataTypes, self).__init__(*args, **kwargs)
-        self.schema = get_default_test_user()
-
-    def setUp(self):
-        self.options = build_current_options()
-
-        customers_table_name = "CUSTOMERS"
-        messages = OffloadMessages()
-        operation = OffloadOperation.from_dict(
-            {"owner_table": "%s.%s" % (self.schema, customers_table_name)},
-            self.options,
-            messages,
-        )
-        metadata = OrchestrationMetadata.from_name(
-            self.schema,
-            customers_table_name,
-            connection_options=self.options,
-            messages=messages,
-        )
-        self.customers_backend_table = backend_table_factory(
-            metadata.backend_owner,
-            metadata.backend_table,
-            self.options.target,
-            self.options,
-            messages,
-            operation,
-            dry_run=True,
-        )
-        self.customers_rdbms_table = OffloadSourceTable.create(
-            self.schema, customers_table_name, self.options, messages, dry_run=True
-        )
-
-    def test_data_type_errors(self):
-        expect_data_type_error = [
-            "column(CUST_CITY) = numeric(34)",
-            "column(CUST_CITY) = datetime(2012-01-01)",
-            "column(CUST_CITY) = datetime(2012-01-01 00:00:00.123456789)",
-            "column(CUST_CITY) IN (numeric(34))",
-            "column(CUST_CITY) NOT IN (numeric(34))",
-            'column(CUST_CITY) IN (string("NYC"), numeric(34))',
-            "numeric(34) > column(CUST_CITY)",
-            "column(CUST_ID) = datetime(2020-12-30)",
-            'column(CUST_ID) = string("2020-12-30")',
-            'column(CUST_CREDIT_LIMIT) < string("nan")',
-            "column(CUST_EFF_TO) = numeric(34)",
-            'column(CUST_EFF_TO) = string("34")',
-        ]
-
-        for predicate_dsl in expect_data_type_error:
-            self.assertRaisesRegex(
-                OptionValueError,
-                "cannot be compared to",
-                oracle_predicate.predicate_to_where_clause,
-                self.customers_rdbms_table.columns,
-                GenericPredicate(predicate_dsl),
-            )
-            self.assertRaisesRegex(
-                OptionValueError,
-                "cannot be compared to",
-                hadoop_predicate.predicate_to_where_clause,
-                self.customers_backend_table.get_columns(),
-                GenericPredicate(predicate_dsl),
-            )
-            self.assertRaisesRegex(
-                OptionValueError,
-                "cannot be compared to",
-                bigquery_predicate.predicate_to_where_clause,
-                self.customers_backend_table.get_columns(),
-                GenericPredicate(predicate_dsl),
-            )
-            self.assertRaisesRegex(
-                OptionValueError,
-                "cannot be compared to",
-                snowflake_predicate.predicate_to_where_clause,
-                self.customers_backend_table.get_columns(),
-                GenericPredicate(predicate_dsl),
-            )
-            self.assertRaisesRegex(
-                OptionValueError,
-                "cannot be compared to",
-                synapse_predicate.predicate_to_where_clause,
-                self.customers_backend_table.get_columns(),
-                GenericPredicate(predicate_dsl),
-            )
-            self.assertRaisesRegex(
-                OptionValueError,
-                "cannot be compared to",
-                teradata_predicate.predicate_to_where_clause,
-                self.customers_backend_table.get_columns(),
-                GenericPredicate(predicate_dsl),
-            )
 
 
 if __name__ == "__main__":

@@ -36,9 +36,8 @@ from goe.offload.column_metadata import (
     GLUENT_TYPE_INTERVAL_DS,
     GLUENT_TYPE_INTERVAL_YM,
 )
-from goe.offload.hadoop.hadoop_column import HadoopColumn
-from goe.offload.offload_messages import VERBOSE
-from goe.util.better_impyla import (
+from goe.offload.hadoop.hadoop_column import (
+    HadoopColumn,
     HADOOP_TYPE_BIGINT,
     HADOOP_TYPE_CHAR,
     HADOOP_TYPE_DATE,
@@ -52,6 +51,7 @@ from goe.util.better_impyla import (
     HADOOP_TYPE_TINYINT,
     HADOOP_TYPE_VARCHAR,
 )
+from goe.offload.offload_messages import VERBOSE
 from tests.testlib.test_framework.backend_testing_api import (
     BackendTestingApiInterface,
     BackendTestingApiException,

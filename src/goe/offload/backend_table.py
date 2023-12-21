@@ -34,7 +34,7 @@ from goe.offload.offload_functions import get_hybrid_threshold_clauses, hvs_to_b
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 from goe.orchestration import command_steps, orchestration_constants
-from goe.util.better_impyla import HADOOP_TYPE_STRING
+from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
 
 

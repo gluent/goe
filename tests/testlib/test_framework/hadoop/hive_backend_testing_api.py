@@ -33,9 +33,8 @@ from goe.offload.column_metadata import (
 from goe.offload.hadoop.hadoop_backend_api import (
     hive_enable_dynamic_partitions_for_insert_sqls,
 )
-from goe.offload.hadoop.hadoop_column import HadoopColumn
-from goe.offload.offload_messages import NORMAL, VVERBOSE
-from goe.util.better_impyla import (
+from goe.offload.hadoop.hadoop_column import (
+    HadoopColumn,
     HADOOP_TYPE_BIGINT,
     HADOOP_TYPE_BINARY,
     HADOOP_TYPE_BOOLEAN,
@@ -49,6 +48,7 @@ from goe.util.better_impyla import (
     HADOOP_TYPE_TIMESTAMP,
     HADOOP_TYPE_TINYINT,
 )
+from goe.offload.offload_messages import NORMAL, VVERBOSE
 from tests.testlib.test_framework.hadoop.hadoop_backend_testing_api import (
     BackendHadoopTestingApi,
     BackendTestingApiException,

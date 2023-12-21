@@ -194,6 +194,9 @@ class BackendTableInterface(metaclass=ABCMeta):
     # PRIVATE METHODS
     ###########################################################################
 
+    def _alter_table_sort_columns(self):
+        return self._db_api.alter_sort_columns(self.db_name, self._base_table_name, self._sort_columns or [])
+
     def _cast_validation_columns(self, staging_columns: list):
         """ Method returning columns and casts to be checked. That's both data type conversion
             casts and those used to generate synthetic partition columns.
@@ -1784,9 +1787,9 @@ class BackendTableInterface(metaclass=ABCMeta):
     # PUBLIC METHODS - HIGH LEVEL STEP METHODS AND SUPPORTING ABSTRACT METHODS
     ###########################################################################
 
-    def alter_table_sort_columns(self):
+    def alter_table_sort_columns_step(self):
         def step_fn():
-            return self._db_api.alter_sort_columns(self.db_name, self._base_table_name, self._sort_columns or [])
+            return self._alter_table_sort_columns()
         return self._offload_step(command_steps.STEP_ALTER_TABLE, step_fn)
 
     def cleanup_staging_area_step(self):

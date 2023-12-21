@@ -24,7 +24,7 @@ from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
 from tests.testlib.test_framework.test_functions import get_test_messages
 
 
-FACT_NAME = "INTEGRATION_OST_FACT_TABLE"
+FACT_NAME = "INTEG_SOURCE_TABLE_FACT"
 
 
 class TestCurrentOffloadSourceTable(TestCase):
@@ -33,10 +33,9 @@ class TestCurrentOffloadSourceTable(TestCase):
         self.db_type = orchestration_options.db_type
         return orchestration_options
 
-    def _create_test_tables(self):
+    def _create_test_table(self):
         messages = get_test_messages(self.config, "TestCurrentOffloadSourceTable")
         # Setup partitioned table
-        print("NJNJ self.db, self.table", self.db, self.table)
         run_setup_ddl(
             self.config,
             self.test_api,
@@ -214,7 +213,7 @@ class TestCurrentOffloadSourceTable(TestCase):
             dry_run=True,
         )
 
-        self._create_test_tables()
+        self._create_test_table()
         self._run_all_tests()
 
 

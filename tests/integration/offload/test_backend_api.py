@@ -24,8 +24,8 @@ from tests.testlib.test_framework.test_functions import get_test_messages
 from tests.unit.offload.test_backend_api import TestBackendApi
 
 
-DIM_NAME = "INTEGRATION_BAPI_DIM_TABLE"
-FACT_NAME = "INTEGRATION_BAPI_FACT_TABLE"
+DIM_NAME = "INTEG_BACKEND_API_DIM"
+FACT_NAME = "INTEG_BACKEND_API_FACT"
 
 
 class TestCurrentBackendApi(TestBackendApi):

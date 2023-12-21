@@ -1097,18 +1097,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
         """ No roles in Hadoop """
         pass
 
-    def sample_table_stats_partitionwise(self, db_name, table_name, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        hive_stats = self._get_hive_stats_table(db_name, table_name)
-        tab_stats, col_stats = hive_stats.sample_partitions(percent=sample_stats_perc, as_dict=as_dict,
-                                                            num_bytes_fudge=num_bytes_fudge)
-        return tab_stats, col_stats
-
-    def sample_table_stats_scan(self, db_name, table_name, as_dict=False, sample_perc=None):
-        """ Hadoop implementation calls out to HiveStats module, sample_perc ignored. """
-        hive_stats = self._get_hive_stats_table(db_name, table_name)
-        tab_stats, col_stats = hive_stats.scan(as_dict=as_dict)
-        return tab_stats, col_stats
-
     def set_column_stats(self, db_name, table_name, new_column_stats, ndv_cap, num_null_factor):
         if not self.table_stats_get_supported():
             return

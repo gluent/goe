@@ -1620,14 +1620,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         if data_gov_client:
             self.set_data_gov_client(data_gov_client)
 
-    def sample_table_stats_partitionwise(self, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        return self._db_api.sample_table_stats_partitionwise(self.db_name, self._base_table_name, sample_stats_perc,
-                                                             num_bytes_fudge, as_dict=as_dict)
-
-    def sample_table_stats_scan(self, as_dict=False, sample_perc=None):
-        return self._db_api.sample_table_stats_scan(self.db_name, self._base_table_name,
-                                                    as_dict=as_dict, sample_perc=sample_perc)
-
     def set_column_stats(self, new_column_stats, ndv_cap, num_null_factor):
         self._db_api.set_column_stats(self.db_name, self._base_table_name, new_column_stats, ndv_cap, num_null_factor)
 

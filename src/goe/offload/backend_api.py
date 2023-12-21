@@ -1407,22 +1407,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
         pass
 
     @abstractmethod
-    def sample_table_stats_partitionwise(self, db_name, table_name, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        """ Scan a selection of partitions from a table and estimate statistics.
-            Used when a backend object doesn't have stats but we want something representative
-            for the hybrid schema external table.
-        """
-        pass
-
-    @abstractmethod
-    def sample_table_stats_scan(self, db_name, table_name, as_dict=False, sample_perc=None):
-        """ Scan a table/view and estimate statistics.
-            Used when a backend object doesn't have stats but we want something representative
-            for the hybrid schema external table.
-        """
-        pass
-
-    @abstractmethod
     def sequence_table_max(self, db_name, table_name):
         pass
 

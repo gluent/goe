@@ -72,15 +72,15 @@ logger.addHandler(logging.NullHandler()) # Disabling logging by default
 ###############################################################################
 
 # Size as reported by impala (i.e. show partitions)
-REGEX_IMPALA_SIZE = re.compile('^([\d.]+)(\w+)$')
+REGEX_IMPALA_SIZE = re.compile(r'^([\d.]+)(\w+)$')
 # Extract SQL 'FROM' contents
-REGEX_FROM_CLAUSE = re.compile('^.*FROM\s+(.*?)(WHERE|GROUP BY|ORDER BY|LIMIT|;|$)', re.I)
+REGEX_FROM_CLAUSE = re.compile(r'^.*FROM\s+(.*?)(WHERE|GROUP BY|ORDER BY|LIMIT|;|$)', re.I)
 # Split tables in the JOIN
-REGEX_JOIN = re.compile('(?:INNER\s+JOIN|(LEFT|RIGHT|FULL)\s+OUTER\sJOIN|(LEFT|RIGHT)\s+SEMI\s+JOIN|(LEFT|RIGHT)\s+ANTI\s+JOIN)', re.I)
+REGEX_JOIN = re.compile(r'(?:INNER\s+JOIN|(LEFT|RIGHT|FULL)\s+OUTER\sJOIN|(LEFT|RIGHT)\s+SEMI\s+JOIN|(LEFT|RIGHT)\s+ANTI\s+JOIN)', re.I)
 # Parse out table and alias
 REGEX_DB_TABLE = re.compile('^(\S+)\s*(\S+)?\s*(ON\s+)?.*$', re.I)
 # Drop 'create view ... as' from view ddl
-REGEX_CREATE_VIEW = re.compile('CREATE\s+VIEW\s+.*?\s+AS\s+', re.I)
+REGEX_CREATE_VIEW = re.compile(r'CREATE\s+VIEW\s+.*?\s+AS\s+', re.I)
 # The constant used by HDFS for NULL partition keys
 HDFS_NULL_PART_KEY_CONSTANT='__HIVE_DEFAULT_PARTITION__'
 

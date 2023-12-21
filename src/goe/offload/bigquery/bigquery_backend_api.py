@@ -20,7 +20,7 @@ from numpy import datetime64
 
 from goe.connect.connect_constants import CONNECT_DETAIL, CONNECT_STATUS, CONNECT_TEST
 from goe.offload.column_metadata import CanonicalColumn, ColumnMetadataInterface, ColumnPartitionInfo, \
-    get_column_names, is_safe_mapping, match_table_column, str_list_of_columns, valid_column_list, \
+    match_table_column, str_list_of_columns, valid_column_list, \
     CANONICAL_CHAR_SEMANTICS_CHAR, \
     GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY, \
     GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, \
@@ -28,7 +28,7 @@ from goe.offload.column_metadata import CanonicalColumn, ColumnMetadataInterface
     GLUENT_TYPE_DOUBLE, GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, \
     GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_BOOLEAN, \
     ALL_CANONICAL_TYPES, DATE_CANONICAL_TYPES, NUMERIC_CANONICAL_TYPES, STRING_CANONICAL_TYPES
-from goe.offload.backend_api import BackendApiInterface, BackendApiException, BackendStatsException, \
+from goe.offload.backend_api import BackendApiInterface, BackendApiException, \
     UdfDetails, UdfParameter, \
     FETCH_ACTION_ALL, FETCH_ACTION_ONE, REPORT_ATTR_BACKEND_CLASS, REPORT_ATTR_BACKEND_TYPE, \
     REPORT_ATTR_BACKEND_DISPLAY_NAME, REPORT_ATTR_BACKEND_HOST_INFO_TYPE, REPORT_ATTR_BACKEND_HOST_INFO
@@ -43,7 +43,6 @@ from goe.offload.bigquery.bigquery_column import BigQueryColumn, \
     BIGQUERY_TYPE_TIME, BIGQUERY_TYPE_TIMESTAMP
 from goe.offload.bigquery.bigquery_literal import BigQueryLiteral
 
-from goe.util.hive_table_stats import parse_stats_into_tab_col, transform_stats_as_tuples
 from goe.util.misc_functions import backtick_sandwich, format_list_for_logging
 
 ###############################################################################
@@ -1506,31 +1505,6 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
     def role_exists(self, role_name):
         """ No roles in BigQuery """
         pass
-
-    def sample_table_stats_partitionwise(self, db_name, table_name, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        """ On BigQuery there should be no need to sample a partitioned table because stats are always present.
-        """
-        raise NotImplementedError('Partitionwise statistic sampling does not apply for BigQuery')
-
-    def sample_table_stats_scan(self, db_name, table_name, as_dict=False, sample_perc=None):
-        """ BigQuery implementation ignores sample_perc parameter """
-        tab_stats = EMPTY_BACKEND_TABLE_STATS_DICT
-        col_stats = EMPTY_BACKEND_COLUMN_STATS_DICT
-        try:
-            sql = self._gen_sample_stats_sql_text_common(db_name, table_name)
-            stats = self.execute_query_fetch_one(sql, time_sql=True, log_level=VVERBOSE)
-            tab_stats, col_stats = parse_stats_into_tab_col(stats)
-            if not as_dict:
-                tab_stats, col_stats = transform_stats_as_tuples(tab_stats, col_stats,
-                                                                 get_column_names(
-                                                                     self.get_non_synthetic_columns(db_name,
-                                                                                                    table_name)))
-        except Exception as exc:
-            self._log(traceback.format_exc(), detail=VERBOSE)
-            self._messages.warning("Exception: %s detected while sampling stats: %s.%s"
-                                   % (str(exc), db_name, table_name))
-            raise BackendStatsException(exc)
-        return tab_stats, col_stats
 
     def sequence_table_max(self, db_name, table_name):
         raise NotImplementedError('Sequence table does not apply for BigQuery')

@@ -2285,37 +2285,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         )
         return bool(row)
 
-    def sample_table_stats_partitionwise(
-        self, db_name, table_name, sample_stats_perc, num_bytes_fudge, as_dict=False
-    ):
-        raise NotImplementedError(
-            "sample_table_stats_partitionwise not supported for Synapse"
-        )
-
-    def sample_table_stats_scan(
-        self, db_name, table_name, as_dict=False, sample_perc=None
-    ):
-        tab_stats = EMPTY_BACKEND_TABLE_STATS_DICT
-        col_stats = EMPTY_BACKEND_COLUMN_STATS_DICT
-        try:
-            sql = self._gen_sample_stats_sql_text_common(
-                db_name, table_name, sample_perc=sample_perc
-            )
-            stats = self.execute_query_fetch_one(sql, time_sql=True, log_level=VVERBOSE)
-            tab_stats, col_stats = parse_stats_into_tab_col(stats)
-            if not as_dict:
-                tab_stats, col_stats = transform_stats_as_tuples(
-                    tab_stats, col_stats, self.get_column_names(db_name, table_name)
-                )
-        except Exception as exc:
-            self._log(traceback.format_exc(), detail=VERBOSE)
-            self._messages.warning(
-                "Exception: %s detected while sampling stats: %s.%s"
-                % (str(exc), db_name, table_name)
-            )
-            raise BackendStatsException(exc)
-        return tab_stats, col_stats
-
     def sequence_table_max(self, db_name, table_name):
         raise NotImplementedError("Sequence table does not apply for Synapse")
 

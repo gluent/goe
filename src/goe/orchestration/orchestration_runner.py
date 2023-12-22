@@ -13,7 +13,6 @@ from typing import Optional, TYPE_CHECKING
 # Gluent
 from goe.gluent import (
     OffloadOperation,
-    check_and_set_nls_lang,
     get_log_fh,
     get_offload_target_table,
     init,
@@ -103,7 +102,10 @@ class OrchestrationRunner:
 
     def _build_repo_client(self, messages) -> "OrchestrationRepoClientInterface":
         return orchestration_repo_client_factory(
-            self._config, messages, dry_run=bool(not self._config.execute)
+            self._config,
+            messages,
+            dry_run=bool(not self._config.execute),
+            trace_action="repo_client(OrchestrationRunner)",
         )
 
     def _cleanup_objects(self, repo_client, frontend_table=None, backend_table=None):
@@ -239,6 +241,7 @@ class OrchestrationRunner:
                     params,
                     self._config,
                     self._messages,
+                    repo_client=repo_client,
                     execution_id=self._execution_id,
                     max_hybrid_name_length=self._get_max_hybrid_identifier_length(),
                 )
@@ -480,97 +483,8 @@ class OrchestrationRunner:
             self._command_fail(command_id, exc, repo_client)
             raise
 
+        # The repo client is leaving connections behind so let's explicitly close it.
         return status
-
-    def offload_join(
-        self,
-        params,
-        execution_id: Optional[ExecutionId] = None,
-        reuse_log: bool = False,
-        messages_override: Optional[OffloadMessages] = None,
-    ):
-        """
-        Run an offload join using incoming params.
-        See offload() for parameter descriptions.
-        """
-        repo_client = self._init_command(
-            orchestration_constants.COMMAND_OFFLOAD_JOIN,
-            params,
-            execution_id=execution_id,
-            reuse_log=reuse_log,
-            messages_override=messages_override,
-        )
-
-        check_and_set_nls_lang(self._config, self._messages)
-        command_id = self._command_begin(
-            orchestration_constants.COMMAND_OFFLOAD_JOIN, params, repo_client
-        )
-        try:
-            raise OrchestrationRunnerException("Offload Join no longer exists")
-        except Exception as exc:
-            self._command_fail(command_id, exc, repo_client)
-            raise
-
-    def present(
-        self,
-        params,
-        execution_id: Optional[ExecutionId] = None,
-        reuse_log: bool = False,
-        messages_override: Optional[OffloadMessages] = None,
-    ):
-        """
-        Run a present based on incoming params.
-        params: Can be a dict or an OptParse object.
-        execution_id: A UUID used to uniquely identify the Offload. Can be generted internally or provided as
-                      an override.
-        reuse_log: True indicates that there is already a log file installed in gluent.py for us to integrate with.
-        messages_override: Allows us to pass in an existing messages object so a parent can inspect the messages,
-                           used for testing.
-        """
-        repo_client = self._init_command(
-            orchestration_constants.COMMAND_PRESENT,
-            params,
-            execution_id=execution_id,
-            reuse_log=reuse_log,
-            messages_override=messages_override,
-        )
-
-        command_id = self._command_begin(
-            orchestration_constants.COMMAND_PRESENT, params, repo_client
-        )
-        try:
-            raise OrchestrationRunnerException("Present no longer exists")
-        except Exception as exc:
-            self._command_fail(command_id, exc, repo_client)
-            raise
-
-    def present_join(
-        self,
-        params,
-        execution_id: Optional[ExecutionId] = None,
-        reuse_log: bool = False,
-        messages_override: Optional[OffloadMessages] = None,
-    ):
-        """
-        Run a present join using incoming params.
-        """
-        repo_client = self._init_command(
-            orchestration_constants.COMMAND_PRESENT_JOIN,
-            params,
-            execution_id=execution_id,
-            reuse_log=reuse_log,
-            messages_override=messages_override,
-        )
-
-        check_and_set_nls_lang(self._config, self._messages)
-        command_id = self._command_begin(
-            orchestration_constants.COMMAND_PRESENT_JOIN, params, repo_client
-        )
-        try:
-            raise OrchestrationRunnerException("Offload Join no longer exists")
-        except Exception as exc:
-            self._command_fail(command_id, exc, repo_client)
-            raise
 
     def schema_sync(
         self,

@@ -72,6 +72,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         connection_options: "OrchestrationConfig",
         messages: "OffloadMessages",
         dry_run: bool = False,
+        trace_action: str = None,
     ):
         """Abstract base class which acts as an interface for frontend specific sub-classes for
         get/put of orchestration metadata.
@@ -83,6 +84,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         self._messages = messages
         self._dry_run = dry_run
         self._frontend_client: "Optional[FrontendApiInterface]" = None
+        self._trace_action = trace_action or self.__class__.__name__
 
     def __del__(self):
         self.close()
@@ -206,7 +208,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
                 self._connection_options,
                 self._messages,
                 dry_run=self._dry_run,
-                trace_action=self.__class__.__name__,
+                trace_action=self._trace_action,
             )
         return self._frontend_client
 
@@ -242,10 +244,16 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
     # PUBLIC METHODS
     ###########################################################################
 
-    def close(self):
+    def close(self, force=False):
         """Free up any resources currently held"""
         if self._frontend_client:
-            self._frontend_client.close()
+            if force:
+                try:
+                    self._frontend_client.close()
+                except:
+                    pass
+            else:
+                self._frontend_client.close()
 
     #
     # OFFLOAD METADATA
@@ -268,7 +276,8 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def set_offload_metadata(
-        self, metadata: Union[dict, OrchestrationMetadata],
+        self,
+        metadata: Union[dict, OrchestrationMetadata],
     ):
         """Persist metadata"""
 

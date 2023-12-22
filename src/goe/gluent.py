@@ -1122,7 +1122,8 @@ class BaseOperation(object):
   def repo_client(self):
     if self._repo_client is None:
       self._repo_client = orchestration_repo_client_factory(self._orchestration_config, self._messages,
-                                                            dry_run=bool(not self._orchestration_config.execute))
+                                                            dry_run=bool(not self._orchestration_config.execute),
+                                                            trace_action="repo_client(OffloadOperation)")
     return self._repo_client
 
   def vars(self):

@@ -108,6 +108,9 @@ def get_rdbms_connection_for_oracle(ora_user, ora_pass, ora_dsn, use_oracle_wall
     finally:
         session_cursor.close()
     ora_conn.module = FRONTEND_TRACE_MODULE
+    ora_conn.action = "Offload Transport"
+    # Ping updates the module/action in the session.
+    ora_conn.ping()
     return ora_conn
 
 

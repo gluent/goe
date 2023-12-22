@@ -459,7 +459,9 @@ def test_offload_pbo_late_range_90_10(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -499,7 +501,9 @@ def test_offload_pbo_late_range_100_0(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -544,7 +548,9 @@ def test_offload_pbo_late_list_as_range(config, schema, data_db):
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -595,7 +601,9 @@ def test_offload_pbo_late_list_as_range_100_0(config, schema, data_db):
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -641,9 +649,9 @@ def test_offload_pbo_late_mcol_range(config, schema, data_db):
         )
         return
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    # backend_api = get_backend_testing_api(config, messages)
+    # frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    # repo_client = orchestration_repo_client_factory(config, messages, trace_action=f'repo_client({id})')
 
     # TODO
     # setup_fn = lambda: gen_sales_based_multi_pcol_fact_create_ddl(schema, table_name)
@@ -662,9 +670,9 @@ def test_offload_pbo_late_range_sub(config, schema, data_db):
         )
         return
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    # backend_api = get_backend_testing_api(config, messages)
+    # frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    # repo_client = orchestration_repo_client_factory(config, messages, trace_action=f'repo_client({id})')
 
     # TODO
     # setup_fn = lambda: gen_sales_based_subpartitioned_fact_ddl(schema, table_name)

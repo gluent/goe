@@ -4,14 +4,11 @@
     CrossDbValidator:   Validate successful offload via calculating aggregates in front/back databases
                         and comparing them
 
-    HybridCountValidator: Validate data in the frontend table vs that returned from the Hybrid View
-
     LICENSE_TEXT
 """
 
 from datetime import date, datetime
 import logging
-from textwrap import dedent
 from functools import reduce
 
 from goe.util.misc_functions import is_number, isclose, str_floatlike
@@ -22,7 +19,6 @@ from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.frontend_api_factory import (
     frontend_api_factory,
-    frontend_api_factory_ctx,
 )
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.frontend_api import QueryParameter
@@ -733,7 +729,7 @@ class CrossDbValidator(OffloadMessagesMixin, object):
         return query_result[0]
 
     def _extract_offload_boundary(self, frontend=False):
-        """Extract offload boundary for Hybrid table
+        """Extract offload boundary for offloaded table
         Returns a string value ready to be plugged in to a SQL statement.
         """
         if not self._offload_metadata:
@@ -952,117 +948,6 @@ class CrossDbValidator(OffloadMessagesMixin, object):
             self.log_verbose("Frontend sql: %s" % self._frontend_sql)
             self.log_verbose("Backend sql: %s" % self._backend_sql)
             return True, agg_message
-
-
-###############################################################################
-# HybridCountValidator
-###############################################################################
-
-
-class HybridCountValidator(object):
-    """Validate data in the frontend table matches that returned from the Hybrid View using COUNT(*) queries.
-    Taken from gluent.py so does not completely match style used by CrossDbValidator.
-    """
-
-    def __init__(
-        self,
-        table_owner,
-        table_name,
-        hybrid_schema,
-        hybrid_view,
-        connection_options,
-        messages=None,
-        dry_run=False,
-    ):
-        """CONSTRUCTOR
-        messages - OffloadMessages object, None means no logging
-        """
-        self._table_owner = table_owner
-        self._table_name = table_name
-        self._hybrid_schema = hybrid_schema
-        self._hybrid_view = hybrid_view
-        self._connection_options = connection_options
-        self._messages = messages
-        self._dry_run = dry_run
-
-    ###########################################################################
-    # PRIVATE METHODS
-    ###########################################################################
-
-    def _log(self, msg, detail=None, ansi_code=None):
-        """Write to offload log file."""
-        if self._messages:
-            self._messages.log(msg, detail=detail, ansi_code=ansi_code)
-        if detail == VVERBOSE:
-            logger.debug(msg)
-        else:
-            logger.info(msg)
-
-    ###########################################################################
-    # PUBLIC METHODS
-    ###########################################################################
-
-    def validate(
-        self, frontend_filters, frontend_query_params, frontend_hint_block=None
-    ):
-        def crlfping(filter_str):
-            """crlfping - for those who've seen a typewriter"""
-            return "\n                  %s" % filter_str
-
-        if frontend_filters:
-            assert isinstance(frontend_filters, list), "{} is not list".format(
-                type(frontend_query_params)
-            )
-        if frontend_query_params:
-            assert isinstance(frontend_query_params, list), "{} is not list".format(
-                type(frontend_query_params)
-            )
-
-        threshold_clause = ""
-        if frontend_filters:
-            threshold_clause = crlfping("WHERE %s") % crlfping("AND   ").join(
-                frontend_filters
-            )
-
-        hint_clause = f" {frontend_hint_block}" if frontend_hint_block else ""
-        params = {
-            "owner": self._table_owner,
-            "table_name": self._table_name,
-            "hybrid_owner": self._hybrid_schema,
-            "hybrid_name": self._hybrid_view,
-            "threshold_clause": threshold_clause,
-            "hint_clause": hint_clause,
-        }
-        q = (
-            dedent(
-                """\
-        WITH
-          origin_rows AS (SELECT COUNT(*) c FROM "%(owner)s"."%(table_name)s"%(threshold_clause)s)
-        , hybrid_rows AS (SELECT COUNT(*) c FROM "%(hybrid_owner)s"."%(hybrid_name)s"%(threshold_clause)s)
-        SELECT%(hint_clause)s origin_rows.c - hybrid_rows.c diff, origin_rows.c origin_rows, hybrid_rows.c hybrid_rows
-        FROM hybrid_rows, origin_rows"""
-            )
-            % params
-        )
-
-        with frontend_api_factory_ctx(
-            self._connection_options.db_type,
-            self._connection_options,
-            self._messages,
-            conn_user_override=self._connection_options.rdbms_app_user,
-            trace_action=self.__class__.__name__,
-        ) as frontend_api:
-            results = frontend_api.execute_query_fetch_one(
-                q,
-                query_params=frontend_query_params,
-                log_level=VERBOSE,
-                not_when_dry_running=True,
-            )
-            if self._dry_run or results is None:
-                return 0, 0, 0
-            else:
-                num_diff, source_rows, hybrid_rows = results
-            return num_diff, source_rows, hybrid_rows
 
 
 ###############################################################################

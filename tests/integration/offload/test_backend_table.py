@@ -116,6 +116,7 @@ class TestCurrentBackendTable(TestCase):
             self.config,
             messages,
             dry_run=False,
+            trace_action="frontend_api(TestCurrentBackendTable)",
         )
         # Setup partitioned table
         run_setup_ddl(

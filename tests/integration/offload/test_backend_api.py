@@ -1,6 +1,5 @@
 from unittest import main
 
-
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.offload_constants import DBTYPE_SPARK
 from goe.offload.offload_functions import (
@@ -66,6 +65,7 @@ class TestCurrentBackendApi(TestBackendApi):
             self.config,
             messages,
             dry_run=False,
+            trace_action="frontend_api(TestCurrentBackendApi)",
         )
         # Setup non-partitioned table
         run_setup_ddl(

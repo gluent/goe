@@ -366,6 +366,9 @@ def test_offload_pbo_exceptions(config, schema, data_db):
         expected_status=False,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_dim(config, schema, data_db):
     """Standard PBO on a non-partitioned table."""
@@ -544,6 +547,9 @@ def test_offload_pbo_dim(config, schema, data_db):
         "txn_desc = 'GHI'",
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_unicode(config, schema, data_db):
     """PBO testing with unicode data."""
@@ -640,6 +646,9 @@ def test_offload_pbo_unicode(config, schema, data_db):
         "data = '%s'" % UCODE_VALUE2,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_char_pad(config, schema, data_db):
     """PBO testing with CHAR padded column."""
@@ -709,6 +718,9 @@ def test_offload_pbo_char_pad(config, schema, data_db):
         expected_status=False,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_ts(config, schema, data_db):
     """PBO testing with a TIMESTAMP column."""
@@ -766,6 +778,9 @@ def test_offload_pbo_ts(config, schema, data_db):
         f"{id}:1",
         "id = 1",
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_pbo_range(config, schema, data_db):
@@ -909,6 +924,9 @@ def test_offload_pbo_range(config, schema, data_db):
         expected_exception_string=PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_list(config, schema, data_db):
     """PBO testing with a LIST partitioned table."""
@@ -1049,3 +1067,6 @@ def test_offload_pbo_list(config, schema, data_db):
         "yrmon = %s AND channel_id = 4"
         % const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_1),
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

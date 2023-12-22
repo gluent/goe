@@ -365,6 +365,9 @@ def test_offload_basic_dim(config, schema, data_db):
     )
     assert offload_basic_dim_assertion(backend_api, messages, data_db, backend_name)
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_basic_fact(config, schema, data_db):
     id = "test_offload_basic_fact"
@@ -597,3 +600,6 @@ def test_offload_basic_fact(config, schema, data_db):
         OFFLOAD_FACT,
         SALES_BASED_FACT_HV_4,
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

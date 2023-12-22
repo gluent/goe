@@ -444,6 +444,8 @@ def test_offload_rpa_int8(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_int_8(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_date(config, schema, data_db):
@@ -465,6 +467,8 @@ def test_offload_rpa_date(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_date(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_timestamp(config, schema, data_db):
@@ -486,6 +490,8 @@ def test_offload_rpa_timestamp(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_timestamp(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_string(config, schema, data_db):
@@ -513,6 +519,8 @@ def test_offload_rpa_string(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_string(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_nvarchar2(config, schema, data_db):
@@ -541,6 +549,8 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
         repo_client,
         ORACLE_TYPE_NVARCHAR2,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_udf_int8(config, schema, data_db):
@@ -583,6 +593,8 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         frontend_api.test_type_canonical_int_8(),
         partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_udf_string(config, schema, data_db):
@@ -616,6 +628,8 @@ def test_offload_rpa_udf_string(config, schema, data_db):
         frontend_api.test_type_canonical_string(),
         partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_alpha(config, schema, data_db):
@@ -709,3 +723,5 @@ def test_offload_rpa_alpha(config, schema, data_db):
         incremental_key="STR",
         incremental_key_type=canonical_string,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

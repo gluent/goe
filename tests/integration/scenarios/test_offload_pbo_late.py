@@ -96,6 +96,19 @@ def data_db(schema, config):
     return data_db
 
 
+def gen_insert_late_arriving_sales_based_multi_pcol_data(
+    schema, table_name, new_time_id_string
+):
+    ins = f"""INSERT INTO {schema}.{table_name}
+             SELECT prod_id, cust_id, TO_DATE('{new_time_id_string}','YYYY-MM-DD HH24:MI:SS') AS time_id
+             ,      channel_id, promo_id, quantity_sold, amount_sold
+             ,      EXTRACT(YEAR FROM DATE' {new_time_id_string}') AS time_year
+             ,      EXTRACT(MONTH FROM DATE' {new_time_id_string}') AS time_month
+             FROM   {schema}.{table_name}
+             WHERE  ROWNUM = 1"""
+    return [ins]
+
+
 def offload_pbo_late_100_x_tests(
     config,
     backend_api,
@@ -270,6 +283,7 @@ def offload_pbo_late_arriving_std_range_tests(
     offload_by_subpartition = False
     offload_partition_columns = None
     part_key_type = frontend_api.test_type_canonical_date()
+    check_hwm_in_metadata = True
     if table_name == RANGE_TABLE_LATE:
         inc_key = "TIME_ID"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
@@ -297,7 +311,10 @@ def offload_pbo_late_arriving_std_range_tests(
         offload_partition_granularity = "1,1,Y"
         less_than_option = "less_than_value"
         hv_pred = "(column(time_id) = datetime(%s))" % OLD_HV_1
-        # add_row_fn = lambda: gen_insert_late_arriving_sales_based_multi_pcol_data(schema, table_name, OLD_HV_1)
+        add_row_fn = lambda: gen_insert_late_arriving_sales_based_multi_pcol_data(
+            schema, table_name, OLD_HV_1
+        )
+        check_hwm_in_metadata = False
         if config.target == DBTYPE_BIGQUERY:
             offload_partition_columns = "TIME_ID"
             offload_partition_granularity = None
@@ -307,7 +324,9 @@ def offload_pbo_late_arriving_std_range_tests(
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
         hv_1 = chk_hv_1 = test_constants.SALES_BASED_FACT_HV_1
         hv_pred = "(column(time_id) = datetime(%s))" % OLD_HV_1
-        # add_row_fn = lambda: gen_insert_late_arriving_sales_based_data(frontend_api, schema, table_name, OLD_HV_1)
+        add_row_fn = lambda: frontend_api.sales_based_fact_late_arriving_data_sql(
+            schema, table_name, OLD_HV_1, channel_id_literal=2
+        )
         expected_incremental_range = "SUBPARTITION"
     else:
         raise NotImplementedError(f"Test table not implemented: {table_name}")
@@ -337,6 +356,7 @@ def offload_pbo_late_arriving_std_range_tests(
         ipa_predicate_type=ipa_predicate_type,
         incremental_predicate_value="NULL",
         incremental_range=expected_incremental_range,
+        check_hwm_in_metadata=check_hwm_in_metadata,
     )
 
     # No-op Offload Late Arriving Data.
@@ -441,6 +461,7 @@ def offload_pbo_late_arriving_std_range_tests(
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
         incremental_predicate_value="NULL",
+        check_hwm_in_metadata=check_hwm_in_metadata,
     )
     assert check_predicate_count_matches_log(
         frontend_api, messages, schema, table_name, f"{test_id}:1", chk_cnt_filter
@@ -452,13 +473,18 @@ def offload_pbo_late_arriving_std_range_tests(
     # Attempt to re-offload same predicate.
     run_offload(options, config, messages, expected_status=False)
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_late_range_90_10(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload."""
     id = "test_offload_pbo_late_range_90_10"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    frontend_api = get_frontend_testing_api(
+        config, messages, trace_action=f"ftest_api({id})"
+    )
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"
     )
@@ -494,13 +520,18 @@ def test_offload_pbo_late_range_90_10(config, schema, data_db):
     # TODO do we need to create a test for below 100_10 tests?
     # offload_pbo_late_100_x_tests(config, backend_api, frontend_api, messages, repo_client, schema, data_db, RANGE_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_late_range_100_0(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload."""
     id = "test_offload_pbo_late_range_100_0"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    frontend_api = get_frontend_testing_api(
+        config, messages, trace_action=f"ftest_api({id})"
+    )
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"
     )
@@ -534,6 +565,9 @@ def test_offload_pbo_late_range_100_0(config, schema, data_db):
         id,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_late_list_as_range(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a LIST_AS_RANGE."""
@@ -547,7 +581,9 @@ def test_offload_pbo_late_list_as_range(config, schema, data_db):
         return
 
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    frontend_api = get_frontend_testing_api(
+        config, messages, trace_action=f"ftest_api({id})"
+    )
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"
     )
@@ -587,6 +623,9 @@ def test_offload_pbo_late_list_as_range(config, schema, data_db):
     # offload_pbo_late_100_x_tests(options, backend_api, frontend_api, messages, repo_client, schema,
     #                                    hybrid_schema, data_db, LAR_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_late_list_as_range_100_0(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a LIST_AS_RANGE 100/0."""
@@ -600,7 +639,9 @@ def test_offload_pbo_late_list_as_range_100_0(config, schema, data_db):
         return
 
     backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    frontend_api = get_frontend_testing_api(
+        config, messages, trace_action=f"ftest_api({id})"
+    )
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"
     )
@@ -637,6 +678,9 @@ def test_offload_pbo_late_list_as_range_100_0(config, schema, data_db):
         id,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_late_mcol_range(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a multi-partition column table."""
@@ -649,14 +693,45 @@ def test_offload_pbo_late_mcol_range(config, schema, data_db):
         )
         return
 
-    # backend_api = get_backend_testing_api(config, messages)
-    # frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    # repo_client = orchestration_repo_client_factory(config, messages, trace_action=f'repo_client({id})')
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(
+        config, messages, trace_action=f"ftest_api({id})"
+    )
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
-    # TODO
-    # setup_fn = lambda: gen_sales_based_multi_pcol_fact_create_ddl(schema, table_name)
-    # offload_pbo_late_arriving_std_range_tests(schema, data_db, config, backend_api, frontend_api,
-    #                                                 messages, repo_client, MCOL_TABLE_LATE)
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_multi_col_fact_create_ddl(
+            schema,
+            MCOL_TABLE_LATE,
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, MCOL_TABLE_LATE
+            ),
+        ],
+    )
+
+    offload_pbo_late_arriving_std_range_tests(
+        schema,
+        data_db,
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        MCOL_TABLE_LATE,
+        id,
+    )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_pbo_late_range_sub(config, schema, data_db):
@@ -670,11 +745,42 @@ def test_offload_pbo_late_range_sub(config, schema, data_db):
         )
         return
 
-    # backend_api = get_backend_testing_api(config, messages)
-    # frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    # repo_client = orchestration_repo_client_factory(config, messages, trace_action=f'repo_client({id})')
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(
+        config, messages, trace_action=f"ftest_api({id})"
+    )
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
-    # TODO
-    # setup_fn = lambda: gen_sales_based_subpartitioned_fact_ddl(schema, table_name)
-    # offload_pbo_late_arriving_std_range_tests(schema, data_db, config, backend_api, frontend_api,
-    #                                                 messages, repo_client, RANGE_SP_LATE)
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_subpartitioned_fact_ddl(
+            schema,
+            RANGE_SP_LATE,
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, RANGE_SP_LATE
+            ),
+        ],
+    )
+
+    offload_pbo_late_arriving_std_range_tests(
+        schema,
+        data_db,
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        RANGE_SP_LATE,
+        id,
+    )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

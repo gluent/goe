@@ -720,7 +720,11 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def sales_based_fact_late_arriving_data_sql(
-        self, schema: str, table_name: str, time_id_literal: str
+        self,
+        schema: str,
+        table_name: str,
+        time_id_literal: str,
+        channel_id_literal: int = 1,
     ) -> list:
         pass
 
@@ -743,6 +747,18 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def sales_based_list_fact_add_partition_ddl(
         self, schema: str, table_name: str, next_ym_override: Optional[tuple] = None
+    ) -> list:
+        pass
+
+    @abstractmethod
+    def sales_based_multi_col_fact_create_ddl(
+        self, schema: str, table_name: str, maxval_partition=False
+    ) -> list:
+        pass
+
+    @abstractmethod
+    def sales_based_subpartitioned_fact_ddl(
+        self, schema: str, table_name: str, top_level="LIST", rowdependencies=False
     ) -> list:
         pass
 

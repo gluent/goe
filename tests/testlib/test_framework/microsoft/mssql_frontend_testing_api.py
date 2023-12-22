@@ -363,7 +363,11 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         )
 
     def sales_based_fact_late_arriving_data_sql(
-        self, schema: str, table_name: str, time_id_literal: str
+        self,
+        schema: str,
+        table_name: str,
+        time_id_literal: str,
+        channel_id_literal: int = 1,
     ):
         raise NotImplementedError(
             "MSSQL sales_based_fact_late_arriving_data_sql() pending implementation"
@@ -398,6 +402,20 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
     ) -> list:
         raise NotImplementedError(
             "MSSQL sales_based_list_fact_late_arriving_data_sql() pending implementation"
+        )
+
+    def sales_based_multi_col_fact_create_ddl(
+        self, schema: str, table_name: str, maxval_partition=False
+    ) -> list:
+        raise NotImplementedError(
+            "MSSQL sales_based_multi_col_fact_create_ddl() not implemented"
+        )
+
+    def sales_based_subpartitioned_fact_ddl(
+        self, schema: str, table_name: str, top_level="LIST", rowdependencies=False
+    ) -> list:
+        raise NotImplementedError(
+            "MSSQL sales_based_subpartitioned_fact_ddl() not implemented"
         )
 
     def select_grant_exists(

@@ -62,9 +62,6 @@ COMMAND_ID_CONNECT = "CONNECT"
 LOG_FILE_PREFIXES = {
     COMMAND_ID_CONNECT: "connect",
     orchestration_constants.COMMAND_OFFLOAD: "offload",
-    orchestration_constants.COMMAND_OFFLOAD_JOIN: "offload",
-    orchestration_constants.COMMAND_PRESENT: "present",
-    orchestration_constants.COMMAND_PRESENT_JOIN: "present",
     orchestration_constants.COMMAND_SCHEMA_SYNC: "schema_sync",
 }
 
@@ -481,9 +478,9 @@ class OrchestrationRunner:
             )
         except Exception as exc:
             self._command_fail(command_id, exc, repo_client)
+            repo_client.close(force=True)
             raise
 
-        # The repo client is leaving connections behind so let's explicitly close it.
         return status
 
     def schema_sync(

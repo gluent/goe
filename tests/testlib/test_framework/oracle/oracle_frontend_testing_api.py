@@ -1143,6 +1143,17 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         else:
             self._log("%s rows mock-inserted: %s" % (rows, col_types), detail=VERBOSE)
 
+    def _sales_gen_subquery(self, time_id_expr: str, rows=500) -> str:
+        return f"""SELECT CAST(MOD(ROWNUM,100)+1 AS NUMBER(4))  prod_id
+                    ,      CAST(MOD(ROWNUM,1000)+1 AS NUMBER(5)) cust_id
+                    ,      {time_id_expr} time_id
+                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(2))    channel_id
+                    ,      CAST(MOD(ROWNUM,100)+1 AS NUMBER)     promo_id
+                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(10,2)) quantity_sold
+                    ,      CAST(ROWNUM*1.75 AS NUMBER(10,2))     amount_sold
+                    FROM   dual
+                    CONNECT BY ROWNUM <= {rows}"""
+
     ###########################################################################
     # PUBLIC METHODS
     ###########################################################################
@@ -1678,6 +1689,9 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             ):
                 hv7 = hv7.replace("-", "")
             params.update({"part_7_name": "P7", "part_7_expr": part_7_expr % hv7})
+        params["sales_gen_subquery"] = self._sales_gen_subquery(
+            f"ADD_MONTHS(DATE'{SALES_BASED_FACT_HV_6}',-(MOD(ROWNUM,7))) - MOD(ROWNUM,31)"
+        )
 
         create_ddl = dedent(
             """\
@@ -1705,15 +1719,7 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                SELECT prod_id, cust_id, %(time_id_expr)s AS %(time_id_alias)s, channel_id, promo_id
                , quantity_sold, amount_sold%(extra_cols)s
                FROM (
-                    SELECT CAST(MOD(ROWNUM,100)+1 AS NUMBER(4))  prod_id
-                    ,      CAST(MOD(ROWNUM,1000)+1 AS NUMBER(5)) cust_id
-                    ,      ADD_MONTHS(DATE'%(hv6_date)s',-(MOD(ROWNUM,7))) - MOD(ROWNUM,31) time_id
-                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(2))    channel_id
-                    ,      CAST(MOD(ROWNUM,100)+1 AS NUMBER)     promo_id
-                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(10,2)) quantity_sold
-                    ,      CAST(ROWNUM*1.75 AS NUMBER(10,2))     amount_sold
-                    FROM   dual
-                    CONNECT BY ROWNUM <= 500
+                    %(sales_gen_subquery)s
                ) sales
                WHERE time_id BETWEEN TO_DATE('%(pre_hv)s','YYYY-MM-DD') AND TO_DATE('%(hv6)s','YYYY-MM-DD')
                %(extra_pred)s"""
@@ -1749,19 +1755,13 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         ins = """INSERT INTO %(schema)s.%(table)s
                  SELECT *
                  FROM (
-                    SELECT CAST(MOD(ROWNUM,100)+1 AS NUMBER(4))  prod_id
-                    ,      CAST(MOD(ROWNUM,1000)+1 AS NUMBER(5)) cust_id
-                    ,      DATE'%(hv)s' + MOD(ROWNUM,25) time_id
-                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(2))    channel_id
-                    ,      CAST(MOD(ROWNUM,100)+1 AS NUMBER)     promo_id
-                    ,      CAST(MOD(ROWNUM,5)+1 AS NUMBER(10,2)) quantity_sold
-                    ,      CAST(ROWNUM*1.75 AS NUMBER(10,2))     amount_sold
-                    FROM   dual
-                    CONNECT BY ROWNUM <= 60
+                    %(sales_gen_subquery)s
                  ) sales""" % {
             "schema": schema,
             "table": table_name,
-            "hv": hv,
+            "sales_gen_subquery": self._sales_gen_subquery(
+                f"DATE'{hv}' + MOD(ROWNUM,25)", rows=60
+            ),
         }
         return [alt, ins]
 
@@ -1815,16 +1815,16 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         return hwm_literal, meta_hwm_check_literal, sql_literal
 
     def sales_based_fact_late_arriving_data_sql(
-        self, schema: str, table_name: str, time_id_literal: str
+        self,
+        schema: str,
+        table_name: str,
+        time_id_literal: str,
+        channel_id_literal: int = 1,
     ) -> list:
-        ins = """INSERT INTO %(schema)s.%(table_name)s
-        SELECT 1, 1001, TO_DATE('%(time_id)s','YYYY-MM-DD HH24:MI:SS'), 1,
-               1, 1.1, 2.2
-        FROM   dual""" % {
-            "schema": schema,
-            "table_name": table_name,
-            "time_id": time_id_literal,
-        }
+        ins = f"""INSERT INTO {schema}.{table_name}
+        SELECT 1 prod_id, 1001 cust_id, TO_DATE('{time_id_literal}','YYYY-MM-DD HH24:MI:SS') time_id, {channel_id_literal} channel_id,
+               1 promo_id, 1.1, 2.2
+        FROM   dual"""
         return [ins]
 
     def sales_based_list_fact_create_ddl(
@@ -2085,6 +2085,124 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             "yrmon": yrmon_string,
         }
         return [ins]
+
+    def sales_based_multi_col_fact_create_ddl(
+        self, schema: str, table_name: str, maxval_partition=False
+    ) -> list:
+        """Create a partitioned table with a multi column partition key.
+        Uses a limited number of CHANNEL_IDs to reduce the rows, volume not a factor.
+        """
+        params = {"schema": schema, "table": table_name}
+        if maxval_partition:
+            params.update({"hv2": "MAXVALUE", "hv4": "MAXVALUE"})
+        else:
+            params.update(
+                {
+                    "hv2": "TO_DATE('2013-01-01','YYYY-MM-DD')",
+                    "hv4": "TO_DATE('2014-01-01','YYYY-MM-DD')",
+                }
+            )
+        params["sales_gen_subquery"] = self._sales_gen_subquery(
+            f"DATE'2012-01-01' + (MOD(ROWNUM,104)*7)", rows=500
+        )
+        sqls = [
+            "DROP TABLE %(schema)s.%(table)s" % params,
+            """CREATE TABLE %(schema)s.%(table)s
+               STORAGE (INITIAL 64K NEXT 64K)
+               PARTITION BY RANGE (time_year,time_month,time_id)
+                (PARTITION %(table)s_P1 VALUES LESS THAN (2012,06,TO_DATE('2012-07-01','YYYY-MM-DD'))
+                ,PARTITION %(table)s_P2 VALUES LESS THAN (2012,12,%(hv2)s)
+                ,PARTITION %(table)s_P3 VALUES LESS THAN (2013,06,TO_DATE('2013-07-01','YYYY-MM-DD'))
+                ,PARTITION %(table)s_P4 VALUES LESS THAN (2013,12,%(hv4)s))
+                AS
+                SELECT sales.*
+                ,      EXTRACT(YEAR FROM time_id) AS time_year
+                ,      EXTRACT(MONTH FROM time_id) AS time_month
+                FROM (
+                    %(sales_gen_subquery)s
+                ) sales
+                WHERE time_id BETWEEN TO_DATE('2012-01-01','YYYY-MM-DD') AND TO_DATE('2013-12-31','YYYY-MM-DD')
+                """
+            % params,
+        ]
+        sqls.append(self.collect_table_stats_sql_text(schema, table_name))
+        return sqls
+
+    def sales_based_subpartitioned_fact_ddl(
+        self, schema: str, table_name: str, top_level="LIST", rowdependencies=False
+    ) -> list:
+        """Create a LIST/RANGE partitioned table with:
+        - a dormant/old subpartition in an unused list 0
+        - several common HWMs across lists 2 & 3
+        - a single HWM that is not present in list 3
+        """
+        rowdeps = "%sROWDEPENDENCIES" % ("" if rowdependencies else "NO")
+        if top_level.upper() == "HASH":
+            partition_scheme = """PARTITION BY HASH (channel_id)
+                SUBPARTITION BY RANGE (time_id)
+                SUBPARTITION TEMPLATE
+                (   SUBPARTITION P_201201 VALUES LESS THAN (TO_DATE('2012-02-01','YYYY-MM-DD'))
+                    ,SUBPARTITION P_201202 VALUES LESS THAN (TO_DATE('2012-03-01','YYYY-MM-DD'))
+                    ,SUBPARTITION P_201203 VALUES LESS THAN (TO_DATE('2012-04-01','YYYY-MM-DD'))
+                    ,SUBPARTITION P_201204 VALUES LESS THAN (TO_DATE('2012-05-01','YYYY-MM-DD'))
+                    ,SUBPARTITION P_201205 VALUES LESS THAN (TO_DATE('2012-06-01','YYYY-MM-DD'))
+                    ,SUBPARTITION P_201206 VALUES LESS THAN (TO_DATE('2012-07-01','YYYY-MM-DD'))
+                )
+                PARTITIONS 2"""
+        else:
+            partition_scheme = """PARTITION BY LIST (channel_id)
+                SUBPARTITION BY RANGE (time_id)
+                (PARTITION %(table)s_C0 VALUES (0)
+                    (SUBPARTITION C0_200001 VALUES LESS THAN (TO_DATE('2000-01-01','YYYY-MM-DD'))
+                    )
+                ,PARTITION %(table)s_C2 VALUES (2)
+                    (SUBPARTITION C2_201201 VALUES LESS THAN (TO_DATE('2012-02-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201202 VALUES LESS THAN (TO_DATE('2012-03-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201203 VALUES LESS THAN (TO_DATE('2012-04-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201204 VALUES LESS THAN (TO_DATE('2012-05-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201205 VALUES LESS THAN (TO_DATE('2012-06-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201206 VALUES LESS THAN (TO_DATE('2012-07-01','YYYY-MM-DD'))
+                    )
+                ,PARTITION %(table)s_C3 VALUES (3)
+                    (SUBPARTITION C3_201201 VALUES LESS THAN (TO_DATE('2012-02-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C3_201202 VALUES LESS THAN (TO_DATE('2012-03-01','YYYY-MM-DD'))
+                    --,SUBPARTITION C3_201203 VALUES LESS THAN (TO_DATE('2012-04-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C3_201204 VALUES LESS THAN (TO_DATE('2012-05-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C3_201205 VALUES LESS THAN (TO_DATE('2012-06-01','YYYY-MM-DD'))
+                    )
+                )""" % {
+                "table": table_name
+            }
+        params = {
+            "schema": schema,
+            "table": table_name,
+            "partition_scheme": partition_scheme,
+            "rowdependencies": rowdeps,
+            "sales_gen_subquery": self._sales_gen_subquery(
+                f"DATE'2012-01-01' + (MOD(ROWNUM,52)*7)", rows=500
+            ),
+        }
+        sqls = [
+            "DROP TABLE %(schema)s.%(table)s" % params,
+            """CREATE TABLE %(schema)s.%(table)s
+                STORAGE (INITIAL 64K NEXT 64K)
+                %(rowdependencies)s
+                %(partition_scheme)s
+                AS
+                SELECT *
+                FROM (
+                    %(sales_gen_subquery)s
+                    ) sales
+                WHERE  time_id >= TO_DATE('2012-01-01','YYYY-MM-DD')
+                AND    ((time_id < TO_DATE('2012-06-01','YYYY-MM-DD')
+                AND    channel_id = 3)
+                OR     (time_id < TO_DATE('2012-07-01','YYYY-MM-DD')
+                AND    channel_id = 2))
+                AND    channel_id IN (2,3)"""
+            % params,
+        ]
+        sqls.append(self.collect_table_stats_sql_text(schema, table_name))
+        return sqls
 
     def select_grant_exists(
         self,

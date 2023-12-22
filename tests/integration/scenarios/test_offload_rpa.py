@@ -430,7 +430,9 @@ def test_offload_rpa_int8(config, schema, data_db):
         )
         return
 
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -442,6 +444,8 @@ def test_offload_rpa_int8(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_int_8(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_date(config, schema, data_db):
@@ -449,7 +453,9 @@ def test_offload_rpa_date(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -461,6 +467,8 @@ def test_offload_rpa_date(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_date(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_timestamp(config, schema, data_db):
@@ -468,7 +476,9 @@ def test_offload_rpa_timestamp(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -480,6 +490,8 @@ def test_offload_rpa_timestamp(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_timestamp(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_string(config, schema, data_db):
@@ -493,7 +505,9 @@ def test_offload_rpa_string(config, schema, data_db):
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -505,6 +519,8 @@ def test_offload_rpa_string(config, schema, data_db):
         repo_client,
         frontend_api.test_type_canonical_string(),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_nvarchar2(config, schema, data_db):
@@ -519,7 +535,9 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     offload_range_ipa_standard_tests(
         schema,
@@ -531,6 +549,8 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
         repo_client,
         ORACLE_TYPE_NVARCHAR2,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_udf_int8(config, schema, data_db):
@@ -554,7 +574,9 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         )
         return
 
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     backend_api.create_test_partition_functions(
         data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
@@ -571,6 +593,8 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         frontend_api.test_type_canonical_int_8(),
         partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_udf_string(config, schema, data_db):
@@ -585,7 +609,9 @@ def test_offload_rpa_udf_string(config, schema, data_db):
         return
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     backend_api.create_test_partition_functions(
         data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING
@@ -602,6 +628,8 @@ def test_offload_rpa_udf_string(config, schema, data_db):
         frontend_api.test_type_canonical_string(),
         partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_offload_rpa_alpha(config, schema, data_db):
@@ -615,7 +643,9 @@ def test_offload_rpa_alpha(config, schema, data_db):
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     canonical_string = frontend_api.test_type_canonical_string()
 
@@ -693,3 +723,5 @@ def test_offload_rpa_alpha(config, schema, data_db):
         incremental_key="STR",
         incremental_key_type=canonical_string,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

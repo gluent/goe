@@ -38,6 +38,7 @@ class TestCurrentFrontendApi(TestFrontendApi):
             messages,
             dry_run=False,
             do_not_connect=bool(not self.connect_to_frontend),
+            trace_action="frontend_api(TestCurrentFrontendApi)",
         )
 
         self.db = get_default_test_user()

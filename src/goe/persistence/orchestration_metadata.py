@@ -119,7 +119,10 @@ def build_client(connection_options=None, messages=None, client=None, dry_run=Fa
         assert connection_options
         assert messages
         return orchestration_repo_client_factory(
-            connection_options, messages, dry_run=dry_run
+            connection_options,
+            messages,
+            dry_run=dry_run,
+            trace_action="repo_client(OrchestrationMetadata)",
         )
 
 

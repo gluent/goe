@@ -264,7 +264,9 @@ def test_offload_basic_dim(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     backend_name = convert_backend_identifier_case(config, OFFLOAD_DIM)
     copy_stats_available = backend_api.table_stats_set_supported()
@@ -285,6 +287,8 @@ def test_offload_basic_dim(config, schema, data_db):
             ),
         ],
     )
+    # Frontend API is not used for anything else so let's close it.
+    frontend_api.close()
 
     assert not backend_table_exists(config, backend_api, messages, data_db, OFFLOAD_DIM)
     assert not backend_table_exists(config, backend_api, messages, load_db, OFFLOAD_DIM)
@@ -361,13 +365,18 @@ def test_offload_basic_dim(config, schema, data_db):
     )
     assert offload_basic_dim_assertion(backend_api, messages, data_db, backend_name)
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_basic_fact(config, schema, data_db):
     id = "test_offload_basic_fact"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     backend_name = convert_backend_identifier_case(config, OFFLOAD_FACT)
 
@@ -591,3 +600,6 @@ def test_offload_basic_fact(config, schema, data_db):
         OFFLOAD_FACT,
         SALES_BASED_FACT_HV_4,
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

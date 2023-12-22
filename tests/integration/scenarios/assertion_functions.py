@@ -448,6 +448,7 @@ def sales_based_fact_assertion(
     incremental_range=None,
     story_id="",
     split_type=None,
+    check_hwm_in_metadata=True,
     ipa_predicate_type="RANGE",
     incremental_key_type=None,
     incremental_predicate_value=None,
@@ -497,6 +498,9 @@ def sales_based_fact_assertion(
                     % (meta_check_literal, mt.incremental_high_value, match)
                 )
             return match
+
+    if not check_hwm_in_metadata:
+        check_fn = None
 
     if not backend_table_exists(config, backend_api, messages, data_db, backend_table):
         messages.log("backend_table_exists() == False")

@@ -808,6 +808,8 @@ def test_numeric_controls(config, schema, data_db):
             p=max_decimal_precision, s=max_decimal_scale
         ),
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_date_controls(config, schema, data_db):
@@ -873,6 +875,8 @@ def test_date_controls(config, schema, data_db):
         DATE_DIM,
         forced_to_tstz=True,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_date_sampling(config, schema, data_db):
@@ -966,6 +970,8 @@ def test_date_sampling(config, schema, data_db):
         from_stats=False,
         good_as_date=True,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_precision_scale_overflow(config, schema, data_db):
@@ -1082,6 +1088,13 @@ def test_precision_scale_overflow(config, schema, data_db):
         "reset_backend_table": True,
         "decimal_padding_digits": 0,
     }
+    run_offload(
+        options,
+        config,
+        messages,
+    )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_datatype_controls_column_name_checks(config, schema, data_db, load_db):
@@ -1263,3 +1276,5 @@ def test_datatype_controls_column_name_checks(config, schema, data_db, load_db):
     unicode_assertion(
         backend_api, data_db, offload_dim_be, {"TXN_DESC": GLUENT_TYPE_VARIABLE_STRING}
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

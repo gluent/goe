@@ -366,6 +366,9 @@ def test_offload_pbo_exceptions(config, schema, data_db):
         expected_status=False,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_dim(config, schema, data_db):
     """Standard PBO on a non-partitioned table."""
@@ -373,7 +376,9 @@ def test_offload_pbo_dim(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -542,6 +547,9 @@ def test_offload_pbo_dim(config, schema, data_db):
         "txn_desc = 'GHI'",
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_unicode(config, schema, data_db):
     """PBO testing with unicode data."""
@@ -549,7 +557,9 @@ def test_offload_pbo_unicode(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -636,6 +646,9 @@ def test_offload_pbo_unicode(config, schema, data_db):
         "data = '%s'" % UCODE_VALUE2,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_char_pad(config, schema, data_db):
     """PBO testing with CHAR padded column."""
@@ -643,7 +656,9 @@ def test_offload_pbo_char_pad(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -703,6 +718,9 @@ def test_offload_pbo_char_pad(config, schema, data_db):
         expected_status=False,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_ts(config, schema, data_db):
     """PBO testing with a TIMESTAMP column."""
@@ -710,7 +728,9 @@ def test_offload_pbo_ts(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -759,6 +779,9 @@ def test_offload_pbo_ts(config, schema, data_db):
         "id = 1",
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_range(config, schema, data_db):
     """PBO testing with a RANGE partitioned table."""
@@ -766,8 +789,9 @@ def test_offload_pbo_range(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
-    # TODO Testing needs copying over from offload_pbo.py tests.
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     # Setup
     run_setup(
@@ -808,7 +832,10 @@ def test_offload_pbo_range(config, schema, data_db):
         "owner_table": schema + "." + RANGE_TABLE,
         "offload_predicate": GenericPredicate(
             "(column(time_id) >= datetime(%s)) and (column(time_id) < datetime(%s))"
-            % (test_constants.SALES_BASED_FACT_HV_2, test_constants.SALES_BASED_FACT_HV_3)
+            % (
+                test_constants.SALES_BASED_FACT_HV_2,
+                test_constants.SALES_BASED_FACT_HV_3,
+            )
         ),
         "reset_backend_table": True,
     }
@@ -897,6 +924,9 @@ def test_offload_pbo_range(config, schema, data_db):
         expected_exception_string=PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_pbo_list(config, schema, data_db):
     """PBO testing with a LIST partitioned table."""
@@ -904,7 +934,9 @@ def test_offload_pbo_list(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     if not frontend_api.gluent_lpa_supported():
         messages.log(f"Skipping {id} for system/type: {config.db_type}/LIST")
@@ -974,7 +1006,10 @@ def test_offload_pbo_list(config, schema, data_db):
         expected_incremental_key="NULL",
         expected_incremental_range="NULL",
         expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=[test_constants.SALES_BASED_FACT_HV_1, "(3)"],
+        values_in_predicate_value_metadata=[
+            test_constants.SALES_BASED_FACT_HV_1,
+            "(3)",
+        ],
     )
     assert check_predicate_count_matches_log(
         frontend_api,
@@ -1018,7 +1053,10 @@ def test_offload_pbo_list(config, schema, data_db):
         expected_incremental_key="NULL",
         expected_incremental_range="NULL",
         expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=[test_constants.SALES_BASED_FACT_HV_1, "(4)"],
+        values_in_predicate_value_metadata=[
+            test_constants.SALES_BASED_FACT_HV_1,
+            "(4)",
+        ],
     )
     assert check_predicate_count_matches_log(
         frontend_api,
@@ -1029,3 +1067,6 @@ def test_offload_pbo_list(config, schema, data_db):
         "yrmon = %s AND channel_id = 4"
         % const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_1),
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

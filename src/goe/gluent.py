@@ -30,9 +30,7 @@ from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import IMPALA_SHUFFLE_HINT, IMPALA_NOSHUFFLE_HINT
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory, get_backend_table_from_metadata
-from goe.offload.factory.frontend_api_factory import frontend_api_factory_ctx
-from goe.offload.column_metadata import ColumnBucketInfo, \
-    invalid_column_list_message, match_table_column,\
+from goe.offload.column_metadata import invalid_column_list_message, match_table_column,\
     is_synthetic_partition_column, valid_column_list, \
     GLUENT_TYPE_DECIMAL, GLUENT_TYPE_DATE, GLUENT_TYPE_DOUBLE,\
     GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8,\
@@ -42,11 +40,11 @@ from goe.offload.offload_constants import (
     ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
     DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_MSSQL,
     FILE_STORAGE_COMPRESSION_CODEC_GZIP, FILE_STORAGE_COMPRESSION_CODEC_SNAPPY, FILE_STORAGE_COMPRESSION_CODEC_ZLIB,
-    HYBRID_EXT_TABLE_DEGREE_AUTO,
     IPA_PREDICATE_TYPE_CHANGE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
     IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
     LOG_LEVEL_INFO, LOG_LEVEL_DETAIL, LOG_LEVEL_DEBUG,
+    MISSING_METADATA_EXCEPTION_TEMPLATE,
     OFFLOAD_BUCKET_NAME,
     NUM_BUCKETS_AUTO,
     OFFLOAD_STATS_METHOD_COPY,
@@ -109,7 +107,7 @@ from goe.persistence.orchestration_metadata import OrchestrationMetadata, \
 from goe.data_governance.hadoop_data_governance import get_hadoop_data_governance_client_from_options,\
     is_valid_data_governance_tag
 
-from goe.util.misc_functions import csv_split, bytes_to_human_size,\
+from goe.util.misc_functions import all_int_chars, csv_split, bytes_to_human_size,\
     human_size_to_bytes, standard_log_name
 from goe.util.ora_query import get_oracle_connection
 from goe.util.redis_tools import RedisClient
@@ -117,28 +115,14 @@ from goe.util.redis_tools import RedisClient
 
 dev_logger = logging.getLogger('gluent')
 
-lob_null_special_value = 'X\'00\''
-
-AAPD_VALID_NUMERIC_FNS = ['AVG', 'MIN', 'MAX', 'COUNT', 'SUM']
-AAPD_VALID_STRING_FNS = ['MIN', 'MAX', 'COUNT']
-AAPD_VALID_DATE_FNS = ['MIN', 'MAX', 'COUNT']
-
 OFFLOAD_PATTERN_100_0, OFFLOAD_PATTERN_90_10, OFFLOAD_PATTERN_100_10 = list(range(3))
-
-HYBRID_EXT_TABLE_DEGREE_DEFAULT = 'DEFAULT'
-HYBRID_EXT_TABLE_CHARSET = 'AL32UTF8'
-HYBRID_EXT_TABLE_PREPROCESSOR = 'smart_connector.sh'
 
 OFFLOAD_OP_NAME = 'offload'
 
 CONFIG_FILE_NAME = 'offload.env'
-LOCATION_FILE_BASE = 'offload.conf'
-
-LEGACY_MAX_HYBRID_IDENTIFIER_LENGTH = 30
 
 # Used in test to identify specific warnings
-HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = 'Including hybrid schema steps due to HWM change'
-MISSING_HYBRID_METADATA_EXCEPTION_TEMPLATE = 'Missing hybrid metadata for hybrid view %s.%s, contact Gluent support (or --reset-backend-table to overwrite table data)'
+HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = 'Including post transport steps due to HWM change'
 NLS_LANG_MISSING_CHARACTER_SET_EXCEPTION_TEMPLATE = 'NLS_LANG value %s missing character set delimiter (.)'
 OFFLOAD_STATS_COPY_EXCEPTION_TEXT = 'Invalid --offload-stats value'
 RETAINING_PARTITITON_FUNCTIONS_MESSAGE_TEXT = 'Retaining partition functions from backend target'
@@ -149,17 +133,17 @@ EXPECTED_OFFLOAD_ARGS = [
     'bucket_hash_col',
     'column_transformation_list', 'compress_load_table', 'compute_load_table_stats', 'create_backend_db',
     'data_governance_custom_tags_csv', 'data_governance_custom_properties',
-    'data_sample_parallelism', 'data_sample_pct', 'date_columns_csv', 'date_fns',
+    'data_sample_parallelism', 'data_sample_pct', 'date_columns_csv',
     'decimal_columns_csv_list', 'decimal_columns_type_list', 'decimal_padding_digits', 'double_columns_csv',
-    'equal_to_values', 'error_before_step', 'error_after_step', 'ext_readsize', 'ext_table_name',
-    'force', 'generate_dependent_views',
-    'hive_column_stats', 'hybrid_ext_table_degree',
+    'equal_to_values', 'error_before_step', 'error_after_step',
+    'force',
+    'hive_column_stats',
     'impala_insert_hint',
     'integer_1_columns_csv', 'integer_2_columns_csv', 'integer_4_columns_csv', 'integer_8_columns_csv',
     'integer_38_columns_csv', 'ipa_predicate_type',
-    'less_than_value', 'lob_data_length',
+    'less_than_value',
     'max_offload_chunk_count', 'max_offload_chunk_size', 'not_null_columns_csv',
-    'num_buckets', 'num_location_files', 'numeric_fns',
+    'num_buckets', 'num_location_files',
     'offload_by_subpartition', 'offload_chunk_column', 'offload_distribute_enabled',
     'offload_fs_container', 'offload_fs_prefix', 'offload_fs_scheme',
     'offload_partition_columns', 'offload_partition_functions', 'offload_partition_granularity',
@@ -174,7 +158,7 @@ EXPECTED_OFFLOAD_ARGS = [
     'partition_names_csv', 'preserve_load_table', 'purge_backend_table',
     'reset_backend_table', 'reset_hybrid_view',
     'sort_columns_csv', 'sqoop_additional_options', 'sqoop_mapreduce_map_memory_mb', 'sqoop_mapreduce_map_java_opts',
-    'skip', 'storage_compression', 'storage_format', 'string_fns', 'synthetic_partition_digits', 'suppress_stdout',
+    'skip', 'storage_compression', 'storage_format', 'synthetic_partition_digits', 'suppress_stdout',
     'target_owner_name', 'timestamp_tz_columns_csv', 'unicode_string_columns_csv',
     'variable_string_columns_csv', 'ver_check', 'verify_parallelism', 'verify_row_count'
 ]
@@ -184,7 +168,6 @@ options = None
 log_fh = None
 suppress_stdout_override = False
 execution_id = ""
-
 
 redis_execution_id = None
 redis_in_error = False
@@ -356,15 +339,6 @@ def silent_close(something_that_closes):
         log('Exception issuing close() silently:\n%s' % str(e), vverbose)
 
 
-def all_int_chars(int_str, allow_negative=False):
-  """ returns true if all chars in a string are 0-9
-  """
-  if allow_negative:
-    return bool(re.match(r'^-?\d+$', str(int_str)))
-  else:
-    return bool(re.match(r'^\d+$', str(int_str)))
-
-
 def get_offload_type(owner, table_name, hybrid_operation, incr_append_capable, partition_type, hybrid_metadata, messages, with_messages=True):
     """ Wrapper for get_offload_type_for_config that caters for speculative retrievals of offload_type
         Used when deciding whether to auto-enable subpartition offloads
@@ -404,16 +378,6 @@ def log_timedelta(ansi_code='grey', hybrid_options=None):
     return ts2 - ts
 
 
-def enter_or_cancel(msg, allowed=('', 'S')):
-  try:
-    i = None
-    while i not in allowed:
-      i = input(msg).upper()
-    return i
-  except KeyboardInterrupt as exc:
-    sys.exit(1)
-
-
 # TODO Should really be named oracle_adm_connection
 def oracle_connection(opts, proxy_user=None):
   return get_oracle_connection(opts.ora_adm_user, opts.ora_adm_pass, opts.rdbms_dsn, opts.use_oracle_wallet, proxy_user)
@@ -432,15 +396,6 @@ def incremental_offload_partition_overrides(offload_operation, existing_part_dig
     messages.notice('Retaining partition column scheme from backend target (ignoring --partition-columns)')
   if offload_operation.offload_partition_functions:
     messages.notice(f'{RETAINING_PARTITITON_FUNCTIONS_MESSAGE_TEXT} (ignoring --partition-functions)')
-
-
-def parse_size_expr(size, binary_sizes=False):
-  """ Converts a size string, such as 10M or 64G, into bytes """
-  return human_size_to_bytes(size, binary_sizes=binary_sizes)
-
-
-def hybrid_owner(target_owner):
-  return OffloadOperation.hybrid_owner(target_owner)
 
 
 def verify_offload_by_backend_count(offload_source_table, offload_target_table, ipa_predicate_type, offload_options,
@@ -524,30 +479,23 @@ def offload_data_verification(offload_source_table, offload_target_table, offloa
         new_hvs = new_hv_tuple[1]
 
   if offload_operation.verify_row_count == 'minus':
-    hybrid_name = 'Hybrid'
-    hybrid_label = 'hybrid_rows'
-    if offload_source_table.hybrid_schema_supported():
-      raise OffloadException('Hybrid Schema is no longer supported')
-    else:
-      hybrid_name = offload_target_table.backend_db_name()
-      hybrid_label = 'backend_rows'
-      verify_fn = lambda: verify_offload_by_backend_count(offload_source_table, offload_target_table,
-                                                          offload_operation.ipa_predicate_type,
-                                                          offload_options, messages, new_hvs, prior_hvs,
-                                                          offload_operation.verify_parallelism,
-                                                          inflight_offload_predicate=source_data_client.get_inflight_offload_predicate())
+    verify_fn = lambda: verify_offload_by_backend_count(offload_source_table, offload_target_table,
+                                                        offload_operation.ipa_predicate_type,
+                                                        offload_options, messages, new_hvs, prior_hvs,
+                                                        offload_operation.verify_parallelism,
+                                                        inflight_offload_predicate=source_data_client.get_inflight_offload_predicate())
     verify_by_count_results = messages.offload_step(command_steps.STEP_VERIFY_EXPORTED_DATA,
                                                     verify_fn, execute=offload_options.execute)
     if offload_options.execute and verify_by_count_results:
         num_diff, source_rows, hybrid_rows = verify_by_count_results
         if num_diff == 0:
-            messages.log(f'Source and {hybrid_name} table data matches: offload successful'
+            messages.log(f'Source and {offload_target_table.backend_db_name()} table data matches: offload successful'
                          + (' (with warnings)' if messages.get_warnings() else ''),
                          ansi_code='green')
-            messages.log('%s origin_rows, %s %s' % (source_rows, hybrid_rows, hybrid_label), detail=VERBOSE)
+            messages.log('%s origin_rows, %s backend_rows' % (source_rows, hybrid_rows), detail=VERBOSE)
         else:
-            raise OffloadException('Source and Hybrid mismatch: %s differences, %s origin_rows, %s %s'
-                                   % (num_diff, source_rows, hybrid_rows, hybrid_label))
+            raise OffloadException('Source and Hybrid mismatch: %s differences, %s origin_rows, %s backend_rows'
+                                   % (num_diff, source_rows, hybrid_rows))
   else:
     verify_fn = lambda: verify_row_count_by_aggs(offload_source_table, offload_target_table,
                                                  offload_operation.ipa_predicate_type,
@@ -556,10 +504,10 @@ def offload_data_verification(offload_source_table, offload_target_table, offloa
                                                  inflight_offload_predicate=source_data_client.get_inflight_offload_predicate())
     if messages.offload_step(command_steps.STEP_VERIFY_EXPORTED_DATA,
                              verify_fn, execute=offload_options.execute):
-      messages.log('Source and Hybrid table data matches: offload successful%s'
+      messages.log('Source and target table data matches: offload successful%s'
                    % (' (with warnings)' if messages.get_warnings() else ''), ansi_code='green')
     else:
-      raise OffloadException('Source and Hybrid mismatch')
+      raise OffloadException('Source and target mismatch')
 
 
 def normalise_column_transformations(column_transformation_list, offload_cols=None, backend_cols=None):
@@ -643,13 +591,7 @@ def normalise_owner_table_options(options):
     raise OffloadOptionError('Option --base-name required in form SCHEMA.TABLENAME')
 
   options.target_owner, options.target_name = options.target_owner_name.split('.')
-  # When presenting, target-name modifies the frontend (hybrid) details.
-  # When offloading it modifies the backend (hadoop) details.
   # Need to maintain the upper below for backward compatibility if names pass through trunc_with_hash().
-  if hasattr(options, 'operation_name') and options.operation_name == OFFLOAD_OP_NAME:
-    options.hybrid_owner, options.hybrid_name = hybrid_owner(options.owner), options.table_name.upper()
-  else:
-    options.hybrid_owner, options.hybrid_name = hybrid_owner(options.target_owner), options.target_name.upper()
   options.base_owner, options.base_name = options.base_owner_name.upper().split('.')
 
   if options.base_owner_name.upper() != options.owner_table.upper() and options.target_owner.upper() != options.base_owner.upper():
@@ -824,12 +766,6 @@ def normalise_options(options, normalise_owner_table=True):
                            % options.ipa_predicate_type)
 
   options.skip = options.skip if type(options.skip) is list else options.skip.lower().split(',')
-
-  if options.hybrid_ext_table_degree != HYBRID_EXT_TABLE_DEGREE_AUTO:
-    # if not AUTO then must be integral
-    if not all_int_chars(options.hybrid_ext_table_degree):
-      raise OffloadOptionError('Invalid value for --ext-table-degree, must be %s or integral number'
-                        % HYBRID_EXT_TABLE_DEGREE_AUTO)
 
   valid_combination, message = check_bucket_location_combinations(options)
   if not valid_combination:
@@ -1039,8 +975,6 @@ class BaseOperation(object):
     if repo_client:
         self._repo_client = repo_client
 
-    self.ext_table_name = self.table_name #TODO (GOE-2334) Remove this temporary value once metadata DB code updated.
-
     self.partition_names_csv = self.partition_names_csv.upper() if self.partition_names_csv else None
     self.partition_names = self.partition_names_csv.split(',') if self.partition_names_csv else []
 
@@ -1122,7 +1056,8 @@ class BaseOperation(object):
   def repo_client(self):
     if self._repo_client is None:
       self._repo_client = orchestration_repo_client_factory(self._orchestration_config, self._messages,
-                                                            dry_run=bool(not self._orchestration_config.execute))
+                                                            dry_run=bool(not self._orchestration_config.execute),
+                                                            trace_action="repo_client(OffloadOperation)")
     return self._repo_client
 
   def vars(self):
@@ -1205,7 +1140,7 @@ class BaseOperation(object):
       self.bucket_hash_col = self.bucket_hash_col.upper()
 
   def get_hybrid_metadata(self, force=False):
-    """ Get metadata for current hybrid view and add to state
+    """ Get metadata for current table and add to state
         force can be used to ensure we read regardless of the reset status of the operation, but not store in state.
     """
     if not self._existing_metadata and not self.reset_backend_table:
@@ -1224,7 +1159,7 @@ class BaseOperation(object):
     return self._existing_metadata
 
   def enable_reset_backend_table(self):
-    """ If we need to programmatically enable backend reset then we also need to drop cached hybrid metadata.
+    """ If we need to programmatically enable backend reset then we also need to drop cached metadata.
     """
     self.reset_backend_table = True
     self._existing_metadata = None
@@ -1264,7 +1199,7 @@ class BaseOperation(object):
     existing_metadata = self.get_hybrid_metadata()
 
     if not existing_metadata:
-      raise OffloadException(MISSING_HYBRID_METADATA_EXCEPTION_TEMPLATE % (self.owner, self.table_name))
+      raise OffloadException(MISSING_METADATA_EXCEPTION_TEMPLATE % (self.owner, self.table_name))
 
     self.set_bucket_info_from_metadata(existing_metadata, messages)
 
@@ -1531,14 +1466,6 @@ class OffloadOperation(BaseOperation):
 
     return return_hash_col
 
-  @staticmethod
-  def hybrid_owner(target_owner):
-    hybrid_suffix = '_H'
-    if target_owner.upper()[-2:] == hybrid_suffix:
-      return target_owner.upper()
-    else:
-      return target_owner.upper() + hybrid_suffix
-
   def gen_canonical_overrides(self, backend_table, columns_override=None):
     """ For Offload """
     reference_columns = columns_override or backend_table.get_columns()
@@ -1575,7 +1502,6 @@ class OffloadOperation(BaseOperation):
           data_sample_parallelism=options.data_sample_parallelism,
           data_sample_pct=options.data_sample_pct,
           date_columns_csv=options.date_columns_csv,
-          date_fns=options.date_fns,
           decimal_columns_csv_list=options.decimal_columns_csv_list,
           decimal_columns_type_list=options.decimal_columns_type_list,
           decimal_padding_digits=options.decimal_padding_digits,
@@ -1583,12 +1509,8 @@ class OffloadOperation(BaseOperation):
           equal_to_values=options.equal_to_values,
           error_after_step=options.error_after_step,
           error_before_step=options.error_before_step,
-          ext_readsize=options.ext_readsize,
-          ext_table_name=options.ext_table_name,
           force=options.force,
-          generate_dependent_views=options.generate_dependent_views,
           hive_column_stats=options.hive_column_stats,
-          hybrid_ext_table_degree=options.hybrid_ext_table_degree,
           impala_insert_hint=options.impala_insert_hint,
           integer_1_columns_csv=options.integer_1_columns_csv,
           integer_2_columns_csv=options.integer_2_columns_csv,
@@ -1597,13 +1519,11 @@ class OffloadOperation(BaseOperation):
           integer_38_columns_csv=options.integer_38_columns_csv,
           ipa_predicate_type=options.ipa_predicate_type,
           less_than_value=options.less_than_value,
-          lob_data_length=options.lob_data_length,
           max_offload_chunk_count=options.max_offload_chunk_count,
           max_offload_chunk_size=options.max_offload_chunk_size,
           not_null_columns_csv=options.not_null_columns_csv,
           num_buckets=options.num_buckets,
           num_location_files=options.num_location_files,
-          numeric_fns=options.numeric_fns,
           offload_by_subpartition=options.offload_by_subpartition,
           offload_chunk_column=options.offload_chunk_column,
           offload_distribute_enabled=options.offload_distribute_enabled,
@@ -1643,7 +1563,6 @@ class OffloadOperation(BaseOperation):
           sqoop_mapreduce_map_java_opts=options.sqoop_mapreduce_map_java_opts,
           storage_format=options.storage_format,
           storage_compression = options.storage_compression,
-          string_fns=options.string_fns,
           suppress_stdout=options.suppress_stdout,
           synthetic_partition_digits=options.synthetic_partition_digits,
           target_owner_name=options.target_owner_name,
@@ -1686,7 +1605,6 @@ class OffloadOperation(BaseOperation):
                                                    orchestration_defaults.data_sample_parallelism_default()),
         data_sample_pct=operation_dict.get('data_sample_pct', orchestration_defaults.data_sample_pct_default()),
         date_columns_csv=operation_dict.get('date_columns_csv'),
-        date_fns=operation_dict.get('date_fns', orchestration_defaults.date_fns_default()),
         decimal_columns_csv_list=operation_dict.get('decimal_columns_csv_list'),
         decimal_columns_type_list=operation_dict.get('decimal_columns_type_list'),
         decimal_padding_digits=operation_dict.get('decimal_padding_digits',
@@ -1695,15 +1613,9 @@ class OffloadOperation(BaseOperation):
         equal_to_values=operation_dict.get('equal_to_values'),
         error_after_step=operation_dict.get('error_after_step'),
         error_before_step=operation_dict.get('error_before_step'),
-        ext_readsize=operation_dict.get('ext_readsize', orchestration_defaults.ext_readsize_default()),
-        ext_table_name=operation_dict.get('ext_table_name'),
         force=operation_dict.get('force', orchestration_defaults.force_default()),
-        generate_dependent_views=operation_dict.get('generate_dependent_views',
-                                                    orchestration_defaults.generate_dependent_views_default()),
         hive_column_stats=operation_dict.get('hive_column_stats',
                                              orchestration_defaults.hive_column_stats_default()),
-        hybrid_ext_table_degree=operation_dict.get('hybrid_ext_table_degree',
-                                                   orchestration_defaults.hybrid_ext_table_degree_default()),
         impala_insert_hint=operation_dict.get('impala_insert_hint'),
         integer_1_columns_csv=operation_dict.get('integer_1_columns_csv'),
         integer_2_columns_csv=operation_dict.get('integer_2_columns_csv'),
@@ -1712,7 +1624,6 @@ class OffloadOperation(BaseOperation):
         integer_38_columns_csv=operation_dict.get('integer_38_columns_csv'),
         ipa_predicate_type=operation_dict.get('ipa_predicate_type'),
         less_than_value=operation_dict.get('less_than_value'),
-        lob_data_length=operation_dict.get('lob_data_length', orchestration_defaults.lob_data_length_default()),
         max_offload_chunk_count=operation_dict.get('max_offload_chunk_count',
                                                    orchestration_defaults.max_offload_chunk_count_default()),
         max_offload_chunk_size=operation_dict.get('max_offload_chunk_size',
@@ -1720,7 +1631,6 @@ class OffloadOperation(BaseOperation):
         not_null_columns_csv=operation_dict.get('not_null_columns_csv'),
         num_buckets=operation_dict.get('num_buckets', orchestration_defaults.num_buckets_default()),
         num_location_files=operation_dict.get('num_location_files'),
-        numeric_fns=operation_dict.get('numeric_fns', orchestration_defaults.numeric_fns_default()),
         offload_by_subpartition=operation_dict.get('offload_by_subpartition'),
         offload_chunk_column=operation_dict.get('offload_chunk_column'),
         offload_distribute_enabled=operation_dict.get('offload_distribute_enabled',
@@ -1777,7 +1687,6 @@ class OffloadOperation(BaseOperation):
         storage_format=operation_dict.get('storage_format', orchestration_defaults.storage_format_default()),
         storage_compression = operation_dict.get('storage_compression',
                                                   orchestration_defaults.storage_compression_default()),
-        string_fns=operation_dict.get('string_fns', orchestration_defaults.string_fns_default()),
         suppress_stdout=operation_dict.get('suppress_stdout', orchestration_defaults.suppress_stdout_default()),
         synthetic_partition_digits=operation_dict.get('synthetic_partition_digits',
                                                       orchestration_defaults.synthetic_partition_digits_default()),
@@ -2201,7 +2110,6 @@ def get_options(usage=None, operation_name=None):
   opt = get_common_options(usage)
 
   opt.add_option('-t', '--table', dest='owner_table', help='Required. Owner and table-name, eg. OWNER.TABLE')
-  opt.add_option('--ext-table-name', dest='ext_table_name', help=SUPPRESS_HELP)
   opt.add_option('--target', dest='target', default=orchestration_defaults.query_engine_default(),
                  help=SUPPRESS_HELP)
   opt.add_option('--target-name', dest='target_owner_name',
@@ -2266,15 +2174,6 @@ def get_options(usage=None, operation_name=None):
   opt.add_option('--storage-compression', dest='storage_compression',
                  help='Backage storage compression, valid values are: HIGH|MED|NONE|GZIP|ZLIB|SNAPPY.',
                  default=orchestration_defaults.storage_compression_default())
-
-  opt.add_option('--ext-table-degree', dest='hybrid_ext_table_degree',
-                 default=orchestration_defaults.hybrid_ext_table_degree_default(),
-                 help=SUPPRESS_HELP)
-  opt.add_option('--ext-table-readsize', dest='ext_readsize', default=orchestration_defaults.ext_readsize_default(),
-                 help=SUPPRESS_HELP)
-  opt.add_option('--lob-data-length', dest='lob_data_length', default=orchestration_defaults.lob_data_length_default(),
-                 help=SUPPRESS_HELP)
-
   opt.add_option('--hive-column-stats', dest='hive_column_stats',
                  default=orchestration_defaults.hive_column_stats_default(), action='store_true',
                  help='Enable computation of column stats with "NATIVE" or "HISTORY" offload stats methods. Applies to Hive only')
@@ -2315,19 +2214,8 @@ def get_options(usage=None, operation_name=None):
   opt.add_option('--dev-log-level', dest='dev_log_level', default=orchestration_defaults.dev_log_level_default(),
                  help=SUPPRESS_HELP)
 
-  opt.add_option('--no-generate-dependent-views', dest='generate_dependent_views',
-                 default=orchestration_defaults.generate_dependent_views_default(), action='store_false',
-                 help='Any application views dependent on offloaded data will not be re-generated in to the hybrid schema')
-
   opt.add_option('--transform-column', dest='column_transformation_list', action='append', help=SUPPRESS_HELP)
                 #, help='Transform a column, format "column:transformation[(params)]". The transformation can be one of the following keywords: suppress, null, translate(from, to), regexp_replace(pattern, replacement)')
-
-  opt.add_option('--numeric-fns', dest='numeric_fns', default=orchestration_defaults.numeric_fns_default(),
-                 help=SUPPRESS_HELP)
-  opt.add_option('--string-fns', dest='string_fns', default=orchestration_defaults.string_fns_default(),
-                 help=SUPPRESS_HELP)
-  opt.add_option('--date-fns', dest='date_fns', default=orchestration_defaults.date_fns_default(),
-                 help=SUPPRESS_HELP)
 
   get_data_governance_options(opt)
 

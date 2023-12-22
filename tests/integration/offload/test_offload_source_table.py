@@ -203,7 +203,11 @@ class TestCurrentOffloadSourceTable(TestCase):
         self.messages = OffloadMessages()
         self.config = self._build_current_options()
         self.test_api = frontend_testing_api_factory(
-            self.config.db_type, self.config, self.messages, dry_run=False
+            self.config.db_type,
+            self.config,
+            self.messages,
+            dry_run=False,
+            trace_action="frontend_api(TestCurrentOffloadSourceTable)",
         )
         self.api = OffloadSourceTable.create(
             self.db,

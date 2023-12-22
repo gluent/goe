@@ -877,65 +877,65 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
         else:
             return None
 
-    def expected_customers_offload_predicates(self):
+    def expected_std_dim_offload_predicates(self) -> list:
         return [
-            ("column(cust_id) IS NULL", "`CUST_ID` IS NULL"),
-            ("column(cust_id) IS NOT NULL", "`CUST_ID` IS NOT NULL"),
-            ("column(cust_id) > numeric(4)", "`CUST_ID` > 4"),
+            ("column(id) IS NULL", "`ID` IS NULL"),
+            ("column(id) IS NOT NULL", "`ID` IS NOT NULL"),
+            ("column(id) > numeric(4)", "`ID` > 4"),
             (
-                "(column(CUST_ID) = numeric(10)) AND (column(CUST_ID) < numeric(2.2))",
-                "(`CUST_ID` = 10 AND `CUST_ID` < 2.2)",
+                "(column(ID) = numeric(10)) AND (column(ID) < numeric(2.2))",
+                "(`ID` = 10 AND `ID` < 2.2)",
             ),
             (
-                "(column(CUST_ID) = numeric(10)) AND (column(CUST_ID) IS NULL)",
-                "(`CUST_ID` = 10 AND `CUST_ID` IS NULL)",
+                "(column(ID) = numeric(10)) AND (column(ID) IS NULL)",
+                "(`ID` = 10 AND `ID` IS NULL)",
             ),
-            ('column(CUST_CITY) = string("Oxford")', "`CUST_CITY` = 'Oxford'"),
+            ('column(TXN_DESC) = string("Oxford")', "`TXN_DESC` = 'Oxford'"),
             (
-                "column(CUST_EFF_FROM) = datetime(1970-01-01)",
-                "`CUST_EFF_FROM` = '1970-01-01'",
+                "column(TXN_TIME) = datetime(1970-01-01)",
+                "`TXN_TIME` = '1970-01-01'",
             ),
             (
-                "column(CUST_EFF_FROM) = datetime(1970-01-01 12:13:14)",
-                "`CUST_EFF_FROM` = '1970-01-01 12:13:14'",
+                "column(TXN_TIME) = datetime(1970-01-01 12:13:14)",
+                "`TXN_TIME` = '1970-01-01 12:13:14'",
             ),
         ]
 
-    def expected_customers_synthetic_offload_predicates(self):
-        date_column = "CUST_EFF_FROM"
-        number_column = "CUST_ID"
-        string_column = "CUST_POSTAL_CODE"
+    def expected_std_dim_synthetic_offload_predicates(self) -> list:
+        date_column = "TXN_DATE"
+        number_column = "ID"
+        string_column = "TXN_DESC"
         return [
             (
                 (date_column, "D", None),
                 [
                     (
-                        "column(CUST_EFF_FROM) = datetime(2010-01-01)",
-                        "(`CUST_EFF_FROM` = '2010-01-01' AND `GL_PART_D_CUST_EFF_FROM` = '2010-01-01')",
+                        f"column({date_column}) = datetime(2010-01-01)",
+                        f"(`{date_column}` = '2010-01-01' AND `GL_PART_D_{date_column}` = '2010-01-01')",
                     ),
                     (
-                        "datetime(2010-01-01) = column(CUST_EFF_FROM)",
-                        "('2010-01-01' = `CUST_EFF_FROM` AND '2010-01-01' = `GL_PART_D_CUST_EFF_FROM`)",
+                        f"datetime(2010-01-01) = column({date_column})",
+                        f"('2010-01-01' = `{date_column}` AND '2010-01-01' = `GL_PART_D_{date_column}`)",
                     ),
                     (
-                        "column(CUST_EFF_FROM) != datetime(2010-01-01)",
-                        "(`CUST_EFF_FROM` != '2010-01-01' AND `GL_PART_D_CUST_EFF_FROM` != '2010-01-01')",
+                        f"column({date_column}) != datetime(2010-01-01)",
+                        f"(`{date_column}` != '2010-01-01' AND `GL_PART_D_{date_column}` != '2010-01-01')",
                     ),
                     (
-                        "column(CUST_EFF_FROM) < datetime(2010-01-01)",
-                        "(`CUST_EFF_FROM` < '2010-01-01' AND `GL_PART_D_CUST_EFF_FROM` < '2010-01-01')",
+                        f"column({date_column}) < datetime(2010-01-01)",
+                        f"(`{date_column}` < '2010-01-01' AND `GL_PART_D_{date_column}` < '2010-01-01')",
                     ),
                     (
-                        "column(CUST_EFF_FROM) <= datetime(2010-01-01)",
-                        "(`CUST_EFF_FROM` <= '2010-01-01' AND `GL_PART_D_CUST_EFF_FROM` <= '2010-01-01')",
+                        f"column({date_column}) <= datetime(2010-01-01)",
+                        f"(`{date_column}` <= '2010-01-01' AND `GL_PART_D_{date_column}` <= '2010-01-01')",
                     ),
                     (
-                        "column(CUST_EFF_FROM) > datetime(2010-01-01)",
-                        "(`CUST_EFF_FROM` > '2010-01-01' AND `GL_PART_D_CUST_EFF_FROM` > '2010-01-01')",
+                        f"column({date_column}) > datetime(2010-01-01)",
+                        f"(`{date_column}` > '2010-01-01' AND `GL_PART_D_{date_column}` > '2010-01-01')",
                     ),
                     (
-                        "column(CUST_EFF_FROM) >= datetime(2010-01-01)",
-                        "(`CUST_EFF_FROM` >= '2010-01-01' AND `GL_PART_D_CUST_EFF_FROM` >= '2010-01-01')",
+                        f"column({date_column}) >= datetime(2010-01-01)",
+                        f"(`{date_column}` >= '2010-01-01' AND `GL_PART_D_{date_column}` >= '2010-01-01')",
                     ),
                 ],
             ),
@@ -943,12 +943,12 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 (date_column, "M", None),
                 [
                     (
-                        "column(CUST_EFF_FROM) = datetime(2010-01-01)",
-                        "(`CUST_EFF_FROM` = '2010-01-01' AND `GL_PART_M_CUST_EFF_FROM` = '2010-01')",
+                        f"column({date_column}) = datetime(2010-01-01)",
+                        f"(`{date_column}` = '2010-01-01' AND `GL_PART_M_{date_column}` = '2010-01')",
                     ),
                     (
-                        "datetime(2010-01-01) = column(CUST_EFF_FROM)",
-                        "('2010-01-01' = `CUST_EFF_FROM` AND '2010-01' = `GL_PART_M_CUST_EFF_FROM`)",
+                        f"datetime(2010-01-01) = column({date_column})",
+                        f"('2010-01-01' = `{date_column}` AND '2010-01' = `GL_PART_M_{date_column}`)",
                     ),
                 ],
             ),
@@ -956,12 +956,12 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 (date_column, "Y", None),
                 [
                     (
-                        "column(CUST_EFF_FROM) = datetime(2010-01-01)",
-                        "(`CUST_EFF_FROM` = '2010-01-01' AND `GL_PART_Y_CUST_EFF_FROM` = '2010')",
+                        "column({date_column}) = datetime(2010-01-01)",
+                        "(`{date_column}` = '2010-01-01' AND `GL_PART_Y_{date_column}` = '2010')",
                     ),
                     (
-                        "datetime(2010-01-01) = column(CUST_EFF_FROM)",
-                        "('2010-01-01' = `CUST_EFF_FROM` AND '2010' = `GL_PART_Y_CUST_EFF_FROM`)",
+                        "datetime(2010-01-01) = column({date_column})",
+                        "('2010-01-01' = `{date_column}` AND '2010' = `GL_PART_Y_{date_column}`)",
                     ),
                 ],
             ),
@@ -969,12 +969,12 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 (number_column, "1000", 10),
                 [
                     (
-                        "column(CUST_ID) = numeric(17)",
-                        "(`CUST_ID` = 17 AND `GL_PART_0000001000_CUST_ID` = '0000000000')",
+                        f"column({number_column}) = numeric(17)",
+                        f"(`{number_column}` = 17 AND `GL_PART_0000001000_{number_column}` = '0000000000')",
                     ),
                     (
-                        "column(CUST_ID) = numeric(1700)",
-                        "(`CUST_ID` = 1700 AND `GL_PART_0000001000_CUST_ID` = '0000001000')",
+                        f"column({number_column}) = numeric(1700)",
+                        f"(`{number_column}` = 1700 AND `GL_PART_0000001000_{number_column}` = '0000001000')",
                     ),
                 ],
             ),
@@ -982,12 +982,12 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 (number_column, "10000", 12),
                 [
                     (
-                        "column(CUST_ID) = numeric(170)",
-                        "(`CUST_ID` = 170 AND `GL_PART_000000010000_CUST_ID` = '000000000000')",
+                        f"column({number_column}) = numeric(170)",
+                        f"(`{number_column}` = 170 AND `GL_PART_000000010000_{number_column}` = '000000000000')",
                     ),
                     (
-                        "column(CUST_ID) = numeric(17000)",
-                        "(`CUST_ID` = 17000 AND `GL_PART_000000010000_CUST_ID` = '000000010000')",
+                        f"column({number_column}) = numeric(17000)",
+                        f"(`{number_column}` = 17000 AND `GL_PART_000000010000_{number_column}` = '000000010000')",
                     ),
                 ],
             ),
@@ -995,12 +995,12 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 (string_column, "1", None),
                 [
                     (
-                        'column(CUST_POSTAL_CODE) = string("123456")',
-                        "(`CUST_POSTAL_CODE` = '123456' AND `GL_PART_1_CUST_POSTAL_CODE` = '1')",
+                        f'column({string_column}) = string("123456")',
+                        f"(`{string_column}` = '123456' AND `GL_PART_1_{string_column}` = '1')",
                     ),
                     (
-                        'column(CUST_POSTAL_CODE) = string("")',
-                        "(`CUST_POSTAL_CODE` = '' AND `GL_PART_1_CUST_POSTAL_CODE` = '')",
+                        f'column({string_column}) = string("")',
+                        f"(`{string_column}` = '' AND `GL_PART_1_{string_column}` = '')",
                     ),
                 ],
             ),
@@ -1008,12 +1008,12 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 (string_column, "2", None),
                 [
                     (
-                        'column(CUST_POSTAL_CODE) = string("123456")',
-                        "(`CUST_POSTAL_CODE` = '123456' AND `GL_PART_2_CUST_POSTAL_CODE` = '12')",
+                        f'column({string_column}) = string("123456")',
+                        f"(`{string_column}` = '123456' AND `GL_PART_2_{string_column}` = '12')",
                     ),
                     (
-                        'column(CUST_POSTAL_CODE) = string("")',
-                        "(`CUST_POSTAL_CODE` = '' AND `GL_PART_2_CUST_POSTAL_CODE` = '')",
+                        f'column({string_column}) = string("")',
+                        f"(`{string_column}` = '' AND `GL_PART_2_{string_column}` = '')",
                     ),
                 ],
             ),

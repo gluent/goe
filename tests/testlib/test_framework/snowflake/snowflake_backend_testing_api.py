@@ -782,31 +782,31 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
             GLUENT_TYPE_BOOLEAN: SNOWFLAKE_TYPE_BOOLEAN,
         }
 
-    def expected_customers_offload_predicates(self):
+    def expected_std_dim_offload_predicates(self) -> list:
         return [
-            ("column(cust_id) IS NULL", '"CUST_ID" IS NULL'),
-            ("column(cust_id) IS NOT NULL", '"CUST_ID" IS NOT NULL'),
-            ("column(cust_id) > numeric(4)", '"CUST_ID" > 4'),
+            ("column(id) IS NULL", '"ID" IS NULL'),
+            ("column(id) IS NOT NULL", '"ID" IS NOT NULL'),
+            ("column(id) > numeric(4)", '"ID" > 4'),
             (
-                "(column(CUST_ID) = numeric(10)) AND (column(CUST_ID) < numeric(2.2))",
-                '("CUST_ID" = 10 AND "CUST_ID" < 2.2)',
+                "(column(ID) = numeric(10)) AND (column(ID) < numeric(2.2))",
+                '("ID" = 10 AND "ID" < 2.2)',
             ),
             (
-                "(column(CUST_ID) = numeric(10)) AND (column(CUST_ID) IS NULL)",
-                '("CUST_ID" = 10 AND "CUST_ID" IS NULL)',
+                "(column(ID) = numeric(10)) AND (column(ID) IS NULL)",
+                '("ID" = 10 AND "ID" IS NULL)',
             ),
-            ('column(CUST_CITY) = string("Oxford")', "\"CUST_CITY\" = 'Oxford'"),
+            ('column(TXN_DESC) = string("Oxford")', "\"TXN_DESC\" = 'Oxford'"),
             (
-                "column(CUST_EFF_FROM) = datetime(1970-01-01)",
-                "\"CUST_EFF_FROM\" = '1970-01-01'::TIMESTAMP_NTZ",
+                "column(TXN_TIME) = datetime(1970-01-01)",
+                "\"TXN_TIME\" = '1970-01-01'::TIMESTAMP_NTZ",
             ),
             (
-                "column(CUST_EFF_FROM) = datetime(1970-01-01 12:13:14)",
-                "\"CUST_EFF_FROM\" = '1970-01-01 12:13:14'::TIMESTAMP_NTZ",
+                "column(TXN_TIME) = datetime(1970-01-01 12:13:14)",
+                "\"TXN_TIME\" = '1970-01-01 12:13:14'::TIMESTAMP_NTZ",
             ),
         ]
 
-    def expected_customers_synthetic_offload_predicates(self):
+    def expected_std_synthetic_offload_predicates(self) -> list:
         """No partitioning on Snowflake"""
         return []
 

@@ -1053,12 +1053,12 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def expected_customers_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected backend predicate"""
+    def expected_std_dim_offload_predicates(self) -> list:
+        """Return a list of tuples of GOE offload predicates and expected backend predicate"""
 
     @abstractmethod
-    def expected_customers_synthetic_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected backend predicate"""
+    def expected_std_dim_synthetic_offload_predicates(self) -> list:
+        """Return a list of tuples of GOE offload predicates and expected backend predicate"""
 
     @abstractmethod
     def gl_type_mapping_generated_table_col_specs(self):

@@ -1167,64 +1167,64 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                 self._log("Drop table exception: {}".format(str(exc)), detail=VERBOSE)
                 raise
 
-    def expected_channels_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate"""
+    def expected_std_dim_offload_predicates(self):
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate"""
         return [
             (
-                "(column(CHANNEL_ID) = numeric(10)) AND (column(CHANNEL_ID) < numeric(2.2))",
-                '("CHANNEL_ID" = 10 AND "CHANNEL_ID" < 2.2)',
+                "(column(ID) = numeric(10)) AND (column(ID) < numeric(2.2))",
+                '("ID" = 10 AND "ID" < 2.2)',
             ),
             (
-                "(column(CHANNEL_ID) IS NULL) AND (column(CHANNEL_ID) IS NOT NULL)",
-                '("CHANNEL_ID" IS NULL AND "CHANNEL_ID" IS NOT NULL)',
+                "(column(ID) IS NULL) AND (column(ID) IS NOT NULL)",
+                '("ID" IS NULL AND "ID" IS NOT NULL)',
             ),
             (
-                "(column(CHANNEL_ID) is null) AND (column(CHANNEL_ID) is not null)",
-                '("CHANNEL_ID" IS NULL AND "CHANNEL_ID" IS NOT NULL)',
+                "(column(ID) is null) AND (column(ID) is not null)",
+                '("ID" IS NULL AND "ID" IS NOT NULL)',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(1234567890123456789012345))",
-                '"CHANNEL_ID" = 1234567890123456789012345',
+                "(column(ID) = numeric(1234567890123456789012345))",
+                '"ID" = 1234567890123456789012345',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(-1234567890123456789012345))",
-                '"CHANNEL_ID" = -1234567890123456789012345',
+                "(column(ID) = numeric(-1234567890123456789012345))",
+                '"ID" = -1234567890123456789012345',
             ),
             (
-                "(column(channel_id) = numeric(0.00000000000000000001))",
-                '"CHANNEL_ID" = 0.00000000000000000001',
+                "(column(id) = numeric(0.00000000000000000001))",
+                '"ID" = 0.00000000000000000001',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(-0.00000000000000000001))",
-                '"CHANNEL_ID" = -0.00000000000000000001',
+                "(column(ID) = numeric(-0.00000000000000000001))",
+                '"ID" = -0.00000000000000000001',
             ),
             (
-                "(column(CHANNEL_ID) in (numeric(-10),numeric(0),numeric(10)))",
-                '"CHANNEL_ID" IN (-10, 0, 10)',
+                "(column(ID) in (numeric(-10),numeric(0),numeric(10)))",
+                '"ID" IN (-10, 0, 10)',
             ),
             (
-                'column(CHANNEL_DESC) = string("Internet")',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                'column(TXN_DESC) = string("Internet")',
+                "\"TXN_DESC\" = 'Internet'",
             ),
             (
-                '(column(CHANNEL_DESC) = string("Internet"))',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                '(column(TXN_DESC) = string("Internet"))',
+                "\"TXN_DESC\" = 'Internet'",
             ),
             (
-                '(column(ALIAS.CHANNEL_DESC) = string("Internet"))',
-                '"ALIAS"."CHANNEL_DESC" = \'Internet\'',
+                '(column(ALIAS.TXN_DESC) = string("Internet"))',
+                '"ALIAS"."TXN_DESC" = \'Internet\'',
             ),
             (
-                'column(CHANNEL_DESC) = string("column(CHANNEL_DESC)")',
-                "\"CHANNEL_DESC\" = 'column(CHANNEL_DESC)'",
+                'column(TXN_DESC) = string("column(TXN_DESC)")',
+                "\"TXN_DESC\" = 'column(TXN_DESC)'",
             ),
             (
-                'column(CHANNEL_DESC) NOT IN (string("A"),string("B"),string("C"))',
-                "\"CHANNEL_DESC\" NOT IN ('A', 'B', 'C')",
+                'column(TXN_DESC) NOT IN (string("A"),string("B"),string("C"))',
+                "\"TXN_DESC\" NOT IN ('A', 'B', 'C')",
             ),
             (
-                '(column(CHANNEL_DESC) = string("Internet"))',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                '(column(TXN_DESC) = string("Internet"))',
+                "\"TXN_DESC\" = 'Internet'",
             ),
         ]
 

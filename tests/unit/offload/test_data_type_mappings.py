@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase, main
 
 from goe.offload.bigquery.bigquery_column import (
@@ -48,7 +47,6 @@ from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
-    DBTYPE_ORACLE,
     DBTYPE_SNOWFLAKE,
     DBTYPE_SYNAPSE,
     FILE_STORAGE_FORMAT_AVRO,
@@ -189,7 +187,7 @@ from goe.offload.staging.parquet.parquet_column import (
     PARQUET_TYPE_DOUBLE,
     PARQUET_TYPE_INT64,
 )
-from goe.util.better_impyla import (
+from goe.offload.hadoop.hadoop_column import (
     HADOOP_TYPE_BOOLEAN,
     HADOOP_TYPE_BIGINT,
     HADOOP_TYPE_BINARY,

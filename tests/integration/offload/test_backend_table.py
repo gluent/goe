@@ -11,7 +11,6 @@ import logging
 from unittest import TestCase, main
 
 from goe.gluent import OffloadOperation
-from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.column_metadata import (
     CanonicalColumn,
     ColumnMetadataInterface,
@@ -20,28 +19,37 @@ from goe.offload.column_metadata import (
     GLUENT_TYPE_INTEGER_4,
     GLUENT_TYPE_INTEGER_8,
 )
+from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.offload_constants import DBTYPE_IMPALA
+from goe.offload.offload_functions import (
+    convert_backend_identifier_case,
+    data_db_name,
+)
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 from goe.orchestration import orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
-from goe.persistence.orchestration_metadata import OrchestrationMetadata
+from tests.integration.test_functions import (
+    build_current_options,
+    get_default_test_user,
+    run_offload,
+    run_setup_ddl,
+)
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )
-from tests.unit.offload.unittest_functions import (
-    build_current_options,
-    get_default_test_user,
+from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
+    frontend_testing_api_factory,
 )
+
+
+FACT_NAME = "INTEG_BACKEND_TABLE_FACT"
 
 
 # logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 # Disabling logging by default
 logger.addHandler(logging.NullHandler())
-
-
-SALES = "SALES"
 
 
 def partition_key_test_numbers(low_digits, high_digits, wiggle_room=3, negative=False):
@@ -55,45 +63,72 @@ def partition_key_test_numbers(low_digits, high_digits, wiggle_room=3, negative=
     return nums
 
 
-class TestBackendTable(TestCase):
+class TestCurrentBackendTable(TestCase):
     def __init__(self, *args, **kwargs):
-        super(TestBackendTable, self).__init__(*args, **kwargs)
+        super(TestCurrentBackendTable, self).__init__(*args, **kwargs)
         self.api = None
         self.test_api = None
-        self.options = None
+        self.config = None
         self.db = None
+        self.schema = None
         self.table = None
 
     def setUp(self):
+        self.config = build_current_options()
         execution_id = ExecutionId()
         messages = OffloadMessages(
             execution_id=execution_id,
             command_type=orchestration_constants.COMMAND_OFFLOAD,
         )
         self.test_api = backend_testing_api_factory(
-            self.options.target, self.options, messages, dry_run=True
+            self.config.target, self.config, messages, dry_run=True
         )
-        self.db, rdbms_owner, self.table = self._get_real_db_table()
+        self.schema = get_default_test_user()
+        self.db = data_db_name(self.schema, self.config)
+        self.db, self.table = convert_backend_identifier_case(
+            self.config, self.db, FACT_NAME
+        )
         operation = OffloadOperation.from_dict(
-            {"owner_table": "%s.%s" % (rdbms_owner or self.db, self.table)},
-            self.options,
+            {"owner_table": "%s.%s" % (self.schema or self.db, self.table)},
+            self.config,
             messages,
             execution_id=execution_id,
         )
         self.api = backend_table_factory(
             self.db,
             self.table,
-            self.options.target,
-            self.options,
+            self.config.target,
+            self.config,
             messages,
             orchestration_operation=operation,
             dry_run=True,
         )
-        if rdbms_owner:
-            operation.set_bucket_info_from_metadata(
-                operation.get_hybrid_metadata(self.options), messages
-            )
-            self.api.refresh_operational_settings(operation)
+        operation.set_bucket_info_from_metadata(
+            operation.get_hybrid_metadata(self.config), messages
+        )
+        self.api.refresh_operational_settings(operation)
+
+    def _create_test_table(self):
+        """To a create backend test table we need to create it in the frontend and offload it."""
+        messages = OffloadMessages()
+        frontend_api = frontend_testing_api_factory(
+            self.config.db_type,
+            self.config,
+            messages,
+            dry_run=False,
+            trace_action="frontend_api(TestCurrentBackendTable)",
+        )
+        # Setup partitioned table
+        run_setup_ddl(
+            self.config,
+            frontend_api,
+            messages,
+            frontend_api.sales_based_fact_create_ddl(
+                self.schema, FACT_NAME, simple_partition_names=True
+            ),
+        )
+        # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
+        run_offload({"owner_table": self.schema + "." + FACT_NAME})
 
     def _compare_sql_and_python_synthetic_part_number_outcomes(
         self, num, num_column, granularity, padding_digits
@@ -145,32 +180,6 @@ class TestBackendTable(TestCase):
                 ),
             )
 
-    def _get_real_db_table(self):
-        # Try to find an SH_TEST.SALES table
-        messages = OffloadMessages()
-        hybrid_schema = get_default_test_user(hybrid=True)
-        for hybrid_schema, hybrid_view in [
-            (hybrid_schema, SALES),
-            ("SH_TEST_H", SALES),
-            ("SH_H", SALES),
-        ]:
-            metadata = OrchestrationMetadata.from_name(
-                hybrid_schema,
-                hybrid_view,
-                connection_options=self.options,
-                messages=messages,
-            )
-            if metadata:
-                return (
-                    metadata.backend_owner,
-                    metadata.offloaded_owner,
-                    metadata.backend_table,
-                )
-        # We shouldn't get to here in a correctly configured environment
-        raise Exception(
-            "SALES test table is missing, please configure your environment"
-        )
-
     def _run_call_sql_expression_from_sql(
         self, sql_expression, db=None, table=None, base_column=None, query_options=None
     ):
@@ -191,9 +200,9 @@ class TestBackendTable(TestCase):
             sql = "SELECT %s" % sql_expression
         return self.test_api.execute_query_fetch_one(sql, query_options=query_options)
 
-    def _test_alter_table_sort_columns(self):
+    def _test__alter_table_sort_columns(self):
         if self.api.sorted_table_modify_supported():
-            self.assertIsInstance(self.api.alter_table_sort_columns(), list)
+            self.assertIsInstance(self.api._alter_table_sort_columns(), list)
 
     def _test_cleanup_staging_area(self):
         self.api.cleanup_staging_area()
@@ -368,7 +377,7 @@ class TestBackendTable(TestCase):
         for col in self.api.get_columns():
             # This is a bit of a cheat because we pass in the backend column for both front and backend.
             # It's close enough to give the code a shake down though.
-            cast_tuple = self.api._staging_to_backend_cast(col, col)
+            cast_tuple = self.api._staging_to_backend_cast(col, col, col)
             self.assertIsInstance(cast_tuple, tuple)
             self.assertIsNotNone(cast_tuple[0])
             self.assertEqual(len(cast_tuple), 3)
@@ -576,6 +585,7 @@ class TestBackendTable(TestCase):
 
     def _run_all_tests(self):
         # Private methods, feels wrong but there are just a few we want testing
+        self._test__alter_table_sort_columns()
         self._test__derive_partition_info()
         self._test__gen_synthetic_literal_function()
         self._test__gen_synthetic_part_date_as_string_sql_expr()
@@ -584,7 +594,6 @@ class TestBackendTable(TestCase):
         self._test__gen_synthetic_part_string_sql_expr()
         self._test__staging_to_backend_cast()
         # Public methods
-        self._test_alter_table_sort_columns()
         self._test_cleanup_staging_area()
         self._test_compute_final_table_stats()
         self._test_create_backend_table()
@@ -601,25 +610,30 @@ class TestBackendTable(TestCase):
         self._test_staging_area_exists()
         self._test_synthetic_bucket_data_type()
         self._test_synthetic_bucket_filter_capable_column()
-        self._test_synthetic_part_number_int_expressions()
-        self._test_synthetic_part_number_bigint_expressions()
-        self._test_synthetic_part_number_decimal_18_expressions()
-        self._test_synthetic_part_number_decimal_38_expressions()
-        self._test_synthetic_part_number_decimal_18_9_expressions()
-        self._test_synthetic_part_number_decimal_38_9_expressions()
-
-
-class TestCurrentBackendTable(TestBackendTable):
-    def setUp(self):
-        self.options = self._build_current_options()
-        super(TestCurrentBackendTable, self).setUp()
-
-    @staticmethod
-    def _build_current_options():
-        return build_current_options()
 
     def test_full_api_on_current_backend(self):
+        self._create_test_table()
         self._run_all_tests()
+
+    # These synthetivc partition ley tests do not use the offloaded table and can
+    # therefore run in parallel to other tests.
+    def test_synthetic_part_number_int_expressions(self):
+        self._test_synthetic_part_number_int_expressions()
+
+    def test_synthetic_part_number_bigint_expressions(self):
+        self._test_synthetic_part_number_bigint_expressions()
+
+    # def test_synthetic_part_number_decimal_18_expressions(self):
+    #    self._test_synthetic_part_number_decimal_18_expressions()
+
+    def test_synthetic_part_number_decimal_38_expressions(self):
+        self._test_synthetic_part_number_decimal_38_expressions()
+
+    # def test_synthetic_part_number_decimal_18_9_expressions(self):
+    #    self._test_synthetic_part_number_decimal_18_9_expressions()
+
+    def test_synthetic_part_number_decimal_38_9_expressions(self):
+        self._test_synthetic_part_number_decimal_38_9_expressions()
 
 
 if __name__ == "__main__":

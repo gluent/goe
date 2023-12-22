@@ -87,8 +87,11 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         connection_options: "OrchestrationConfig",
         messages: "OffloadMessages",
         dry_run: bool = False,
+        trace_action: str = None,
     ):
-        super().__init__(connection_options, messages, dry_run=dry_run)
+        super().__init__(
+            connection_options, messages, dry_run=dry_run, trace_action=trace_action
+        )
         self._repo_user = self._connection_options.ora_repo_user
 
     ###########################################################################

@@ -6,7 +6,6 @@
 """
 
 import logging
-import random
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from typing import Optional, Union
@@ -599,18 +598,18 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def drop_table(self, schema, table_name):
-        """Obviously this is dangerous, that's why it is in this TestIngApi only."""
+        """Obviously this is dangerous, that's why it is in this TestingApi only."""
 
     @abstractmethod
-    def expected_channels_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate
+    def expected_std_dim_offload_predicates(self):
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate
         tuple format:
             (predicate_dsl, expected_sql)
         """
 
     @abstractmethod
     def expected_sales_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate.
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate.
         tuple format:
             (predicate_dsl, expected_sql, expected_bind_sql, expected_binds)
         or if binds are not relevant:
@@ -721,7 +720,11 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def sales_based_fact_late_arriving_data_sql(
-        self, schema: str, table_name: str, time_id_literal: str
+        self,
+        schema: str,
+        table_name: str,
+        time_id_literal: str,
+        channel_id_literal: int = 1,
     ) -> list:
         pass
 
@@ -744,6 +747,18 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def sales_based_list_fact_add_partition_ddl(
         self, schema: str, table_name: str, next_ym_override: Optional[tuple] = None
+    ) -> list:
+        pass
+
+    @abstractmethod
+    def sales_based_multi_col_fact_create_ddl(
+        self, schema: str, table_name: str, maxval_partition=False
+    ) -> list:
+        pass
+
+    @abstractmethod
+    def sales_based_subpartitioned_fact_ddl(
+        self, schema: str, table_name: str, top_level="LIST", rowdependencies=False
     ) -> list:
         pass
 

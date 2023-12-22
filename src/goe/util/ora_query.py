@@ -62,7 +62,7 @@ def get_oracle_connection(ora_user, ora_pass, ora_dsn, ora_wallet=False, ora_pro
         session_cursor.execute('ALTER SESSION SET TRACEFILE_IDENTIFIER="%s"' % ora_trace_id)
     finally:
         session_cursor.close()
-    ora_conn.module = 'Gluent Offload Engine'
+    ora_conn.module = 'GOE'
     ora_conn.action = 'Main'
     return ora_conn
 

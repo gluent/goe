@@ -58,13 +58,15 @@ from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_HIVE, FILE_STORA
     EMPTY_BACKEND_TABLE_STATS_LIST, EMPTY_BACKEND_TABLE_STATS_DICT, EMPTY_BACKEND_COLUMN_STATS_LIST, \
     EMPTY_BACKEND_COLUMN_STATS_DICT, FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_ORC, FILE_STORAGE_FORMAT_PARQUET, \
     PART_COL_GRANULARITY_DAY, PART_COL_GRANULARITY_MONTH, PART_COL_GRANULARITY_YEAR
-from goe.offload.hadoop.hadoop_column import HadoopColumn
-from goe.util.better_impyla import HiveConnection, HiveTable, HiveServer2Error, BetterImpylaException, \
-    HADOOP_TYPE_CHAR, HADOOP_TYPE_STRING, HADOOP_TYPE_VARCHAR, \
-    HADOOP_TYPE_BINARY, HADOOP_TYPE_TINYINT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_INT, \
-    HADOOP_TYPE_BIGINT, HADOOP_TYPE_DECIMAL, HADOOP_TYPE_FLOAT, HADOOP_TYPE_DOUBLE, \
-    HADOOP_TYPE_DOUBLE_PRECISION, HADOOP_TYPE_REAL, HADOOP_TYPE_DATE, HADOOP_TYPE_TIMESTAMP, \
-    HADOOP_TYPE_INTERVAL_DS, HADOOP_TYPE_INTERVAL_YM, HADOOP_TYPE_BOOLEAN
+from goe.offload.hadoop.hadoop_column import (
+    HadoopColumn,
+    HADOOP_TYPE_CHAR, HADOOP_TYPE_STRING, HADOOP_TYPE_VARCHAR,
+    HADOOP_TYPE_BINARY, HADOOP_TYPE_TINYINT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_INT,
+    HADOOP_TYPE_BIGINT, HADOOP_TYPE_DECIMAL, HADOOP_TYPE_FLOAT, HADOOP_TYPE_DOUBLE,
+    HADOOP_TYPE_DOUBLE_PRECISION, HADOOP_TYPE_REAL, HADOOP_TYPE_DATE, HADOOP_TYPE_TIMESTAMP,
+    HADOOP_TYPE_INTERVAL_DS, HADOOP_TYPE_INTERVAL_YM, HADOOP_TYPE_BOOLEAN,
+)
+from goe.util.better_impyla import HiveConnection, HiveTable, HiveServer2Error, BetterImpylaException
 from goe.util.hive_table_stats import HiveTableStats
 from goe.util.hs2_connection import hs2_connection, HS2_OPTIONS
 from goe.util.misc_functions import backtick_sandwich
@@ -1094,18 +1096,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" \
     def role_exists(self, role_name):
         """ No roles in Hadoop """
         pass
-
-    def sample_table_stats_partitionwise(self, db_name, table_name, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        hive_stats = self._get_hive_stats_table(db_name, table_name)
-        tab_stats, col_stats = hive_stats.sample_partitions(percent=sample_stats_perc, as_dict=as_dict,
-                                                            num_bytes_fudge=num_bytes_fudge)
-        return tab_stats, col_stats
-
-    def sample_table_stats_scan(self, db_name, table_name, as_dict=False, sample_perc=None):
-        """ Hadoop implementation calls out to HiveStats module, sample_perc ignored. """
-        hive_stats = self._get_hive_stats_table(db_name, table_name)
-        tab_stats, col_stats = hive_stats.scan(as_dict=as_dict)
-        return tab_stats, col_stats
 
     def set_column_stats(self, db_name, table_name, new_column_stats, ndv_cap, num_null_factor):
         if not self.table_stats_get_supported():

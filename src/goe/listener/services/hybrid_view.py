@@ -21,7 +21,6 @@ from goe.offload.offload_constants import LOG_LEVEL_DEBUG
 from goe.offload.offload_messages import VVERBOSE, OffloadMessages
 from goe.offload.offload_validation import (
     CrossDbValidator,
-    HybridCountValidator,
     build_verification_clauses,
 )
 from goe.persistence.orchestration_metadata import (
@@ -214,67 +213,7 @@ class HybridViewService(object):
         return self._format_payload(payload, as_json)
 
     def validate_by_count(self, lower_hv=None, upper_hv=None, as_json=True):
-        """Return response from HybridCountValidator
-
-        as JSON: {'success': True/False, 'message': "blah"}
-        lower_hv, upper_hv: DBA_TAB_PARTITIONS.HIGH_VALUE based.
-        Can have both empty, upper_hv only or both.
-        """
-        if lower_hv:
-            assert isinstance(lower_hv, str)
-        if upper_hv:
-            assert isinstance(upper_hv, str)
-        logger.debug("validate_by_count(%r, %r)" % (upper_hv, lower_hv))
-        if not self._frontend_table_owner or not self._frontend_table_name:
-            raise HybridViewServiceException(
-                "Hybrid view is not for an offloaded table: %s.%s"
-                % (self.hybrid_schema, self.hybrid_view)
-            )
-
-        self._debug("Running validation by Hybrid View count")
-        t = SimpleTimer("validate_by_count")
-        frontend_table = self._get_frontend_table()
-        upper_hvs, prior_hvs = self._decode_high_values(
-            frontend_table, lower_hv_str=lower_hv, upper_hv_str=upper_hv
-        )
-        if self._ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST and upper_hvs:
-            # HVs for LIST are lists of tuples, not just a tuple as per RANGE
-            upper_hvs = [upper_hvs]
-        threshold_clauses, query_binds = build_verification_clauses(
-            frontend_table,
-            self._ipa_predicate_type,
-            upper_hvs,
-            prior_hvs,
-            with_binds=self._bind_in_predicates(),
-        )
-        self._debug("Generated frontend filters:\n%r" % threshold_clauses)
-
-        validator = HybridCountValidator(
-            self._frontend_table_owner,
-            self._frontend_table_name,
-            self.hybrid_schema,
-            self.hybrid_view,
-            self._connection_options,
-            messages=self._messages,
-            dry_run=self._dry_run,
-        )
-        num_diff, source_rows, hybrid_rows = validator.validate(
-            threshold_clauses, query_binds
-        )
-        self._debug(
-            "validate_by_count returning: %s, %s, %s"
-            % (num_diff, source_rows, hybrid_rows)
-        )
-        self._debug(t.show())
-        validation_msg = (
-            "Source and Hybrid mismatch: %s differences, %s origin rows, %s hybrid rows"
-            % (num_diff, source_rows, hybrid_rows)
-        )
-        payload = {
-            JSON_KEY_VALIDATE_STATUS: bool(num_diff == 0),
-            JSON_KEY_VALIDATE_MESSAGE: validation_msg,
-        }
-        return self._format_payload(payload, as_json)
+        raise NotImplementedError("Validate by hybrid view is no longer implmented")
 
     ###########################################################################
     # PRIVATE METHODS

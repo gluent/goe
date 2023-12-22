@@ -34,7 +34,7 @@ from goe.offload.offload_functions import get_hybrid_threshold_clauses, hvs_to_b
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 from goe.orchestration import command_steps, orchestration_constants
-from goe.util.better_impyla import HADOOP_TYPE_STRING
+from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
 
 
@@ -193,6 +193,9 @@ class BackendTableInterface(metaclass=ABCMeta):
     ###########################################################################
     # PRIVATE METHODS
     ###########################################################################
+
+    def _alter_table_sort_columns(self):
+        return self._db_api.alter_sort_columns(self.db_name, self._base_table_name, self._sort_columns or [])
 
     def _cast_validation_columns(self, staging_columns: list):
         """ Method returning columns and casts to be checked. That's both data type conversion
@@ -1620,14 +1623,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         if data_gov_client:
             self.set_data_gov_client(data_gov_client)
 
-    def sample_table_stats_partitionwise(self, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        return self._db_api.sample_table_stats_partitionwise(self.db_name, self._base_table_name, sample_stats_perc,
-                                                             num_bytes_fudge, as_dict=as_dict)
-
-    def sample_table_stats_scan(self, as_dict=False, sample_perc=None):
-        return self._db_api.sample_table_stats_scan(self.db_name, self._base_table_name,
-                                                    as_dict=as_dict, sample_perc=sample_perc)
-
     def set_column_stats(self, new_column_stats, ndv_cap, num_null_factor):
         self._db_api.set_column_stats(self.db_name, self._base_table_name, new_column_stats, ndv_cap, num_null_factor)
 
@@ -1792,9 +1787,9 @@ class BackendTableInterface(metaclass=ABCMeta):
     # PUBLIC METHODS - HIGH LEVEL STEP METHODS AND SUPPORTING ABSTRACT METHODS
     ###########################################################################
 
-    def alter_table_sort_columns(self):
+    def alter_table_sort_columns_step(self):
         def step_fn():
-            return self._db_api.alter_sort_columns(self.db_name, self._base_table_name, self._sort_columns or [])
+            return self._alter_table_sort_columns()
         return self._offload_step(command_steps.STEP_ALTER_TABLE, step_fn)
 
     def cleanup_staging_area_step(self):

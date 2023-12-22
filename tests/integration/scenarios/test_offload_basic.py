@@ -30,16 +30,6 @@ from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
-from tests.integration.test_sets.stories.story_setup_functions import (
-    SALES_BASED_FACT_HV_1,
-    SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-    SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
-    gen_truncate_sales_based_fact_partition_ddls,
-    partition_columns_if_supported,
-)
-
 from tests.integration.scenarios.assertion_functions import (
     backend_column_exists,
     backend_table_count,
@@ -56,10 +46,19 @@ from tests.integration.scenarios.scenario_runner import (
 from tests.integration.scenarios.setup_functions import (
     drop_backend_test_load_table,
     drop_backend_test_table,
+    gen_truncate_sales_based_fact_partition_ddls,
+    partition_columns_if_supported,
 )
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
+)
+from tests.testlib.test_framework.test_constants import (
+    SALES_BASED_FACT_HV_1,
+    SALES_BASED_FACT_HV_2,
+    SALES_BASED_FACT_HV_3,
+    SALES_BASED_FACT_HV_4,
+    SALES_BASED_FACT_PRE_HV,
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
@@ -265,7 +264,9 @@ def test_offload_basic_dim(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     backend_name = convert_backend_identifier_case(config, OFFLOAD_DIM)
     copy_stats_available = backend_api.table_stats_set_supported()
@@ -286,6 +287,8 @@ def test_offload_basic_dim(config, schema, data_db):
             ),
         ],
     )
+    # Frontend API is not used for anything else so let's close it.
+    frontend_api.close()
 
     assert not backend_table_exists(config, backend_api, messages, data_db, OFFLOAD_DIM)
     assert not backend_table_exists(config, backend_api, messages, load_db, OFFLOAD_DIM)
@@ -362,13 +365,18 @@ def test_offload_basic_dim(config, schema, data_db):
     )
     assert offload_basic_dim_assertion(backend_api, messages, data_db, backend_name)
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_offload_basic_fact(config, schema, data_db):
     id = "test_offload_basic_fact"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
 
     backend_name = convert_backend_identifier_case(config, OFFLOAD_FACT)
 
@@ -592,3 +600,6 @@ def test_offload_basic_fact(config, schema, data_db):
         OFFLOAD_FACT,
         SALES_BASED_FACT_HV_4,
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

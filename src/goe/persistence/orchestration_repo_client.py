@@ -72,6 +72,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         connection_options: "OrchestrationConfig",
         messages: "OffloadMessages",
         dry_run: bool = False,
+        trace_action: str = None,
     ):
         """Abstract base class which acts as an interface for frontend specific sub-classes for
         get/put of orchestration metadata.
@@ -83,6 +84,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         self._messages = messages
         self._dry_run = dry_run
         self._frontend_client: "Optional[FrontendApiInterface]" = None
+        self._trace_action = trace_action or self.__class__.__name__
 
     def __del__(self):
         self.close()
@@ -206,7 +208,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
                 self._connection_options,
                 self._messages,
                 dry_run=self._dry_run,
-                trace_action=self.__class__.__name__,
+                trace_action=self._trace_action,
             )
         return self._frontend_client
 
@@ -242,10 +244,16 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
     # PUBLIC METHODS
     ###########################################################################
 
-    def close(self):
+    def close(self, force=False):
         """Free up any resources currently held"""
         if self._frontend_client:
-            self._frontend_client.close()
+            if force:
+                try:
+                    self._frontend_client.close()
+                except:
+                    pass
+            else:
+                self._frontend_client.close()
 
     #
     # OFFLOAD METADATA
@@ -268,41 +276,14 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def set_offload_metadata(
-        self, metadata: Union[dict, OrchestrationMetadata],
+        self,
+        metadata: Union[dict, OrchestrationMetadata],
     ):
         """Persist metadata"""
 
     @abstractmethod
     def drop_offload_metadata(self, frontend_owner: str, frontend_name: str):
         """Remove metadata"""
-
-    #
-    # INCREMENTAL UPDATE EXTRACTION METADATA
-    #
-    def get_incremental_update_extraction_metadata(
-        self, hybrid_owner: str, hybrid_name: str
-    ) -> dict:
-        """Get Incremental Update extraction metadata for a hybrid view"""
-        offload_metadata = self.get_offload_metadata(hybrid_owner, hybrid_name)
-        return {
-            "last_scn": offload_metadata.iu_extraction_scn,
-            "ts": offload_metadata.iu_extraction_time,
-        }
-
-    def save_incremental_update_extraction_metadata(
-        self,
-        hybrid_owner: str,
-        hybrid_name: str,
-        extraction_metadata: dict,
-        execution_id: ExecutionId,
-    ):
-        """Save Incremental Update extraction metadata for a hybrid view"""
-        assert isinstance(extraction_metadata, dict)
-        assert isinstance(execution_id, ExecutionId)
-        offload_metadata = self.get_offload_metadata(hybrid_owner, hybrid_name)
-        offload_metadata.iu_extraction_scn = int(extraction_metadata["last_scn"])
-        offload_metadata.iu_extraction_time = int(extraction_metadata["ts"])
-        offload_metadata.save(execution_id)
 
     #
     # COMMAND EXECUTION LOGGING METHODS

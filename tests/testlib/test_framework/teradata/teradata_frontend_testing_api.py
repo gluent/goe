@@ -65,7 +65,7 @@ from goe.offload.teradata.teradata_frontend_api import (
     teradata_get_primary_partition_expression,
 )
 from pyodbc import SQL_WVARCHAR
-from tests.integration.test_sets.stories.story_setup_functions import (
+from tests.testlib.test_framework.test_constants import (
     SALES_BASED_FACT_HV_1,
     SALES_BASED_FACT_HV_2,
     SALES_BASED_FACT_HV_3,
@@ -89,9 +89,9 @@ from tests.integration.test_sets.stories.story_setup_functions import (
     SALES_BASED_LIST_HV_6,
     SALES_BASED_LIST_HV_7,
     SALES_BASED_LIST_PRE_HV,
+    UNICODE_NAME_TOKEN,
 )
 from tests.testlib.setup import gen_test_data
-from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.frontend_testing_api import (
     FrontendTestingApiException,
     FrontendTestingApiInterface,
@@ -375,20 +375,20 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 "ascii_only": ascii_only,
                 "notnull": all_chars_notnull,
             },
-            name(TERADATA_TYPE_CHAR, "3", test_constants.UNICODE_NAME_TOKEN): {
+            name(TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_CHAR, "3", test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN),
                     TERADATA_TYPE_CHAR,
                     data_length=3,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_CHAR, "3", test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN),
                     GLUENT_TYPE_FIXED_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "offload_options": {
                     "unicode_string_columns_csv": name(
-                        TERADATA_TYPE_CHAR, "3", test_constants.UNICODE_NAME_TOKEN
+                        TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN
                     )
                 },
                 "ascii_only": ascii_only,
@@ -404,19 +404,19 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 # Keep row size small for mapping table
                 "literals": ["lob-a", "lob-b", "lob-c"],
             },
-            name(TERADATA_TYPE_CLOB, test_constants.UNICODE_NAME_TOKEN): {
+            name(TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_CLOB, test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN),
                     TERADATA_TYPE_CLOB,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_CLOB, test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN),
                     GLUENT_TYPE_LARGE_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "offload_options": {
                     "unicode_string_columns_csv": name(
-                        TERADATA_TYPE_CLOB, test_constants.UNICODE_NAME_TOKEN
+                        TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN
                     )
                 },
                 "ascii_only": ascii_only,
@@ -1092,19 +1092,19 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 "ascii_only": ascii_only,
                 "notnull": all_chars_notnull,
             },
-            name(TERADATA_TYPE_VARCHAR, test_constants.UNICODE_NAME_TOKEN): {
+            name(TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_VARCHAR, test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN),
                     TERADATA_TYPE_VARCHAR,
                     data_length=30,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_VARCHAR, test_constants.UNICODE_NAME_TOKEN),
+                    name(TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN),
                     GLUENT_TYPE_VARIABLE_STRING,
                 ),
                 "offload_options": {
                     "unicode_string_columns_csv": name(
-                        TERADATA_TYPE_VARCHAR, test_constants.UNICODE_NAME_TOKEN
+                        TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN
                     )
                 },
                 "ascii_only": ascii_only,
@@ -1371,64 +1371,64 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 self._log("Drop table exception: {}".format(str(exc)), detail=VERBOSE)
                 raise
 
-    def expected_channels_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate"""
+    def expected_std_dim_offload_predicates(self):
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate"""
         return [
             (
-                "(column(CHANNEL_ID) = numeric(10)) AND (column(CHANNEL_ID) < numeric(2.2))",
-                '("CHANNEL_ID" = 10 AND "CHANNEL_ID" < 2.2)',
+                "(column(ID) = numeric(10)) AND (column(ID) < numeric(2.2))",
+                '("ID" = 10 AND "ID" < 2.2)',
             ),
             (
-                "(column(CHANNEL_ID) IS NULL) AND (column(CHANNEL_ID) IS NOT NULL)",
-                '("CHANNEL_ID" IS NULL AND "CHANNEL_ID" IS NOT NULL)',
+                "(column(ID) IS NULL) AND (column(ID) IS NOT NULL)",
+                '("ID" IS NULL AND "ID" IS NOT NULL)',
             ),
             (
-                "(column(CHANNEL_ID) is null) AND (column(CHANNEL_ID) is not null)",
-                '("CHANNEL_ID" IS NULL AND "CHANNEL_ID" IS NOT NULL)',
+                "(column(ID) is null) AND (column(ID) is not null)",
+                '("ID" IS NULL AND "ID" IS NOT NULL)',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(1234567890123456789012345))",
-                '"CHANNEL_ID" = 1234567890123456789012345',
+                "(column(ID) = numeric(1234567890123456789012345))",
+                '"ID" = 1234567890123456789012345',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(-1234567890123456789012345))",
-                '"CHANNEL_ID" = -1234567890123456789012345',
+                "(column(ID) = numeric(-1234567890123456789012345))",
+                '"ID" = -1234567890123456789012345',
             ),
             (
-                "(column(channel_id) = numeric(0.00000000000000000001))",
-                '"CHANNEL_ID" = 0.00000000000000000001',
+                "(column(id) = numeric(0.00000000000000000001))",
+                '"ID" = 0.00000000000000000001',
             ),
             (
-                "(column(CHANNEL_ID) = numeric(-0.00000000000000000001))",
-                '"CHANNEL_ID" = -0.00000000000000000001',
+                "(column(ID) = numeric(-0.00000000000000000001))",
+                '"ID" = -0.00000000000000000001',
             ),
             (
-                "(column(CHANNEL_ID) in (numeric(-10),numeric(0),numeric(10)))",
-                '"CHANNEL_ID" IN (-10, 0, 10)',
+                "(column(ID) in (numeric(-10),numeric(0),numeric(10)))",
+                '"ID" IN (-10, 0, 10)',
             ),
             (
-                'column(CHANNEL_DESC) = string("Internet")',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                'column(TXN_DESC) = string("Internet")',
+                "\"TXN_DESC\" = 'Internet'",
             ),
             (
-                '(column(CHANNEL_DESC) = string("Internet"))',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                '(column(TXN_DESC) = string("Internet"))',
+                "\"TXN_DESC\" = 'Internet'",
             ),
             (
-                '(column(ALIAS.CHANNEL_DESC) = string("Internet"))',
-                '"ALIAS"."CHANNEL_DESC" = \'Internet\'',
+                '(column(ALIAS.TXN_DESC) = string("Internet"))',
+                '"ALIAS"."TXN_DESC" = \'Internet\'',
             ),
             (
-                'column(CHANNEL_DESC) = string("column(CHANNEL_DESC)")',
-                "\"CHANNEL_DESC\" = 'column(CHANNEL_DESC)'",
+                'column(TXN_DESC) = string("column(TXN_DESC)")',
+                "\"TXN_DESC\" = 'column(TXN_DESC)'",
             ),
             (
-                'column(CHANNEL_DESC) NOT IN (string("A"),string("B"),string("C"))',
-                "\"CHANNEL_DESC\" NOT IN ('A', 'B', 'C')",
+                'column(TXN_DESC) NOT IN (string("A"),string("B"),string("C"))',
+                "\"TXN_DESC\" NOT IN ('A', 'B', 'C')",
             ),
             (
-                '(column(CHANNEL_DESC) = string("Internet"))',
-                "\"CHANNEL_DESC\" = 'Internet'",
+                '(column(TXN_DESC) = string("Internet"))',
+                "\"TXN_DESC\" = 'Internet'",
             ),
         ]
 
@@ -1877,7 +1877,11 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
         return [sql]
 
     def sales_based_fact_late_arriving_data_sql(
-        self, schema: str, table_name: str, time_id_literal: str
+        self,
+        schema: str,
+        table_name: str,
+        time_id_literal: str,
+        channel_id_literal: int = 1,
     ) -> list:
         ins = """INSERT INTO %(schema)s.%(table_name)s
         SELECT TOP 1
@@ -2056,6 +2060,20 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             "yrmon": yrmon_string,
         }
         return [ins]
+
+    def sales_based_multi_col_fact_create_ddl(
+        self, schema: str, table_name: str, maxval_partition=False
+    ) -> list:
+        raise NotImplementedError(
+            "Teradata sales_based_multi_col_fact_create_ddl() not implemented"
+        )
+
+    def sales_based_subpartitioned_fact_ddl(
+        self, schema: str, table_name: str, top_level="LIST", rowdependencies=False
+    ) -> list:
+        raise NotImplementedError(
+            "Teradata sales_based_subpartitioned_fact_ddl() not implemented"
+        )
 
     def select_grant_exists(
         self,

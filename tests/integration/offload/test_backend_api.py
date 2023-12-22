@@ -1,6 +1,5 @@
 from unittest import main
 
-
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.offload_constants import DBTYPE_SPARK
 from goe.offload.offload_functions import (
@@ -24,8 +23,8 @@ from tests.testlib.test_framework.test_functions import get_test_messages
 from tests.unit.offload.test_backend_api import TestBackendApi
 
 
-DIM_NAME = "INTEGRATION_BAPI_DIM_TABLE"
-FACT_NAME = "INTEGRATION_BAPI_FACT_TABLE"
+DIM_NAME = "INTEG_BACKEND_API_DIM"
+FACT_NAME = "INTEG_BACKEND_API_FACT"
 
 
 class TestCurrentBackendApi(TestBackendApi):
@@ -66,6 +65,7 @@ class TestCurrentBackendApi(TestBackendApi):
             self.config,
             messages,
             dry_run=False,
+            trace_action="frontend_api(TestCurrentBackendApi)",
         )
         # Setup non-partitioned table
         run_setup_ddl(

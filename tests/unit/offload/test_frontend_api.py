@@ -9,8 +9,6 @@ from unittest import TestCase, main
 
 from numpy import datetime64
 
-from tests.unit.offload.unittest_functions import get_real_frontend_schema_and_table
-
 from goe.offload.column_metadata import ColumnMetadataInterface
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.frontend_api import QueryParameter

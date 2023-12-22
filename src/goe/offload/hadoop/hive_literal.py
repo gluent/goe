@@ -9,7 +9,7 @@ import logging
 from numpy import datetime64
 
 from goe.offload.format_literal import FormatLiteralInterface
-from goe.util.better_impyla import HADOOP_TYPE_DATE, HADOOP_TYPE_TIMESTAMP
+from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_DATE, HADOOP_TYPE_TIMESTAMP
 
 ###############################################################################
 # CONSTANTS

@@ -26,7 +26,6 @@ from goe.offload.offload_constants import (
     FILE_STORAGE_FORMAT_AVRO,
     FILE_STORAGE_FORMAT_PARQUET,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
-    HYBRID_EXT_TABLE_DEGREE_AUTO,
     LIVY_IDLE_SESSION_TIMEOUT,
     LIVY_MAX_SESSIONS,
     NOT_NULL_PROPAGATION_AUTO,
@@ -155,10 +154,6 @@ def data_sample_pct_default() -> str:
     return "AUTO"
 
 
-def date_fns_default() -> str:
-    return "MIN,MAX,COUNT"
-
-
 def db_name_pattern_default() -> str:
     return "%s"
 
@@ -177,10 +172,6 @@ def dev_log_level_default() -> str:
 
 def execute_default() -> bool:
     return False
-
-
-def ext_readsize_default() -> str:
-    return "64K"
 
 
 def force_default():
@@ -207,12 +198,12 @@ def frontend_odbc_driver_name_default() -> Optional[str]:
     return os.environ.get("FRONTEND_ODBC_DRIVER_NAME")
 
 
-def generate_dependent_views_default() -> bool:
-    return True
-
-
 def get_load_db_pattern():
     return "%s_load"
+
+
+def google_dataproc_batches_subnet_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_DATAPROC_BATCHES_SUBNET")
 
 
 def google_dataproc_batches_version_default() -> Optional[str]:
@@ -221,6 +212,10 @@ def google_dataproc_batches_version_default() -> Optional[str]:
 
 def google_dataproc_cluster_default() -> Optional[str]:
     return os.environ.get("GOOGLE_DATAPROC_CLUSTER")
+
+
+def google_dataproc_project_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_DATAPROC_PROJECT")
 
 
 def google_dataproc_region_default() -> Optional[str]:
@@ -266,16 +261,8 @@ def hdfs_home_default() -> Optional[str]:
     return os.environ.get("HDFS_HOME")
 
 
-def hybrid_ext_table_degree_default():
-    return os.environ.get("HYBRID_EXT_TABLE_DEGREE") or HYBRID_EXT_TABLE_DEGREE_AUTO
-
-
 def load_db_name_pattern_default():
     return get_load_db_pattern()
-
-
-def lob_data_length_default():
-    return "32K"
 
 
 def log_dir_default():
@@ -321,10 +308,6 @@ def num_location_files_default():
 
 def num_bytes_fudge_default():
     return 0.25
-
-
-def numeric_fns_default():
-    return "AVG,MIN,MAX,COUNT,SUM"
 
 
 def offload_distribute_enabled_default():
@@ -401,10 +384,6 @@ def suppress_stdout_default():
 
 def synthetic_partition_digits_default():
     return 15
-
-
-def string_fns_default():
-    return "COUNT"
 
 
 def ver_check_default():

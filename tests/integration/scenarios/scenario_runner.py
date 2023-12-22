@@ -105,6 +105,7 @@ def run_setup(
 ):
     try:
         if frontend_sqls:
+            assert frontend_api
             run_setup_ddl(
                 config,
                 frontend_api,

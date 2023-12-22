@@ -12,7 +12,6 @@ from goe.filesystem.gluent_dfs import (
     DFS_TYPE_FILE,
 )
 from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
-from goe.offload.offload_messages import OffloadMessages
 
 from tests.unit.filesystem.test_gluent_dfs import TestGluentDfs
 from tests.integration.test_functions import (

@@ -208,6 +208,8 @@ class OracleFrontendApi(FrontendApiInterface):
         self._db_conn.module = FRONTEND_TRACE_MODULE
         self._db_conn.action = self._trace_action
         self._db_conn.outputtypehandler = self._connection_output_type_handler
+        # Ping updates the module/action in the session.
+        self._db_conn.ping()
         return made_new_connection
 
     def _create_table_sql_text(
@@ -414,7 +416,7 @@ class OracleFrontendApi(FrontendApiInterface):
             profile_dict = self._instrumentation_snap()
         t1 = datetime.now().replace(microsecond=0)
 
-        if self._dry_run and not_when_dry_running:
+        if (self._dry_run and not_when_dry_running) or self._db_conn is None:
             log_query()
             return None
 

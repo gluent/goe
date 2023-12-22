@@ -73,24 +73,6 @@ def build_kv_store(
         return HdfsFilepathKeyValueStore(
             location_for_dataset, hdfs_client_factory, dry_run=dry_run
         )
-    elif kv_store_flavor == GLUENT_REPO_FLAVOR:
-        assert db and table_name
-        assert orchestration_config, "{} kv store requires orchestration_config".format(
-            kv_store_flavor
-        )
-        assert messages, "{} kv store requires messages object".format(kv_store_flavor)
-        from .gluent_repo_key_value_store import GluentRepoKeyValueStore
-
-        # db and table_name are hybrid_owner/view for Gluent Repo persistence
-        return GluentRepoKeyValueStore(
-            db,
-            table_name,
-            orchestration_config,
-            messages,
-            dry_run=dry_run,
-            repo_client=repo_client,
-            execution_id=execution_id,
-        )
     elif kv_store_flavor == PICKLE_FLAVOR:
         from .pickle_key_value_store import PickleKeyValueStore
 

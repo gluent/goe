@@ -14,9 +14,10 @@ from termcolor import colored, cprint
 from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_HIVE, \
     EMPTY_BACKEND_COLUMN_STATS_DICT, EMPTY_BACKEND_TABLE_STATS_DICT
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
-from goe.util.better_impyla import HiveConnection, HiveTable, \
-    HADOOP_TYPE_BIGINT, HADOOP_TYPE_INT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_TINYINT, \
+from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_BIGINT, \
+    HADOOP_TYPE_INT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_TINYINT, \
     HADOOP_TYPE_DOUBLE, HADOOP_TYPE_FLOAT, HADOOP_TYPE_REAL, HADOOP_TYPE_TIMESTAMP
+from goe.util.better_impyla import HiveConnection, HiveTable
 from goe.util.hive_ddl_transform import DDLTransform
 from goe.util.misc_functions import is_number
 

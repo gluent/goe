@@ -125,6 +125,7 @@ IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT = (
     "--offload-predicate-type is not valid for a first time predicate-based offload"
 )
 IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT = "Missing --offload-predicate option. This option is mandatory to offload tables with an INCREMENTAL_PREDICATE_TYPE configuration of PREDICATE"
+MISSING_METADATA_EXCEPTION_TEMPLATE = "Missing metadata for table %s.%s. Offload with --reset-backend-table to overwrite table data"
 OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT = "Switching to offload type INCREMENTAL for LIST partitioned table requires --equal-to-values/--partition-names"
 OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT = (
     "Switching to INCREMENTAL for LIST partitioned table"

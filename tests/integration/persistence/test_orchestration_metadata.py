@@ -275,7 +275,11 @@ class TestOrchestrationMetadata(TestCase):
         """Tests we can interact with OrchestrationMetadata by client.
         This is more efficient as it will re-use a connection.
         """
-        client = orchestration_repo_client_factory(self.config, self.messages)
+        client = orchestration_repo_client_factory(
+            self.config,
+            self.messages,
+            trace_action="repo_client(test_metadata_by_client)",
+        )
         self._test_metadata(self._gen_test_metadata(), client=client)
 
     def test_metadata_direct(self):

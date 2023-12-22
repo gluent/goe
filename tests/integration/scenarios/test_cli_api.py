@@ -8,11 +8,6 @@ from goe.offload.offload_functions import (
     data_db_name,
 )
 
-from tests.integration.test_sets.stories.story_setup_functions import (
-    SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-)
-
 from tests.integration.scenarios.assertion_functions import (
     backend_table_exists,
 )
@@ -27,6 +22,7 @@ from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
 )
+from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
@@ -245,7 +241,7 @@ def test_cli_offload_rpa(config, schema, data_db):
                 "-t",
                 schema + "." + CLI_FACT,
                 "-x",
-                f"--older-than-date={SALES_BASED_FACT_HV_2}",
+                f"--older-than-date={test_constants.SALES_BASED_FACT_HV_2}",
                 "--reset-backend-table",
             ]
         ),
@@ -265,7 +261,7 @@ def test_cli_offload_rpa(config, schema, data_db):
                 schema + "." + CLI_FACT,
                 "-x",
                 "-v",
-                f"--older-than-date={SALES_BASED_FACT_HV_3}",
+                f"--older-than-date={test_constants.SALES_BASED_FACT_HV_3}",
                 "--reset-backend-table",
             ]
         ),

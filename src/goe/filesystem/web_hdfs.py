@@ -13,9 +13,9 @@ from requests_kerberos.exceptions import MutualAuthenticationError
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning, SubjectAltNameWarning
 
+from google.api_core import retry
 from hdfs.ext.kerberos import KerberosClient
 from hdfs.util import HdfsError
-from google.api_core import retry
 
 from goe.filesystem.gluent_dfs import GluentDfs, GluentDfsDeleteNotComplete, GluentDfsException,\
     gen_fs_uri,\

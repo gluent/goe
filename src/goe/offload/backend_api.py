@@ -28,7 +28,6 @@
 
 from abc import ABCMeta, abstractmethod
 import logging
-from textwrap import TextWrapper
 
 from goe.filesystem.gluent_dfs import OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_WASB, \
     OFFLOAD_FS_SCHEME_WASBS, OFFLOAD_FS_SCHEME_ADL, OFFLOAD_FS_SCHEME_ABFS, OFFLOAD_FS_SCHEME_ABFSS,\
@@ -364,62 +363,6 @@ class BackendApiInterface(metaclass=ABCMeta):
             assert isinstance(partition_expr_tuples[0], tuple), '%s is not tuple' % type(partition_expr_tuples[0])
         if filter_clauses:
             assert isinstance(filter_clauses, list)
-
-    def _gen_sample_stats_sql_text_common(self, db_name, table_name, sample_perc=None):
-        """ Generate query to estimate table & column stats.
-            The SQL is to return a list as described in hive_table_stats.parse_stats_into_tab_col().
-        """
-        def generic_string_type(data_length=None):
-            cast_str_type = self.generic_string_data_type()
-            if self.data_type_accepts_length(self.generic_string_data_type()):
-                # 40 is long enough to cater for 38 precision decimal with decimal place and sign.
-                data_length = data_length or 40
-                cast_str_type += f'({data_length})'
-            return cast_str_type
-
-        def string_cast(col, cast_source=None):
-            cast_source = cast_source or self.enclose_identifier(col.name)
-            if col.is_string_based():
-                # Just return the column name with no CAST
-                return cast_source
-            else:
-                return 'CAST(%s AS %s)' % (cast_source, generic_string_type(data_length=col.data_length))
-
-        self._log('Generating stats scan SQL for: %s.%s' % (db_name, table_name), detail=VVERBOSE)
-        projection = ['COUNT(*)']
-        for col in self.get_non_synthetic_columns(db_name, table_name):
-            hybrid_byte_size = self.to_canonical_column(col).estimate_hybrid_schema_byte_size()
-            self._log('Estimated byte size of %s: %s' % (col.name, hybrid_byte_size), detail=VVERBOSE)
-
-            if hybrid_byte_size:
-                avg_col_size = max_col_size = str(hybrid_byte_size)
-            else:
-                length_expression = self.length_sql_expression(string_cast(col))
-                avg_col_size = 'AVG(%s)' % length_expression
-                max_col_size = 'MAX(%s)' % length_expression
-
-            min_value = string_cast(col, cast_source='MIN(%s)' % self.enclose_identifier(col.name))
-            max_value = string_cast(col, cast_source='MAX(%s)' % self.enclose_identifier(col.name))
-            col_set = ("'%(col_name)s', APPROX_COUNT_DISTINCT(%(col)s), COUNT(*)-COUNT(%(col)s), %(avg_size)s, " +
-                       "%(min_value)s, %(max_value)s, %(max_size)s") \
-                       % {'col_name': col.name,
-                          'col': self.enclose_identifier(col.name),
-                          'avg_size': avg_col_size,
-                          'min_value': min_value,
-                          'max_value': max_value,
-                          'max_size': max_col_size,
-                          'str_type': self.generic_string_data_type()}
-            projection.append(col_set)
-
-        sample_clause = self._gen_sample_stats_sql_sample_clause(db_name, table_name, sample_perc=sample_perc)
-        if sample_clause:
-            sample_clause = ' ' + sample_clause
-        else:
-            sample_clause = ''
-        sql = "SELECT %s\nFROM   %s%s" % ('\n,      '.join(projection),
-                                          self.enclose_object_reference(db_name, table_name),
-                                          sample_clause)
-        return sql
 
     def _gen_sql_text_common(self, db_name, table_name, column_names=None, filter_clauses=None, measures=None, agg_fns=None):
         """ Generate a SQL statement appropriate for running in the backend.
@@ -1404,22 +1347,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
     @abstractmethod
     def role_exists(self, role_name):
         """ Check the role exists, returns True/False """
-        pass
-
-    @abstractmethod
-    def sample_table_stats_partitionwise(self, db_name, table_name, sample_stats_perc, num_bytes_fudge, as_dict=False):
-        """ Scan a selection of partitions from a table and estimate statistics.
-            Used when a backend object doesn't have stats but we want something representative
-            for the hybrid schema external table.
-        """
-        pass
-
-    @abstractmethod
-    def sample_table_stats_scan(self, db_name, table_name, as_dict=False, sample_perc=None):
-        """ Scan a table/view and estimate statistics.
-            Used when a backend object doesn't have stats but we want something representative
-            for the hybrid schema external table.
-        """
         pass
 
     @abstractmethod

@@ -5,6 +5,14 @@ from decimal import Decimal
 from unittest import TestCase, main
 from numpy import datetime64
 
+from goe.offload.hadoop.hadoop_column import (
+    HADOOP_TYPE_BIGINT,
+    HADOOP_TYPE_DATE,
+    HADOOP_TYPE_DECIMAL,
+    HADOOP_TYPE_DOUBLE,
+    HADOOP_TYPE_STRING,
+    HADOOP_TYPE_TIMESTAMP,
+)
 from goe.offload.hadoop.hive_literal import HiveLiteral
 from goe.offload.hadoop.impala_literal import ImpalaLiteral
 from goe.offload.bigquery.bigquery_literal import BigQueryLiteral
@@ -71,14 +79,6 @@ from goe.offload.teradata.teradata_column import (
     TERADATA_TYPE_VARCHAR,
 )
 from goe.offload.teradata.teradata_literal import TeradataLiteral
-from goe.util.better_impyla import (
-    HADOOP_TYPE_BIGINT,
-    HADOOP_TYPE_DATE,
-    HADOOP_TYPE_DECIMAL,
-    HADOOP_TYPE_DOUBLE,
-    HADOOP_TYPE_STRING,
-    HADOOP_TYPE_TIMESTAMP,
-)
 
 
 class TestFormatLiteral(TestCase):

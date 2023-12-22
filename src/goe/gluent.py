@@ -111,7 +111,6 @@ from goe.data_governance.hadoop_data_governance import get_hadoop_data_governanc
 
 from goe.util.misc_functions import csv_split, bytes_to_human_size,\
     human_size_to_bytes, standard_log_name
-from goe.util.hs2_connection import hs2_connection as hs2_connection_with_opts
 from goe.util.ora_query import get_oracle_connection
 from goe.util.redis_tools import RedisClient
 
@@ -189,11 +188,6 @@ execution_id = ""
 
 redis_execution_id = None
 redis_in_error = False
-
-def hs2_connection(opts=None):
-    """ Wrapper for gluentlib hs2_connection() for backward compatibility
-    """
-    return hs2_connection_with_opts(opts or options)
 
 
 def ansi(line, ansi_code):

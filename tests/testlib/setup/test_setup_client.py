@@ -15,7 +15,8 @@ from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.factory.backend_testing_api_factory import backend_testing_api_factory
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import frontend_testing_api_factory
 from tests.testlib.test_framework.test_functions import get_data_db_for_schema, get_orchestration_options_object
-from tests.integration.test_sets.offload_test_functions import get_suitable_offload_granularity_options
+# We are going to need these at some point so I've left them here commented out creating issues further down this file.
+#from tests.integration.test_sets.offload_test_functions import get_suitable_offload_granularity_options
 #from tests.integration.test_sets.sql_offload.sql_offload_tests import sql_offload_test_table_scripts, sql_offload_tpt_scripts
 
 

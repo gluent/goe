@@ -11,6 +11,90 @@ from lark import Tree, Token
 import numpy as np
 
 from goe.offload.predicate_offload import GenericPredicate, parse_predicate_dsl
+from goe.offload.bigquery import bigquery_column, bigquery_predicate
+from goe.offload.hadoop import hadoop_column, hadoop_predicate
+from goe.offload.microsoft import synapse_column, synapse_predicate
+from goe.offload.oracle import oracle_column, oracle_predicate
+from goe.offload.snowflake import snowflake_column, snowflake_predicate
+from goe.offload.teradata import teradata_column, teradata_predicate
+
+
+BIGQUERY_COLUMNS = [
+    bigquery_column.BigQueryColumn("COL_INT", bigquery_column.BIGQUERY_TYPE_INT64),
+    bigquery_column.BigQueryColumn("COL_STRING", bigquery_column.BIGQUERY_TYPE_STRING),
+    bigquery_column.BigQueryColumn("COL_DATE", bigquery_column.BIGQUERY_TYPE_DATETIME),
+    bigquery_column.BigQueryColumn(
+        "COL_DECIMAL",
+        bigquery_column.BIGQUERY_TYPE_NUMERIC,
+        data_precision=10,
+        data_scale=2,
+    ),
+]
+HADOOP_COLUMNS = [
+    hadoop_column.HadoopColumn("COL_INT", hadoop_column.HADOOP_TYPE_INT),
+    hadoop_column.HadoopColumn("COL_STRING", hadoop_column.HADOOP_TYPE_STRING),
+    hadoop_column.HadoopColumn("COL_DATE", hadoop_column.HADOOP_TYPE_TIMESTAMP),
+    hadoop_column.HadoopColumn(
+        "COL_DECIMAL",
+        hadoop_column.HADOOP_TYPE_DECIMAL,
+        data_precision=10,
+        data_scale=2,
+    ),
+]
+ORACLE_COLUMNS = [
+    oracle_column.OracleColumn(
+        "COL_INT", oracle_column.ORACLE_TYPE_NUMBER, data_precision=5, data_scale=0
+    ),
+    oracle_column.OracleColumn("COL_STRING", oracle_column.ORACLE_TYPE_VARCHAR2),
+    oracle_column.OracleColumn("COL_DATE", oracle_column.ORACLE_TYPE_DATE),
+    oracle_column.OracleColumn(
+        "COL_DECIMAL", oracle_column.ORACLE_TYPE_NUMBER, data_precision=10, data_scale=2
+    ),
+]
+SNOWFLAKE_COLUMNS = [
+    snowflake_column.SnowflakeColumn(
+        "COL_INT",
+        snowflake_column.SNOWFLAKE_TYPE_NUMBER,
+        data_precision=5,
+        data_scale=0,
+    ),
+    snowflake_column.SnowflakeColumn(
+        "COL_STRING", snowflake_column.SNOWFLAKE_TYPE_TEXT
+    ),
+    snowflake_column.SnowflakeColumn(
+        "COL_DATE", snowflake_column.SNOWFLAKE_TYPE_TIMESTAMP_NTZ
+    ),
+    snowflake_column.SnowflakeColumn(
+        "COL_DECIMAL",
+        snowflake_column.SNOWFLAKE_TYPE_NUMBER,
+        data_precision=10,
+        data_scale=2,
+    ),
+]
+SYNAPSE_COLUMNS = [
+    synapse_column.SynapseColumn("COL_INT", synapse_column.SYNAPSE_TYPE_BIGINT),
+    synapse_column.SynapseColumn("COL_STRING", synapse_column.SYNAPSE_TYPE_VARCHAR),
+    synapse_column.SynapseColumn("COL_DATE", synapse_column.SYNAPSE_TYPE_DATETIME2),
+    synapse_column.SynapseColumn(
+        "COL_DECIMAL",
+        synapse_column.SYNAPSE_TYPE_DECIMAL,
+        data_precision=10,
+        data_scale=2,
+    ),
+]
+TERADATA_COLUMNS = [
+    teradata_column.TeradataColumn(
+        "COL_INT", teradata_column.TERADATA_TYPE_NUMBER, data_precision=5, data_scale=0
+    ),
+    teradata_column.TeradataColumn("COL_STRING", teradata_column.TERADATA_TYPE_VARCHAR),
+    teradata_column.TeradataColumn("COL_DATE", teradata_column.TERADATA_TYPE_DATE),
+    teradata_column.TeradataColumn(
+        "COL_DECIMAL",
+        teradata_column.TERADATA_TYPE_NUMBER,
+        data_precision=10,
+        data_scale=2,
+    ),
+]
 
 
 class TestIdaPredicateParse(TestCase):
@@ -258,6 +342,68 @@ class TestIdaPredicateRenderToDSL(TestCase):
         ]
         for input_dsl, render_dsl in expect_dsl:
             self.assertEqual(GenericPredicate(input_dsl).dsl, render_dsl)
+
+
+class TestIdaPredicateDataTypes(TestCase):
+    def test_data_type_errors(self):
+        expect_data_type_error = [
+            "column(COL_STRING) = numeric(34)",
+            "column(COL_STRING) = datetime(2012-01-01)",
+            "column(COL_STRING) = datetime(2012-01-01 00:00:00.123456789)",
+            "column(COL_STRING) IN (numeric(34))",
+            "column(COL_STRING) NOT IN (numeric(34))",
+            'column(COL_STRING) IN (string("NYC"), numeric(34))',
+            "numeric(34) > column(COL_STRING)",
+            "column(COL_INT) = datetime(2020-12-30)",
+            'column(COL_INT) = string("2020-12-30")',
+            'column(COL_DECIMAL) < string("nan")',
+            "column(COL_DATE) = numeric(34)",
+            'column(COL_DATE) = string("34")',
+        ]
+
+        for predicate_dsl in expect_data_type_error:
+            self.assertRaisesRegex(
+                OptionValueError,
+                "cannot be compared to",
+                oracle_predicate.predicate_to_where_clause,
+                ORACLE_COLUMNS,
+                GenericPredicate(predicate_dsl),
+            )
+            self.assertRaisesRegex(
+                OptionValueError,
+                "cannot be compared to",
+                hadoop_predicate.predicate_to_where_clause,
+                HADOOP_COLUMNS,
+                GenericPredicate(predicate_dsl),
+            )
+            self.assertRaisesRegex(
+                OptionValueError,
+                "cannot be compared to",
+                bigquery_predicate.predicate_to_where_clause,
+                BIGQUERY_COLUMNS,
+                GenericPredicate(predicate_dsl),
+            )
+            self.assertRaisesRegex(
+                OptionValueError,
+                "cannot be compared to",
+                snowflake_predicate.predicate_to_where_clause,
+                SNOWFLAKE_COLUMNS,
+                GenericPredicate(predicate_dsl),
+            )
+            self.assertRaisesRegex(
+                OptionValueError,
+                "cannot be compared to",
+                synapse_predicate.predicate_to_where_clause,
+                SYNAPSE_COLUMNS,
+                GenericPredicate(predicate_dsl),
+            )
+            self.assertRaisesRegex(
+                OptionValueError,
+                "cannot be compared to",
+                teradata_predicate.predicate_to_where_clause,
+                TERADATA_COLUMNS,
+                GenericPredicate(predicate_dsl),
+            )
 
 
 if __name__ == "__main__":

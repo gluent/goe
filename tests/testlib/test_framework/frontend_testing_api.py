@@ -598,18 +598,18 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def drop_table(self, schema, table_name):
-        """Obviously this is dangerous, that's why it is in this TestIngApi only."""
+        """Obviously this is dangerous, that's why it is in this TestingApi only."""
 
     @abstractmethod
-    def expected_channels_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate
+    def expected_std_dim_offload_predicates(self):
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate
         tuple format:
             (predicate_dsl, expected_sql)
         """
 
     @abstractmethod
     def expected_sales_offload_predicates(self):
-        """Return a list of tuples of Gluent offload predicates and expected frontend predicate.
+        """Return a list of tuples of GOE offload predicates and expected frontend predicate.
         tuple format:
             (predicate_dsl, expected_sql, expected_bind_sql, expected_binds)
         or if binds are not relevant:

@@ -14,16 +14,18 @@ from goe.util.orchestration_lock import (
 
 
 LOCK_OWNER = "SH_TEST"
-LOCK_TABLE = "UNIT_TABLE"
+LOCK_TABLE1 = "UNIT_TABLE1"
+LOCK_TABLE2 = "UNIT_TABLE2"
+LOCK_TABLE3 = "UNIT_TABLE3"
 
 
 class TestOrchestrationLock(TestCase):
     def test_orchestration_lock_for_table(self):
         # Ensure works as context manager
-        lock = orchestration_lock_for_table(LOCK_OWNER, LOCK_TABLE)
+        lock = orchestration_lock_for_table(LOCK_OWNER, LOCK_TABLE1)
         with lock:
             pass
-        with orchestration_lock_for_table(LOCK_OWNER, LOCK_TABLE):
+        with orchestration_lock_for_table(LOCK_OWNER, LOCK_TABLE1):
             pass
         # Ensure works with explicit acquisition.
         # Should pass because above code will release lock automatically.
@@ -33,7 +35,7 @@ class TestOrchestrationLock(TestCase):
     def test_orchestration_lock_from_hybrid_metadata(self):
         messages = OffloadMessages()
         metadata = OrchestrationMetadata.from_attributes(
-            messages=messages, offloaded_owner=LOCK_OWNER, offloaded_table=LOCK_TABLE
+            messages=messages, offloaded_owner=LOCK_OWNER, offloaded_table=LOCK_TABLE2
         )
         # Ensure works as context manager
         lock = orchestration_lock_from_hybrid_metadata(metadata)
@@ -69,7 +71,7 @@ class TestOrchestrationLock(TestCase):
             if t == 2:
                 # Ensure thread 1 has the lock
                 time.sleep(0.1)
-            lock = orchestration_lock_for_table(LOCK_OWNER, LOCK_TABLE)
+            lock = orchestration_lock_for_table(LOCK_OWNER, LOCK_TABLE3)
             lock.acquire()
             time.sleep(1)
             lock.release()

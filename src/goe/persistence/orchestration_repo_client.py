@@ -286,34 +286,6 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         """Remove metadata"""
 
     #
-    # INCREMENTAL UPDATE EXTRACTION METADATA
-    #
-    def get_incremental_update_extraction_metadata(
-        self, hybrid_owner: str, hybrid_name: str
-    ) -> dict:
-        """Get Incremental Update extraction metadata for a hybrid view"""
-        offload_metadata = self.get_offload_metadata(hybrid_owner, hybrid_name)
-        return {
-            "last_scn": offload_metadata.iu_extraction_scn,
-            "ts": offload_metadata.iu_extraction_time,
-        }
-
-    def save_incremental_update_extraction_metadata(
-        self,
-        hybrid_owner: str,
-        hybrid_name: str,
-        extraction_metadata: dict,
-        execution_id: ExecutionId,
-    ):
-        """Save Incremental Update extraction metadata for a hybrid view"""
-        assert isinstance(extraction_metadata, dict)
-        assert isinstance(execution_id, ExecutionId)
-        offload_metadata = self.get_offload_metadata(hybrid_owner, hybrid_name)
-        offload_metadata.iu_extraction_scn = int(extraction_metadata["last_scn"])
-        offload_metadata.iu_extraction_time = int(extraction_metadata["ts"])
-        offload_metadata.save(execution_id)
-
-    #
     # COMMAND EXECUTION LOGGING METHODS
     #
     @abstractmethod

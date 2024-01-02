@@ -397,7 +397,7 @@ def standard_dimension_assertion(
     story_id="",
     split_type=None,
     partition_functions=None,
-):
+) -> bool:
     data_db = backend_db or data_db
     backend_table = backend_table or table_name
     data_db, backend_table = convert_backend_identifier_case(

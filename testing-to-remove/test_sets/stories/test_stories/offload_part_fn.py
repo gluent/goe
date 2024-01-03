@@ -123,6 +123,17 @@ def offload_part_fn_story_tests(schema, hybrid_schema, data_db, options, backend
             test_stories/offload_part_fn.py
             test_stories/offload_rpa.py
     """
+
+    # TODO Add this test when convert to scenario:
+    #{'id': 'offload_story_dim_no_part_funcs',
+    #     'type': STORY_TYPE_OFFLOAD,
+    #     'title': 'Offload With Partition Functions When Not Supported',
+    #     'options': {'owner_table': schema + '.' + OFFLOAD_DIM,
+    #                 'reset_backend_table': True,
+    #                 'offload_partition_functions': 'anything'},
+    #     'expected_exception_string': PARTITION_FUNCTIONS_NOT_SUPPORTED_EXCEPTION_TEXT,
+    #     'prereq': lambda: not backend_api.gluent_partition_functions_supported()},
+
     if backend_api and not backend_api.gluent_partition_functions_supported():
         log('Skipping offload_part_fn_story_tests() due to gluent_partition_functions_supported() == False')
         return []

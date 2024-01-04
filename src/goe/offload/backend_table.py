@@ -88,7 +88,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     """
 
     def __init__(self, db_name, table_name, backend_type, orchestration_options, messages, orchestration_operation=None,
-                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None):
+                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None, do_not_connect=False):
         assert db_name and table_name
         assert orchestration_options
         assert backend_type in VALID_REMOTE_DB_TYPES, '%s not in %s' % (backend_type, VALID_REMOTE_DB_TYPES)
@@ -111,7 +111,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         if existing_backend_api:
             self._db_api = existing_backend_api
         else:
-            self._db_api = backend_api_factory(backend_type, self._connection_options, self._messages, dry_run=dry_run)
+            self._db_api = backend_api_factory(backend_type, self._connection_options, self._messages, dry_run=dry_run, do_not_connect=do_not_connect)
         self._dfs_client = None
         self._backend_dfs = None
 

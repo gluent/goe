@@ -801,3 +801,6 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
         NOSEG_FACT,
         test_constants.SALES_BASED_FACT_HV_5,
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

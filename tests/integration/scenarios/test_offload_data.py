@@ -3,66 +3,30 @@
 import pytest
 
 from goe.config import orchestration_defaults
-from goe.offload.backend_api import IMPALA_NOSHUFFLE_HINT
-from goe.offload.column_metadata import (
-    match_table_column,
-    str_list_of_columns,
-)
 from goe.offload.offload_constants import (
-    DBTYPE_BIGQUERY,
-    DBTYPE_HIVE,
-    DBTYPE_IMPALA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
-    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
-    OFFLOAD_STATS_METHOD_COPY,
-    OFFLOAD_STATS_METHOD_NATIVE,
-    PART_COL_GRANULARITY_DAY,
-    PART_COL_GRANULARITY_MONTH,
 )
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
-    load_db_name,
 )
-from goe.offload.offload_metadata_functions import (
-    INCREMENTAL_PREDICATE_TYPE_LIST,
-    INCREMENTAL_PREDICATE_TYPE_RANGE,
-)
-from goe.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
-from tests.integration.scenarios.assertion_functions import (
-    backend_column_exists,
-    backend_table_count,
-    backend_table_exists,
-    date_gl_part_column_name,
-    sales_based_fact_assertion,
-    standard_dimension_assertion,
-    text_in_events,
-)
+from tests.integration.scenarios.assertion_functions import sales_based_fact_assertion
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
     run_setup,
 )
 from tests.integration.scenarios.setup_functions import (
-    drop_backend_test_load_table,
     drop_backend_test_table,
-    gen_truncate_sales_based_fact_partition_ddls,
-    partition_columns_if_supported,
+    no_query_import_transport_method,
 )
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
-)
-from tests.testlib.test_framework.test_constants import (
-    SALES_BASED_FACT_HV_1,
-    SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-    SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
@@ -74,6 +38,7 @@ from tests.testlib.test_framework.test_functions import (
 NAN_TABLE = "STORY_NAN"
 US_FACT = "MICRO_SEC_FACT"
 NS_FACT = "NANO_SEC_FACT"
+XMLTYPE_TABLE = "XMLTYPE_TABLE"
 
 
 @pytest.fixture
@@ -411,3 +376,61 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
             incremental_key="TS",
             incremental_key_type=frontend_datetime,
         )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def test_offload_data_oracle_xmltype(config, schema, data_db):
+    """Tests Offload of Oracle XMLTYPE."""
+    # TODO Maybe this should move to scenarios/test_offload_transport.py
+    id = "test_offload_data_oracle_xmltype"
+
+    if config.db_type != DBTYPE_ORACLE:
+        messages.log(f"Skipping {id} on frontend system: {config.db_type}")
+        return
+
+    messages = get_test_messages(config, id)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    backend_api = get_backend_testing_api(config, messages)
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=[
+            "DROP TABLE %(schema)s.%(table)s"
+            % {"schema": schema, "table": XMLTYPE_TABLE},
+            """CREATE TABLE %(schema)s.%(table)s
+                           (id NUMBER(8), data XMLTYPE)"""
+            % {"schema": schema, "table": XMLTYPE_TABLE},
+            """INSERT INTO %(schema)s.%(table)s (id, data)
+                           SELECT ROWNUM, SYS_XMLGEN(table_name) FROM all_tables WHERE ROWNUM <= 10"""
+            % {"schema": schema, "table": XMLTYPE_TABLE},
+            frontend_api.collect_table_stats_sql_text(schema, XMLTYPE_TABLE),
+        ],
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, XMLTYPE_TABLE
+            ),
+        ],
+    )
+
+    # Offload XMLTYPE (Query Import).
+    options = {
+        "owner_table": schema + "." + XMLTYPE_TABLE,
+        "reset_backend_table": True,
+    }
+    run_offload(options, config, messages)
+
+    # Offload XMLTYPE (no Query Import).
+    options = {
+        "owner_table": schema + "." + XMLTYPE_TABLE,
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
+        ),
+        "reset_backend_table": True,
+    }
+    run_offload(options, config, messages)

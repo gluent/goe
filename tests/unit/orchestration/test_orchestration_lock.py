@@ -5,12 +5,12 @@ import time
 from unittest import TestCase, main
 
 from goe.offload.offload_messages import OffloadMessages
-from goe.persistence.orchestration_metadata import OrchestrationMetadata
-from goe.util.orchestration_lock import (
+from goe.orchestration.orchestration_lock import (
     OrchestrationLockTimeout,
     orchestration_lock_for_table,
     orchestration_lock_from_hybrid_metadata,
 )
+from goe.persistence.orchestration_metadata import OrchestrationMetadata
 
 
 LOCK_OWNER = "SH_TEST"

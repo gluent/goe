@@ -75,6 +75,8 @@ EXAMPLE_SALES_METADATA_DICT = {
     "OFFLOAD_PARTITION_FUNCTIONS": None,
     "COMMAND_EXECUTION": "UUID",
 }
+EXAMPLE_SALES_METADATA_DICT_HV2 = "TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
+EXAMPLE_SALES_METADATA_DICT_HV3 = "TO_DATE(' 2012-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
 
 EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
     "OFFLOAD_TYPE": "INCREMENTAL",
@@ -216,7 +218,7 @@ class TestOrchestrationMetadata(TestCase):
 
         # Test that the save function updates changes
         # Change by attribute:
-        test_metadata.offload_snapshot = -1
+        test_metadata.incremental_high_value = EXAMPLE_SALES_METADATA_DICT_HV2
         test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
@@ -233,7 +235,7 @@ class TestOrchestrationMetadata(TestCase):
         )
         # Change by dict:
         test_metadata_dict = test_metadata.as_dict()
-        test_metadata_dict["OFFLOAD_SNAPSHOT"] = -2
+        test_metadata_dict["INCREMENTAL_HIGH_VALUE"] = EXAMPLE_SALES_METADATA_DICT_HV3
         test_metadata = OrchestrationMetadata(
             test_metadata_dict, client=test_metadata.client
         )

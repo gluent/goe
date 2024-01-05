@@ -35,7 +35,6 @@ METADATA_DICT_TEST_DEFAULTS = {
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
     "INCREMENTAL_PREDICATE_VALUE": ["column(OBJECT_ID) < numeric(100)"],
     "OFFLOAD_BUCKET_COLUMN": "SOME_COLUMN",
-    "OFFLOAD_VERSION": "6.0.0",
     "OFFLOAD_SORT_COLUMNS": "SOME_COLUMN1,SOME_COLUMN2",
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": "UDF1,UDF2",
@@ -53,7 +52,6 @@ EXAMPLE_CHANNELS_METADATA_DICT = {
     "INCREMENTAL_PREDICATE_TYPE": None,
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
@@ -72,12 +70,13 @@ EXAMPLE_SALES_METADATA_DICT = {
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
     "COMMAND_EXECUTION": "UUID",
 }
+EXAMPLE_SALES_METADATA_DICT_HV2 = "TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
+EXAMPLE_SALES_METADATA_DICT_HV3 = "TO_DATE(' 2012-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
 
 EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
     "OFFLOAD_TYPE": "INCREMENTAL",
@@ -91,7 +90,6 @@ EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
     "INCREMENTAL_PREDICATE_TYPE": "RANGE",
     "INCREMENTAL_PREDICATE_VALUE": None,
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "SUBPARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
@@ -110,7 +108,6 @@ EXAMPLE_STORY_PBO_DIM_METADATA_DICT = {
     "INCREMENTAL_PREDICATE_TYPE": "PREDICATE",
     "INCREMENTAL_PREDICATE_VALUE": ['column(PROD_SUBCATEGORY) = string("Camcorders")'],
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": None,
     "OFFLOAD_PARTITION_FUNCTIONS": None,
@@ -131,7 +128,6 @@ EXAMPLE_STORY_PBO_R_INTRA_METADATA_DICT = {
         "((column(TIME_ID) >= datetime(2012-02-01) AND column(TIME_ID) < datetime(2012-03-01)) AND column(CHANNEL_ID) = numeric(2))"
     ],
     "OFFLOAD_BUCKET_COLUMN": None,
-    "OFFLOAD_VERSION": "4.3.0",
     "OFFLOAD_SORT_COLUMNS": None,
     "INCREMENTAL_RANGE": "PARTITION",
     "OFFLOAD_PARTITION_FUNCTIONS": None,
@@ -222,7 +218,7 @@ class TestOrchestrationMetadata(TestCase):
 
         # Test that the save function updates changes
         # Change by attribute:
-        test_metadata.offload_snapshot = -1
+        test_metadata.incremental_high_value = EXAMPLE_SALES_METADATA_DICT_HV2
         test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
@@ -239,7 +235,7 @@ class TestOrchestrationMetadata(TestCase):
         )
         # Change by dict:
         test_metadata_dict = test_metadata.as_dict()
-        test_metadata_dict["OFFLOAD_SNAPSHOT"] = -2
+        test_metadata_dict["INCREMENTAL_HIGH_VALUE"] = EXAMPLE_SALES_METADATA_DICT_HV3
         test_metadata = OrchestrationMetadata(
             test_metadata_dict, client=test_metadata.client
         )

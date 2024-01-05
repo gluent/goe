@@ -39,7 +39,6 @@ from goe.persistence.orchestration_metadata import (
     OFFLOAD_SNAPSHOT,
     OFFLOAD_SORT_COLUMNS,
     OFFLOAD_TYPE,
-    OFFLOAD_VERSION,
     OFFLOADED_OWNER,
     OFFLOADED_TABLE,
     COMMAND_EXECUTION,
@@ -180,7 +179,6 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             OFFLOAD_PARTITION_FUNCTIONS
         ]
         metadata_obj.COMMAND_EXECUTION = metadata_dict[COMMAND_EXECUTION].as_bytes()
-        metadata_obj.OFFLOAD_VERSION = metadata_dict[OFFLOAD_VERSION]
         return metadata_obj
 
     def _ora_object_to_metadata_dict(self, metadata_obj):
@@ -203,7 +201,6 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             if metadata_obj.OFFLOAD_PREDICATE_VALUE
             else None,
             OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_HASH_COLUMN or None,
-            OFFLOAD_VERSION: metadata_obj.OFFLOAD_VERSION,
             OFFLOAD_SORT_COLUMNS: metadata_obj.OFFLOAD_SORT_COLUMNS or None,
             OFFLOAD_SNAPSHOT: metadata_obj.OFFLOAD_SNAPSHOT or None,
             OFFLOAD_PARTITION_FUNCTIONS: metadata_obj.OFFLOAD_PARTITION_FUNCTIONS

@@ -51,6 +51,8 @@ RPA_FACT_TABLE_STR = "RPA_STR"
 RPA_FACT_TABLE_STR_UDF = "RPA_USTR"
 RPA_FACT_TABLE_NSTR = "RPA_NSTR"
 RPA_ALPHA_FACT_TABLE = "RPA_ALPHA"
+NOSEG_FACT = "RPA_NOSEG"
+FACT_MCOL_MAXVAL = "RPA_MCOL_MAXVAL"
 
 
 @pytest.fixture
@@ -649,7 +651,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
 
     canonical_string = frontend_api.test_type_canonical_string()
 
-    # Setup - drop oldest partition from fact.
+    # Setup
     run_setup(
         frontend_api,
         backend_api,
@@ -723,5 +725,83 @@ def test_offload_rpa_alpha(config, schema, data_db):
         incremental_key="STR",
         incremental_key_type=canonical_string,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def test_offload_rpa_empty_partitions(config, schema, data_db):
+    """Tests ensuring empty partitions are offloaded correctly."""
+    id = "test_offload_rpa_empty_partitions"
+    messages = get_test_messages(config, id)
+
+    if config.db_type == DBTYPE_TERADATA:
+        messages.log(
+            f"Skipping {id} for {config.db_type} because empty partitions are not a thing"
+        )
+        return
+
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
+
+    # Setup, create a partitioned table with one populated partition and a series of empty ones
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+            schema,
+            NOSEG_FACT,
+            simple_partition_names=True,
+            extra_pred="AND time_id = TO_DATE('2012-01-01','YYYY-MM-DD')",
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, NOSEG_FACT
+            ),
+        ],
+    )
+
+    # Offload first partition of fact, this one is populated.
+    options = {
+        "owner_table": schema + "." + NOSEG_FACT,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+        "reset_backend_table": True,
+    }
+    run_offload(options, config, messages)
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        NOSEG_FACT,
+        test_constants.SALES_BASED_FACT_HV_2,
+    )
+
+    # Offload remaining empty partitions, metadata should still reflect this.
+    options = {
+        "owner_table": schema + "." + NOSEG_FACT,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_5,
+        "max_offload_chunk_count": 1,
+    }
+    run_offload(options, config, messages)
+    assert sales_based_fact_assertion(
+        config,
+        backend_api,
+        frontend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        NOSEG_FACT,
+        test_constants.SALES_BASED_FACT_HV_5,
+    )
+
     # Connections are being left open, explicitly close them.
     frontend_api.close()

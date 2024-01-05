@@ -73,6 +73,8 @@ FAKE_ORACLE_BQ_ENV.update(
         "GOOGLE_KMS_KEY_RING_LOCATION": "US",
         "GOOGLE_KMS_KEY_RING_NAME": "ring-name",
         "GOOGLE_KMS_KEY_NAME": "key-name",
+        "OFFLOAD_FS_CONTAINER": "b",
+        "OFFLOAD_FS_SCHEME": "gs",
     }
 )
 
@@ -86,6 +88,7 @@ FAKE_ORACLE_HIVE_ENV.update(
         "HIVE_SERVER_HOST": "h",
         "HIVE_SERVER_USER": "x",
         "QUERY_ENGINE": "HIVE",
+        "OFFLOAD_FS_SCHEME": "inherit",
     }
 )
 
@@ -98,6 +101,7 @@ FAKE_ORACLE_IMPALA_ENV.update(
         "HDFS_LOAD": "/tmp/a_load",
         "HIVE_SERVER_HOST": "h",
         "QUERY_ENGINE": "IMPALA",
+        "OFFLOAD_FS_SCHEME": "inherit",
     }
 )
 
@@ -115,6 +119,8 @@ FAKE_ORACLE_SNOWFLAKE_ENV.update(
         "SNOWFLAKE_INTEGRATION": "i",
         "SNOWFLAKE_STAGE": "s",
         "SNOWFLAKE_WAREHOUSE": "w",
+        "OFFLOAD_FS_CONTAINER": "b",
+        "OFFLOAD_FS_SCHEME": "gs",
     }
 )
 
@@ -134,6 +140,7 @@ FAKE_ORACLE_SYNAPSE_ENV.update(
         "SYNAPSE_DATA_SOURCE": "d",
         "SYNAPSE_FILE_FORMAT": "f",
         "BACKEND_ODBC_DRIVER_NAME": "ms",
+        "OFFLOAD_FS_SCHEME": "wasb",
     }
 )
 
@@ -154,4 +161,6 @@ def build_mock_offload_operation():
     fake_operation.offload_transport_fetch_size = 100
     fake_operation.offload_transport_spark_properties = {}
     fake_operation.unicode_string_columns_csv = None
+    fake_operation.max_offload_chunk_size = 100 * 1024 * 1024
+    fake_operation.max_offload_chunk_count = 100
     return fake_operation

@@ -325,9 +325,6 @@ def check_metadata(
         metadata, incremental_predicate_value, "incremental_predicate_value"
     ):
         return False
-    if not getattr(metadata, "offload_version"):
-        messages.log("OFFLOAD_VERSION missing from metadata")
-        return False
     if check_fn:
         messages.log("Checking metadata by fn", detail=VERBOSE)
         if not check_fn(metadata):
@@ -397,7 +394,7 @@ def standard_dimension_assertion(
     story_id="",
     split_type=None,
     partition_functions=None,
-):
+) -> bool:
     data_db = backend_db or data_db
     backend_table = backend_table or table_name
     data_db, backend_table = convert_backend_identifier_case(
@@ -412,7 +409,6 @@ def standard_dimension_assertion(
         hadoop_owner=data_db,
         hadoop_table=backend_table,
         offload_partition_functions=partition_functions,
-        check_fn=lambda mt: bool(mt.offload_version),
     ):
         messages.log("check_metadata(%s.%s) == False" % (schema, table_name))
         return False

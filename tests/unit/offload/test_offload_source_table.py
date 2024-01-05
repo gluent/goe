@@ -1,11 +1,8 @@
-from datetime import datetime
-from unittest import TestCase, main
+from unittest import TestCase
 
 from numpy import datetime64
 
-from goe.offload.column_metadata import ColumnMetadataInterface
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
-from goe.offload.frontend_api import QueryParameter
 from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
     DBTYPE_NETEZZA,

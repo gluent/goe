@@ -1898,7 +1898,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
             ),
         ]
 
-    def expected_std_synthetic_offload_predicates(self) -> list:
+    def expected_std_dim_synthetic_offload_predicates(self) -> list:
         """No synthetic partitioning on Synapse"""
         return []
 

@@ -140,13 +140,11 @@ def filter_properties_by_gluent_object_type(prop_dict, gluent_object_type, messa
     return filtered_props
 
 
-def data_governance_auto_property_defaults(goe_version, rdbms_name, rdbms_schema, source_rdbms_object=None, target_rdbms_object=None, gluent_object_type=None):
+def data_governance_auto_property_defaults(rdbms_name, rdbms_schema, source_rdbms_object=None, target_rdbms_object=None, gluent_object_type=None):
     """ Create a dictionary of the default properties for an operation
         These values may not be used or may be merged with other properties at a later point, these are optimistic defaults
     """
     property_defaults = {}
-    property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_INITIAL_GLUENT_VERSION] = goe_version
-    property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_LATEST_GLUENT_VERSION] = goe_version
     now = datetime.datetime.now().replace(microsecond=0)
     property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_INITIAL_OPERATION_DATETIME] = now.isoformat()
     property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_LATEST_OPERATION_DATETIME] = now.isoformat()
@@ -163,7 +161,7 @@ def data_governance_auto_property_defaults(goe_version, rdbms_name, rdbms_schema
 def expand_data_governance_props(data_gov_client, messages, gluent_object_type=None):
     """ Expand the property values defined via offload.env or command line into a single dictionary
         This code relies on values below being cached in data_gov_client:
-            goe_version, rdbms_name, rdbms_schema, source_rdbms_object, target_rdbms_object
+            rdbms_name, rdbms_schema, source_rdbms_object, target_rdbms_object
             Only 1 of source_rdbms_object_name/target_rdbms_object_name can be used, this dictates which direction we are going in
         gluent_object_type is only applicable when creating an object, otherwise pass as None
     """
@@ -172,8 +170,7 @@ def expand_data_governance_props(data_gov_client, messages, gluent_object_type=N
     assert not gluent_object_type or gluent_object_type in VALID_DATA_GOVERNANCE_GLUENT_OBJECT_TYPES, 'Invalid gluent_object_type: %s' % gluent_object_type
 
     auto_props = data_gov_client.auto_properties_csv.split(',') if data_gov_client.auto_properties_csv else []
-    data_gov_prop_dict = data_governance_auto_property_defaults(data_gov_client.goe_version,
-                                                                data_gov_client.rdbms_name,
+    data_gov_prop_dict = data_governance_auto_property_defaults(data_gov_client.rdbms_name,
                                                                 data_gov_client.rdbms_schema,
                                                                 source_rdbms_object=data_gov_client.source_rdbms_object_name,
                                                                 target_rdbms_object=data_gov_client.target_rdbms_object_name,

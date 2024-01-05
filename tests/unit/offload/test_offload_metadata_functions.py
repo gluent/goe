@@ -8,9 +8,7 @@ from goe.offload.offload_metadata_functions import (
     gen_offload_metadata,
 )
 from goe.offload.oracle.oracle_column import OracleColumn
-from goe.offload.predicate_offload import GenericPredicate
 from goe.orchestration.execution_id import ExecutionId
-from goe.persistence.orchestration_metadata import OrchestrationMetadata
 
 
 def test_incremental_hv_list_from_csv():
@@ -55,7 +53,6 @@ def test_gen_offload_metadata_rpa():
     fake_hybrid_operation.owner = "goe_test"
     fake_hybrid_operation.table_name = "sales"
     fake_hybrid_operation.bucket_hash_col = "CUST_ID"
-    fake_hybrid_operation.goe_version = "1.2.3"
     fake_hybrid_operation.offload_partition_functions = ["UDF1"]
     fake_hybrid_operation.sort_columns = ["CUST_ID"]
     fake_hybrid_operation.ipa_predicate_type = "RANGE"
@@ -85,15 +82,14 @@ def test_gen_offload_metadata_rpa():
         "OFFLOAD_TYPE": "INCREMENTAL",
         "HADOOP_OWNER": fake_hybrid_operation.owner.lower(),
         "HADOOP_TABLE": fake_hybrid_operation.table_name.lower(),
-        "OFFLOADED_OWNER": fake_hybrid_operation.owner,
-        "OFFLOADED_TABLE": fake_hybrid_operation.table_name,
+        "OFFLOADED_OWNER": fake_hybrid_operation.owner.upper(),
+        "OFFLOADED_TABLE": fake_hybrid_operation.table_name.upper(),
         "OFFLOAD_SNAPSHOT": pre_offload_scn,
         "INCREMENTAL_KEY": partition_key,
         "INCREMENTAL_HIGH_VALUE": inc_hvs,
         "INCREMENTAL_PREDICATE_TYPE": fake_hybrid_operation.ipa_predicate_type,
         "INCREMENTAL_PREDICATE_VALUE": None,
         "OFFLOAD_BUCKET_COLUMN": fake_hybrid_operation.bucket_hash_col,
-        "OFFLOAD_VERSION": fake_hybrid_operation.goe_version,
         "OFFLOAD_SORT_COLUMNS": fake_hybrid_operation.sort_columns[0],
         "INCREMENTAL_RANGE": "PARTITION",
         "OFFLOAD_PARTITION_FUNCTIONS": fake_hybrid_operation.offload_partition_functions[
@@ -107,7 +103,6 @@ def test_gen_offload_metadata_rpa():
     # Capture metadata from previous test to use as input for this one.
     pre_offload_metadata = generated_metadata
     prior_offload_scn = pre_offload_scn
-    prior_goe_version = fake_hybrid_operation.goe_version
 
     # Set new operational values.
     # New execution id, GOE version, SCN and partition high value.
@@ -115,7 +110,6 @@ def test_gen_offload_metadata_rpa():
     fake_hybrid_operation.owner = "GOE_TEST"
     fake_hybrid_operation.table_name = "SALES"
     fake_hybrid_operation.bucket_hash_col = "CUST_ID"
-    fake_hybrid_operation.goe_version = "1.2.5"
     fake_hybrid_operation.offload_partition_functions = ["UDF1"]
     fake_hybrid_operation.sort_columns = ["CUST_ID", "PROD_ID"]
     fake_hybrid_operation.ipa_predicate_type = "RANGE"
@@ -128,6 +122,8 @@ def test_gen_offload_metadata_rpa():
     generated_metadata = gen_offload_metadata(
         fake_repo_client,
         fake_hybrid_operation,
+        fake_hybrid_operation.owner.upper(),
+        fake_hybrid_operation.table_name.upper(),
         fake_hybrid_operation.owner.lower(),
         fake_hybrid_operation.table_name.lower(),
         inc_cols,
@@ -142,15 +138,14 @@ def test_gen_offload_metadata_rpa():
         "OFFLOAD_TYPE": "INCREMENTAL",
         "HADOOP_OWNER": fake_hybrid_operation.owner.lower(),
         "HADOOP_TABLE": fake_hybrid_operation.table_name.lower(),
-        "OFFLOADED_OWNER": fake_hybrid_operation.owner,
-        "OFFLOADED_TABLE": fake_hybrid_operation.table_name,
+        "OFFLOADED_OWNER": fake_hybrid_operation.owner.upper(),
+        "OFFLOADED_TABLE": fake_hybrid_operation.table_name.upper(),
         "OFFLOAD_SNAPSHOT": prior_offload_scn,
         "INCREMENTAL_KEY": partition_key,
         "INCREMENTAL_HIGH_VALUE": inc_hvs,
         "INCREMENTAL_PREDICATE_TYPE": fake_hybrid_operation.ipa_predicate_type,
         "INCREMENTAL_PREDICATE_VALUE": None,
         "OFFLOAD_BUCKET_COLUMN": fake_hybrid_operation.bucket_hash_col,
-        "OFFLOAD_VERSION": prior_goe_version,
         "OFFLOAD_SORT_COLUMNS": ",".join(fake_hybrid_operation.sort_columns),
         "INCREMENTAL_RANGE": "PARTITION",
         "OFFLOAD_PARTITION_FUNCTIONS": fake_hybrid_operation.offload_partition_functions[

@@ -68,7 +68,6 @@ from tests.testlib.test_framework.test_functions import (
 
 
 OFFLOAD_DIM = "STORY_DIM"
-DEPENDENT_VIEW_DIM = "STORY_VIEW_DIM"
 OFFLOAD_FACT = "STORY_FACT"
 
 

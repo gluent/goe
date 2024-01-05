@@ -534,6 +534,9 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def nan_supported(self) -> bool:
         return self._db_api.nan_supported()
 
+    def nanoseconds_supported(self) -> bool:
+        return self._db_api.nanoseconds_supported()
+
     def schema_evolution_supported(self) -> bool:
         return self._db_api.schema_evolution_supported()
 

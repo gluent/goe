@@ -51,11 +51,6 @@ class TestFrontendTestingApi(TestCase):
     def _test_drop_table(self):
         self.assertIsInstance(self.test_api.drop_table(self.db, "some-table"), list)
 
-    def _test_expected_channels_offload_predicates(self):
-        self.assertIsInstance(
-            self.test_api.expected_channels_offload_predicates(), list
-        )
-
     def _test_expected_sales_offload_predicates(self):
         try:
             self.assertIsInstance(
@@ -106,7 +101,6 @@ class TestFrontendTestingApi(TestCase):
 
     def _run_all_tests(self):
         self._test_drop_table()
-        self._test_expected_channels_offload_predicates()
         self._test_expected_sales_offload_predicates()
         self._test_gl_type_mapping_generated_table_col_specs()
         self._test_host_compare_sql_projection()

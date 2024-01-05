@@ -60,7 +60,7 @@ class BackendHadoopTable(BackendTableInterface):
     """
 
     def __init__(self, db_name, table_name, backend_type, orchestration_options, messages, orchestration_operation=None,
-                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None):
+                 hybrid_metadata=None, data_gov_client=None, dry_run=False, existing_backend_api=None, do_not_connect=False):
         """ CONSTRUCTOR
         """
         assert db_name and table_name
@@ -72,7 +72,7 @@ class BackendHadoopTable(BackendTableInterface):
         super(BackendHadoopTable, self).__init__(self.db_name, self.table_name, backend_type, orchestration_options,
                                                  messages, orchestration_operation=orchestration_operation,
                                                  hybrid_metadata=hybrid_metadata, data_gov_client=data_gov_client,
-                                                 dry_run=dry_run, existing_backend_api=existing_backend_api)
+                                                 dry_run=dry_run, existing_backend_api=existing_backend_api, do_not_connect=do_not_connect)
 
         self._sql_engine_name = 'Hadoop'
         self._default_location = None

@@ -1895,8 +1895,7 @@ def offload_table(offload_options, offload_operation, offload_source_table, offl
   data_gov_client = get_data_gov_client(offload_options,
                                         messages,
                                         rdbms_schema=offload_source_table.owner,
-                                        source_rdbms_object_name=offload_source_table.table_name,
-                                        goe_version=offload_operation.goe_version)
+                                        source_rdbms_object_name=offload_source_table.table_name)
   offload_operation.offload_transport_method = choose_offload_transport_method(offload_operation, offload_source_table,
                                                                                offload_options, messages)
   dfs_client = get_dfs_from_options(offload_options, messages)
@@ -2006,7 +2005,7 @@ def get_synthetic_partition_cols(backend_cols):
   return [col for col in backend_cols if is_synthetic_partition_column(col.name)]
 
 
-def get_data_gov_client(options, messages, rdbms_schema=None, source_rdbms_object_name=None, target_rdbms_object_name=None, goe_version=None):
+def get_data_gov_client(options, messages, rdbms_schema=None, source_rdbms_object_name=None, target_rdbms_object_name=None):
   if options.data_governance_api_url:
     data_gov_client = get_hadoop_data_governance_client_from_options(options, messages, dry_run=bool(not options.execute))
     data_gov_client.healthcheck_api()
@@ -2017,8 +2016,7 @@ def get_data_gov_client(options, messages, rdbms_schema=None, source_rdbms_objec
                                           rdbms_name=get_db_unique_name(options),
                                           rdbms_schema=rdbms_schema,
                                           source_rdbms_object_name=source_rdbms_object_name,
-                                          target_rdbms_object_name=target_rdbms_object_name,
-                                          goe_version=goe_version)
+                                          target_rdbms_object_name=target_rdbms_object_name,)
     return data_gov_client
   return None
 

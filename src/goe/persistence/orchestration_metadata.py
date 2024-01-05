@@ -34,7 +34,6 @@ INCREMENTAL_RANGE = "INCREMENTAL_RANGE"
 INCREMENTAL_PREDICATE_TYPE = "INCREMENTAL_PREDICATE_TYPE"
 INCREMENTAL_PREDICATE_VALUE = "INCREMENTAL_PREDICATE_VALUE"
 OFFLOAD_BUCKET_COLUMN = "OFFLOAD_BUCKET_COLUMN"
-OFFLOAD_VERSION = "OFFLOAD_VERSION"
 OFFLOAD_SORT_COLUMNS = "OFFLOAD_SORT_COLUMNS"
 OFFLOAD_SNAPSHOT = "OFFLOAD_SNAPSHOT"
 OFFLOAD_PARTITION_FUNCTIONS = "OFFLOAD_PARTITION_FUNCTIONS"
@@ -52,7 +51,6 @@ ALL_METADATA_ATTRIBUTES = [
     INCREMENTAL_PREDICATE_TYPE,
     INCREMENTAL_PREDICATE_VALUE,
     OFFLOAD_BUCKET_COLUMN,
-    OFFLOAD_VERSION,
     OFFLOAD_SORT_COLUMNS,
     OFFLOAD_SNAPSHOT,
     OFFLOAD_PARTITION_FUNCTIONS,
@@ -72,7 +70,6 @@ METADATA_ATTRIBUTES = {
     "incremental_predicate_type": INCREMENTAL_PREDICATE_TYPE,
     "incremental_predicate_value": INCREMENTAL_PREDICATE_VALUE,
     "offload_bucket_column": OFFLOAD_BUCKET_COLUMN,
-    "offload_version": OFFLOAD_VERSION,
     "offload_sort_columns": OFFLOAD_SORT_COLUMNS,
     "offload_snapshot": OFFLOAD_SNAPSHOT,
     "offload_partition_functions": OFFLOAD_PARTITION_FUNCTIONS,
@@ -402,14 +399,6 @@ class OrchestrationMetadata:
     @property
     def offload_bucket_column(self):
         return self._metadata[OFFLOAD_BUCKET_COLUMN]
-
-    @property
-    def offload_version(self):
-        return self._metadata[OFFLOAD_VERSION]
-
-    @offload_version.setter
-    def offload_version(self, new_value):
-        self._metadata[OFFLOAD_VERSION] = new_value
 
     @property
     def offload_sort_columns(self):

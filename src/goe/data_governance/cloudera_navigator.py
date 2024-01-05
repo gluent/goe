@@ -364,7 +364,7 @@ class ClouderaNavigator(HadoopDataGovernanceInterface):
     def get_properties_from_metadata(self, metadata):
         assert metadata
         return metadata[METADATA_PROPERTIES]
-        
+
     def get_custom_metadata(self, entity_id, ignore_missing_metadata=False):
         """ Get just the custom metadata dict for an entity id ("identity" in Navigator)
             These are the fields we can change
@@ -374,7 +374,7 @@ class ClouderaNavigator(HadoopDataGovernanceInterface):
 
     def merge_new_custom_metadata_over_old(self, new_metadata, existing_metadata, reset=False):
         """ Merges custom metadata over existing metadata retaining certain fields
-            If reset=True then we will overwrite the INITIAL_GLUENT_VERSION, INITIAL_OPERATION_DATETIME and description.
+            If reset=True then we will overwrite the INITIAL_OPERATION_DATETIME and description.
         """
         self._messages.debug('merge_new_custom_metadata_over_old(reset=%s)' % reset, detail=SUPPRESS_STDOUT)
         merged_metadata = copy(existing_metadata)
@@ -391,7 +391,7 @@ class ClouderaNavigator(HadoopDataGovernanceInterface):
                     self._messages.log('Merging properties with existing metadata[%s]' % (metadata_key), detail=VVERBOSE)
                     for new_prop_key, new_prop_val in new_value.items():
                         self._messages.debug('new_prop_key, new_prop_val: %s, %s' % (new_prop_key, new_prop_val), detail=SUPPRESS_STDOUT)
-                        if not reset and new_prop_key in (DATA_GOVERNANCE_DYNAMIC_PROPERTY_INITIAL_GLUENT_VERSION, DATA_GOVERNANCE_DYNAMIC_PROPERTY_INITIAL_OPERATION_DATETIME) and merged_metadata[metadata_key].get(new_prop_key):
+                        if not reset and new_prop_key in (DATA_GOVERNANCE_DYNAMIC_PROPERTY_INITIAL_OPERATION_DATETIME) and merged_metadata[metadata_key].get(new_prop_key):
                             # do nothing, we don't want to overwrite these
                             pass
                         elif new_prop_key in (DATA_GOVERNANCE_DYNAMIC_PROPERTY_SOURCE_RDBMS_OBJECT, DATA_GOVERNANCE_DYNAMIC_PROPERTY_TARGET_RDBMS_OBJECT) and new_prop_val:

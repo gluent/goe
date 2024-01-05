@@ -31,7 +31,6 @@ class HadoopDataGovernanceInterface(metaclass=ABCMeta):
         self._custom_tags_csv = None
         self._auto_properties_csv = None
         self._custom_properties = None
-        self._goe_version = None
         self._rdbms_name = None
         self._rdbms_schema = None
         self._source_rdbms_object_name = None
@@ -96,7 +95,7 @@ class HadoopDataGovernanceInterface(metaclass=ABCMeta):
         pass
 
     # common (non backend specific) methods
-    def cache_property_values(self, auto_tags_csv, custom_tags_csv, auto_properties_csv, custom_properties, rdbms_name=None, rdbms_schema=None, source_rdbms_object_name=None, target_rdbms_object_name=None, goe_version=None):
+    def cache_property_values(self, auto_tags_csv, custom_tags_csv, auto_properties_csv, custom_properties, rdbms_name=None, rdbms_schema=None, source_rdbms_object_name=None, target_rdbms_object_name=None):
         """ Caches property values that will be useful across multiple API calls
         """
         self._auto_tags_csv = auto_tags_csv
@@ -107,7 +106,6 @@ class HadoopDataGovernanceInterface(metaclass=ABCMeta):
         self._rdbms_schema = rdbms_schema
         self._source_rdbms_object_name = source_rdbms_object_name
         self._target_rdbms_object_name = target_rdbms_object_name
-        self._goe_version = goe_version
 
     def get_hive_object_custom_metadata(self, db, object_name, ignore_missing_metadata=False, object_type=None):
         assert db and object_name
@@ -155,10 +153,6 @@ class HadoopDataGovernanceInterface(metaclass=ABCMeta):
     @property
     def target_rdbms_object_name(self):
         return self._target_rdbms_object_name
-
-    @property
-    def goe_version(self):
-        return self._goe_version
 
     def expand_dynamic_data_governance_tag(self, tag):
         """ Expands a dynamic tag to the runtime value

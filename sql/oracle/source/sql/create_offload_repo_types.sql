@@ -20,7 +20,6 @@ CREATE OR REPLACE TYPE offload_metadata_ot AS OBJECT
 ,   offload_sort_columns        VARCHAR2(1000)
 ,   offload_partition_functions VARCHAR2(1000)
 ,   command_execution           RAW(32)
-,   offload_version             VARCHAR2(30)
 );
 /
 SHOW ERRORS

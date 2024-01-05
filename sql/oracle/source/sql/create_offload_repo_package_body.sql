@@ -294,7 +294,6 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
 
         v_command_execution_id := get_command_execution_id( p_command_execution_uuid => p_metadata.command_execution );
 
-        -- Always get the latest version from the database, even if the orchestrator layer provides a value...
         v_goe_version_id := get_latest_goe_version_id();
 
         IF p_metadata.offload_predicate_type IS NOT NULL THEN
@@ -407,8 +406,7 @@ CREATE OR REPLACE PACKAGE BODY offload_repo AS
                     v.offload_hash_column,
                     v.offload_sort_columns,
                     v.offload_partition_functions,
-                    v.command_execution_current,
-                    v.offload_version_current
+                    v.command_execution_current
                     )
         INTO   v_offload_metadata
         FROM   offload_metadata_v v

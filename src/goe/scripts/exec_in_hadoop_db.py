@@ -25,7 +25,7 @@ from goe.gluent import get_options_from_list, normalise_db_paths, init
 
 # Gluent.py options "imported" by this tool
 GLUENT_OPTIONS=(
-    'dev_log_level', 'execute', 'hash_chars',
+    'dev_log_level', 'execute',
 )
 
 
@@ -100,7 +100,7 @@ def main():
     except Exception as e:
         log('Exception: %s' % e, ansi_code='red', options=args)
         sys.exit(-1)
-        
+
 
 #### MAIN PROGRAM BEGINS HERE
 if __name__ == "__main__":

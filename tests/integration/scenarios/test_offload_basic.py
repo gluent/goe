@@ -53,13 +53,7 @@ from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
 )
-from tests.testlib.test_framework.test_constants import (
-    SALES_BASED_FACT_HV_1,
-    SALES_BASED_FACT_HV_2,
-    SALES_BASED_FACT_HV_3,
-    SALES_BASED_FACT_HV_4,
-    SALES_BASED_FACT_PRE_HV,
-)
+from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
@@ -400,7 +394,7 @@ def test_offload_basic_fact(config, schema, data_db):
     # Non-Execute offload of first partition with basic options.
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
-        "older_than_date": SALES_BASED_FACT_HV_1,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
         "reset_backend_table": True,
     }
@@ -413,7 +407,7 @@ def test_offload_basic_fact(config, schema, data_db):
     # Offload of RANGE requesting LIST.
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
-        "older_than_date": SALES_BASED_FACT_HV_1,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_LIST,
         "reset_backend_table": True,
     }
@@ -433,7 +427,7 @@ def test_offload_basic_fact(config, schema, data_db):
         # Offloads only empty partitions. Ensure 0 rows in backend.
         options = {
             "owner_table": schema + "." + OFFLOAD_FACT,
-            "older_than_date": SALES_BASED_FACT_PRE_HV,
+            "older_than_date": test_constants.SALES_BASED_FACT_PRE_HV,
             "reset_backend_table": True,
         }
         run_offload(options, config, messages)
@@ -454,7 +448,7 @@ def test_offload_basic_fact(config, schema, data_db):
     )
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
-        "older_than_date": SALES_BASED_FACT_HV_1,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
         "integer_2_columns_csv": "channel_id",
         "integer_8_columns_csv": "cust_id,prod_id,promo_id",
@@ -489,7 +483,7 @@ def test_offload_basic_fact(config, schema, data_db):
         schema,
         data_db,
         OFFLOAD_FACT,
-        SALES_BASED_FACT_HV_1,
+        test_constants.SALES_BASED_FACT_HV_1,
         check_backend_rowcount=True,
     )
     assert offload_basic_fact_init_assertion(
@@ -499,7 +493,7 @@ def test_offload_basic_fact(config, schema, data_db):
     # Incremental Offload of Fact - Non-Execute.
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
-        "older_than_date": SALES_BASED_FACT_HV_2,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
     }
     run_offload(options, config, messages, config_overrides={"execute": False})
 
@@ -510,7 +504,7 @@ def test_offload_basic_fact(config, schema, data_db):
     # Offloads next partition from fact table.
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
-        "older_than_date": SALES_BASED_FACT_HV_2,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -522,7 +516,7 @@ def test_offload_basic_fact(config, schema, data_db):
         schema,
         data_db,
         OFFLOAD_FACT,
-        SALES_BASED_FACT_HV_2,
+        test_constants.SALES_BASED_FACT_HV_2,
     )
 
     # Try re-offload same partition which will result in no action and early abort.
@@ -536,13 +530,13 @@ def test_offload_basic_fact(config, schema, data_db):
         schema,
         data_db,
         OFFLOAD_FACT,
-        SALES_BASED_FACT_HV_2,
+        test_constants.SALES_BASED_FACT_HV_2,
     )
 
     # Offloads next partition with dodgy settings, offload will override these with sensible options.
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
-        "older_than_date": SALES_BASED_FACT_HV_3,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_3,
         "integer_1_columns_csv": "cust_id,channel_id,prod_id",
         "offload_partition_granularity": 100,
         "offload_partition_lower_value": 0,
@@ -562,7 +556,7 @@ def test_offload_basic_fact(config, schema, data_db):
         schema,
         data_db,
         OFFLOAD_FACT,
-        SALES_BASED_FACT_HV_3,
+        test_constants.SALES_BASED_FACT_HV_3,
     )
     assert offload_basic_fact_2nd_incr_assertion(
         config, backend_api, messages, data_db, backend_name
@@ -575,14 +569,14 @@ def test_offload_basic_fact(config, schema, data_db):
         config,
         messages,
         frontend_sqls=gen_truncate_sales_based_fact_partition_ddls(
-            schema, OFFLOAD_FACT, [SALES_BASED_FACT_HV_4], frontend_api
+            schema, OFFLOAD_FACT, [test_constants.SALES_BASED_FACT_HV_4], frontend_api
         ),
     )
 
     # Offloads next partition from fact table after all offloaded partitions have been truncated.
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
-        "older_than_date": SALES_BASED_FACT_HV_4,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
     }
     run_offload(options, config, messages)
 
@@ -597,7 +591,7 @@ def test_offload_basic_fact(config, schema, data_db):
         schema,
         data_db,
         OFFLOAD_FACT,
-        SALES_BASED_FACT_HV_4,
+        test_constants.SALES_BASED_FACT_HV_4,
     )
 
     # Connections are being left open, explicitly close them.

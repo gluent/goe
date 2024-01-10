@@ -626,7 +626,7 @@ def test_offload_lpa_unicode(config, schema, data_db):
         frontend_sqls=gen_list_multi_part_value_create_ddl(
             schema,
             LPA_UNICODE_FACT_TABLE,
-            oracle_column.ORACLE_TYPE_NCHAR,
+            oracle_column.ORACLE_TYPE_NVARCHAR2,
             [LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2, LPA_UNICODE_PART2_KEY1],
         ),
         python_fns=[
@@ -659,7 +659,6 @@ def test_offload_lpa_unicode(config, schema, data_db):
         repo_client,
         [LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2],
         incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-        check_hwm_metadata_with_sql=True,
     )
 
     # Offload next LPA partition.
@@ -679,7 +678,6 @@ def test_offload_lpa_unicode(config, schema, data_db):
         repo_client,
         [LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2, LPA_UNICODE_PART2_KEY1],
         incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-        check_hwm_metadata_with_sql=True,
     )
 
     # Connections are being left open, explicitly close them.

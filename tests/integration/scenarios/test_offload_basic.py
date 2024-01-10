@@ -5,17 +5,7 @@ from goe.offload.column_metadata import (
     match_table_column,
     str_list_of_columns,
 )
-from goe.offload.offload_constants import (
-    DBTYPE_BIGQUERY,
-    DBTYPE_HIVE,
-    DBTYPE_IMPALA,
-    DBTYPE_TERADATA,
-    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
-    OFFLOAD_STATS_METHOD_COPY,
-    OFFLOAD_STATS_METHOD_NATIVE,
-    PART_COL_GRANULARITY_DAY,
-    PART_COL_GRANULARITY_MONTH,
-)
+from goe.offload import offload_constants
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
@@ -93,7 +83,7 @@ def offload_basic_dim_assertion(backend_api, messages, data_db, backend_name):
         return True
 
     if backend_api.partition_by_column_supported():
-        if backend_api.backend_type() == DBTYPE_BIGQUERY:
+        if backend_api.backend_type() == offload_constants.DBTYPE_BIGQUERY:
             part_cols = backend_api.get_partition_columns(data_db, backend_name)
             if not check_column_exists("prod_id", part_cols):
                 return False
@@ -118,7 +108,10 @@ def offload_basic_fact_init_assertion(
     config, backend_api, messages, data_db, backend_name
 ):
     if backend_api.partition_by_column_supported():
-        if backend_api.backend_type() in [DBTYPE_IMPALA, DBTYPE_HIVE]:
+        if backend_api.backend_type() in [
+            offload_constants.DBTYPE_IMPALA,
+            offload_constants.DBTYPE_HIVE,
+        ]:
             if not backend_column_exists(
                 config,
                 backend_api,
@@ -167,7 +160,10 @@ def offload_basic_fact_init_assertion(
         search_type=backend_api.backend_test_type_canonical_int_8(),
     ):
         return False
-    if backend_api.backend_type() in [DBTYPE_IMPALA, DBTYPE_HIVE]:
+    if backend_api.backend_type() in [
+        offload_constants.DBTYPE_IMPALA,
+        offload_constants.DBTYPE_HIVE,
+    ]:
         search_type1 = "decimal(18,4)"
         search_type2 = "decimal(38,4)"
     else:
@@ -204,9 +200,9 @@ def offload_basic_fact_1st_incr_assertion(
         return True
     # Check that OffloadSourceData added an optimistic partition pruning clause when appropriate
     granularity = (
-        PART_COL_GRANULARITY_MONTH
-        if config.target == DBTYPE_IMPALA
-        else PART_COL_GRANULARITY_DAY
+        offload_constants.PART_COL_GRANULARITY_MONTH
+        if config.target == offload_constants.DBTYPE_IMPALA
+        else offload_constants.PART_COL_GRANULARITY_DAY
     )
     expect_optimistic_prune_clause = (
         backend_api.partition_column_requires_synthetic_column(
@@ -300,9 +296,9 @@ def test_offload_basic_dim(config, schema, data_db):
     # Basic offload of a simple dimension.
     options = {
         "owner_table": schema + "." + OFFLOAD_DIM,
-        "offload_stats_method": OFFLOAD_STATS_METHOD_COPY
+        "offload_stats_method": offload_constants.OFFLOAD_STATS_METHOD_COPY
         if copy_stats_available
-        else OFFLOAD_STATS_METHOD_NATIVE,
+        else offload_constants.OFFLOAD_STATS_METHOD_NATIVE,
         "compute_load_table_stats": True,
         "preserve_load_table": True,
         "impala_insert_hint": IMPALA_NOSHUFFLE_HINT,
@@ -416,14 +412,14 @@ def test_offload_basic_fact(config, schema, data_db):
         config,
         messages,
         config_overrides={"execute": False},
-        expected_exception_string=IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+        expected_exception_string=offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
     )
 
     assert not backend_table_exists(
         config, backend_api, messages, data_db, OFFLOAD_FACT
     ), "The backend table should NOT exist"
 
-    if config.db_type != DBTYPE_TERADATA:
+    if config.db_type != offload_constants.DBTYPE_TERADATA:
         # Offloads only empty partitions. Ensure 0 rows in backend.
         options = {
             "owner_table": schema + "." + OFFLOAD_FACT,
@@ -442,9 +438,9 @@ def test_offload_basic_fact(config, schema, data_db):
 
     # Non-Execute offload of first partition with advanced options.
     offload_stats_method = (
-        OFFLOAD_STATS_METHOD_COPY
-        if config.target == DBTYPE_IMPALA
-        else OFFLOAD_STATS_METHOD_NATIVE
+        offload_constants.OFFLOAD_STATS_METHOD_COPY
+        if config.target == offload_constants.DBTYPE_IMPALA
+        else offload_constants.OFFLOAD_STATS_METHOD_NATIVE
     )
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
@@ -458,13 +454,18 @@ def test_offload_basic_fact(config, schema, data_db):
         "reset_backend_table": True,
     }
     if backend_api.partition_by_column_supported():
-        if config.target == DBTYPE_BIGQUERY:
-            options.update({"offload_partition_granularity": PART_COL_GRANULARITY_DAY})
+        if config.target == offload_constants.DBTYPE_BIGQUERY:
+            options.update(
+                {
+                    "offload_partition_granularity": offload_constants.PART_COL_GRANULARITY_DAY
+                }
+            )
         else:
             options.update(
                 {
                     "offload_partition_columns": "time_id,channel_id",
-                    "offload_partition_granularity": PART_COL_GRANULARITY_MONTH + ",1",
+                    "offload_partition_granularity": offload_constants.PART_COL_GRANULARITY_MONTH
+                    + ",1",
                 }
             )
     run_offload(options, config, messages, config_overrides={"execute": False})

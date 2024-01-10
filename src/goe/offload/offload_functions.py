@@ -396,11 +396,6 @@ def get_hybrid_predicate_clauses(offload_predicates, table_object, columns_overr
         return '', ''
 
 
-def prefix_column_with_alias(alias, real_name, hash_chars, max_identifier_length, force_append_hash=False):
-    return trunc_with_hash(('%s_%s' % (alias, real_name)).lower(), hash_chars, max_identifier_length,
-                           force_append_hash=force_append_hash)
-
-
 def hybrid_view_combine_hv_and_pred_clauses(hv_clause, pred_clause, join_term):
     """ Trivial function to combine hyrbid view threshold clauses with offload predicate
         clauses but gives consistent formatting for the few places that do this.

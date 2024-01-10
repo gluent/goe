@@ -140,7 +140,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         # Pickup some orchestration_operation/offload_options attributes
         self._offload_staging_format = getattr(self._orchestration_config, 'offload_staging_format', None)
         self._udf_db = getattr(self._orchestration_config, 'udf_db', None)
-        self._trunc_name_hash_chars = getattr(self._orchestration_config, 'hash_chars', None)
         # If orchestration_operation is not set then we are not doing anything significant by way of offload/present
         self._ipa_predicate_type = None
         self._offload_distribute_enabled = None

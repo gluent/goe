@@ -52,15 +52,10 @@ EXPECTED_CONFIG_ARGS = [
     "backend_identifier_case",
     "backend_odbc_driver_name",
     "backend_session_parameters",
-    "bin_dir",
     "bigquery_dataset_location",
     "bigquery_dataset_project",
     "ca_cert",
     "cloudera_navigator_hive_source_id",
-    "connector_hive_server_host",
-    "connector_hive_server_http_path",
-    "connector_query_monitor_threshold",
-    "connector_sql_engine",
     "db_name_pattern",
     "db_name_prefix",
     "db_type",
@@ -89,7 +84,6 @@ EXPECTED_CONFIG_ARGS = [
     "hadoop_ssh_user",
     "webhdfs_verify_ssl",
     "hiveserver2_auth_mechanism",
-    "hash_chars",
     "hdfs_data",
     "hdfs_home",
     "hdfs_host",
@@ -116,7 +110,6 @@ EXPECTED_CONFIG_ARGS = [
     "listener_redis_password",
     "listener_redis_ssl_cert",
     "listener_redis_use_ssl",
-    "log_dir",
     "log_path",
     "log_level",
     "kerberos_principal",
@@ -242,7 +235,6 @@ class OrchestrationConfig:
     backend_session_parameters: Optional[str]
     bigquery_dataset_location: Optional[str]
     bigquery_dataset_project: Optional[str]
-    bin_dir: Optional[str]
     ca_cert: Optional[str]
     db_name_pattern: str
     db_name_prefix: Optional[str]
@@ -266,7 +258,6 @@ class OrchestrationConfig:
     hadoop_ssh_user: Optional[str]
     webhdfs_verify_ssl: Optional[str]
     hiveserver2_auth_mechanism: Optional[str]
-    hash_chars: int
     hdfs_data: Optional[str]
     hdfs_home: Optional[str]
     hdfs_host: Optional[str]
@@ -283,7 +274,6 @@ class OrchestrationConfig:
     listener_redis_password: Optional[str]
     listener_redis_ssl_cert: Optional[str]
     listener_redis_use_ssl: Optional[bool]
-    log_dir: Optional[str]
     log_level: Optional[str]
     log_path: str
     not_null_propagation: Optional[str]
@@ -307,11 +297,6 @@ class OrchestrationConfig:
         vars(self).update(kwargs)
 
         self._do_not_connect = do_not_connect
-
-        if not self.log_dir:
-            raise OrchestrationConfigException(
-                "Missing OFFLOAD_LOG option, please check your environment configuration file"
-            )
 
         normalise_backend_session_parameters(self)
         normalise_data_governance_config(self)
@@ -379,9 +364,6 @@ class OrchestrationConfig:
             bigquery_dataset_project=config_dict.get(
                 "bigquery_dataset_project",
                 orchestration_defaults.bigquery_dataset_project_default(),
-            ),
-            bin_dir=config_dict.get(
-                "bin_dir", orchestration_defaults.bin_dir_default()
             ),
             ca_cert=config_dict.get(
                 "ca_cert", orchestration_defaults.ca_cert_default()
@@ -491,9 +473,6 @@ class OrchestrationConfig:
                 "hiveserver2_auth_mechanism",
                 orchestration_defaults.hiveserver2_auth_mechanism_default(),
             ),
-            hash_chars=config_dict.get(
-                "hash_chars", orchestration_defaults.hash_chars_default()
-            ),
             hdfs_data=config_dict.get(
                 "hdfs_data", orchestration_defaults.hdfs_data_default()
             ),
@@ -579,9 +558,6 @@ class OrchestrationConfig:
             listener_redis_use_ssl=config_dict.get(
                 "listener_redis_use_ssl",
                 orchestration_defaults.listener_redis_use_ssl_default(),
-            ),
-            log_dir=config_dict.get(
-                "log_dir", orchestration_defaults.log_dir_default()
             ),
             log_level=config_dict.get(
                 "log_level", orchestration_defaults.log_level_default()
@@ -919,22 +895,6 @@ class OrchestrationConfig:
             ldap_password_file=config_dict.get(
                 "ldap_password_file",
                 orchestration_defaults.ldap_password_file_default(),
-            ),
-            connector_hive_server_host=config_dict.get(
-                "connector_hive_server_host",
-                orchestration_defaults.connector_hive_server_host_default(),
-            ),
-            connector_hive_server_http_path=config_dict.get(
-                "connector_hive_server_http_path",
-                orchestration_defaults.connector_hive_server_http_path_default(),
-            ),
-            connector_query_monitor_threshold=config_dict.get(
-                "connector_query_monitor_threshold",
-                orchestration_defaults.connector_query_monitor_threshold_default(),
-            ),
-            connector_sql_engine=config_dict.get(
-                "connector_sql_engine",
-                orchestration_defaults.connector_sql_engine_default(),
             ),
             spark_thrift_host=config_dict.get(
                 "spark_thrift_host", orchestration_defaults.spark_thrift_host_default()

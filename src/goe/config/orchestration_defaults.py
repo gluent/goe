@@ -134,10 +134,6 @@ def bigquery_dataset_project_default() -> Optional[str]:
     return os.environ.get("BIGQUERY_DATASET_PROJECT")
 
 
-def bin_dir_default() -> Optional[str]:
-    return os.environ.get("OFFLOAD_BIN")
-
-
 def ca_cert_default() -> Optional[str]:
     return os.environ.get("SSL_TRUSTED_CERTS")
 
@@ -242,13 +238,6 @@ def google_kms_key_ring_project_default() -> Optional[str]:
     return os.environ.get("GOOGLE_KMS_KEY_RING_PROJECT")
 
 
-def hash_chars_default() -> int:
-    return posint_option_from_string(
-        "HYBRID_NAME_HASH_CHARACTERS",
-        os.environ.get("HYBRID_NAME_HASH_CHARACTERS") or "4",
-    )
-
-
 def hdfs_data_default() -> Optional[str]:
     return os.environ.get("HDFS_DATA")
 
@@ -263,10 +252,6 @@ def hdfs_home_default() -> Optional[str]:
 
 def load_db_name_pattern_default():
     return get_load_db_pattern()
-
-
-def log_dir_default():
-    return os.environ.get("OFFLOAD_LOG")
 
 
 def log_level_default():
@@ -974,25 +959,6 @@ def data_governance_custom_properties_default():
 ###########################################################################
 # QUERY ENGINE DEFAULTS
 ###########################################################################
-
-
-def connector_hive_server_host_default() -> Optional[str]:
-    return os.environ.get("CONNECTOR_HIVE_SERVER_HOST")
-
-
-def connector_hive_server_http_path_default() -> Optional[str]:
-    return os.environ.get("CONNECTOR_HIVE_SERVER_HTTP_PATH")
-
-
-def connector_query_monitor_threshold_default() -> str:
-    return os.environ.get("QUERY_MONITOR_THRESHOLD") or "5"
-
-
-def connector_sql_engine_default() -> str:
-    # Including QUERY_ENGINE as a fallback for backwards compatibility
-    return (
-        os.environ.get("CONNECTOR_SQL_ENGINE") or os.environ.get("QUERY_ENGINE") or ""
-    ).lower()
 
 
 def spark_thrift_host_default() -> Optional[str]:

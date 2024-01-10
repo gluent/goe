@@ -91,7 +91,6 @@ RDBMS_MAX_DESCRIPTOR_LENGTH = 30
 
 SORT_COLUMNS_NO_CHANGE = "NONE"
 
-HYBRID_EXT_TABLE_DEGREE_AUTO = "AUTO"
 PRESENT_OP_NAME = "present"
 
 NOT_NULL_PROPAGATION_AUTO = "AUTO"
@@ -214,7 +213,7 @@ CAPABILITY_GLUENT_MATERIALIZED_JOIN = "gluent_mat_join"
                 column values.
             - User provides the name of the SQL UDF to Gluent Data Platform with a new
                 --partition-functions=<UDF_NAME> option.
-            - Both Offload and Smart Connector will use the UDF when generating SQL statements/predicates
+            - Offload will use the UDF when generating SQL statements/predicates
                 involving the natural and synthetic partition columns.
 """
 CAPABILITY_GLUENT_PARTITION_FUNCTIONS = "gluent_partition_functions"

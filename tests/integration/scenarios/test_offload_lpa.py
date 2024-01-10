@@ -235,7 +235,7 @@ def offload_lpa_fact_assertion(
 
     if backend_table_count_check is not None:
         if (
-            backend_table_count(backend_api, data_db, backend_table)
+            backend_table_count(config, backend_api, messages, data_db, backend_table)
             != backend_table_count_check
         ):
             messages.log(f"Backend count != {backend_table_count_check}")
@@ -246,7 +246,7 @@ def offload_lpa_fact_assertion(
         and backend_api.synthetic_partitioning_supported()
     ):
         if not backend_column_exists(
-            backend_api, data_db, backend_table, synthetic_partition_column_name
+            config, backend_api, messages, data_db, backend_table, synthetic_partition_column_name
         ):
             messages.log(
                 f"Backend column {synthetic_partition_column_name} does not exist"
@@ -588,7 +588,7 @@ def test_offload_lpa_ts(config, schema, data_db):
     # Offload next LPA partition.
     options = {
         "owner_table": schema + "." + LPA_TS_PART_KEY_TABLE,
-        "equal_to_values": [LPA_PART2_KEY1],
+        "equal_to_values": [LPA_DT_PART2_KEY1],
         "verify_row_count": "aggregate",
     }
     run_offload(options, config, messages)
@@ -925,7 +925,7 @@ def test_offload_lpa_part_fn(config, schema, data_db):
     )
     udf = data_db + "." + test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
     udf_synth_name = synthetic_part_col_name("U0", "CAT")
-    udf_synth_name = convert_backend_identifier_case(options, udf_synth_name)
+    udf_synth_name = convert_backend_identifier_case(config, udf_synth_name)
 
     # Setup
     run_setup(
@@ -936,7 +936,7 @@ def test_offload_lpa_part_fn(config, schema, data_db):
         frontend_sqls=gen_list_multi_part_value_create_ddl(
             schema,
             LPA_NUM_PART_FUNC_TABLE,
-            oracle_column.ORACLE_TYPE_TIMESTAMP,
+            oracle_column.ORACLE_TYPE_NUMBER,
             [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
         ),
         python_fns=[

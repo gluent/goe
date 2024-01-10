@@ -54,7 +54,7 @@ def run_offload(
     expected_status=True,
     expected_exception_string: str = None,
     config_overrides: dict = None,
-):
+) -> OffloadMessages:
     execution_id = ExecutionId()
     messages = OffloadMessages.from_options(
         orchestration_config,
@@ -93,6 +93,7 @@ def run_offload(
         else:
             messages.log(traceback.format_exc())
             raise
+    return messages
 
 
 def run_setup(

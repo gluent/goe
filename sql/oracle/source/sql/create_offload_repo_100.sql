@@ -370,7 +370,7 @@ CREATE TABLE offload_partition (
     name               VARCHAR2(128) NOT NULL,
     bytes              INTEGER NOT NULL,
     partitioning_level INTEGER NOT NULL,
-    boundary           VARCHAR2(128),
+    boundary           VARCHAR2(4000),
     offload_chunk_id   INTEGER NOT NULL,
     frontend_object_id INTEGER NOT NULL
 ) TABLESPACE "&goe_repo_tablespace";

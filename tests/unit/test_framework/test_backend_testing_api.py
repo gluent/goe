@@ -110,21 +110,25 @@ class TestBackendTestingApi(TestCase):
 
             try:
                 transient_error_global_counter = 0
-                self.test_api.transient_error_rerunner(test_callable)
+                self.test_api.transient_error_rerunner(test_callable, pause_seconds=0.1)
             except TransientException:
                 # Ran twice
                 self.assertEqual(transient_error_global_counter, 2)
 
             try:
                 transient_error_global_counter = 0
-                self.test_api.transient_error_rerunner(test_callable, max_retries=0)
+                self.test_api.transient_error_rerunner(
+                    test_callable, max_retries=0, pause_seconds=0.1
+                )
             except TransientException:
                 # Ran once
                 self.assertEqual(transient_error_global_counter, 1)
 
             try:
                 transient_error_global_counter = 0
-                self.test_api.transient_error_rerunner(test_callable, max_retries=2)
+                self.test_api.transient_error_rerunner(
+                    test_callable, max_retries=2, pause_seconds=0.1
+                )
             except TransientException:
                 # Ran three times
                 self.assertEqual(transient_error_global_counter, 3)

@@ -20,6 +20,7 @@ from goe.offload.column_metadata import (
     GLUENT_TYPE_INTEGER_8,
 )
 from goe.offload.factory.backend_table_factory import backend_table_factory
+from goe.offload.offload import OffloadException
 from goe.offload.offload_constants import DBTYPE_IMPALA
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
@@ -128,7 +129,11 @@ class TestCurrentBackendTable(TestCase):
             ),
         )
         # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
-        run_offload({"owner_table": self.schema + "." + FACT_NAME})
+        try:
+            run_offload({"owner_table": self.schema + "." + FACT_NAME})
+        except OffloadException:
+            # If this one fails then we let the exception bubble up.
+            run_offload({"owner_table": self.schema + "." + FACT_NAME, "reset_backend_table": True})
 
     def _compare_sql_and_python_synthetic_part_number_outcomes(
         self, num, num_column, granularity, padding_digits

@@ -32,10 +32,10 @@ from goe.offload.offload_messages import (
 )
 from goe.orchestration import command_steps, orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
+from goe.orchestration.orchestration_lock import orchestration_lock_for_table
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
-from goe.util.orchestration_lock import orchestration_lock_for_table
 
 if TYPE_CHECKING:
     from goe.persistence.orchestration_repo_client import (

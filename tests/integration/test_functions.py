@@ -62,6 +62,12 @@ def run_offload(option_dict: dict) -> bool:
     )
 
 
+def get_offload_home():
+    offload_home = os.environ.get("OFFLOAD_HOME")
+    assert offload_home, "OFFLOAD_HOME must be set in order to run tests"
+    return offload_home
+
+
 def run_setup_ddl(
     config: "OrchestrationRepoClientInterface",
     frontend_api: "FrontendTestingApiInterface",

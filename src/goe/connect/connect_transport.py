@@ -142,7 +142,6 @@ def is_spark_thrift_connector_available(orchestration_config):
     return bool(
         orchestration_config.spark_thrift_host
         and orchestration_config.spark_thrift_port
-        and orchestration_config.connector_sql_engine == DBTYPE_SPARK
     )
 
 

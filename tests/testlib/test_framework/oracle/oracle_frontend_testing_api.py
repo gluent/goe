@@ -2239,9 +2239,16 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         else:
             return bool(row[0] == "NO")
 
-    def standard_dimension_frontend_ddl(self, schema: str, table_name: str) -> list:
+    def standard_dimension_frontend_ddl(
+        self, schema: str, table_name: str, extra_col_tuples: Optional[list] = None
+    ) -> list:
+        extra_cols = ""
+        if extra_col_tuples:
+            extra_cols = "," + ",".join(
+                "{} AS {}".format(_[0], _[1]) for _ in extra_col_tuples
+            )
         subquery = dedent(
-            """\
+            f"""\
             SELECT CAST(1 AS NUMBER(15))          AS id
             ,      CAST(2 AS NUMBER(4))           AS prod_id
             ,      CAST(20121031 AS NUMBER(8))    AS txn_day
@@ -2250,6 +2257,7 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             ,      CAST(17.5 AS NUMBER(10,2))     AS txn_rate
             ,      CAST('ABC' AS VARCHAR(50))     AS txn_desc
             ,      CAST('ABC' AS CHAR(3))         AS txn_code
+            {extra_cols}
             FROM dual
             UNION ALL
             SELECT CAST(2 AS NUMBER(15))          AS id
@@ -2260,6 +2268,7 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             ,      CAST(20 AS NUMBER(10,2))       AS txn_rate
             ,      CAST('DEF' AS VARCHAR(50))     AS txn_desc
             ,      CAST('DEF' AS CHAR(3))         AS txn_code
+            {extra_cols}
             FROM dual
             UNION ALL
             SELECT CAST(3 AS NUMBER(15))          AS id
@@ -2270,6 +2279,7 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             ,      CAST(10.55 AS NUMBER(10,2))    AS txn_rate
             ,      CAST('GHI' AS VARCHAR(50))     AS txn_desc
             ,      CAST('GHI' AS CHAR(3))         AS txn_code
+            {extra_cols}
             FROM dual
             """
         )

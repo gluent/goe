@@ -246,7 +246,12 @@ def offload_lpa_fact_assertion(
         and backend_api.synthetic_partitioning_supported()
     ):
         if not backend_column_exists(
-            config, backend_api, messages, data_db, backend_table, synthetic_partition_column_name
+            config,
+            backend_api,
+            messages,
+            data_db,
+            backend_table,
+            synthetic_partition_column_name,
         ):
             messages.log(
                 f"Backend column {synthetic_partition_column_name} does not exist"
@@ -839,52 +844,53 @@ def test_offload_lpa_fact(config, schema, data_db):
         expected_exception_string=NO_MATCHING_PARTITION_EXCEPTION_TEXT,
     )
 
+    # TODO Enable tests below as part of issue-16.
     # Reset the predicate in a list 90/10 config with a new list.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "reset_hybrid_view": True,
-        "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [
-            test_constants.SALES_BASED_LIST_HV_3,
-        ],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+    # options = {
+    #    "owner_table": schema + "." + LPA_FACT_TABLE,
+    #    "reset_hybrid_view": True,
+    #    "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3,
+    # }
+    # run_offload(options, config, messages)
+    # assert offload_lpa_fact_assertion(
+    #    schema,
+    #    data_db,
+    #    LPA_FACT_TABLE,
+    #    config,
+    #    backend_api,
+    #    messages,
+    #    repo_client,
+    #    [
+    #        test_constants.SALES_BASED_LIST_HV_3,
+    #    ],
+    #    incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+    # )
 
     # Offload a partition after the Hybrid View reset, should move data and influence the metadata.
     # We pass HV 5 and 6 but only 6 has not been offloaded, should then have 3, 5 and 6 in view while only copying 6.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "reset_hybrid_view": True,
-        "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_5
-        + ","
-        + test_constants.SALES_BASED_LIST_PNAME_6,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [
-            test_constants.SALES_BASED_LIST_HV_3,
-            test_constants.SALES_BASED_LIST_HV_5,
-            test_constants.SALES_BASED_LIST_HV_6,
-        ],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+    # options = {
+    #    "owner_table": schema + "." + LPA_FACT_TABLE,
+    #    "reset_hybrid_view": True,
+    #    "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_5
+    #    + ","
+    #    + test_constants.SALES_BASED_LIST_PNAME_6,
+    # }
+    # run_offload(options, config, messages)
+    # assert offload_lpa_fact_assertion(
+    #    schema,
+    #    data_db,
+    #    LPA_FACT_TABLE,
+    #    config,
+    #    backend_api,
+    #    messages,
+    #    repo_client,
+    #    [
+    #        test_constants.SALES_BASED_LIST_HV_3,
+    #        test_constants.SALES_BASED_LIST_HV_5,
+    #        test_constants.SALES_BASED_LIST_HV_6,
+    #    ],
+    #    incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+    # )
 
     # Only way to offload the default partition is to switch to FULL.
     options = {

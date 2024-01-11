@@ -141,6 +141,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "owner_table": schema + "." + KEYWORD_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -150,6 +151,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "owner_table": schema + "." + KEYWORD_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -159,6 +161,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "owner_table": schema + "." + KEYWORD_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SQOOP,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -168,6 +171,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "owner_table": schema + "." + KEYWORD_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -177,6 +181,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "owner_table": schema + "." + KEYWORD_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -186,6 +191,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "owner_table": schema + "." + KEYWORD_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -225,6 +231,7 @@ def test_identifiers_bad_char_column_names(config, schema, data_db):
             "owner_table": schema + "." + BAD_CHAR_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -234,6 +241,7 @@ def test_identifiers_bad_char_column_names(config, schema, data_db):
             "owner_table": schema + "." + BAD_CHAR_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -243,6 +251,7 @@ def test_identifiers_bad_char_column_names(config, schema, data_db):
             "owner_table": schema + "." + BAD_CHAR_COL_TABLE,
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -280,6 +289,7 @@ def test_identifiers_table_name_case(config, schema, data_db):
     options = {
         "owner_table": schema + "." + CASE_DIM,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     log_test_marker(messages, f"{id}1")
     run_offload(
@@ -334,7 +344,6 @@ def test_identifiers_table_name_change_100_0(config, schema, data_db):
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"
     )
-    new_name_dim2_be = convert_backend_identifier_case(config, NEW_NAME_DIM2)
 
     # Setup
     run_setup(
@@ -357,6 +366,7 @@ def test_identifiers_table_name_change_100_0(config, schema, data_db):
         "owner_table": schema + "." + NEW_NAME_DIM1,
         "target_owner_name": schema + "." + NEW_NAME_DIM2,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(
         options,
@@ -426,6 +436,7 @@ def test_identifiers_table_name_change_90_10(config, schema, data_db):
         "target_owner_name": schema + "." + NEW_NAME_FACT2,
         "older_than_date": SALES_BASED_FACT_HV_1,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 

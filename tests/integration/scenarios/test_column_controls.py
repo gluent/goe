@@ -723,6 +723,7 @@ def test_numeric_controls(config, schema, data_db):
         "data_sample_pct": 0,
         "reset_backend_table": True,
         "decimal_padding_digits": 2,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     nums_assertion(
@@ -909,6 +910,7 @@ def test_date_controls(config, schema, data_db):
         "owner_table": schema + "." + DATE_DIM,
         "data_sample_pct": 0,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     date_assertion(config, frontend_api, backend_api, messages, data_db, DATE_DIM)
@@ -980,6 +982,7 @@ def test_date_sampling(config, schema, data_db):
         "allow_nanosecond_timestamp_columns": True,
         "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     samp_date_assertion(config, backend_api, frontend_api, messages, data_db, DATE_SDIM)
@@ -1076,6 +1079,7 @@ def test_precision_scale_overflow(config, schema, data_db):
             "owner_table": schema + "." + NUM_TOO_BIG_DIM,
             "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(
             options,
@@ -1145,6 +1149,7 @@ def test_precision_scale_overflow(config, schema, data_db):
         "decimal_columns_type_list": ["20,5"],
         "reset_backend_table": True,
         "decimal_padding_digits": 0,
+        "create_backend_db": True,
     }
     run_offload(
         options,
@@ -1209,6 +1214,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "decimal_columns_type_list": ["12,3"],
         "unicode_string_columns_csv": "*_desc",
         "decimal_padding_digits": 0,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     wildcard_assertion(backend_api, data_db, wildcard_dim_be)
@@ -1382,6 +1388,7 @@ def test_column_controls_not_null(config, schema, data_db):
     options = {
         "owner_table": f"{schema}.{NOT_NULL_DIM}",
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(
         options,

@@ -303,6 +303,7 @@ def test_offload_basic_dim(config, schema, data_db):
         "preserve_load_table": True,
         "impala_insert_hint": IMPALA_NOSHUFFLE_HINT,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -425,6 +426,7 @@ def test_offload_basic_fact(config, schema, data_db):
             "owner_table": schema + "." + OFFLOAD_FACT,
             "older_than_date": test_constants.SALES_BASED_FACT_PRE_HV,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -452,6 +454,7 @@ def test_offload_basic_fact(config, schema, data_db):
         "decimal_columns_type_list": ["10,2", "20,2"],
         "offload_stats_method": offload_stats_method,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     if backend_api.partition_by_column_supported():
         if config.target == offload_constants.DBTYPE_BIGQUERY:

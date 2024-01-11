@@ -130,10 +130,21 @@ class TestCurrentBackendTable(TestCase):
         )
         # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
         try:
-            run_offload({"owner_table": self.schema + "." + FACT_NAME})
+            run_offload(
+                {
+                    "owner_table": self.schema + "." + FACT_NAME,
+                    "create_backend_db": True,
+                }
+            )
         except OffloadException:
             # If this one fails then we let the exception bubble up.
-            run_offload({"owner_table": self.schema + "." + FACT_NAME, "reset_backend_table": True})
+            run_offload(
+                {
+                    "owner_table": self.schema + "." + FACT_NAME,
+                    "reset_backend_table": True,
+                    "create_backend_db": True,
+                }
+            )
 
     def _compare_sql_and_python_synthetic_part_number_outcomes(
         self, num, num_column, granularity, padding_digits

@@ -165,6 +165,7 @@ def test_offload_sorting_dim(config, schema, data_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "sort_columns_csv": offload_constants.SORT_COLUMNS_NO_CHANGE,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert sort_story_assertion(
@@ -292,6 +293,7 @@ def test_offload_basic_fact(config, schema, data_db):
             backend_api
         ),
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert sort_story_assertion(

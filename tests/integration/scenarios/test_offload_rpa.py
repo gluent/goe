@@ -206,6 +206,7 @@ def offload_range_ipa_standard_tests(
         "offload_partition_lower_value": lower_value,
         "offload_partition_upper_value": upper_value,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -688,6 +689,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
         "less_than_value": "U",
         "offload_partition_granularity": "1",
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -770,6 +772,7 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
         "owner_table": schema + "." + NOSEG_FACT,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(

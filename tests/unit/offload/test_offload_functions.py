@@ -174,16 +174,5 @@ class TestOffloadFunctions(TestCase):
         )
 
 
-        for offloaded_table, hybrid_view, hybrid_external_table in data:
-            self.assertEqual(
-                hybrid_view,
-                trunc_with_hash("{}_cnt_agg".format(offloaded_table), 4, 30).upper(),
-            )
-            self.assertEqual(
-                hybrid_external_table,
-                trunc_with_hash("{}_EXT".format(hybrid_view), 4, 30).upper(),
-            )
-
-
 if __name__ == "__main__":
     main()

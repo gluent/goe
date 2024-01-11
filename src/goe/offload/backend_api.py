@@ -1415,7 +1415,7 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
 
     @abstractmethod
     def target_version(self):
-        """ Return version of the backend SQL engine in x.y.z format that can be used by StrictVersion().
+        """ Return version of the backend SQL engine in x.y.z format that can be used by GOEVersion().
             This is different to backend_version() even though it appears similar in function.
         """
         pass

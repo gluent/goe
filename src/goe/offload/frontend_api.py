@@ -32,7 +32,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_SCHEMA_EVOLUTION,
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
-from goe.offload.offload_source_table import HYBRID_ALL_OBJECTS
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default
@@ -312,7 +311,7 @@ class FrontendApiInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def frontend_version(self) -> str:
-        """ Return version of the frontend SQL engine in x.y.z format that can be used by StrictVersion() """
+        """ Return version of the frontend SQL engine in x.y.z format that can be used by GOEVersion() """
 
     @abstractmethod
     def gen_column_object(self, column_name, **kwargs):

@@ -6,7 +6,6 @@
     LICENSE_TEXT
 """
 
-from distutils.version import StrictVersion
 import logging
 
 from goe.offload.column_metadata import get_column_names, valid_column_list
@@ -14,6 +13,7 @@ from goe.offload.hadoop.hadoop_backend_table import BackendHadoopTable
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_BIGINT, HADOOP_TYPE_INT, HADOOP_TYPE_SMALLINT,\
     HADOOP_TYPE_TINYINT
 from goe.offload.offload_constants import FILE_STORAGE_FORMAT_PARQUET, FILE_STORAGE_FORMAT_PARQUET_IMPALA
+from goe.util.goe_version import GOEVersion
 
 ###############################################################################
 # CONSTANTS
@@ -93,7 +93,7 @@ class BackendImpalaTable(BackendHadoopTable):
         # This is to avoid issues such as being unable to reduce a 34 digit number:
         #   select cast(lpad('9',34,'9') as decimal(38,0)) / 10;
         #   ERROR: UDF ERROR: Decimal expression overflowed
-        if bool(StrictVersion(self.target_version()) >= StrictVersion('3.0.0')):
+        if bool(GOEVersion(self.target_version()) >= GOEVersion('3.0.0')):
             return {'DECIMAL_V2': 'FALSE'}
         else:
             return {}

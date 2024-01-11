@@ -19,7 +19,6 @@ from goe.connect.connect_constants import CONNECT_DETAIL, CONNECT_STATUS, CONNEC
 from goe.offload.backend_api import (
     BackendApiInterface,
     BackendApiException,
-    BackendStatsException,
     FETCH_ACTION_ALL,
     FETCH_ACTION_CURSOR,
     FETCH_ACTION_ONE,
@@ -2398,7 +2397,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         return bool(row)
 
     def target_version(self):
-        """Return version of the backend SQL engine in x.y.z format that can be used by StrictVersion().
+        """Return version of the backend SQL engine in x.y.z format that can be used by GOEVersion().
         This is different to backend_version() even though it appears similar in function.
         """
         if self._target_version is None:

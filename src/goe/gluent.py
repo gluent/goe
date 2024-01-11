@@ -108,7 +108,7 @@ from goe.data_governance.hadoop_data_governance import get_hadoop_data_governanc
     is_valid_data_governance_tag
 
 from goe.util.misc_functions import all_int_chars, csv_split, bytes_to_human_size,\
-    human_size_to_bytes, standard_log_name
+    standard_log_name
 from goe.util.ora_query import get_oracle_connection
 from goe.util.redis_tools import RedisClient
 
@@ -839,7 +839,7 @@ def version_abort(check_version, frontend_api):
 
 def strict_version_ready(version_string):
   """ Our offload version can have -RC or -DEV (or both!) appended
-      In order to use StrictVersion we need to tidy this up
+      In order to use GOEVersion we need to tidy this up
       Chop off anything after (and including) a hyphen
   """
   version_string = version_string.split('-')[0] if version_string else version_string

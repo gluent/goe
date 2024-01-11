@@ -8,16 +8,16 @@ import random
 import re
 
 from collections import defaultdict
-from distutils.version import StrictVersion
 from termcolor import colored, cprint
 
 from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_HIVE, \
     EMPTY_BACKEND_COLUMN_STATS_DICT, EMPTY_BACKEND_TABLE_STATS_DICT
-from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_messages import VERBOSE
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_BIGINT, \
     HADOOP_TYPE_INT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_TINYINT, \
     HADOOP_TYPE_DOUBLE, HADOOP_TYPE_FLOAT, HADOOP_TYPE_REAL, HADOOP_TYPE_TIMESTAMP
 from goe.util.better_impyla import HiveConnection, HiveTable
+from goe.util.goe_version import GOEVersion
 from goe.util.hive_ddl_transform import DDLTransform
 from goe.util.misc_functions import is_number
 
@@ -414,7 +414,7 @@ class HiveTableStats(object):
                 col_stats[col]['high_val'] = None
                 col_stats[col]['max_col_len'] = max(_[col]['max_col_len'] for _ in sample_col_stats)
 
-            # low/high values are passed to OFFLOAD package as strings 
+            # low/high values are passed to OFFLOAD package as strings
             col_stats[col]['low_val'] = None if col_stats[col]['low_val'] is None else str(col_stats[col]['low_val'])
             col_stats[col]['high_val'] = None if col_stats[col]['high_val'] is None else str(col_stats[col]['high_val'])
 
@@ -440,7 +440,7 @@ class HiveTableStats(object):
         if not dependent_objects:
             logger.warn("Unable to find dependent objects for view: %s" % self.db_table)
             return None, None
-        
+
         for dep_o in dependent_objects:
             db_name, table_name, alias = dep_o
             db_table = "%s.%s" % (db_name, table_name)
@@ -467,7 +467,7 @@ class HiveTableStats(object):
 
     def _get_temp_view_ddl(self, temp_where_clause):
         """ Construct DDL for a temporary 'partition-wise' view for stats collection
- 
+
             Returns view name, ddl
         """
         temp_view_name = "%s%s" % (TEMP_VIEW_PREFIX, self._table.table_name)
@@ -805,7 +805,7 @@ class HiveTableStats(object):
         Note: Hive does not aggregate partition level (including column) stats into global stats. This means there
               is no single command to get total table rows or column stats. These must be derived from
               partition level stats. We rollup the partition level stats to get table stats in our code.
-              
+
               For column level stats we don't perform any rollup. We only (for now) need to determine if the columns have stats.
               To prevent having to do <num cols> * <num partitions> calls to Hive to get all of them, we only check for the
               presence of stats on the first column in the table in each partition.
@@ -860,14 +860,14 @@ class HiveTableStats(object):
                     first_column = self._table.table_columns(as_dict=True)[0]['col_name']
                     sql_engine_version = self._table.connection.sql_engine_version()
                     if self._table.db_type == DBTYPE_HIVE and \
-                        (sql_engine_version is None or StrictVersion(sql_engine_version) < StrictVersion('2.0.0')):
+                        (sql_engine_version is None or GOEVersion(sql_engine_version) < GOEVersion('2.0.0')):
                         # old HiveQL format
                         sql = "DESCRIBE FORMATTED %s.%s %s PARTITION (%s)" \
                             % (self._table.db_name, self._table.table_name, first_column, part_string)
                     else:
                         sql = "DESCRIBE FORMATTED %s.%s PARTITION (%s) %s" \
                             % (self._table.db_name, self._table.table_name, part_string, first_column)
-    
+
                     logger.debug("Fetching column stats: %s" % sql)
                     c = self.hive.execute(sql, lambda c: c, as_dict=False)
                     stats = c.fetchall()
@@ -1025,7 +1025,7 @@ class HiveTableStats(object):
         temp_db_view = None
         try:
             temp_where_clause, partitioned_table, total_partitions, partitions_to_scan = \
-                self._get_view_sample_where_clause(percent) 
+                self._get_view_sample_where_clause(percent)
             if not temp_where_clause:
                 logger.warn("Unable to construct partition-wise WHERE clause injection for view: %s" % self.db_table)
             else:
@@ -1124,7 +1124,7 @@ class HiveTableStats(object):
 if __name__ == "__main__":
     import os
     import sys
-   
+
     from goe.util.misc_functions import set_gluentlib_logging
 
 

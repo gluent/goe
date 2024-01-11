@@ -6,7 +6,7 @@
     LICENSE_TEXT
 """
 
-from distutils.version import StrictVersion
+from goe.util.goe_version import GOEVersion
 import logging
 import os
 import re
@@ -722,7 +722,7 @@ FROM   %(from_db_table)s%(where)s%(dist_by)s%(sort_by)s""" % {
 
         if user_udf_version:
             udf_version = user_udf_version
-        elif StrictVersion(self.target_version()) >= StrictVersion("3.0.0"):
+        elif GOEVersion(self.target_version()) >= GOEVersion("3.0.0"):
             udf_version = "3.0.0"
         else:
             udf_version = "2.0.0"

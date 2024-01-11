@@ -23,7 +23,7 @@ dependencies = [
     "cryptography",
     "filelock",
     "lark-parser",
-    "numpy==1.24.1",
+    "numpy",
     "python-dateutil",
     "PyYAML",
     "requests",

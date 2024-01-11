@@ -14,7 +14,7 @@ logger = logging.getLogger()
 
 def validate_python_environment():
     try:
-        # Gluent
+        # GOE
         from goe.listener.prestart import prestart
 
         prestart()
@@ -27,8 +27,8 @@ def validate_python_environment():
 
 
 def run_listener():
-    """Run Gluent Listener."""
-    # Gluent
+    """Run GOE Listener."""
+    # GOE
     from goe.listener.config.application import settings
     from goe.listener.config.logging import Logger
     from goe.listener.heartbeat import run_heartbeat
@@ -36,7 +36,7 @@ def run_listener():
     from goe.listener.wsgi import run_wsgi
 
     logger = Logger.configure_logger()
-    logger.info("Booting Gluent Orchestration Listener")
+    logger.info("Booting GOE Listener")
     if settings.cache_enabled:
         logger.info(
             "Listener cache configuration is enabled.  Heartbeat and background workers will be started."
@@ -76,16 +76,16 @@ def run_listener():
         http_process.join()
     except KeyboardInterrupt:
         http_process.kill()
-        logger.info("Stopping Gluent Orchestration Listener")
+        logger.info("Stopping GOE Listener")
     except Exception:
         http_process.terminate()
-        logger.info("Force stopping Gluent Orchestration Listener")
+        logger.info("Force stopping GOE Listener")
     finally:
         for worker in workers:
             worker.kill()
         if http_process and http_process.is_alive():
             http_process.terminate()
-        logger.info("Stopped Gluent Orchestration Listener")
+        logger.info("Stopped GOE Listener")
         sys.exit(4)
 
 

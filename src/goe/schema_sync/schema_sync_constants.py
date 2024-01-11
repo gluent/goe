@@ -11,11 +11,11 @@ PRESENT_TABLE = 'present_table'
 
 # schema sync exception names
 
-EXCEPTION_ADD_BACKEND_COLUMN = 'GLSS-01: exception caught while adding backend column'
-EXCEPTION_ADD_ORACLE_COLUMN = 'GLSS-03: exception caught while adding Oracle column'
-EXCEPTION_ORACLE_HIVE_NAME_MISMATCH = 'GLSS-11: Oracle and backend object names do not match'
-EXCEPTION_ORACLE_MORE_THAN_998_COLUMNS = 'GLSS-12: Oracle Incremental Update changelog table would exceed the 1000 Oracle column limit'
-EXCEPTION_SCHEMA_EVOLUTION_NOT_SUPPORTED = 'GLSS-13: Schema evolution is not supported for this backend system'
+EXCEPTION_ADD_BACKEND_COLUMN = 'GOESS-01: exception caught while adding backend column'
+EXCEPTION_ADD_ORACLE_COLUMN = 'GOESS-03: exception caught while adding Oracle column'
+EXCEPTION_ORACLE_HIVE_NAME_MISMATCH = 'GOESS-11: Oracle and backend object names do not match'
+EXCEPTION_ORACLE_MORE_THAN_998_COLUMNS = 'GOESS-12: Oracle Incremental Update changelog table would exceed the 1000 Oracle column limit'
+EXCEPTION_SCHEMA_EVOLUTION_NOT_SUPPORTED = 'GOESS-13: Schema evolution is not supported for this backend system'
 
 # schema sync analyzer
 

@@ -1,7 +1,7 @@
 # Standard Library
 import logging
 
-# Gluent
+# GOE
 from goe.listener import utils
 from goe.listener.config import settings
 
@@ -9,9 +9,9 @@ logger = logging.getLogger()
 
 
 async def on_startup():
-    """Gluent listener startup event handler.
+    """GOE listener startup event handler.
 
-    Performs startup activities for Gluent Listener
+    Performs startup activities for GOE Listener
 
     """
     if settings.cache_enabled:
@@ -20,9 +20,9 @@ async def on_startup():
 
 
 async def on_shutdown():
-    """Gluent listener shutdown event handler.
+    """GOE listener shutdown event handler.
 
-    Performs shutdown activities for Gluent Listener
+    Performs shutdown activities for GOE Listener
 
     """
     if settings.cache_enabled:

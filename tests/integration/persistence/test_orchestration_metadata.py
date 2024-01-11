@@ -78,12 +78,12 @@ EXAMPLE_SALES_METADATA_DICT = {
 EXAMPLE_SALES_METADATA_DICT_HV2 = "TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
 EXAMPLE_SALES_METADATA_DICT_HV3 = "TO_DATE(' 2012-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')"
 
-EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT = {
+EXAMPLE_GOE_LIST_RANGE_DAY_DT_METADATA_DICT = {
     "OFFLOAD_TYPE": "INCREMENTAL",
     "HADOOP_OWNER": "SH_TEST",
-    "HADOOP_TABLE": "GL_LIST_RANGE_DAY_DT",
+    "HADOOP_TABLE": "GOE_LIST_RANGE_DAY_DT",
     "OFFLOADED_OWNER": "SH_TEST",
-    "OFFLOADED_TABLE": "GL_LIST_RANGE_DAY_DT",
+    "OFFLOADED_TABLE": "GOE_LIST_RANGE_DAY_DT",
     "OFFLOAD_SNAPSHOT": 69472864,
     "INCREMENTAL_KEY": "DT",
     "INCREMENTAL_HIGH_VALUE": "TO_DATE(' 2015-01-31 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
@@ -316,13 +316,13 @@ class TestOrchestrationMetadata(TestCase):
         self.assertIsInstance(sales_metadata.is_subpartition_offload(), bool)
         self.assertEqual(sales_metadata.is_subpartition_offload(), False)
 
-        gl_list_range_day_dt_metadata = OrchestrationMetadata(
-            EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT
+        goe_list_range_day_dt_metadata = OrchestrationMetadata(
+            EXAMPLE_GOE_LIST_RANGE_DAY_DT_METADATA_DICT
         )
         self.assertIsInstance(
-            gl_list_range_day_dt_metadata.is_subpartition_offload(), bool
+            goe_list_range_day_dt_metadata.is_subpartition_offload(), bool
         )
-        self.assertEqual(gl_list_range_day_dt_metadata.is_subpartition_offload(), True)
+        self.assertEqual(goe_list_range_day_dt_metadata.is_subpartition_offload(), True)
 
     def test_is_hwm_in_hybrid_view(self):
         channels_metadata = OrchestrationMetadata(EXAMPLE_CHANNELS_METADATA_DICT)
@@ -365,23 +365,23 @@ class TestOrchestrationMetadata(TestCase):
         )
 
         # Offload by subpartition
-        gl_list_range_day_dt_metadata = OrchestrationMetadata(
-            EXAMPLE_GL_LIST_RANGE_DAY_DT_METADATA_DICT
+        goe_list_range_day_dt_metadata = OrchestrationMetadata(
+            EXAMPLE_GOE_LIST_RANGE_DAY_DT_METADATA_DICT
         )
         self.assertIsInstance(
-            gl_list_range_day_dt_metadata.incremental_data_append_feature(), str
+            goe_list_range_day_dt_metadata.incremental_data_append_feature(), str
         )
         self.assertIn(
             "partition",
-            gl_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
+            goe_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
         )
         self.assertIn(
             "sub",
-            gl_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
+            goe_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
         )
         self.assertNotIn(
             "predicate",
-            gl_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
+            goe_list_range_day_dt_metadata.incremental_data_append_feature().lower(),
         )
 
         # Offload by predicate

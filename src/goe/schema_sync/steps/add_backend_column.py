@@ -3,7 +3,7 @@ LICENSE_TEXT
 """
 import traceback
 
-from goe.gluent import log
+from goe.goe import log
 from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_constants import BACKEND_DISTRO_GCP
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable

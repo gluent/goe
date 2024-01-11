@@ -12,7 +12,7 @@ import logging
 # Third Party Libraries
 import orjson as json
 
-# Gluent
+# GOE
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory

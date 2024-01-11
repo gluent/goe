@@ -14,11 +14,11 @@ from numpy import datetime64
 from goe.offload import offload_constants
 from goe.offload.column_metadata import CanonicalColumn, \
     is_safe_mapping, match_table_column, CANONICAL_CHAR_SEMANTICS_UNICODE, \
-    GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY,\
-    GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4,\
-    GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE,\
-    GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ,\
-    GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, CANONICAL_CHAR_SEMANTICS_CHAR, \
+    GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING, GOE_TYPE_BINARY,\
+    GOE_TYPE_LARGE_BINARY, GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4,\
+    GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38, GOE_TYPE_DECIMAL, GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE,\
+    GOE_TYPE_DATE, GOE_TYPE_TIME, GOE_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ,\
+    GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM, CANONICAL_CHAR_SEMANTICS_CHAR, \
     ALL_CANONICAL_TYPES, DATE_CANONICAL_TYPES, NUMERIC_CANONICAL_TYPES, STRING_CANONICAL_TYPES
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.offload_source_table import OffloadSourceTableInterface, OffloadSourceTableException,\
@@ -398,7 +398,7 @@ class TeradataSourceTable(OffloadSourceTableInterface):
         raise NotImplementedError('Subpartition Offloads are not supported for Teradata')
 
     def from_canonical_column(self, column):
-        """ Translate an internal Gluent column to a Teradata column.
+        """ Translate an internal GOE column to a Teradata column.
             In practice this method is unlikely to be used because we will no support present, but
             we've fleshed it out anyway.
         """
@@ -415,7 +415,7 @@ class TeradataSourceTable(OffloadSourceTableInterface):
         assert column
         assert isinstance(column, CanonicalColumn)
 
-        if column.data_type == GLUENT_TYPE_FIXED_STRING:
+        if column.data_type == GOE_TYPE_FIXED_STRING:
             # TODO Don't know 32000 is just for UNICODE or if CHAR as well
             max_length = 32000 if column.char_semantics in [CANONICAL_CHAR_SEMANTICS_CHAR,
                                                             CANONICAL_CHAR_SEMANTICS_UNICODE] else 64000
@@ -429,9 +429,9 @@ class TeradataSourceTable(OffloadSourceTableInterface):
                 return new_column(column, TERADATA_TYPE_CLOB)
             else:
                 return new_column(column, TERADATA_TYPE_CHAR, data_length=data_length, char_length=char_length)
-        elif column.data_type == GLUENT_TYPE_LARGE_STRING:
+        elif column.data_type == GOE_TYPE_LARGE_STRING:
             return new_column(column, TERADATA_TYPE_CLOB)
-        elif column.data_type == GLUENT_TYPE_VARIABLE_STRING:
+        elif column.data_type == GOE_TYPE_VARIABLE_STRING:
             # TODO Don't know 32000 is just for UNICODE or if CHAR as well
             max_length = 32000 if column.char_semantics in [CANONICAL_CHAR_SEMANTICS_CHAR,
                                                             CANONICAL_CHAR_SEMANTICS_UNICODE] else 64000
@@ -445,46 +445,46 @@ class TeradataSourceTable(OffloadSourceTableInterface):
                 return new_column(column, TERADATA_TYPE_CLOB)
             else:
                 return new_column(column, TERADATA_TYPE_VARCHAR, data_length=data_length, char_length=char_length)
-        elif column.data_type == GLUENT_TYPE_BINARY:
+        elif column.data_type == GOE_TYPE_BINARY:
             data_length = column.data_length or 64000
             if data_length > 64000:
                 return new_column(column, TERADATA_TYPE_BLOB)
             else:
                 return new_column(column, TERADATA_TYPE_BYTE, data_length=data_length)
-        elif column.data_type == GLUENT_TYPE_LARGE_BINARY:
+        elif column.data_type == GOE_TYPE_LARGE_BINARY:
             return new_column(column, TERADATA_TYPE_BLOB)
-        elif column.data_type == GLUENT_TYPE_INTEGER_1:
+        elif column.data_type == GOE_TYPE_INTEGER_1:
             return new_column(column, TERADATA_TYPE_BYTEINT, data_length=1)
-        elif column.data_type == GLUENT_TYPE_INTEGER_2:
+        elif column.data_type == GOE_TYPE_INTEGER_2:
             return new_column(column, TERADATA_TYPE_SMALLINT, data_length=2)
-        elif column.data_type == GLUENT_TYPE_INTEGER_4:
+        elif column.data_type == GOE_TYPE_INTEGER_4:
             return new_column(column, TERADATA_TYPE_INTEGER, data_length=4)
-        elif column.data_type == GLUENT_TYPE_INTEGER_8:
+        elif column.data_type == GOE_TYPE_INTEGER_8:
             return new_column(column, TERADATA_TYPE_BIGINT, data_length=8)
-        elif column.data_type == GLUENT_TYPE_INTEGER_38:
+        elif column.data_type == GOE_TYPE_INTEGER_38:
             return new_column(column, TERADATA_TYPE_NUMBER, data_precision=38, data_scale=0, data_length=18)
-        elif column.data_type == GLUENT_TYPE_DECIMAL:
+        elif column.data_type == GOE_TYPE_DECIMAL:
             data_length = column.data_length or 18
             data_precision, data_scale = column.data_precision, column.data_scale
             if column.data_precision and column.data_precision > 38:
                 data_precision, data_scale = None, None
             return new_column(column, TERADATA_TYPE_NUMBER, data_precision=data_precision,
                               data_scale=data_scale, data_length=data_length)
-        elif column.data_type in [GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE]:
+        elif column.data_type in [GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE]:
             # Teradata REAL, FLOAT and DOUBLE are all the same thing, a 64 bit double.
             return new_column(column, TERADATA_TYPE_DOUBLE, data_length=8)
-        elif column.data_type == GLUENT_TYPE_DATE:
+        elif column.data_type == GOE_TYPE_DATE:
             return new_column(column, TERADATA_TYPE_DATE, data_length=4)
-        elif column.data_type == GLUENT_TYPE_TIME:
+        elif column.data_type == GOE_TYPE_TIME:
             return new_column(column, TERADATA_TYPE_TIME, data_length=6)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP:
+        elif column.data_type == GOE_TYPE_TIMESTAMP:
             data_scale = column.data_scale if column.data_scale is not None else self.max_datetime_scale()
             return new_column(column, TERADATA_TYPE_TIMESTAMP, data_scale=data_scale, data_length=10)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP_TZ:
+        elif column.data_type == GOE_TYPE_TIMESTAMP_TZ:
             data_scale = column.data_scale if column.data_scale is not None else self.max_datetime_scale()
             return new_column(column, TERADATA_TYPE_TIMESTAMP_TZ, data_scale=data_scale, data_length=12)
         else:
-            raise NotImplementedError('Unsupported Gluent data type: %s' % column.data_type)
+            raise NotImplementedError('Unsupported GOE data type: %s' % column.data_type)
 
     def gen_column(self, name, data_type, data_length=None, data_precision=None, data_scale=None, nullable=None,
                    data_default=None, hidden=None, char_semantics=None, char_length=None):
@@ -668,7 +668,7 @@ class TeradataSourceTable(OffloadSourceTableInterface):
         return pe.pseudo_column
 
     def to_canonical_column(self, column):
-        """ Translate a Teradata column to an internal Gluent column """
+        """ Translate a Teradata column to an internal GOE column """
 
         def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, safe_mapping=None):
             """ Wrapper that carries name, nullable, data_default and usually char_semantics forward from RDBMS
@@ -690,23 +690,23 @@ class TeradataSourceTable(OffloadSourceTableInterface):
         assert isinstance(column, TeradataColumn)
 
         if column.data_type == TERADATA_TYPE_BIGINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_8, safe_mapping=True)
+            return new_column(column, GOE_TYPE_INTEGER_8, safe_mapping=True)
         elif column.data_type == TERADATA_TYPE_BLOB:
             #TODO Teradata BLOB/CLOB return 2097088000 (2GB) as the data length which is too large for Snowflake BINARY
-            #return new_column(column, GLUENT_TYPE_LARGE_BINARY, data_length=column.data_length)
-            return new_column(column, GLUENT_TYPE_LARGE_BINARY, data_length=8388608)
+            #return new_column(column, GOE_TYPE_LARGE_BINARY, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_LARGE_BINARY, data_length=8388608)
         elif column.data_type in [TERADATA_TYPE_BYTE, TERADATA_TYPE_VARBYTE]:
-            return new_column(column, GLUENT_TYPE_BINARY, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_BINARY, data_length=column.data_length)
         elif column.data_type == TERADATA_TYPE_BYTEINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_1, safe_mapping=True)
+            return new_column(column, GOE_TYPE_INTEGER_1, safe_mapping=True)
         elif column.data_type == TERADATA_TYPE_CHAR:
-            return new_column(column, GLUENT_TYPE_FIXED_STRING, data_length=column.data_length, safe_mapping=True)
+            return new_column(column, GOE_TYPE_FIXED_STRING, data_length=column.data_length, safe_mapping=True)
         elif column.data_type == TERADATA_TYPE_CLOB:
             # TODO Teradata BLOB/CLOB return 2097088000 (2GB) as the char length which is too large for Snowflake TEXT
             column.char_length = 16777216
-            return new_column(column, GLUENT_TYPE_LARGE_STRING, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_LARGE_STRING, data_length=column.data_length)
         elif column.data_type == TERADATA_TYPE_DATE:
-            return new_column(column, GLUENT_TYPE_DATE)
+            return new_column(column, GOE_TYPE_DATE)
         elif column.data_type in (TERADATA_TYPE_DECIMAL, TERADATA_TYPE_NUMBER):
             data_precision = column.data_precision
             data_scale = column.data_scale
@@ -716,28 +716,28 @@ class TeradataSourceTable(OffloadSourceTableInterface):
             else:
                 # If precision & scale are None then this is unsafe, otherwise leave it None to let new_column() logic take over
                 safe_mapping = False if data_precision is None and data_scale is None else None
-                return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale,
+                return new_column(column, GOE_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale,
                                   safe_mapping=safe_mapping)
         elif column.data_type == TERADATA_TYPE_DOUBLE:
-            return new_column(column, GLUENT_TYPE_DOUBLE, safe_mapping=True)
+            return new_column(column, GOE_TYPE_DOUBLE, safe_mapping=True)
         elif column.data_type == TERADATA_TYPE_INTEGER:
-            return new_column(column, GLUENT_TYPE_INTEGER_4, safe_mapping=True)
+            return new_column(column, GOE_TYPE_INTEGER_4, safe_mapping=True)
         elif column.data_type == TERADATA_TYPE_INTERVAL_DS:
-            return new_column(column, GLUENT_TYPE_INTERVAL_DS, data_precision=column.data_precision,
+            return new_column(column, GOE_TYPE_INTERVAL_DS, data_precision=column.data_precision,
                               data_scale=column.data_scale)
         elif column.data_type == TERADATA_TYPE_INTERVAL_YM:
-            return new_column(column, GLUENT_TYPE_INTERVAL_YM, data_precision=column.data_precision,
+            return new_column(column, GOE_TYPE_INTERVAL_YM, data_precision=column.data_precision,
                               data_scale=column.data_scale)
         elif column.data_type == TERADATA_TYPE_SMALLINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_2, safe_mapping=True)
+            return new_column(column, GOE_TYPE_INTEGER_2, safe_mapping=True)
         elif column.data_type == TERADATA_TYPE_TIME:
-            return new_column(column, GLUENT_TYPE_TIME, data_scale=column.data_scale, safe_mapping=True)
+            return new_column(column, GOE_TYPE_TIME, data_scale=column.data_scale, safe_mapping=True)
         elif column.data_type == TERADATA_TYPE_TIMESTAMP:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP, data_scale=column.data_scale)
+            return new_column(column, GOE_TYPE_TIMESTAMP, data_scale=column.data_scale)
         elif column.data_type == TERADATA_TYPE_TIMESTAMP_TZ:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale)
+            return new_column(column, GOE_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale)
         elif column.data_type == TERADATA_TYPE_VARCHAR:
-            return new_column(column, GLUENT_TYPE_VARIABLE_STRING, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_VARIABLE_STRING, data_length=column.data_length)
         else:
             raise NotImplementedError('Unsupported Teradata data type: %s' % column.data_type)
 
@@ -802,30 +802,30 @@ class TeradataSourceTable(OffloadSourceTableInterface):
         else:
             target_type = canonical_override
         if column.data_type == TERADATA_TYPE_BLOB:
-            return bool(target_type == GLUENT_TYPE_LARGE_BINARY)
+            return bool(target_type == GOE_TYPE_LARGE_BINARY)
         elif column.data_type in [TERADATA_TYPE_BYTE, TERADATA_TYPE_VARBYTE]:
-            return bool(target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY])
+            return bool(target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY])
         elif column.data_type == TERADATA_TYPE_CHAR:
-            return bool(target_type == GLUENT_TYPE_FIXED_STRING)
+            return bool(target_type == GOE_TYPE_FIXED_STRING)
         elif column.data_type == TERADATA_TYPE_VARCHAR:
-            return bool(target_type == GLUENT_TYPE_VARIABLE_STRING)
+            return bool(target_type == GOE_TYPE_VARIABLE_STRING)
         elif column.data_type == TERADATA_TYPE_CLOB:
-            return bool(target_type == GLUENT_TYPE_LARGE_STRING)
+            return bool(target_type == GOE_TYPE_LARGE_STRING)
         elif column.data_type == TERADATA_TYPE_DOUBLE:
-            return bool(target_type == GLUENT_TYPE_DOUBLE)
+            return bool(target_type == GOE_TYPE_DOUBLE)
         elif column.is_number_based():
             return target_type in NUMERIC_CANONICAL_TYPES
         elif column.is_date_based() and column.is_time_zone_based():
-            return bool(target_type == GLUENT_TYPE_TIMESTAMP_TZ)
+            return bool(target_type == GOE_TYPE_TIMESTAMP_TZ)
         elif column.is_date_based():
             return bool(target_type in DATE_CANONICAL_TYPES or
                         target_type in STRING_CANONICAL_TYPES)
         elif column.data_type == TERADATA_TYPE_TIME:
-            return bool(target_type == GLUENT_TYPE_TIME)
+            return bool(target_type == GOE_TYPE_TIME)
         elif column.data_type == TERADATA_TYPE_INTERVAL_DS:
-            return bool(target_type == GLUENT_TYPE_INTERVAL_DS)
+            return bool(target_type == GOE_TYPE_INTERVAL_DS)
         elif column.data_type == TERADATA_TYPE_INTERVAL_YM:
-            return bool(target_type == GLUENT_TYPE_INTERVAL_YM)
+            return bool(target_type == GOE_TYPE_INTERVAL_YM)
         elif target_type not in ALL_CANONICAL_TYPES:
             self._log('Unknown canonical type in mapping: %s' % target_type, detail=VVERBOSE)
             return False

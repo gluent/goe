@@ -26,8 +26,8 @@ from goe.offload.column_metadata import (
     match_table_column,
     str_list_of_columns,
     valid_column_list,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_LARGE_BINARY,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_LARGE_BINARY,
 )
 from goe.offload.offload_constants import (
     CAPABILITY_CANONICAL_DATE,
@@ -68,8 +68,8 @@ from goe.offload.hadoop.hadoop_column import (
     HADOOP_TYPE_BOOLEAN,
 )
 from goe.offload.hadoop.impala_literal import ImpalaLiteral
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
-from goe.filesystem.gluent_dfs import OFFLOAD_NON_HDFS_FS_SCHEMES
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
+from goe.filesystem.goe_dfs import OFFLOAD_NON_HDFS_FS_SCHEMES
 from goe.util.better_impyla import BetterImpylaException, from_impala_size
 
 
@@ -95,15 +95,15 @@ def gen_decimal_impala_functions_in_constants(fpq=False):
         int_input = 1 if precision != scale else 0.1
         if fpq:
             yield (
-                "GLUENT_TO_FPQ",
+                "GOE_TO_FPQ",
                 "STRING",
                 "DECIMAL(%s,%s)" % (precision, scale),
                 "CAST(%s AS DECIMAL(%s,%s))" % (int_input, precision, scale),
-                "gluentToFpqNumber",
+                "goeToFpqNumber",
             )
         else:
             yield (
-                "GLUENT_TO_INTERNAL_NUMBER",
+                "GOE_TO_INTERNAL_NUMBER",
                 "STRING",
                 "DECIMAL(%s,%s)" % (precision, scale),
                 "CAST(%s AS DECIMAL(%s,%s))" % (int_input, precision, scale),
@@ -113,161 +113,161 @@ def gen_decimal_impala_functions_in_constants(fpq=False):
 
 IMPALA_UDF_SPECS = list(gen_decimal_impala_functions_in_constants()) + [
     (
-        "GLUENT_TO_INTERNAL_DOUBLE",
+        "GOE_TO_INTERNAL_DOUBLE",
         "STRING",
         "DOUBLE",
         "CAST(1.1 AS DOUBLE)",
         "toInternal",
     ),
     (
-        "GLUENT_TO_INTERNAL_FLOAT",
+        "GOE_TO_INTERNAL_FLOAT",
         "STRING",
         "FLOAT",
         "CAST(1.1 AS FLOAT)",
         "toInternalFloat",
     ),
     (
-        "GLUENT_TO_INTERNAL_FLOAT",
+        "GOE_TO_INTERNAL_FLOAT",
         "STRING",
         "DOUBLE",
         "CAST(1.1 AS FLOAT)",
         "toInternalFloat",
     ),
     (
-        "GLUENT_TO_INTERNAL_NUMBER",
+        "GOE_TO_INTERNAL_NUMBER",
         "STRING",
         "TINYINT",
         "CAST(1 AS TINYINT)",
         "toInternal",
     ),
     (
-        "GLUENT_TO_INTERNAL_NUMBER",
+        "GOE_TO_INTERNAL_NUMBER",
         "STRING",
         "SMALLINT",
         "CAST(1 AS SMALLINT)",
         "toInternal",
     ),
-    ("GLUENT_TO_INTERNAL_NUMBER", "STRING", "INT", "CAST(1 AS INT)", "toInternal"),
+    ("GOE_TO_INTERNAL_NUMBER", "STRING", "INT", "CAST(1 AS INT)", "toInternal"),
     (
-        "GLUENT_TO_INTERNAL_NUMBER",
+        "GOE_TO_INTERNAL_NUMBER",
         "STRING",
         "BIGINT",
         "CAST(1 AS BIGINT)",
         "toInternal",
     ),
     (
-        "GLUENT_TO_INTERNAL_DATE",
+        "GOE_TO_INTERNAL_DATE",
         "STRING",
         "TIMESTAMP",
         "CAST(0 AS TIMESTAMP)",
         "toInternalDate",
     ),
     (
-        "GLUENT_TO_INTERNAL_DATE",
+        "GOE_TO_INTERNAL_DATE",
         "STRING",
         "STRING",
         "'0100-01-01 00:00:00.000000000'",
         "toInternalDate",
     ),
-    ("GLUENT_FIELD_RUN_LENGTH", "STRING", "STRING, INT", "'foo', 1", "fieldRunLength"),
-    ("GLUENT_UTF8_RUN_LENGTH", "STRING", "STRING, INT", "'bar', 1", "utf8RunLength"),
-    ("GLUENT_ROW_RUN_LENGTH", "STRING", "STRING, INT", "'rowrow', 1", "rowRunLength"),
-    ("GLUENT_VERSION", "STRING", "", "", "gluentVersion"),
-    ("GLUENT_UPPER", "STRING", "STRING", "'lowercase'", "gluentToUpper"),
-    ("GLUENT_UPPER", "STRING", "STRING,STRING", "'áéíóú','UTF-8'", "gluentToUpper"),
-    ("GLUENT_LOWER", "STRING", "STRING", "'ÁÉÍÓÚ'", "gluentToLower"),
-    ("GLUENT_LOWER", "STRING", "STRING,STRING", "'ÁÉÍÓÚ','UTF-8'", "gluentToLower"),
-    ("GLUENT_TOUTF8", "STRING", "STRING,STRING", "'abcd','UTF-8'", "gluentToUtf8"),
+    ("GOE_FIELD_RUN_LENGTH", "STRING", "STRING, INT", "'foo', 1", "fieldRunLength"),
+    ("GOE_UTF8_RUN_LENGTH", "STRING", "STRING, INT", "'bar', 1", "utf8RunLength"),
+    ("GOE_ROW_RUN_LENGTH", "STRING", "STRING, INT", "'rowrow', 1", "rowRunLength"),
+    ("GOE_VERSION", "STRING", "", "", "goeVersion"),
+    ("GOE_UPPER", "STRING", "STRING", "'lowercase'", "goeToUpper"),
+    ("GOE_UPPER", "STRING", "STRING,STRING", "'áéíóú','UTF-8'", "goeToUpper"),
+    ("GOE_LOWER", "STRING", "STRING", "'ÁÉÍÓÚ'", "goeToLower"),
+    ("GOE_LOWER", "STRING", "STRING,STRING", "'ÁÉÍÓÚ','UTF-8'", "goeToLower"),
+    ("GOE_TOUTF8", "STRING", "STRING,STRING", "'abcd','UTF-8'", "goeToUtf8"),
     (
-        "GLUENT_TRANSFORM",
+        "GOE_TRANSFORM",
         "STRING",
         "STRING,STRING,STRING",
         "'UPPER', 'abc', '[^a]'",
-        "gluentTransform",
+        "goeTransform",
     ),
     (
-        "GLUENT_TRANSCODE",
+        "GOE_TRANSCODE",
         "STRING",
         "STRING, STRING, STRING",
         "'foo','UTF8','UTF16'",
-        ("gluentTranscode", "gluentTranscodePrepare", "gluentTranscodeClose"),
+        ("goeTranscode", "goeTranscodePrepare", "goeTranscodeClose"),
     ),
-    ("GLUENT_BUCKET", "SMALLINT", "BIGINT,SMALLINT", "1,16", "gluentBucket"),
+    ("GOE_BUCKET", "SMALLINT", "BIGINT,SMALLINT", "1,16", "goeBucket"),
     (
-        "GLUENT_BUCKET",
+        "GOE_BUCKET",
         "SMALLINT",
         "DECIMAL(38,0),SMALLINT",
         "CAST(1234 AS DECIMAL(38,0)),16",
-        "gluentBucket",
+        "goeBucket",
     ),
 ]
 
 IMPALA_FPQ_UDF_SPECS = (
     [
         (
-            "GLUENT_FPQ_NULL",
+            "GOE_FPQ_NULL",
             "STRING",
             "SMALLINT",
             "CAST(1 AS SMALLINT)",
-            "gluentFpqNull",
+            "goeFpqNull",
         ),
         (
-            "GLUENT_FPQ_ROW",
+            "GOE_FPQ_ROW",
             "STRING",
             "BOOLEAN, STRING",
-            "TRUE,%(fn_db)sGLUENT_TO_FPQ('rowrow')",
-            "gluentFpqRow",
+            "TRUE,%(fn_db)sGOE_TO_FPQ('rowrow')",
+            "goeFpqRow",
         ),
         (
-            "GLUENT_FPQ_ROW",
+            "GOE_FPQ_ROW",
             "STRING",
             "BOOLEAN, STRING, STRING ...",
-            "TRUE,%(fn_db)sGLUENT_TO_FPQ('foo'),%(fn_db)sGLUENT_TO_FPQ('bar'),%(fn_db)sGLUENT_TO_FPQ('baz')",
-            "gluentFpqRow",
+            "TRUE,%(fn_db)sGOE_TO_FPQ('foo'),%(fn_db)sGOE_TO_FPQ('bar'),%(fn_db)sGOE_TO_FPQ('baz')",
+            "goeFpqRow",
         ),
     ]
     + list(gen_decimal_impala_functions_in_constants(fpq=True))
     + [
-        ("GLUENT_TO_FPQ", "STRING", "BIGINT", "CAST(1 AS BIGINT)", "gluentToFpqNumber"),
-        ("GLUENT_TO_FPQ", "STRING", "INT", "CAST(1 AS INT)", "gluentToFpqNumber"),
+        ("GOE_TO_FPQ", "STRING", "BIGINT", "CAST(1 AS BIGINT)", "goeToFpqNumber"),
+        ("GOE_TO_FPQ", "STRING", "INT", "CAST(1 AS INT)", "goeToFpqNumber"),
         (
-            "GLUENT_TO_FPQ",
+            "GOE_TO_FPQ",
             "STRING",
             "SMALLINT",
             "CAST(1 AS SMALLINT)",
-            "gluentToFpqNumber",
+            "goeToFpqNumber",
         ),
         (
-            "GLUENT_TO_FPQ",
+            "GOE_TO_FPQ",
             "STRING",
             "TINYINT",
             "CAST(1 AS TINYINT)",
-            "gluentToFpqNumber",
+            "goeToFpqNumber",
         ),
-        ("GLUENT_TO_FPQ", "STRING", "TIMESTAMP", "CAST(0 AS TIMESTAMP)", "gluentToFpq"),
+        ("GOE_TO_FPQ", "STRING", "TIMESTAMP", "CAST(0 AS TIMESTAMP)", "goeToFpq"),
         (
-            "GLUENT_TO_FPQ_TIMESTAMP",
+            "GOE_TO_FPQ_TIMESTAMP",
             "STRING",
             "TIMESTAMP",
             "CAST(0 AS TIMESTAMP)",
-            "gluentToFpqTimestamp",
+            "goeToFpqTimestamp",
         ),
         (
-            "GLUENT_TO_FPQ_TIMESTAMP",
+            "GOE_TO_FPQ_TIMESTAMP",
             "STRING",
             "TIMESTAMP, SMALLINT",
             "CAST(0 AS TIMESTAMP), 5180",
-            "gluentToFpqTimestamp",
+            "goeToFpqTimestamp",
         ),
-        ("GLUENT_TO_FPQ", "STRING", "STRING", "'foo'", "gluentToFpq"),
-        ("GLUENT_TO_FPQ", "STRING", "FLOAT", "CAST(1.123 AS FLOAT)", "gluentToFpq"),
-        ("GLUENT_TO_FPQ", "STRING", "DOUBLE", "CAST(1.123 AS DOUBLE)", "gluentToFpq"),
+        ("GOE_TO_FPQ", "STRING", "STRING", "'foo'", "goeToFpq"),
+        ("GOE_TO_FPQ", "STRING", "FLOAT", "CAST(1.123 AS FLOAT)", "goeToFpq"),
+        ("GOE_TO_FPQ", "STRING", "DOUBLE", "CAST(1.123 AS DOUBLE)", "goeToFpq"),
         (
-            "GLUENT_TO_FPQ_INTERVAL",
+            "GOE_TO_FPQ_INTERVAL",
             "STRING",
             "STRING,BOOLEAN",
             "'44517008-8',TRUE",
-            "gluentToFpqInterval",
+            "goeToFpqInterval",
         ),
     ]
 )
@@ -462,9 +462,9 @@ class BackendImpalaApi(BackendHadoopApi):
             else:
                 return None
 
-        gluent_impala_functions_all = IMPALA_UDF_SPECS + IMPALA_FPQ_UDF_SPECS
+        goe_impala_functions_all = IMPALA_UDF_SPECS + IMPALA_FPQ_UDF_SPECS
         assert [
-            tupl[0] for tupl in gluent_impala_functions_all if len(tupl) != 5
+            tupl[0] for tupl in goe_impala_functions_all if len(tupl) != 5
         ] == [], "Unexpected item count in IMPALA_UDF_SPECS"
 
         cmds = []
@@ -485,16 +485,16 @@ class BackendImpalaApi(BackendHadoopApi):
             installed_udfs = [r[1].upper().replace(" ", "") for r in rows]
 
             # Build a list of functions to drop based on what is installed
-            gluent_impala_functions_drop = []
-            for fnc in gluent_impala_functions_all:
+            goe_impala_functions_drop = []
+            for fnc in goe_impala_functions_all:
                 if (
                     "%s(%s)" % (fnc[0].upper(), fnc[2].upper().replace(" ", ""))
                     in installed_udfs
                 ):
-                    gluent_impala_functions_drop.append(fnc)
+                    goe_impala_functions_drop.append(fnc)
 
-            for i, (f_name, _, f_type, _, _) in enumerate(gluent_impala_functions_drop):
-                sync = get_sync(i, len(gluent_impala_functions_drop))
+            for i, (f_name, _, f_type, _, _) in enumerate(goe_impala_functions_drop):
+                sync = get_sync(i, len(goe_impala_functions_drop))
                 cmds.extend(
                     self._drop_udf(
                         f_name,
@@ -782,7 +782,7 @@ class BackendImpalaApi(BackendHadoopApi):
             return False
 
     def from_canonical_column(self, column, decimal_padding_digits=0):
-        """Translate an internal Gluent column to an Impala column."""
+        """Translate an internal GOE column to an Impala column."""
 
         def new_column(
             col,
@@ -805,11 +805,11 @@ class BackendImpalaApi(BackendHadoopApi):
                 safe_mapping=safe_mapping,
             )
 
-        # Impala has a different outcome to Hive for GLUENT_TYPE_BINARY and GLUENT_TYPE_LARGE_BINARY
+        # Impala has a different outcome to Hive for GOE_TYPE_BINARY and GOE_TYPE_LARGE_BINARY
         # We deal with them here and then fall back into the parent code
-        if column.data_type == GLUENT_TYPE_BINARY:
+        if column.data_type == GOE_TYPE_BINARY:
             return new_column(column, HADOOP_TYPE_STRING)
-        elif column.data_type == GLUENT_TYPE_LARGE_BINARY:
+        elif column.data_type == GOE_TYPE_LARGE_BINARY:
             return new_column(column, HADOOP_TYPE_STRING)
         else:
             return super(BackendImpalaApi, self).from_canonical_column(
@@ -976,11 +976,11 @@ FROM   %(from_db_table)s%(where)s""" % {
 
     def incremental_update_supported(self):
         """The orchestration operations of Incremental Update do work with Data Hub on CDP Public Cloud.
-        However, if Gluent Query Engine is using Data Warehouse then querying the Incremental Update
+        However, if Smart Connector is using Data Warehouse then querying the Incremental Update
         views in the backend throws an exception, because the view contains the delta table which
         currently has to reside in HDFS.
         I don't believe we can allow the creation of any Incremental Update objects in case a customer
-        switches Gluent Query Engine to point to Data Warehouse after offloading.
+        switches Smart Connector to point to Data Warehouse after offloading.
         For now we will crudely stop all public versions of CDP using Incremental Update
         by prevention based on the use of the HiveServer2 HTTP protocol for connections.
         """
@@ -1182,7 +1182,7 @@ FROM   %(from_db_table)s%(where)s""" % {
             parameters = []
             if row and row[1]:
                 # UDF parameters are embedded in a string, no names for parameters, e.g.:
-                # gluent_bucket(DECIMAL(38,0), SMALLINT)
+                # goe_bucket(DECIMAL(38,0), SMALLINT)
                 # Find all text in the signature between the outer parentheses
                 m = re.search(r"[^(]*\((.*)\)", row[1])
                 if m:
@@ -1196,7 +1196,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         Returns a list of commands executed
         """
 
-        if not self.gluent_udfs_supported():
+        if not self.goe_udfs_supported():
             self._messages.log(
                 "Skipping installation of UDFs due to backend: %s" % self._backend_type
             )

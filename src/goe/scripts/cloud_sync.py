@@ -13,11 +13,11 @@ import os
 import sys
 import traceback
 
-from goe.util.config_file import GluentRemoteConfig, ConfigException
+from goe.util.config_file import GOERemoteConfig, ConfigException
 from goe.util.hs2_connection import hs2_connection, hs2_env_options
 from goe.util.misc_functions import timedelta_to_str, disable_terminal_colors, check_offload_env, check_remote_offload_env
 from goe.util.better_impyla import HiveConnection
-from goe.util.gluent_log import log, init_default_log, get_default_log, close_default_log
+from goe.util.goe_log import log, init_default_log, get_default_log, close_default_log
 
 from goe.cloud.hive_table_backup import HiveTableBackup
 from goe.cloud.cloud_sync_tools import get_databases_and_tables, make_older_than_jmespath
@@ -26,7 +26,7 @@ from goe.offload.offload_messages import OffloadMessages
 
 
 # -----------------------------------------------------------------------
-# EXCEPTIONS 
+# EXCEPTIONS
 # -----------------------------------------------------------------------
 class CloudSyncException(Exception): pass
 
@@ -36,7 +36,7 @@ class CloudSyncException(Exception): pass
 # -----------------------------------------------------------------------
 
 PROG_BANNER = "cloud_sync: Backup, restore and sync Hive/Impala tables to and from remote destinations"
-COPYRIGHT_MSG = "Gluent Inc (c) 2015-2016"
+COPYRIGHT_MSG = "GOE Inc (c) 2015-2016"
 
 # "Source" and "target" are sections in offload configuration file:
 # $OFFLOAD_CONF/offload.conf
@@ -141,7 +141,7 @@ def do_single_table(oper_name, oper_args, db_name, table_name, cfg, args, messag
 
     report_status(oper_name, db_name, table_name, elapsed, args.execute, args)
 
- 
+
 def set_logging(cfg, args):
     """ Set "global" logging parameters
     """
@@ -176,7 +176,7 @@ def parse_args(cfg):
             ret[key.lower()] = value
 
         return ret
-            
+
 
     parser = argparse.ArgumentParser(description=PROG_BANNER, formatter_class=argparse.RawDescriptionHelpFormatter,)
 
@@ -263,7 +263,7 @@ Example 'db' section:
 hdfs_root: %(HDFS_DATA)s
 webhdfs_url: http://localhost:50070
 hdfs_url: hdfs://localhost:8020
-hdfs_user: gluent
+hdfs_user: goe
 hdfs_newdir_permissions: 755
 hadoop_host: localhost
 hadoop_port: 21050
@@ -272,8 +272,8 @@ target: impala
 Example 'backup' (S3) section:
 
 [s3-backup]
-s3_bucket: gluent.backup
-s3_prefix: user/gluent/backup
+s3_bucket: goe.backup
+s3_prefix: user/goe/backup
 server_side_encryption: AES256
 storage_class: REDUCED_REDUNDANCY
 max_concurrency: 1
@@ -338,7 +338,7 @@ Important: If you do NOT specify -x/--execute parameter, the tool only compares 
     # Argument post-processing
     if not args.remote_config_section:
         args.remote_config_section = args.local_config_section if args.clone else DEFAULT_DST
-     
+
     if args.force:
         args.overwrite_files = True
         args.recreate_tables = True
@@ -360,7 +360,7 @@ def main():
     check_remote_offload_env()
 
     # Grab configuration from $OFFLOAD_CONF/offload.conf and read user input
-    cfg = GluentRemoteConfig()
+    cfg = GOERemoteConfig()
     args = parse_args(cfg)
 
     # Print tool header, set logging, etc
@@ -380,7 +380,7 @@ def main():
         close_default_log()
 
     sys.exit(exit_value)
-        
+
 
 #### MAIN PROGRAM BEGINS HERE
 if __name__ == "__main__":

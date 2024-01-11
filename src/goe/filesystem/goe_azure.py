@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" GluentAzure: Azure implementation of GluentDfs
+""" GOEAzure: Azure implementation of GOEDfs
     LICENSE_TEXT
 """
 
@@ -11,17 +11,17 @@ from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import BlobServiceClient
 from google.api_core import retry
 
-from goe.filesystem.gluent_dfs import GluentDfs, GluentDfsDeleteNotComplete, GluentDfsException,\
+from goe.filesystem.goe_dfs import GOEDfs, GOEDfsDeleteNotComplete, GOEDfsException,\
     gen_fs_uri, uri_component_split,\
     OFFLOAD_FS_SCHEME_ABFS, OFFLOAD_FS_SCHEME_ABFSS, \
-    DFS_RETRY_TIMEOUT, DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, GLUENT_DFS_AZURE, URI_SEP
+    DFS_RETRY_TIMEOUT, DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, GOE_DFS_AZURE, URI_SEP
 
 
 ###############################################################################
 # EXCEPTIONS
 ###############################################################################
 
-class GluentAzureTryAgainException(Exception):
+class GOEAzureTryAgainException(Exception):
     pass
 
 
@@ -59,11 +59,11 @@ logger.addHandler(logging.NullHandler())
 
 
 ###############################################################################
-# GluentAzure
+# GOEAzure
 ###############################################################################
 
-class GluentAzure(GluentDfs):
-    """ A Gluent wrapper over Azure Cloud Storage API.
+class GOEAzure(GOEDfs):
+    """ A GOE wrapper over Azure Cloud Storage API.
         https://docs.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob?view=azure-python-previous
         This code is specific to v2.x of the module which we are tied to because of Python 2.7 and the Snowflake client.
         When we upgrade to Python 3 we'll likely end up with a newer version of the Snowflake client and a newer version
@@ -79,9 +79,9 @@ class GluentAzure(GluentDfs):
         assert azure_account_key
         assert messages
 
-        logger.info('Client setup: GluentAzure')
+        logger.info('Client setup: GOEAzure')
 
-        super(GluentAzure, self).__init__(messages, dry_run=dry_run)
+        super(GOEAzure, self).__init__(messages, dry_run=dry_run)
 
         if azure_account_domain and not azure_account_domain.startswith('.'):
             azure_account_domain = '.' + azure_account_domain
@@ -94,7 +94,7 @@ class GluentAzure(GluentDfs):
         self._azure_account_name = azure_account_name
         self._azure_account_domain = azure_account_domain
         self._db_path_suffix = db_path_suffix
-        self.dfs_mechanism = GLUENT_DFS_AZURE
+        self.dfs_mechanism = GOE_DFS_AZURE
         self.backend_dfs = 'Azure'
 
     ###########################################################################
@@ -136,10 +136,10 @@ class GluentAzure(GluentDfs):
     ###########################################################################
 
     def chgrp(self, dfs_path, group):
-        raise NotImplementedError('chgrp() not implemented for GluentAzure')
+        raise NotImplementedError('chgrp() not implemented for GOEAzure')
 
     def chmod(self, dfs_path, mode):
-        raise NotImplementedError('chmod() not implemented for GluentAzure')
+        raise NotImplementedError('chmod() not implemented for GOEAzure')
 
     def client(self):
         return self._client
@@ -159,9 +159,9 @@ class GluentAzure(GluentDfs):
         self.debug('Copying to target scheme/container/path: %s' % str([scheme, container, target_path]))
         if not self._dry_run:
             if not self._container_exists(container):
-                raise GluentDfsException('Container does not exist: %s' % container)
+                raise GOEDfsException('Container does not exist: %s' % container)
             if self._blob_exists(container, target_path) and not overwrite:
-                raise GluentDfsException('Cannot copy file over existing file: %s' % target_path)
+                raise GOEDfsException('Cannot copy file over existing file: %s' % target_path)
             container_client = self._client.get_container_client(container)
             with open(local_path, 'rb') as data:
                 container_client.upload_blob(name=target_path, data=data, overwrite=overwrite)
@@ -176,13 +176,13 @@ class GluentAzure(GluentDfs):
         self.debug('Copying from scheme/container/path: %s' % str([scheme, container, path]))
         if not self._dry_run:
             if file_exists(local_path) and not overwrite:
-                raise GluentDfsException('Cannot copy file over existing file: %s' % local_path)
+                raise GOEDfsException('Cannot copy file over existing file: %s' % local_path)
             blob_client = self._client.get_blob_client(container, blob=path)
             with open(local_path, 'wb') as file:
                 data = blob_client.download_blob()
                 file.write(data.readall())
 
-    @retry.Retry(predicate=retry.if_exception_type(GluentDfsDeleteNotComplete, GluentAzureTryAgainException),
+    @retry.Retry(predicate=retry.if_exception_type(GOEDfsDeleteNotComplete, GOEAzureTryAgainException),
                  deadline=DFS_RETRY_TIMEOUT)
     def delete(self, dfs_path, recursive=False):
         """ Delete a file or directory and contents """
@@ -211,7 +211,7 @@ class GluentAzure(GluentDfs):
             self._post_cloud_delete_wait(scheme)
             if self._blob_exists(container, path):
                 self.debug('Azure delete incomplete, retrying')
-                raise GluentDfsDeleteNotComplete
+                raise GOEDfsDeleteNotComplete
         else:
             self.debug('Recursive delete using directory prefix: %s' % path)
             if not path.endswith(URI_SEP):
@@ -222,7 +222,7 @@ class GluentAzure(GluentDfs):
             except HttpResponseError as exc:
                 if 'try again after some time' in str(exc):
                     self.debug('Azure list_blobs timeout, retrying operation:\n{}'.format(str(exc)))
-                    raise GluentAzureTryAgainException
+                    raise GOEAzureTryAgainException
                 else:
                     raise
 
@@ -256,7 +256,7 @@ class GluentAzure(GluentDfs):
                 blobs_pending_delete = self._list_blob_names(container, path, recursive=True)
                 if blobs_pending_delete:
                     self.debug('Azure delete incomplete, retrying')
-                    raise GluentDfsDeleteNotComplete
+                    raise GOEDfsDeleteNotComplete
         # If we get this far then it worked
         return True
 
@@ -284,7 +284,7 @@ class GluentAzure(GluentDfs):
             path += URI_SEP
         if self._client:
             if not self._container_exists(container):
-                raise GluentDfsException('Container does not exist: %s' % container)
+                raise GOEDfsException('Container does not exist: %s' % container)
             blob_names = self._list_blob_names(container, path)
             # Exclude the directory we are checking contents of
             blob_names = [_ for _ in blob_names if _ != path]
@@ -292,10 +292,10 @@ class GluentAzure(GluentDfs):
             return [self.gen_uri(scheme, container, _) for _ in blob_names]
 
     def list_snapshottable_dirs(self):
-        raise NotImplementedError('list_snapshottable_dirs() not implemented for GluentAzure')
+        raise NotImplementedError('list_snapshottable_dirs() not implemented for GOEAzure')
 
     def list_snapshots(self, snapshottable_dir):
-        raise NotImplementedError('list_snapshots() not implemented for GluentAzure')
+        raise NotImplementedError('list_snapshots() not implemented for GOEAzure')
 
     def mkdir(self, dfs_path):
         """ No mkdir on Azure block storage """
@@ -310,7 +310,7 @@ class GluentAzure(GluentDfs):
         if self._dry_run:
             return None
         if not self._blob_exists(container, path):
-            raise GluentDfsException('Cannot download non-existent file: %s' % path)
+            raise GOEDfsException('Cannot download non-existent file: %s' % path)
         blob_client = self._client.get_blob_client(container, blob=path)
         data = blob_client.download_blob()
         content = data.readall()
@@ -319,12 +319,12 @@ class GluentAzure(GluentDfs):
         return content
 
     def rename(self, hdfs_src_path, hdfs_dst_path):
-        raise NotImplementedError('rename() not implemented for GluentAzure')
+        raise NotImplementedError('rename() not implemented for GOEAzure')
 
     def rmdir(self, dfs_path, recursive=False):
         return self.delete(dfs_path, recursive=recursive)
 
-    @retry.Retry(predicate=retry.if_exception_type(GluentAzureTryAgainException),
+    @retry.Retry(predicate=retry.if_exception_type(GOEAzureTryAgainException),
                  deadline=DFS_RETRY_TIMEOUT)
     def stat(self, dfs_path):
         assert dfs_path
@@ -339,7 +339,7 @@ class GluentAzure(GluentDfs):
         self.debug('Checking status of scheme/container/path: %s' % str([scheme, container, path]))
 
         if not self._container_exists(container):
-            raise GluentDfsException('Container does not exist: %s' % container)
+            raise GOEDfsException('Container does not exist: %s' % container)
 
         # We don't want a trailing '/' which would send us down a path level
         path = path.rstrip(URI_SEP)
@@ -349,7 +349,7 @@ class GluentAzure(GluentDfs):
         except HttpResponseError as exc:
             if 'OperationTimedOut' in str(exc):
                 self.debug('Azure list_blobs timeout, retrying operation:\n{}'.format(str(exc)))
-                raise GluentAzureTryAgainException
+                raise GOEAzureTryAgainException
             else:
                 raise
         matched_files = [_ for _ in blobs if _.name == path]
@@ -358,7 +358,7 @@ class GluentAzure(GluentDfs):
             return {'length': 0, 'permission': None, 'type': DFS_TYPE_DIRECTORY}
         elif len(matched_files) > 1:
             self.debug('Multiple file matches: %s' % str(matched_files))
-            raise GluentDfsException('Path matches multiple files: %s' % dfs_path)
+            raise GOEDfsException('Path matches multiple files: %s' % dfs_path)
         elif matched_files:
             return {'length': matched_files[0].size, 'permission': None, 'type': DFS_TYPE_FILE}
         else:
@@ -374,9 +374,9 @@ class GluentAzure(GluentDfs):
         if self._dry_run:
             return None
         if not self._container_exists(container):
-            raise GluentDfsException('Container does not exist: %s' % container)
+            raise GOEDfsException('Container does not exist: %s' % container)
 
         if self._blob_exists(container, path) and not overwrite:
-            raise GluentDfsException('Cannot write to existing file: %s' % path)
+            raise GOEDfsException('Cannot write to existing file: %s' % path)
         container_client = self._client.get_container_client(container)
         container_client.upload_blob(name=path, data=data, overwrite=overwrite)

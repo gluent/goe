@@ -16,7 +16,7 @@ from typing import Optional
 import cx_Oracle as cxo
 from numpy import datetime64
 
-# Gluent
+# GOE
 from goe.offload import offload_constants
 from goe.offload.column_metadata import match_table_column
 from goe.offload.frontend_api import (
@@ -545,8 +545,8 @@ class OracleFrontendApi(FrontendApiInterface):
     def _frontend_capabilities(self):
         return offload_constants.ORACLE_FRONTEND_CAPABILITIES
 
-    def _gdp_db_component_version(self):
-        logger.debug("Fetching GDP DB component version")
+    def _goe_db_component_version(self):
+        logger.debug("Fetching GOE DB component version")
         return self._execute_plsql_function("offload.version", return_type=str)
 
     def _get_ddl(

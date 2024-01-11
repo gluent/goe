@@ -11,25 +11,25 @@ from typing import Optional, Union
 
 from goe.offload.column_metadata import (
     CanonicalColumn,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_TIME,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_DATE,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_TIME,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_VARIABLE_STRING,
 )
 from goe.offload.microsoft.mssql_column import (
     MSSQLColumn,
@@ -107,14 +107,14 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
             data_type = column_or_type
         return bool(data_type in (MSSQL_TYPE_DECIMAL, MSSQL_TYPE_NUMERIC))
 
-    def _gl_chars_column_definitions(
+    def _goe_chars_column_definitions(
         self, ascii_only=False, all_chars_notnull=False, supported_canonical_types=None
     ) -> list:
         raise NotImplementedError(
-            "MSSQL _gl_chars_column_definitions() not yet implemented"
+            "MSSQL _goe_chars_column_definitions() not yet implemented"
         )
 
-    def _gl_type_mapping_column_definitions(
+    def _goe_type_mapping_column_definitions(
         self,
         max_backend_precision,
         max_backend_scale,
@@ -122,10 +122,10 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         filter_column=None,
     ):
         raise NotImplementedError(
-            "MSSQL _gl_type_mapping_column_definitions() not yet implemented"
+            "MSSQL _goe_type_mapping_column_definitions() not yet implemented"
         )
 
-    def _gl_types_column_definitions(
+    def _goe_types_column_definitions(
         self,
         all_chars_ascii7=False,
         all_chars_notnull=False,
@@ -133,10 +133,10 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         include_interval_columns=True,
     ) -> list:
         raise NotImplementedError(
-            "MSSQL _gl_types_column_definitions() not yet implemented"
+            "MSSQL _goe_types_column_definitions() not yet implemented"
         )
 
-    def _gl_wide_column_definitions(
+    def _goe_wide_column_definitions(
         self,
         ascii_only=False,
         all_chars_notnull=False,
@@ -144,7 +144,7 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         backend_max_test_column_count=None,
     ) -> list:
         raise NotImplementedError(
-            "MSSQL _gl_wide_column_definitions() not yet implemented"
+            "MSSQL _goe_wide_column_definitions() not yet implemented"
         )
 
     def _populate_generated_test_table(
@@ -264,7 +264,7 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
     def get_test_table_owner(self, expected_schema: str, table_name: str) -> str:
         raise NotImplementedError("MSSQL get_test_table_owner() not yet implemented")
 
-    def gl_type_mapping_generated_table_col_specs(
+    def goe_type_mapping_generated_table_col_specs(
         self,
         max_backend_precision,
         max_backend_scale,
@@ -273,7 +273,7 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
         ascii_only=False,
     ):
         raise NotImplementedError(
-            "MSSQL gl_type_mapping_generated_table_col_specs() not yet implemented"
+            "MSSQL goe_type_mapping_generated_table_col_specs() not yet implemented"
         )
 
     def host_compare_sql_projection(self, column_list: list) -> str:

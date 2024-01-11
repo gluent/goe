@@ -14,7 +14,7 @@ from gunicorn.arbiter import Arbiter
 from uvicorn.main import Server
 from uvicorn.workers import UvicornWorker as BaseUvicornWorker
 
-# Gluent
+# GOE
 from goe.listener.asgi import get_app
 from goe.listener.config import settings
 

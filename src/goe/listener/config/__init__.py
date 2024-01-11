@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Gluent Gluent Console"""
-# Gluent
+"""GOE Console"""
+# GOE
 from goe.listener.config.application import settings
 from goe.listener.config.router import router
 

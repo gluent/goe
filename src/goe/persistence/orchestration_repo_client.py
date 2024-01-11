@@ -12,7 +12,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
-# Gluent
+# GOE
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_source_data import OffloadSourcePartition
@@ -300,7 +300,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         Record the start of an orchestration command in the repo.
         Returns the numeric identifier of the history record.
         execution_id: The UUID identifying the command execution.
-        command_type: Valid code from GLUENT_REPO.COMMAND_TYPES.
+        command_type: Valid code from GOE_REPO.COMMAND_TYPES.
         command_input: Command line or API JSON. The user provided input.
         parameters: Full set of operational parameters as a dictionary.
         """
@@ -310,7 +310,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         """
         Record the end of an orchestration command along with its status.
         command_execution_id: The identifier returned from start_command, not the higher level execution id.
-        status: Valid status code from GLUENT_REPO.STATUS table.
+        status: Valid status code from GOE_REPO.STATUS table.
         """
 
     @abstractmethod
@@ -321,8 +321,8 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         Record the start of a discrete step of an orchestration command in the repo.
         Returns the numeric identifier of the history record for use in end_command_step().
         execution_id: The UUID identifying the command execution.
-        command_type: Valid code from GLUENT_REPO.COMMAND_TYPE.
-        command_step: Valid code from GLUENT_REPO.COMMAND_STEP.
+        command_type: Valid code from GOE_REPO.COMMAND_TYPE.
+        command_step: Valid code from GOE_REPO.COMMAND_STEP.
         """
 
     @abstractmethod
@@ -333,7 +333,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         Record the end of an orchestration command step along with its status.
         command_step_id: The identifier returned from start_command_step.
         step_details: A dictionary of key/value pairs used to record step outcomes.
-        status: Valid status code from GLUENT_REPO.STATUS table.
+        status: Valid status code from GOE_REPO.STATUS table.
         """
 
     @abstractmethod
@@ -379,7 +379,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
     #
     @abstractmethod
     def get_offloadable_schemas(self):
-        """Returns a dict of all schemas in the database (excluding Gluent-created ones)
+        """Returns a dict of all schemas in the database (excluding GOE-created ones)
         and whether they currently have a hybrid schema created.
         """
 

@@ -7,7 +7,7 @@
 from copy import copy
 import pytest
 
-from goe.gluent import OffloadOperation
+from goe.goe import OffloadOperation
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_functions import (

@@ -69,9 +69,9 @@ class TestFrontendApi(TestCase):
         self.assertIsInstance(self.api.canonical_float_supported(), bool)
         self.assertIsInstance(self.api.canonical_time_supported(), bool)
         self.assertIsInstance(self.api.case_sensitive_identifiers(), bool)
-        self.assertIsInstance(self.api.gdp_has_db_code_component(), bool)
-        self.assertIsInstance(self.api.gluent_join_pushdown_supported(), bool)
-        self.assertIsInstance(self.api.gluent_offload_status_report_supported(), bool)
+        self.assertIsInstance(self.api.goe_has_db_code_component(), bool)
+        self.assertIsInstance(self.api.goe_join_pushdown_supported(), bool)
+        self.assertIsInstance(self.api.goe_offload_status_report_supported(), bool)
         self.assertIsInstance(self.api.hybrid_schema_supported(), bool)
         self.assertIsInstance(self.api.parameterized_queries_supported(), bool)
 
@@ -168,12 +168,12 @@ class TestFrontendApi(TestCase):
         if self.connect_to_frontend:
             self.assertIsNotNone(self.api.frontend_version())
 
-    def _test_gdp_db_component_version(self):
+    def _test_goe_db_component_version(self):
         if self.connect_to_frontend:
-            if self.api.gdp_has_db_code_component():
-                self.assertIsNotNone(self.api.gdp_db_component_version())
+            if self.api.goe_has_db_code_component():
+                self.assertIsNotNone(self.api.goe_db_component_version())
             else:
-                self.assertIsNone(self.api.gdp_db_component_version())
+                self.assertIsNone(self.api.goe_db_component_version())
 
     def _test_get_column_names(self):
         if self.connect_to_frontend:
@@ -318,7 +318,7 @@ class TestFrontendApi(TestCase):
         self._test_execute_query_fetch_one()
         self._test_frontend_db_name()
         self._test_frontend_version()
-        self._test_gdp_db_component_version()
+        self._test_goe_db_component_version()
         self._test_get_column_names()
         self._test_get_columns()
         self._test_get_db_unique_name()

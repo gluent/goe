@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" Gluent system environment extractor
+""" GOE system environment extractor
 
     LICENSE_TEXT
 """
@@ -61,7 +61,7 @@ logger.addHandler(logging.NullHandler())  # Disabling logging by default
 
 class SystemEnvironment(object):
     """SystemEnvironment: Extract and present relevant pieces
-    from (Gluent) system environment
+    from (GOE) system environment
 
     parent class
     """
@@ -165,7 +165,7 @@ class SystemEnvironment(object):
             return HADOOP_TYPE_UNKNOWN
 
     def _get_goe_hadoop_distro(self):
-        """Get HADOOP distribution with Gluent overrides"""
+        """Get HADOOP distribution with GOE overrides"""
         if "BACKEND_DISTRIBUTION" in os.environ:
             return os.environ["BACKEND_DISTRIBUTION"]
         else:
@@ -598,14 +598,14 @@ def system_environment(env_type, offload_root=None):
 
 
 def goe_hadoop_distro():
-    """Return hadoop distribution (with optional Gluent overrides)"""
+    """Return hadoop distribution (with optional GOE overrides)"""
     return SystemEnvironment().goe_hadoop_distro
 
 
 if __name__ == "__main__":
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
 
     def usage(prog_name):
         print("%s: [dev|prod] [<root>] [debug level]" % prog_name)
@@ -621,7 +621,7 @@ if __name__ == "__main__":
         env_root = sys.argv[2] if len(sys.argv) >= 3 else None
 
         log_level = sys.argv[3].upper() if len(sys.argv) > 3 else "CRITICAL"
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         environment = system_environment(env_type, env_root)
         print(environment.report())

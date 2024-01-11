@@ -7,12 +7,12 @@ from typing import Any, Dict, Optional
 from pydantic import validator
 from pydantic.types import SecretStr
 
-# Gluent
+# GOE
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.listener.schemas.base import BaseSettings
 
 BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent.parent
-APP_DIR: Path = Path(BASE_DIR / "gluentlib" / "listener")
+APP_DIR: Path = Path(BASE_DIR / "listener")
 CONFIG_DIR: Path = Path(APP_DIR / "config")
 FRONTEND_DIR: Path = Path(APP_DIR / "web")
 
@@ -43,7 +43,7 @@ class ListenerSettings(BaseSettings):
     redis_ssl: Optional[bool] = global_config.listener_redis_use_ssl
     redis_ssl_cert: Optional[str] = global_config.listener_redis_ssl_cert
     redis_use_sentinel: Optional[bool] = False
-    redis_sentinel_master: str = "gluent-listener"
+    redis_sentinel_master: str = "goe-listener"
 
     @property
     def redis_url(self) -> str:

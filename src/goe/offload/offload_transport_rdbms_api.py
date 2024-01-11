@@ -29,7 +29,7 @@ TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE = 'id_range'
 # TODO Should this have a generic name, e.g. _SYSTEM_SHARD?
 TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_TERADATA_AMP = 'amp'
 TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_TERADATA_HASHAMP = 'hashamp'
-TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN = 'gl_offload_batch'
+TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN = 'goe_offload_batch'
 
 
 ###########################################################################
@@ -57,7 +57,7 @@ class OffloadTransportRdbmsApiInterface(metaclass=ABCMeta):
         self._offload_transport_rdbms_session_parameters = offload_options.offload_transport_rdbms_session_parameters
         self._rdbms_adm_conn = None
         self._rdbms_app_conn = None
-        self._fixed_gluent_parameters = None
+        self._fixed_goe_parameters = None
         self._app_user = None
 
     ###########################################################################

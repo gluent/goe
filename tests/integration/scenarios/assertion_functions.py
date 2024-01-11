@@ -365,7 +365,7 @@ def synthetic_part_col_name(
     ).upper()
 
 
-def date_gl_part_column_name(backend_api, source_col_name, granularity_override=None):
+def date_goe_part_column_name(backend_api, source_col_name, granularity_override=None):
     """Return a synthetic partition column name based on backend defaults.
     I feel this is a bit short term because we have some data types that result
     in native partitioning rather than synthetic columns but at least the

@@ -3,7 +3,7 @@ Functions used as entry points for Orchestration CLI commands.
 LICENSE_TEXT
 """
 
-from goe.gluent import init, init_log, get_log_fh, log, normalise_options, OFFLOAD_OP_NAME, verbose
+from goe.goe import init, init_log, get_log_fh, log, normalise_options, OFFLOAD_OP_NAME, verbose
 from goe.orchestration.orchestration_runner import OrchestrationRunner
 from goe.config.orchestration_config import OrchestrationConfig
 

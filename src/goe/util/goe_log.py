@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
-""" gluent_log: Gluent general logging routines
+""" goe_log: GOE general logging routines
 
-    Replacement of 'loggers' from gluent.py that avoid globals
+    Replacement of 'loggers' from goe.py that avoid globals
     and do not rely on 'expected' parameter structure
 
     LICENSE_TEXT
@@ -192,7 +192,7 @@ if __name__ == "__main__":
 
     from functools import partial
 
-    from goe.util.gluent_log import log as log_f, step as step_f, init_default_log, get_default_log, \
+    from goe.util.goe_log import log as log_f, step as step_f, init_default_log, get_default_log, \
         close_default_log
 
 
@@ -230,7 +230,7 @@ if __name__ == "__main__":
         print("== END CUSTOM OPTIONS")
 
         options.log_path = "/tmp"
-        init_default_log("gluent_log", options)
+        init_default_log("goe_log", options)
 
         print("\n\n== DUP TO LOG FILE")
         log("Hello, maties, I'm colorless !")

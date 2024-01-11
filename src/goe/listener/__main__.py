@@ -3,7 +3,7 @@
 """Application Web Server Gateway Interface - gunicorn."""
 
 
-# Gluent
+# GOE
 from goe.listener.config.application import settings
 from goe.listener.wsgi import run_wsgi
 
@@ -13,7 +13,7 @@ def run_listener(
     port: int = settings.port,
     workers: int = settings.http_workers,
 ):
-    """Run Gluent Listener."""
+    """Run GOE Listener."""
     run_wsgi(host, port, workers)
 
 

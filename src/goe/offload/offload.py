@@ -10,7 +10,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_BASE_TABLE,
+    DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
 )
 from goe.offload.column_metadata import (
     get_column_names,
@@ -204,11 +204,11 @@ def check_table_structure(frontend_table, backend_table, messages: OffloadMessag
 def create_final_backend_table_step(
     offload_target_table,
     offload_operation,
-    gluent_object_type=DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_BASE_TABLE,
+    goe_object_type=DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
 ):
     """Create the final backend table"""
     if not offload_target_table.table_exists() or offload_operation.reset_backend_table:
-        offload_target_table.create_backend_table_step(gluent_object_type)
+        offload_target_table.create_backend_table_step(goe_object_type)
     else:
         check_and_alter_backend_sort_columns(offload_target_table, offload_operation)
 

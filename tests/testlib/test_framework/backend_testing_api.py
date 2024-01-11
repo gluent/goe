@@ -15,13 +15,13 @@ import time
 from goe.offload.column_metadata import (
     CanonicalColumn,
     match_table_column,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_VARIABLE_STRING,
+    GOE_TYPE_DATE,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_VARIABLE_STRING,
 )
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
@@ -166,11 +166,11 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def _canonical_integer_precision(self, data_type):
         assert data_type
         precision_map = {
-            GLUENT_TYPE_INTEGER_1: 2,
-            GLUENT_TYPE_INTEGER_2: 4,
-            GLUENT_TYPE_INTEGER_4: 9,
-            GLUENT_TYPE_INTEGER_8: 18,
-            GLUENT_TYPE_INTEGER_38: 38,
+            GOE_TYPE_INTEGER_1: 2,
+            GOE_TYPE_INTEGER_2: 4,
+            GOE_TYPE_INTEGER_4: 9,
+            GOE_TYPE_INTEGER_8: 18,
+            GOE_TYPE_INTEGER_38: 38,
         }
         return precision_map.get(data_type)
 
@@ -186,8 +186,8 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
             "No source column found for test partitioned table"
         )
 
-    def _gl_type_mapping_column_name(self, *args, uppercase=True):
-        """The case of columns is not particularly important, GDP will maintain either.
+    def _goe_type_mapping_column_name(self, *args, uppercase=True):
+        """The case of columns is not particularly important, GOE will maintain either.
         However it looks nicer if the COL_ prefix and datatype elements are the same case, hence uppercase arg.
         """
         assert args
@@ -196,7 +196,7 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         col_name = col_name.replace("LARGE_BINARY", "LARGE_BIN")
         return col_name.upper() if uppercase else col_name.lower()
 
-    def _gl_type_mapping_interval_ds_test_values(self):
+    def _goe_type_mapping_interval_ds_test_values(self):
         """Just some test values used by all backends."""
         return [
             "+689991265 07:06:06.298066000",
@@ -204,7 +204,7 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
             "+713917392 23:02:50",
         ]
 
-    def _gl_type_mapping_interval_ym_test_values(self):
+    def _goe_type_mapping_interval_ym_test_values(self):
         """Just some test values used by all backends."""
         return ["-104258952-04", "+215028206-04", "+99-00"]
 
@@ -564,36 +564,36 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def get_view_ddl(self, db_name, view_name):
         return self._db_api.get_view_ddl(db_name, view_name)
 
-    def gl_identifiers_generated_table_col_specs(self):
+    def goe_identifiers_generated_table_col_specs(self):
         """Return a list of column specs matching how test.generated_tables expects and a list of column names.
         This is not how we want to pass column specs around but it matches existing code in test.
         Returned lists are sorted by column name.
         """
-        gl_identifiers_cols = []
+        goe_identifiers_cols = []
         canonical_columns = [
-            CanonicalColumn("COL_NUM_UPPER", GLUENT_TYPE_INTEGER_8),
+            CanonicalColumn("COL_NUM_UPPER", GOE_TYPE_INTEGER_8),
             CanonicalColumn(
-                "COL_STR_UPPER", GLUENT_TYPE_VARIABLE_STRING, data_length=10
+                "COL_STR_UPPER", GOE_TYPE_VARIABLE_STRING, data_length=10
             ),
-            CanonicalColumn("COL_DATE_UPPER", GLUENT_TYPE_DATE),
-            CanonicalColumn("col_num_lower", GLUENT_TYPE_INTEGER_8),
+            CanonicalColumn("COL_DATE_UPPER", GOE_TYPE_DATE),
+            CanonicalColumn("col_num_lower", GOE_TYPE_INTEGER_8),
             CanonicalColumn(
-                "col_str_lower", GLUENT_TYPE_VARIABLE_STRING, data_length=10
+                "col_str_lower", GOE_TYPE_VARIABLE_STRING, data_length=10
             ),
-            CanonicalColumn("col_date_lower", GLUENT_TYPE_DATE),
-            CanonicalColumn("Col_Num_CamelCase", GLUENT_TYPE_INTEGER_8),
+            CanonicalColumn("col_date_lower", GOE_TYPE_DATE),
+            CanonicalColumn("Col_Num_CamelCase", GOE_TYPE_INTEGER_8),
             CanonicalColumn(
-                "Col_Str_CamelCase", GLUENT_TYPE_VARIABLE_STRING, data_length=10
+                "Col_Str_CamelCase", GOE_TYPE_VARIABLE_STRING, data_length=10
             ),
-            CanonicalColumn("Col_Date_CamelCase", GLUENT_TYPE_DATE),
+            CanonicalColumn("Col_Date_CamelCase", GOE_TYPE_DATE),
         ]
         # Commented out lines below until GOE-2136 is actioned
         # if not self.identifier_contains_invalid_characters('col space'):
         #     # The backend supports spaces in names so add some columns.
         #     # This is a good test that all generated SQL has column enclosure.
-        #     canonical_columns.extend([CanonicalColumn('COL NUM SPACE', GLUENT_TYPE_INTEGER_8),
-        #                               CanonicalColumn('COL STR SPACE', GLUENT_TYPE_DATE),
-        #                               CanonicalColumn('COL DATE SPACE', GLUENT_TYPE_DATE)])
+        #     canonical_columns.extend([CanonicalColumn('COL NUM SPACE', GOE_TYPE_INTEGER_8),
+        #                               CanonicalColumn('COL STR SPACE', GOE_TYPE_DATE),
+        #                               CanonicalColumn('COL DATE SPACE', GOE_TYPE_DATE)])
         for column in canonical_columns:
             backend_column = self._db_api.from_canonical_column(column)
             if column.is_number_based():
@@ -602,18 +602,18 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
                 literals = ["blah1", "blah2", "blah3"]
             else:
                 literals = None
-            gl_identifiers_cols.append({"column": backend_column, "literals": literals})
-        gl_identifiers_names = [_["column"].name for _ in gl_identifiers_cols]
-        return gl_identifiers_cols, gl_identifiers_names
+            goe_identifiers_cols.append({"column": backend_column, "literals": literals})
+        goe_identifiers_names = [_["column"].name for _ in goe_identifiers_cols]
+        return goe_identifiers_cols, goe_identifiers_names
 
-    def gl_type_mapping_test_columns(self):
+    def goe_type_mapping_test_columns(self):
         """Return a list of column names defined for testing"""
-        definitions = self._gl_type_mapping_column_definitions()
+        definitions = self._goe_type_mapping_column_definitions()
         return sorted(definitions.keys())
 
-    def gl_type_mapping_present_options(self):
+    def goe_type_mapping_present_options(self):
         """Return a dictionary of present datatype control options/values for testing purposes."""
-        definitions = self._gl_type_mapping_column_definitions()
+        definitions = self._goe_type_mapping_column_definitions()
         present_options = {}
         for col_dict in definitions.values():
             if col_dict.get("present_options"):
@@ -642,20 +642,20 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
                         present_options[opt] = opts[opt]
         return present_options
 
-    def gluent_column_transformations_supported(self):
-        return self._db_api.gluent_column_transformations_supported()
+    def goe_column_transformations_supported(self):
+        return self._db_api.goe_column_transformations_supported()
 
-    def gluent_join_pushdown_supported(self):
-        return self._db_api.gluent_join_pushdown_supported()
+    def goe_join_pushdown_supported(self):
+        return self._db_api.goe_join_pushdown_supported()
 
-    def gluent_materialized_join_supported(self):
-        return self._db_api.gluent_materialized_join_supported()
+    def goe_materialized_join_supported(self):
+        return self._db_api.goe_materialized_join_supported()
 
-    def gluent_partition_functions_supported(self):
-        return self._db_api.gluent_partition_functions_supported()
+    def goe_partition_functions_supported(self):
+        return self._db_api.goe_partition_functions_supported()
 
-    def gluent_sequence_table_supported(self):
-        return self._db_api.gluent_sequence_table_supported()
+    def goe_sequence_table_supported(self):
+        return self._db_api.goe_sequence_table_supported()
 
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)
@@ -766,8 +766,8 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def max_table_name_length(self):
         return self._db_api.max_table_name_length()
 
-    def gl_wide_max_test_column_count(self):
-        """Used to limit the columns in frontend table GL_WIDE. Synapse has an override.
+    def goe_wide_max_test_column_count(self):
+        """Used to limit the columns in frontend table GOE_WIDE. Synapse has an override.
         None means there's no specific limit, i.e. we'll leave it up to the frontend.
         """
         return None
@@ -926,7 +926,7 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     # Enforced methods/properties
 
     @abstractmethod
-    def _gl_type_mapping_column_definitions(self, filter_column=None):
+    def _goe_type_mapping_column_definitions(self, filter_column=None):
         pass
 
     @abstractmethod
@@ -989,7 +989,7 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def create_backend_offload_location(self, gluent_user=None):
+    def create_backend_offload_location(self, goe_user=None):
         """In old parlance this will create HDFS_DATA in HDFS
         For non-Hadoop backends it may (or may not) do something else
         """
@@ -1061,7 +1061,7 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         """Return a list of tuples of GOE offload predicates and expected backend predicate"""
 
     @abstractmethod
-    def gl_type_mapping_generated_table_col_specs(self):
+    def goe_type_mapping_generated_table_col_specs(self):
         """Return a list of column specs matching how test.generated_tables expects and a list of column names.
         This is not how we want to pass column specs around but it matches existing code in test.
         Returned lists are sorted by column name.

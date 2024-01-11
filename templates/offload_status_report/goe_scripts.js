@@ -1,9 +1,9 @@
 {% import "offload_status_report/macros.jinja" as macros %}
 
 <script>
-var GluentNS = {}
+var GOENS = {}
 
-GluentNS['DATABASE'] = {
+GOENS['DATABASE'] = {
     RETAINED_BYTES: {{data['_RETAINED_BYTES']}},
     RECLAIMABLE_BYTES: {{data['_RECLAIMABLE_BYTES']}},
     RETAINED_PARTS: {{data['_RETAINED_PARTS']}},
@@ -13,7 +13,7 @@ GluentNS['DATABASE'] = {
 };
 
 {% for schema, schema_values in data.items()|sort if not schema.startswith('_') %}
-GluentNS['{{schema}}'] = {
+GOENS['{{schema}}'] = {
     RETAINED_BYTES: {{schema_values['_RETAINED_BYTES']}},
     RECLAIMABLE_BYTES: {{schema_values['_RECLAIMABLE_BYTES']}},
     OFFLOADED_BYTES: {{schema_values['_OFFLOADED_BYTES']}},
@@ -60,25 +60,25 @@ $(document).ready(function() {
             var option_selected = $("input[name='optradio'][type=radio]:checked").val();
 
             if (option_selected == 'size') {
-                var retained = GluentNS[schema_name].RETAINED_BYTES;
-                var reclaimable = GluentNS[schema_name].RECLAIMABLE_BYTES;
-                var offloaded = GluentNS[schema_name].OFFLOADED_BYTES;
+                var retained = GOENS[schema_name].RETAINED_BYTES;
+                var reclaimable = GOENS[schema_name].RECLAIMABLE_BYTES;
+                var offloaded = GOENS[schema_name].OFFLOADED_BYTES;
                 var retained_display = (retained / Math.pow(1024, 3)).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' GB'
                 var reclaimable_display = (reclaimable / Math.pow(1024, 3)).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' GB'
                 var rdbms_total_display = (Math.round(retained / Math.pow(1024, 3) * 100) / 100 + Math.round(reclaimable / Math.pow(1024, 3) * 100) / 100).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' GB'
                 var offloaded_display = (offloaded / Math.pow(1024, 3)).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' GB'
             } else if (option_selected == 'partitions') {
-                var retained = GluentNS[schema_name].RETAINED_PARTS;
-                var reclaimable = GluentNS[schema_name].RECLAIMABLE_PARTS;
-                var offloaded = GluentNS[schema_name].OFFLOADED_PARTS;
+                var retained = GOENS[schema_name].RETAINED_PARTS;
+                var reclaimable = GOENS[schema_name].RECLAIMABLE_PARTS;
+                var offloaded = GOENS[schema_name].OFFLOADED_PARTS;
                 var retained_display = retained.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 var reclaimable_display = reclaimable.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 var rdbms_total_display = (retained + reclaimable).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 var offloaded_display = offloaded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
             } else if (option_selected == 'rows') {
-                var retained = GluentNS[schema_name].RETAINED_ROWS;
-                var reclaimable = GluentNS[schema_name].RECLAIMABLE_ROWS;
-                var offloaded = GluentNS[schema_name].OFFLOADED_ROWS;
+                var retained = GOENS[schema_name].RETAINED_ROWS;
+                var reclaimable = GOENS[schema_name].RECLAIMABLE_ROWS;
+                var offloaded = GOENS[schema_name].OFFLOADED_ROWS;
                 var retained_display = retained.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 var reclaimable_display = reclaimable.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 var rdbms_total_display = (retained + reclaimable).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -122,9 +122,9 @@ $(document).ready(function() {
         bindto: '#reclaim_partitions_chart',
         data: {
             columns: [
-                ['Reclaimable', GluentNS['DATABASE'].RECLAIMABLE_PARTS],
-                ['Retained', GluentNS['DATABASE'].RETAINED_PARTS],
-                ['Total', parseInt(GluentNS['DATABASE'].RECLAIMABLE_PARTS) + parseInt(GluentNS['DATABASE'].RETAINED_PARTS)]
+                ['Reclaimable', GOENS['DATABASE'].RECLAIMABLE_PARTS],
+                ['Retained', GOENS['DATABASE'].RETAINED_PARTS],
+                ['Total', parseInt(GOENS['DATABASE'].RECLAIMABLE_PARTS) + parseInt(GOENS['DATABASE'].RETAINED_PARTS)]
             ],
             type: 'bar',
             // Total is not another bar but a line
@@ -192,7 +192,7 @@ $(document).ready(function() {
             y = (parseFloat(a0) / 2) + parseFloat(a.attr('y'));
 
             a.html('');
-            a.append('tspan').text(GluentNS['DATABASE'].RECLAIMABLE_PARTS.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")).attr('y', y).attr('x', '50%');
+            a.append('tspan').text(GOENS['DATABASE'].RECLAIMABLE_PARTS.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")).attr('y', y).attr('x', '50%');
             a.append('tspan').text('RECLAIMABLE').attr('dy', '1.5em').attr('x', '50%');
 
             b0 = d3.select('#reclaim_partitions_chart g.c3-chart-bars g.c3-target-Retained')[0][0].getBBox().height;
@@ -200,7 +200,7 @@ $(document).ready(function() {
             y = (parseFloat(b0) / 2) + parseFloat(b.attr('y'));
 
             b.html('');
-            b.append('tspan').text(GluentNS['DATABASE'].RETAINED_PARTS.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")).attr('y', y).attr('x', '50%');
+            b.append('tspan').text(GOENS['DATABASE'].RETAINED_PARTS.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")).attr('y', y).attr('x', '50%');
             b.append('tspan').text('RETAINED').attr('dy', '1.5em').attr('x', '50%');
         }
     });
@@ -209,9 +209,9 @@ $(document).ready(function() {
         bindto: '#reclaim_rows_chart',
         data: {
             columns: [
-                ['Reclaimable', GluentNS['DATABASE'].RECLAIMABLE_ROWS],
-                ['Retained', GluentNS['DATABASE'].RETAINED_ROWS],
-                ['Total', parseInt(GluentNS['DATABASE'].RECLAIMABLE_ROWS) + parseInt(GluentNS['DATABASE'].RETAINED_ROWS)]
+                ['Reclaimable', GOENS['DATABASE'].RECLAIMABLE_ROWS],
+                ['Retained', GOENS['DATABASE'].RETAINED_ROWS],
+                ['Total', parseInt(GOENS['DATABASE'].RECLAIMABLE_ROWS) + parseInt(GOENS['DATABASE'].RETAINED_ROWS)]
             ],
             type: 'bar',
             // Total is not another bar but a line
@@ -279,7 +279,7 @@ $(document).ready(function() {
             y = (parseFloat(c0) / 2) + parseFloat(c.attr('y'));
 
             c.html('');
-            c.append('tspan').text(GluentNS['DATABASE'].RECLAIMABLE_ROWS.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")).attr('y', y).attr('x', '50%');
+            c.append('tspan').text(GOENS['DATABASE'].RECLAIMABLE_ROWS.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")).attr('y', y).attr('x', '50%');
             c.append('tspan').text('RECLAIMABLE').attr('dy', '1.5em').attr('x', '50%');
 
             d0 = d3.select('#reclaim_rows_chart g.c3-chart-bars g.c3-target-Retained')[0][0].getBBox().height;
@@ -287,7 +287,7 @@ $(document).ready(function() {
             y = (parseFloat(d0) / 2) + parseFloat(d.attr('y'));
 
             d.html('');
-            d.append('tspan').text(GluentNS['DATABASE'].RETAINED_ROWS.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")).attr('y', y).attr('x', '50%');
+            d.append('tspan').text(GOENS['DATABASE'].RETAINED_ROWS.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")).attr('y', y).attr('x', '50%');
             d.append('tspan').text('RETAINED').attr('dy', '1.5em').attr('x', '50%');
         }
     });
@@ -296,9 +296,9 @@ $(document).ready(function() {
         bindto: '#reclaim_size_chart',
         data: {
             columns: [
-                ['Reclaimable', GluentNS['DATABASE'].RECLAIMABLE_BYTES],
-                ['Retained', GluentNS['DATABASE'].RETAINED_BYTES],
-                ['Total', parseFloat(GluentNS['DATABASE'].RECLAIMABLE_BYTES) + parseFloat(GluentNS['DATABASE'].RETAINED_BYTES)]
+                ['Reclaimable', GOENS['DATABASE'].RECLAIMABLE_BYTES],
+                ['Retained', GOENS['DATABASE'].RETAINED_BYTES],
+                ['Total', parseFloat(GOENS['DATABASE'].RECLAIMABLE_BYTES) + parseFloat(GOENS['DATABASE'].RETAINED_BYTES)]
             ],
             type: 'bar',
             // Total is not another bar but a line
@@ -366,7 +366,7 @@ $(document).ready(function() {
             y = (parseFloat(c0) / 2) + parseFloat(c.attr('y'));
 
             c.html('');
-            c.append('tspan').text(parseFloat(GluentNS['DATABASE'].RECLAIMABLE_BYTES / 1024 / 1024 / 1024).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' GB').attr('y', y).attr('x', '50%');
+            c.append('tspan').text(parseFloat(GOENS['DATABASE'].RECLAIMABLE_BYTES / 1024 / 1024 / 1024).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' GB').attr('y', y).attr('x', '50%');
             c.append('tspan').text('RECLAIMABLE').attr('dy', '1.5em').attr('x', '50%');
 
             d0 = d3.select('#reclaim_size_chart g.c3-chart-bars g.c3-target-Retained')[0][0].getBBox().height;
@@ -374,7 +374,7 @@ $(document).ready(function() {
             y = (parseFloat(d0) / 2) + parseFloat(d.attr('y'));
 
             d.html('');
-            d.append('tspan').text(parseFloat(GluentNS['DATABASE'].RETAINED_BYTES / 1024 / 1024 / 1024).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' GB').attr('y', y).attr('x', '50%');
+            d.append('tspan').text(parseFloat(GOENS['DATABASE'].RETAINED_BYTES / 1024 / 1024 / 1024).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' GB').attr('y', y).attr('x', '50%');
             d.append('tspan').text('RETAINED').attr('dy', '1.5em').attr('x', '50%');
         }
     });
@@ -417,8 +417,8 @@ $(document).ready(function() {
     d3.select('text.c3-gauge-value').remove();
 
     // List.js inits
-    GluentNS['schemas'] = {}
-    GluentNS['schemas']['options'] = {
+    GOENS['schemas'] = {}
+    GOENS['schemas']['options'] = {
         valueNames: ['table_name',
             {
                 attr: 'data-offload_type',
@@ -450,15 +450,15 @@ $(document).ready(function() {
             }
         ]
     };
-    GluentNS['schemas']['sort_key'] = 'table_name';
-    GluentNS['schemas']['sort_direction'] = 'asc';
+    GOENS['schemas']['sort_key'] = 'table_name';
+    GOENS['schemas']['sort_direction'] = 'asc';
 
     $('.bucket-schema').each(function(index) {
         var target = $(this).attr('id');
         var section = $(this).attr('osr-section');
-        GluentNS[target] = new List(target, GluentNS[section]['options']);
-        GluentNS[target].sort(GluentNS[section]['sort_key'], {
-            order: GluentNS[section]['sort_direction']
+        GOENS[target] = new List(target, GOENS[section]['options']);
+        GOENS[target].sort(GOENS[section]['sort_key'], {
+            order: GOENS[section]['sort_direction']
         });
     });
 });

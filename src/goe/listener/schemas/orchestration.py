@@ -9,7 +9,7 @@ from uuid import UUID
 # Third Party Libraries
 from pydantic import UUID4, Field, Json, PositiveInt, validator
 
-# Gluent
+# GOE
 import goe.config.orchestration_defaults as defaults
 from goe.listener.schemas.base import BaseSchema, TotaledResults
 from goe.orchestration.execution_id import ExecutionId
@@ -70,8 +70,8 @@ class CommandExecution(BaseSchema):
     command_log_path: str
     command_input: str
     command_parameters: Json
-    gluent_version: str
-    gluent_build: str
+    goe_version: str
+    goe_build: str
     steps: Optional[List["CommandExecutionStep"]] = []
 
     @validator("execution_id")

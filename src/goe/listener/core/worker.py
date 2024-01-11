@@ -2,13 +2,13 @@
 import logging
 from typing import Final, Optional
 
-# Gluent
+# GOE
 from goe.listener import services, utils
 from goe.listener.config import settings
 from goe.listener.schemas.base import deserialize_object, serialize_object
 from goe.listener.services import periodic_tasks
-from gluentlib_contrib.worker import CronJob, Job, Queue, Status, Worker
-from gluentlib_contrib.worker.utils import seconds
+from goelib_contrib.worker import CronJob, Job, Queue, Status, Worker
+from goelib_contrib.worker.utils import seconds
 
 logger = logging.getLogger(__name__)
 
@@ -55,13 +55,13 @@ async def cleanup_queue():
         utils.cache.get_client()
         close_connection_at_completion = True
     total_keys_deleted: int = 0
-    keys = await utils.cache.delete_keys(f"gluent:{worker_id}:incomplete*")
+    keys = await utils.cache.delete_keys(f"goe:{worker_id}:incomplete*")
     total_keys_deleted += keys
-    keys = await utils.cache.delete_keys(f"gluent:{worker_id}:job:*")
+    keys = await utils.cache.delete_keys(f"goe:{worker_id}:job:*")
     total_keys_deleted += keys
-    keys = await utils.cache.delete_keys(f"gluent:{worker_id}:schedule")
+    keys = await utils.cache.delete_keys(f"goe:{worker_id}:schedule")
     total_keys_deleted += keys
-    # keys = await utils.cache.delete_keys(f"gluent:{worker_id}:stats*")
+    # keys = await utils.cache.delete_keys(f"goe:{worker_id}:stats*")
     # total_keys_deleted += keys
     logger.info("listener cache cleanup completed successfully.")
     if close_connection_at_completion:

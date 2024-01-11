@@ -1,5 +1,5 @@
 
-ThisBuild / organization := "com.gluent"
+ThisBuild / organization := "com.goe"
 ThisBuild / scalaVersion := "2.12.14"
 ThisBuild / version      := "1.0"
 

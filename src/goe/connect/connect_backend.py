@@ -25,12 +25,12 @@ from goe.connect.connect_functions import (
     warning,
 )
 from goe.filesystem.cli_hdfs import CliHdfs
-from goe.filesystem.gluent_dfs import (
+from goe.filesystem.goe_dfs import (
     OFFLOAD_NON_HDFS_FS_SCHEMES,
     get_scheme_from_location_uri,
     uri_component_split,
 )
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import BackendApiConnectionException
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
 from goe.offload.factory.backend_api_factory import backend_api_factory
@@ -39,7 +39,7 @@ from goe.offload.offload_constants import (
     BACKEND_DISTRO_GCP,
 )
 #from goe.util.better_impyla import BetterImpylaException
-from goe.gluent import get_log_fh, verbose
+from goe.goe import get_log_fh, verbose
 
 
 def static_backend_name(orchestration_config):
@@ -286,7 +286,7 @@ def test_sentry_privs(orchestration_config, backend_api, messages):
                         if chk_uri.startswith((r[uri_pos], hdfs_path)):
                             uris_left_to_check.remove(chk_uri)
                             detail(
-                                "Gluent target URI %s is covered by this privilege"
+                                "GOE target URI %s is covered by this privilege"
                                 % chk_uri
                             )
     except BetterImpylaException as exc:
@@ -390,7 +390,7 @@ def test_ranger_privs(orchestration_config, backend_api, messages):
         # We have ALL ON SERVER so can do what we need to
         detail("Able to perform all required operations")
     else:
-        # Can we create Gluent Data Platform databases
+        # Can we create GOE databases
         detail("\nDatabase Creation")
         db_required = [
             {"privilege": "create", "database": "*", "table": "*", "column": "*"}
@@ -418,7 +418,7 @@ def test_ranger_privs(orchestration_config, backend_api, messages):
     if passed:
         success(test_name)
     else:
-        test_hint = "Refer to Gluent Data Platform documentation for the required Ranger privileges"
+        test_hint = "Refer to GOE documentation for the required Ranger privileges"
         warning(test_name, test_hint)
 
 

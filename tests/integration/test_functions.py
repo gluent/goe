@@ -2,7 +2,7 @@ from functools import lru_cache
 import os
 from typing import TYPE_CHECKING
 
-from goe.gluent import OffloadOperation
+from goe.goe import OffloadOperation
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_TERADATA
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE

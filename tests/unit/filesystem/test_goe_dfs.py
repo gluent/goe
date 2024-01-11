@@ -1,4 +1,4 @@
-""" TestGluentDfs: Unit test library to test API for all supported backend filesystems.
+""" TestGOEDfs: Unit test library to test API for all supported backend filesystems.
     This focuses on API calls that do not need to connect to the system.
     Because there is no connection we can fake any backend and test basic functionality.
 """
@@ -6,12 +6,12 @@ import logging
 from unittest import TestCase, main
 
 from goe.filesystem.cli_hdfs import CliHdfs
-from goe.filesystem.gluent_azure import GluentAzure
-from goe.filesystem.gluent_gcs import GluentGcs
-from goe.filesystem.gluent_s3 import GluentS3
+from goe.filesystem.goe_azure import GOEAzure
+from goe.filesystem.goe_gcs import GOEGcs
+from goe.filesystem.goe_s3 import GOES3
 from goe.filesystem.web_hdfs import WebHdfs
-from goe.filesystem.gluent_dfs import (
-    GluentDfsException,
+from goe.filesystem.goe_dfs import (
+    GOEDfsException,
     gen_fs_uri,
     uri_component_split,
     DFS_TYPE_DIRECTORY,
@@ -30,17 +30,17 @@ logger.addHandler(logging.NullHandler())
 
 
 ###############################################################################
-# TestGluentDfs
+# TestGOEDfs
 ###############################################################################
 
 
-class TestGluentDfs(TestCase):
+class TestGOEDfs(TestCase):
     """An intermediate class that defines the individual tests that are
     inherited by the actual backend APIs.
     """
 
     def __init__(self, *args, **kwargs):
-        super(TestGluentDfs, self).__init__(*args, **kwargs)
+        super(TestGOEDfs, self).__init__(*args, **kwargs)
         self.api = None
         self.options = None
         self.some_dir = None
@@ -172,16 +172,16 @@ class TestGluentDfs(TestCase):
             table_name="my-table",
         )
         check_gen_fs_uri(
-            "hdfs:///user/gluent/db_load.db/my-table",
-            "/user/gluent",
+            "hdfs:///user/goe/db_load.db/my-table",
+            "/user/goe",
             ".db",
             scheme="hdfs",
             backend_db="db_load",
             table_name="my-table",
         )
         check_gen_fs_uri(
-            "/user/gluent/db_load.db/my-table",
-            "/user/gluent",
+            "/user/goe/db_load.db/my-table",
+            "/user/goe",
             ".db",
             backend_db="db_load",
             table_name="my-table",
@@ -233,7 +233,7 @@ class TestGluentDfs(TestCase):
             check_uri_component_split(
                 "not-a-scheme://bucket/some-path/some-file", "", "", ""
             )
-        except GluentDfsException as exc:
+        except GOEDfsException as exc:
             if UNSUPPORTED_URI_SCHEME_EXCEPTION_TEXT in str(exc):
                 pass
             else:
@@ -273,7 +273,7 @@ class TestGluentDfs(TestCase):
 ###############################################################################
 
 
-class TestWebHdfs(TestGluentDfs):
+class TestWebHdfs(TestGOEDfs):
     """There's minimal point to these tests because in dry_run mode we don't
     actually call the underlying thirdparty module.
     So really we're just shaking down that there are no syntax errors or
@@ -307,7 +307,7 @@ class TestWebHdfs(TestGluentDfs):
 ###############################################################################
 
 
-class TestCliHdfs(TestGluentDfs):
+class TestCliHdfs(TestGOEDfs):
     def __init__(self, *args, **kwargs):
         super(TestCliHdfs, self).__init__(*args, **kwargs)
         self.api = None
@@ -326,13 +326,13 @@ class TestCliHdfs(TestGluentDfs):
 
 
 ###############################################################################
-# TestGluentGcs
+# TestGOEGcs
 ###############################################################################
 
 
-class TestGluentGcs(TestGluentDfs):
+class TestGOEGcs(TestGOEDfs):
     def __init__(self, *args, **kwargs):
-        super(TestGluentGcs, self).__init__(*args, **kwargs)
+        super(TestGOEGcs, self).__init__(*args, **kwargs)
         self.api = None
         self.some_dir = "gs://a-bucket/some-path"
         self.some_file = "gs://a-bucket/some-path/a-file"
@@ -340,20 +340,20 @@ class TestGluentGcs(TestGluentDfs):
 
     def setUp(self):
         messages = OffloadMessages()
-        self.api = GluentGcs(messages, dry_run=True, do_not_connect=True)
+        self.api = GOEGcs(messages, dry_run=True, do_not_connect=True)
 
     def test_all(self):
         self._run_all_tests()
 
 
 ###############################################################################
-# TestGluentS3
+# TestGOES3
 ###############################################################################
 
 
-class TestGluentS3(TestGluentDfs):
+class TestGOES3(TestGOEDfs):
     def __init__(self, *args, **kwargs):
-        super(TestGluentS3, self).__init__(*args, **kwargs)
+        super(TestGOES3, self).__init__(*args, **kwargs)
         self.api = None
         self.some_dir = "s3://a-bucket/some-path"
         self.some_file = "s3://a-bucket/some-path/a-file"
@@ -361,20 +361,20 @@ class TestGluentS3(TestGluentDfs):
 
     def setUp(self):
         messages = OffloadMessages()
-        self.api = GluentS3(messages, dry_run=True, do_not_connect=True)
+        self.api = GOES3(messages, dry_run=True, do_not_connect=True)
 
     def test_all(self):
         self._run_all_tests()
 
 
 ###############################################################################
-# TestGluentAzure
+# TestGOEAzure
 ###############################################################################
 
 
-class TestGluentAzure(TestGluentDfs):
+class TestGOEAzure(TestGOEDfs):
     def __init__(self, *args, **kwargs):
-        super(TestGluentAzure, self).__init__(*args, **kwargs)
+        super(TestGOEAzure, self).__init__(*args, **kwargs)
         self.api = None
         self.some_dir = "wasb://a-bucket/some-path"
         self.some_file = "wasb://a-bucket/some-path/a-file"
@@ -382,7 +382,7 @@ class TestGluentAzure(TestGluentDfs):
 
     def setUp(self):
         messages = OffloadMessages()
-        self.api = GluentAzure(
+        self.api = GOEAzure(
             "an-account-name",
             "an-account-key",
             "a-domain",

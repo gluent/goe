@@ -938,7 +938,7 @@ def test_offload_pbo_list(config, schema, data_db):
         config, messages, trace_action=f"repo_client({id})"
     )
 
-    if not frontend_api.gluent_lpa_supported():
+    if not frontend_api.goe_lpa_supported():
         messages.log(f"Skipping {id} for system/type: {config.db_type}/LIST")
         return
 

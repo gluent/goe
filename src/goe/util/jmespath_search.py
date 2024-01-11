@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ jmespath_search: JSON search routines (with JMESPath)
-    
+
     LICENSE_TEXT
 """
 
@@ -34,16 +34,16 @@ class JMESPathSearch(object):
     def jmespath_search(self, where, data, select=''):
         """ Construct and execute JMESPath search 'query'
             from supplied 'where' and 'select' conditions
-            
+
             WHERE expression format: [(<key>, <comparision>, <value>), ...]
-            Example: [('database', '==', 'sh.db'), ('partitions.gl_part_m_time_ud', '>=', '2015-06'), ]
+            Example: [('database', '==', 'sh.db'), ('partitions.goe_part_m_time_ud', '>=', '2015-06'), ]
 
             SELECT expression format: '<column>' or ['column1', 'column2', ...]
             Examples: '*' or ['key_name', 'size']
         """
         query = self.make_jmespath_search_condition(select=select, where=where)
         return self.jmespath_search_raw(query, data)
-    
+
 
     def jmespath_search_raw(self, query, data):
         """ Execute JMESPath search 'query' within 'data'
@@ -57,11 +57,11 @@ class JMESPathSearch(object):
         """ Construct JMESPath search condition based on 'select' and 'where' expressions
 
             WHERE expression format: [(<key>, <comparision>, <value>), ...]
-            Example: [('database', '==', 'sh.db'), ('partitions.gl_part_m_time_ud', '>=', '2015-06'), ]
+            Example: [('database', '==', 'sh.db'), ('partitions.goe_part_m_time_ud', '>=', '2015-06'), ]
 
             SELECT expression format: '<column>' or ['column1', 'column2', ...]
             Examples: '*' or ['key_name', 'size']
-        """ 
+        """
         where_expression, select_expression = "[*]", "" # Select everything
 
         # Add WHERE's

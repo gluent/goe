@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" GluentDfs: Backend storage (e.g. HDFS) interaction library.
+""" GOEDfs: Backend storage (e.g. HDFS) interaction library.
     LICENSE_TEXT
 """
 
@@ -20,15 +20,15 @@ from goe.offload.offload_messages import VERBOSE, VVERBOSE
 ###############################################################################
 
 
-class GluentDfsException(Exception):
+class GOEDfsException(Exception):
     pass
 
 
-class GluentDfsDeleteNotComplete(Exception):
+class GOEDfsDeleteNotComplete(Exception):
     pass
 
 
-class GluentDfsFilesNotVisible(Exception):
+class GOEDfsFilesNotVisible(Exception):
     pass
 
 
@@ -42,11 +42,11 @@ DFS_TYPE_FILE = "FILE"
 # Retry timeout in seconds
 DFS_RETRY_TIMEOUT = 120
 
-GLUENT_DFS_AZURE = "AZURE"
-GLUENT_DFS_GCS = "GCS"
-GLUENT_DFS_S3 = "S3"
-GLUENT_DFS_SSH = "SSH"
-GLUENT_DFS_WEBHDFS = "WEBHDFS"
+GOE_DFS_AZURE = "AZURE"
+GOE_DFS_GCS = "GCS"
+GOE_DFS_S3 = "S3"
+GOE_DFS_SSH = "SSH"
+GOE_DFS_WEBHDFS = "WEBHDFS"
 
 # Generic Azure FS scheme used for Snowflake integration
 OFFLOAD_FS_SCHEME_AZURE = "azure"
@@ -129,7 +129,7 @@ def uri_component_split(uri):
     parsed = urlparse(uri, allow_fragments=False)
     scheme = parsed.scheme.lower()
     if scheme and scheme not in VALID_OFFLOAD_FS_SCHEMES:
-        raise GluentDfsException(
+        raise GOEDfsException(
             "%s: %s" % (UNSUPPORTED_URI_SCHEME_EXCEPTION_TEXT, scheme)
         )
     else:
@@ -218,11 +218,11 @@ logger.addHandler(logging.NullHandler())
 
 
 ###############################################################################
-# GluentDfs
+# GOEDfs
 ###############################################################################
 
 
-class GluentDfs(object, metaclass=ABCMeta):
+class GOEDfs(object, metaclass=ABCMeta):
     def __init__(self, messages, dry_run=False):
         self._messages = messages
         self._dry_run = dry_run
@@ -385,7 +385,7 @@ class GluentDfs(object, metaclass=ABCMeta):
         if not perm_string:
             return None
         assert len(perm_string) >= 10, "Unexpected permission format %s" % perm_string
-        # Only supports rwx keys. That should be fine for Gluent usage
+        # Only supports rwx keys. That should be fine for GOE usage
         perm_values = {"r": 4, "w": 2, "x": 1}
         oct_str = ""
         # Remove directory part and any trailing characters (e.g. "+")
@@ -410,7 +410,7 @@ class GluentDfs(object, metaclass=ABCMeta):
 
     @retry.Retry(
         predicate=retry.if_exception_type(
-            GluentDfsFilesNotVisible, google_exceptions.ServiceUnavailable
+            GOEDfsFilesNotVisible, google_exceptions.ServiceUnavailable
         ),
         deadline=DFS_RETRY_TIMEOUT,
     )
@@ -421,5 +421,5 @@ class GluentDfs(object, metaclass=ABCMeta):
         files = self.list_dir(dfs_path)
         if not files:
             self.debug("Files in %s not yet visible, waiting" % dfs_path)
-            raise GluentDfsFilesNotVisible
+            raise GOEDfsFilesNotVisible
         return files

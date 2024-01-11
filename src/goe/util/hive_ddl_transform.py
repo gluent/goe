@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ hive_ddl_transform: DDL transformation routines for hive/impala
-    
+
     LICENSE_TEXT
 """
 
@@ -177,7 +177,7 @@ class DDLTransform(object):
             pass
 
         return table_ddl
- 
+
 
     def _parse_location(self, table_ddl, options):
         """ Change 'location' components in table_ddl """
@@ -254,7 +254,7 @@ class DDLTransform(object):
         view_ddl = "".join([_ for _ in ddl_chunks if _])
 
         return view_ddl
-                
+
 
     ###########################################################################
     # PUBLIC ROUTINES
@@ -264,7 +264,7 @@ class DDLTransform(object):
         """ Transform 'table_ddl' according to 'options'
         """
         assert table_ddl and isinstance(options, dict)
-    
+
         transformed_ddl = table_ddl
 
         transformed_ddl = self._parse_create_table(transformed_ddl, options)
@@ -281,7 +281,7 @@ class DDLTransform(object):
         """ Transform 'view_ddl' according to 'options'
         """
         assert view_ddl and isinstance(options, dict)
-    
+
         transformed_ddl = view_ddl
 
         transformed_ddl = self._parse_create_view(transformed_ddl, options)
@@ -313,9 +313,9 @@ class DDLTransform(object):
 if __name__ == "__main__":
     import os
     import sys
-   
+
     from goe.util.better_impyla import HiveConnection, HiveTable
-    from goe.util.misc_functions import set_gluentlib_logging, csvkv_to_dict
+    from goe.util.misc_functions import set_goelib_logging, csvkv_to_dict
 
 
     def usage(prog_name):
@@ -331,7 +331,7 @@ if __name__ == "__main__":
         db_name, table_name = db_table.split('.')
 
         log_level = sys.argv[3].upper() if len(sys.argv) > 3 else 'CRITICAL'
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         db_host, db_port = 'localhost', int(os.environ['HIVE_SERVER_PORT'])
         hive_conn = HiveConnection(db_host, db_port)

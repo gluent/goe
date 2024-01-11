@@ -14,7 +14,7 @@ import re
 from functools import partial
 
 from goe.util.better_impyla import HiveConnection, HiveTable
-from goe.util.config_file import GluentRemoteConfig, SECTION_TYPE_S3, SECTION_TYPE_HDFS
+from goe.util.config_file import GOERemoteConfig, SECTION_TYPE_S3, SECTION_TYPE_HDFS
 from goe.util.misc_functions import end_by, dict_to_namespace, get_option
 from goe.util.hive_ddl_transform import DDLTransform
 from goe.util.hi_state import histateandtime
@@ -27,7 +27,7 @@ from goe.cloud.offload_logic import XferSetup
 
 from goe.offload.offload_messages import OffloadMessagesMixin
 
-from goe.util.gluent_log import step
+from goe.util.goe_log import step
 
 
 ###############################################################################
@@ -97,7 +97,7 @@ class HdfsCfgConnection(object):
 
         self._cfg = cfg
         self.section = section
-        self.client = HdfsStore.hdfscli_gluent_client(cfg, section)
+        self.client = HdfsStore.hdfscli_goe_client(cfg, section)
 
     def __call__(self):
         return self.client
@@ -132,9 +132,9 @@ class HiveTableBackup(OffloadMessagesMixin, object):
             local, remote: 'sections' in 'config file': cfg
         """
         assert local and remote and db_name and table_name and \
-            (not cfg or isinstance(cfg, GluentRemoteConfig))
+            (not cfg or isinstance(cfg, GOERemoteConfig))
 
-        self._cfg = cfg or GluentRemoteConfig()
+        self._cfg = cfg or GOERemoteConfig()
         self._local = local
         self._remote = remote
 
@@ -205,7 +205,7 @@ class HiveTableBackup(OffloadMessagesMixin, object):
 
                 'localhost'
                 for:
-                hdfs://localhost:8020/user/gluent/offload/sh_test.db/times
+                hdfs://localhost:8020/user/goe/offload/sh_test.db/times
             """
             base = self._cfg.get(section, 'hive_base')
             if not base:
@@ -410,7 +410,7 @@ class HiveTableBackup(OffloadMessagesMixin, object):
         """ Backup files from: "source" to "target"
 
             diff: (source, backup)
-        """ 
+        """
         to_move_files = diff.source_all if (overwrite or fast_path) else diff.offloadable_source
 
         # Copy files SRC -> DST
@@ -462,7 +462,7 @@ class HiveTableBackup(OffloadMessagesMixin, object):
         # Restore files (only if there are files to restore)
         files_moved = self._move_files(
             file_list = to_move_files,
-            diff = diff, 
+            diff = diff,
             parallel = parallel,
             overwrite = overwrite
         )
@@ -542,7 +542,7 @@ class HiveTableBackup(OffloadMessagesMixin, object):
                 self.warn("Overriding table: %s from EMPTY source: %s" % (self._db_table, diff.source))
             else:
                 raise HiveTableBackupException("Source: %s is EMPTY for table: %s" % (diff.source, self._db_table))
-        
+
 
     def _remote_names(self, transform_ddl):
         """ Analyze 'transform_ddl' and return appropriate:
@@ -779,10 +779,10 @@ if __name__ == "__main__":
     import sys
 
     from goe.offload.offload_messages import OffloadMessages, to_message_level
-    from goe.util.misc_functions import set_gluentlib_logging, options_list_to_namespace, dict_to_namespace, \
+    from goe.util.misc_functions import set_goelib_logging, options_list_to_namespace, dict_to_namespace, \
         set_option, get_option
 
-    from goe.util.gluent_log import get_default_options
+    from goe.util.goe_log import get_default_options
 
     def usage(prog_name):
         print("usage: %s <backup|restore|clone> db_table src dst " \
@@ -793,7 +793,7 @@ if __name__ == "__main__":
 
     def set_legacy_options(opts):
         options = get_default_options({'ansi': True})
-            
+
         for opt in opts:
             setattr(options, opt, opts[opt])
 
@@ -814,7 +814,7 @@ if __name__ == "__main__":
         log_level = sys.argv[-1:][0].upper()
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level = 'CRITICAL'
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         operation, db_table, source, target = sys.argv[1:5]
         db_name, table_name = db_table.split('.')
@@ -829,7 +829,7 @@ if __name__ == "__main__":
         for opt in ('messages', 'execute'):
             if opt in method_args:
                 del method_args[opt]
-        
+
         # Schema transformation rules
         transform_ddl = {}
         for tvar in ('schema', 'name', 'external'):

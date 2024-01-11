@@ -6,7 +6,7 @@ In this file all application endpoints are being defined.
 # Third Party Libraries
 from fastapi import APIRouter, Security
 
-# Gluent
+# GOE
 from goe.listener.api.routes import docs, orchestration, system
 from goe.listener.core import security
 

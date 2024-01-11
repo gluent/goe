@@ -12,7 +12,7 @@ import impala.dbapi as hs2
 from argparse import Namespace
 
 from goe.offload.offload_constants import DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_SPARK
-from goe.util.config_file import GluentRemoteConfig
+from goe.util.config_file import GOERemoteConfig
 from goe.util.misc_functions import dict_to_namespace
 from goe.util.password_tools import PasswordTools
 
@@ -128,9 +128,9 @@ def hs2_connection(orchestration_config, host_override=None, port_override=None)
 
         if password_key_file:
             pass_tool = PasswordTools()
-            gl_key = pass_tool.get_password_key_from_key_file(password_key_file)
+            goe_key = pass_tool.get_password_key_from_key_file(password_key_file)
             logger.debug("Decrypting \"%s\" password" % ldap_user)
-            ldap_password = pass_tool.b64decrypt(ldap_password, gl_key)
+            ldap_password = pass_tool.b64decrypt(ldap_password, goe_key)
 
         return hs2.connect(host=host, port=port, use_ssl=optvars.get('use_ssl'), ca_cert=optvars.get('ca_cert'),
                            auth_mechanism='PLAIN', user=ldap_user, password=ldap_password, timeout=timeout,
@@ -216,10 +216,10 @@ def hs2_section_options(section, override=None, cfg=None):
     """ Populate HiveServer2 options from remote-offload.conf 'section'
         with optional override
     """
-    assert section and (not cfg or isinstance(cfg, GluentRemoteConfig))
+    assert section and (not cfg or isinstance(cfg, GOERemoteConfig))
 
     if not cfg:
-        cfg = GluentRemoteConfig()
+        cfg = GOERemoteConfig()
 
     section_options = hs2_env_options(dict_to_namespace(dict(cfg.items(section))))
     if override:
@@ -268,7 +268,7 @@ def hs2_cursor_user(options=None):
 if __name__ == "__main__":
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging, options_list_to_namespace
+    from goe.util.misc_functions import set_goelib_logging, options_list_to_namespace
 
     def usage(prog_name):
         print("%s: [<option1>=value1 option2=value2] [debug level]" % prog_name)
@@ -279,7 +279,7 @@ if __name__ == "__main__":
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level='CRITICAL'
 
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         args = [_ for _ in sys.argv[1:] if _.upper() != log_level]
         options = hs2_env_options(options_list_to_namespace(args))

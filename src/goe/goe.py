@@ -23,19 +23,19 @@ import orjson
 
 from goe.config import config_descriptions, orchestration_defaults
 from goe.config.config_validation_functions import normalise_size_option
-from goe.filesystem.gluent_dfs import get_scheme_from_location_uri,\
+from goe.filesystem.goe_dfs import get_scheme_from_location_uri,\
     OFFLOAD_FS_SCHEME_INHERIT, VALID_OFFLOAD_FS_SCHEMES
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 
 from goe.offload.backend_api import IMPALA_SHUFFLE_HINT, IMPALA_NOSHUFFLE_HINT
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory, get_backend_table_from_metadata
 from goe.offload.column_metadata import invalid_column_list_message, match_table_column,\
     is_synthetic_partition_column, valid_column_list, \
-    GLUENT_TYPE_DECIMAL, GLUENT_TYPE_DATE, GLUENT_TYPE_DOUBLE,\
-    GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8,\
-    GLUENT_TYPE_INTEGER_38, \
-    GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_TIMESTAMP_TZ
+    GOE_TYPE_DECIMAL, GOE_TYPE_DATE, GOE_TYPE_DOUBLE,\
+    GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4, GOE_TYPE_INTEGER_8,\
+    GOE_TYPE_INTEGER_38, \
+    GOE_TYPE_VARIABLE_STRING, GOE_TYPE_TIMESTAMP_TZ
 from goe.offload.offload_constants import (
     ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT,
     DBTYPE_BIGQUERY, DBTYPE_IMPALA, DBTYPE_ORACLE, DBTYPE_MSSQL,
@@ -113,7 +113,7 @@ from goe.util.ora_query import get_oracle_connection
 from goe.util.redis_tools import RedisClient
 
 
-dev_logger = logging.getLogger('gluent')
+dev_logger = logging.getLogger('goe')
 
 OFFLOAD_PATTERN_100_0, OFFLOAD_PATTERN_90_10, OFFLOAD_PATTERN_100_10 = list(range(3))
 
@@ -209,7 +209,7 @@ def log(line, detail=normal, ansi_code=None, redis_publish=True):
                 "message": line,
             }
             cache.rpush(
-                f"gluent:run:{redis_execution_id}", serialize_object(msg), ttl=timedelta(hours=48)
+                f"goe:run:{redis_execution_id}", serialize_object(msg), ttl=timedelta(hours=48)
             )
         except Exception as exc:
             fh_log('Disabling Redis integration due to: {}'.format(str(exc)))
@@ -825,7 +825,7 @@ def license():
 
 def comp_ver_check(frontend_api):
     v_goe = version()
-    v_ora = frontend_api.gdp_db_component_version()
+    v_ora = frontend_api.goe_db_component_version()
     return v_goe == v_ora, v_goe, v_ora
 
 
@@ -989,22 +989,22 @@ class BaseOperation(object):
     reference_columns = columns_override or backend_table.get_columns()
     canonical_columns = []
     if self.integer_1_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_INTEGER_1, self.integer_1_columns_csv,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_INTEGER_1, self.integer_1_columns_csv,
                                                                   canonical_columns, reference_columns))
     if self.integer_2_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_INTEGER_2, self.integer_2_columns_csv,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_INTEGER_2, self.integer_2_columns_csv,
                                                                   canonical_columns, reference_columns))
     if self.integer_4_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_INTEGER_4, self.integer_4_columns_csv,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_INTEGER_4, self.integer_4_columns_csv,
                                                                   canonical_columns, reference_columns))
     if self.integer_8_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_INTEGER_8, self.integer_8_columns_csv,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_INTEGER_8, self.integer_8_columns_csv,
                                                                   canonical_columns, reference_columns))
     if self.integer_38_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_INTEGER_38, self.integer_38_columns_csv,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_INTEGER_38, self.integer_38_columns_csv,
                                                                   canonical_columns, reference_columns))
     if self.date_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_DATE, self.date_columns_csv,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_DATE, self.date_columns_csv,
                                                                   canonical_columns, reference_columns))
     if self.decimal_columns_csv_list:
       assert type(self.decimal_columns_csv_list) is list, '%s is not list' % type(self.decimal_columns_csv_list)
@@ -1028,10 +1028,10 @@ class BaseOperation(object):
         if spec[1] > backend_table.max_decimal_scale():
           raise OffloadException('--decimal-columns-type scale is beyond backend maximum: %s > %s'
                                  % (spec[1], backend_table.max_decimal_scale()))
-        canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_DECIMAL, col_csv, canonical_columns,
+        canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_DECIMAL, col_csv, canonical_columns,
                                                                     reference_columns, precision=spec[0], scale=spec[1]))
     if self.timestamp_tz_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_TIMESTAMP_TZ,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_TIMESTAMP_TZ,
                                                                   self.timestamp_tz_columns_csv,
                                                                   canonical_columns, reference_columns,
                                                                   scale=backend_table.max_datetime_scale()))
@@ -1473,10 +1473,10 @@ class OffloadOperation(BaseOperation):
                                                            backend_table.max_decimal_scale(),
                                                            columns_override=reference_columns)
     if self.double_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_DOUBLE, self.double_columns_csv,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_DOUBLE, self.double_columns_csv,
                                                                   canonical_columns, reference_columns))
     if self.variable_string_columns_csv:
-      canonical_columns.extend(canonical_columns_from_columns_csv(GLUENT_TYPE_VARIABLE_STRING,
+      canonical_columns.extend(canonical_columns_from_columns_csv(GOE_TYPE_VARIABLE_STRING,
                                                                   self.variable_string_columns_csv,
                                                                   canonical_columns, reference_columns))
     return canonical_columns
@@ -2028,12 +2028,12 @@ def list_for_option_help(opt_list):
 def check_posint(option, opt, value):
   """Type checker for a new "posint" type to define
      and enforce positive integer option values. Used
-     by GluentOptionTypes class below.
+     by GOEOptionTypes class below.
   """
   return check_opt_is_posint(opt, value, exception_class=OptionValueError)
 
 
-class GluentOptionTypes(Option):
+class GOEOptionTypes(Option):
   """Options type class to extend the OptParse types set
      used to define and enforce option value types (initially
      added to enforce positive integers)
@@ -2044,7 +2044,7 @@ class GluentOptionTypes(Option):
 
 
 def get_common_options(usage=None):
-  opt = OptionParser(usage=usage, option_class=GluentOptionTypes)
+  opt = OptionParser(usage=usage, option_class=GOEOptionTypes)
 
   opt.add_option('-c', type="posint", help=SUPPRESS_HELP)
 

@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" GluentS3: S3 implementation of GluentDfs
+""" GOES3: S3 implementation of GOEDfs
     LICENSE_TEXT
 """
 
@@ -10,9 +10,9 @@ import boto3
 from botocore.exceptions import ClientError
 from google.api_core import retry
 
-from goe.filesystem.gluent_dfs import GluentDfs, GluentDfsDeleteNotComplete, GluentDfsException,\
+from goe.filesystem.goe_dfs import GOEDfs, GOEDfsDeleteNotComplete, GOEDfsException,\
     gen_fs_uri,\
-    DFS_RETRY_TIMEOUT, DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, GLUENT_DFS_S3, URI_SEP
+    DFS_RETRY_TIMEOUT, DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, GOE_DFS_S3, URI_SEP
 
 ###############################################################################
 # EXCEPTIONS
@@ -32,11 +32,11 @@ logger.addHandler(logging.NullHandler())
 
 
 ###############################################################################
-# GluentGcs
+# GOEGcs
 ###############################################################################
 
-class GluentS3(GluentDfs):
-    """ A Gluent wrapper over Amazon S3 Storage API (Boto3).
+class GOES3(GOEDfs):
+    """ A GOE wrapper over Amazon S3 Storage API (Boto3).
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#client
         dry_run: Do not make changes.
         do_not_connect: Do not even connect, used for unit testing.
@@ -45,16 +45,16 @@ class GluentS3(GluentDfs):
     def __init__(self, messages, dry_run=False, do_not_connect=False, db_path_suffix=None):
         assert messages
 
-        logger.info('Client setup: GluentS3')
+        logger.info('Client setup: GOES3')
 
-        super(GluentS3, self).__init__(messages, dry_run=dry_run)
+        super(GOES3, self).__init__(messages, dry_run=dry_run)
 
         if do_not_connect:
             self._client = None
         else:
             self._client = boto3.resource('s3')
         self._db_path_suffix = db_path_suffix
-        self.dfs_mechanism = GLUENT_DFS_S3
+        self.dfs_mechanism = GOE_DFS_S3
         self.backend_dfs = 'S3'
 
     ###########################################################################
@@ -106,10 +106,10 @@ class GluentS3(GluentDfs):
     ###########################################################################
 
     def chgrp(self, dfs_path, group):
-        raise NotImplementedError('chgrp() not implemented for GluentS3')
+        raise NotImplementedError('chgrp() not implemented for GOES3')
 
     def chmod(self, dfs_path, mode):
-        raise NotImplementedError('chmod() not implemented for GluentS3')
+        raise NotImplementedError('chmod() not implemented for GOES3')
 
     def client(self):
         return self._client
@@ -139,7 +139,7 @@ class GluentS3(GluentDfs):
         self.debug('Copying to target scheme/container/path: %s' % str([scheme, container, target_path]))
         if not self._dry_run:
             if self._blob_exists(container, target_path) and not overwrite:
-                raise GluentDfsException('Cannot copy file over existing file: %s' % target_path)
+                raise GOEDfsException('Cannot copy file over existing file: %s' % target_path)
             s3_bucket = self._client.Bucket(container)
             s3_bucket.upload_file(Filename=local_path, Key=target_path)
 
@@ -153,11 +153,11 @@ class GluentS3(GluentDfs):
         self.debug('Copying from scheme/container/path: %s' % str([scheme, container, path]))
         if not self._dry_run:
             if file_exists(local_path) and not overwrite:
-                raise GluentDfsException('Cannot copy file over existing file: %s' % local_path)
+                raise GOEDfsException('Cannot copy file over existing file: %s' % local_path)
             s3_bucket = self._client.Bucket(container)
             s3_bucket.download_file(Key=path, Filename=local_path)
 
-    @retry.Retry(predicate=retry.if_exception_type(GluentDfsDeleteNotComplete),
+    @retry.Retry(predicate=retry.if_exception_type(GOEDfsDeleteNotComplete),
                  deadline=DFS_RETRY_TIMEOUT)
     def delete(self, dfs_path, recursive=False):
         """ Delete a file or directory and contents """
@@ -174,7 +174,7 @@ class GluentS3(GluentDfs):
             self._post_cloud_delete_wait(scheme)
             if self.stat(dfs_path):
                 self.debug('S3 delete incomplete, retrying')
-                raise GluentDfsDeleteNotComplete
+                raise GOEDfsDeleteNotComplete
         else:
             self.debug('Recursive delete using directory prefix: %s' % path)
             if not path.endswith(URI_SEP):
@@ -189,11 +189,11 @@ class GluentS3(GluentDfs):
                 # There were failures
                 self.debug('Object delete errors: %s' % str(delete_response.get('Errors')))
                 problem_keys = [_['Key'] for _ in delete_response.get('Errors')]
-                raise GluentDfsException('Errors deleting following objects from S3: %s' % str(problem_keys))
+                raise GOEDfsException('Errors deleting following objects from S3: %s' % str(problem_keys))
             self._post_cloud_delete_wait(scheme)
             if self._list_by_prefix(container, path, recursive=True):
                 self.debug('S3 delete incomplete, retrying')
-                raise GluentDfsDeleteNotComplete
+                raise GOEDfsDeleteNotComplete
         # If we get this far then it worked
         return True
 
@@ -224,10 +224,10 @@ class GluentS3(GluentDfs):
             return None
 
     def list_snapshottable_dirs(self):
-        raise NotImplementedError('list_snapshottable_dirs() not implemented for GluentS3')
+        raise NotImplementedError('list_snapshottable_dirs() not implemented for GOES3')
 
     def list_snapshots(self, snapshottable_dir):
-        raise NotImplementedError('list_snapshots() not implemented for GluentS3')
+        raise NotImplementedError('list_snapshots() not implemented for GOES3')
 
     def mkdir(self, dfs_path):
         """ No mkdir on S3 """
@@ -250,10 +250,10 @@ class GluentS3(GluentDfs):
                     content = content.decode()
                 return content
         except self._client.meta.client.exceptions.NoSuchKey:
-            raise GluentDfsException('Cannot download non-existent file: %s' % path)
+            raise GOEDfsException('Cannot download non-existent file: %s' % path)
 
     def rename(self, hdfs_src_path, hdfs_dst_path):
-        raise NotImplementedError('rename() not implemented for GluentS3')
+        raise NotImplementedError('rename() not implemented for GOES3')
 
     def rmdir(self, dfs_path, recursive=False):
         return self.delete(dfs_path, recursive=recursive)
@@ -291,6 +291,6 @@ class GluentS3(GluentDfs):
         if self._dry_run:
             return None
         if self._blob_exists(container, path) and not overwrite:
-            raise GluentDfsException('Cannot write over existing file: %s' % path)
+            raise GOEDfsException('Cannot write over existing file: %s' % path)
         s3_bucket = self._client.Bucket(container)
         s3_bucket.put_object(Key=path, Body=data)

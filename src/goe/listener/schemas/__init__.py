@@ -1,4 +1,4 @@
-# Gluent
+# GOE
 from goe.listener.schemas.base import BaseSchema, BaseSettings, Message
 from goe.listener.schemas.error import ErrorMessage
 from goe.listener.schemas.generics import (

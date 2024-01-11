@@ -9,10 +9,10 @@ from typing import Union
 
 from goe.offload.column_metadata import CanonicalColumn, \
     is_safe_mapping, \
-    GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY,\
-    GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4,\
-    GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE,\
-    GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_BOOLEAN, \
+    GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING, GOE_TYPE_BINARY,\
+    GOE_TYPE_LARGE_BINARY, GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4,\
+    GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38, GOE_TYPE_DECIMAL, GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE,\
+    GOE_TYPE_DATE, GOE_TYPE_TIME, GOE_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ, GOE_TYPE_BOOLEAN, \
     ALL_CANONICAL_TYPES, NUMERIC_CANONICAL_TYPES, STRING_CANONICAL_TYPES
 from goe.offload.microsoft.mssql_column import MSSQLColumn, \
     MSSQL_TYPE_BIGINT, MSSQL_TYPE_BIT, MSSQL_TYPE_DECIMAL, MSSQL_TYPE_INT, MSSQL_TYPE_MONEY, MSSQL_TYPE_NUMERIC, \
@@ -124,7 +124,7 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
             ,      NULL             AS partitioning_type
             FROM partitions"""
 
-        # TODO: what if we don't have SELECT ON SCHEMA::xyz granted TO [GLUENT_APP] - below will cause exception
+        # TODO: what if we don't have SELECT ON SCHEMA::xyz granted TO [GOE_APP] - below will cause exception
         row = self._db_api.execute_query_fetch_one(q, query_params=(self.owner, self.table_name))
         if row:
             self._iot_type, self._stats_num_rows, self._partitioned, self._partition_type = row
@@ -146,7 +146,7 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
             DBCC SHOW_STATISTICS ("sh_test.all_supported_data_types_nopk", stats_col4) WITH DENSITY_VECTOR
         The "All density" is the value we need (0 best, 1 worst)
         For now this is the best we have, the column with the "All density" value closest to 0
-        In the absence of any column stats we return None and gluent.py will use the first column in the table
+        In the absence of any column stats we return None and goe.py will use the first column in the table
         SP_AUTOSTATS is not valid for Azure Serverless SQL Pools
         """
         rows = self._db_api.execute_query_fetch_all('SP_AUTOSTATS "{schema}.{table}"'.format(
@@ -341,28 +341,28 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
         else:
             target_type = canonical_override
         if column.data_type == MSSQL_TYPE_BIT:
-            return bool(target_type == GLUENT_TYPE_BOOLEAN)
+            return bool(target_type == GOE_TYPE_BOOLEAN)
         elif column.data_type in [MSSQL_TYPE_CHAR, MSSQL_TYPE_NCHAR]:
-            return bool(target_type == GLUENT_TYPE_FIXED_STRING)
+            return bool(target_type == GOE_TYPE_FIXED_STRING)
         elif column.data_type in [MSSQL_TYPE_TEXT, MSSQL_TYPE_NTEXT]:
-            return bool(target_type == GLUENT_TYPE_LARGE_STRING)
+            return bool(target_type == GOE_TYPE_LARGE_STRING)
         elif column.data_type in [MSSQL_TYPE_VARCHAR, MSSQL_TYPE_NVARCHAR, MSSQL_TYPE_UNIQUEIDENTIFIER]:
-            return bool(target_type == GLUENT_TYPE_VARIABLE_STRING)
+            return bool(target_type == GOE_TYPE_VARIABLE_STRING)
         elif column.data_type in [MSSQL_TYPE_BINARY, MSSQL_TYPE_VARBINARY, MSSQL_TYPE_IMAGE]:
-            return bool(target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY])
+            return bool(target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY])
         elif column.data_type == MSSQL_TYPE_FLOAT:
-            return bool(target_type == GLUENT_TYPE_DOUBLE)
+            return bool(target_type == GOE_TYPE_DOUBLE)
         elif column.data_type == MSSQL_TYPE_REAL:
-            return bool(target_type == GLUENT_TYPE_FLOAT)
+            return bool(target_type == GOE_TYPE_FLOAT)
         elif column.is_number_based():
             return target_type in NUMERIC_CANONICAL_TYPES
         elif column.is_date_based() and column.is_time_zone_based():
-            return bool(target_type == GLUENT_TYPE_TIMESTAMP_TZ)
+            return bool(target_type == GOE_TYPE_TIMESTAMP_TZ)
         elif column.is_date_based():
-            return bool(target_type in [GLUENT_TYPE_DATE, GLUENT_TYPE_TIMESTAMP] or
+            return bool(target_type in [GOE_TYPE_DATE, GOE_TYPE_TIMESTAMP] or
                         target_type in STRING_CANONICAL_TYPES)
         elif column.data_type == MSSQL_TYPE_TIME:
-            return bool(target_type == GLUENT_TYPE_TIME)
+            return bool(target_type == GOE_TYPE_TIME)
         elif target_type not in ALL_CANONICAL_TYPES:
             # Ideally we would log something here but this class has no messages object
             # self._log('Unknown canonical type in mapping: %s' % target_type, detail=VVERBOSE)
@@ -370,7 +370,7 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
         return False
 
     def to_canonical_column(self, column):
-        """ Translate an MSSQL column to an internal Gluent column
+        """ Translate an MSSQL column to an internal GOE column
         """
 
         def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, safe_mapping=None):
@@ -387,25 +387,25 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
         assert isinstance(column, MSSQLColumn)
 
         if column.data_type == MSSQL_TYPE_BIT:
-            return new_column(column, GLUENT_TYPE_BOOLEAN)
+            return new_column(column, GOE_TYPE_BOOLEAN)
         elif column.data_type in (MSSQL_TYPE_CHAR, MSSQL_TYPE_NCHAR):
-            return new_column(column, GLUENT_TYPE_FIXED_STRING, data_length=column.data_length, safe_mapping=True)
+            return new_column(column, GOE_TYPE_FIXED_STRING, data_length=column.data_length, safe_mapping=True)
         elif column.data_type in (MSSQL_TYPE_TEXT, MSSQL_TYPE_NTEXT):
-            return new_column(column, GLUENT_TYPE_LARGE_STRING)
+            return new_column(column, GOE_TYPE_LARGE_STRING)
         elif column.data_type in (MSSQL_TYPE_VARCHAR, MSSQL_TYPE_NVARCHAR, MSSQL_TYPE_UNIQUEIDENTIFIER):
-            return new_column(column, GLUENT_TYPE_VARIABLE_STRING, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_VARIABLE_STRING, data_length=column.data_length)
         elif column.data_type in (MSSQL_TYPE_BINARY, MSSQL_TYPE_VARBINARY, MSSQL_TYPE_IMAGE):
-            return new_column(column, GLUENT_TYPE_BINARY, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_BINARY, data_length=column.data_length)
         elif column.data_type in (MSSQL_TYPE_TINYINT, MSSQL_TYPE_SMALLINT):
-            return new_column(column, GLUENT_TYPE_INTEGER_2)
+            return new_column(column, GOE_TYPE_INTEGER_2)
         elif column.data_type == MSSQL_TYPE_INT:
-            return new_column(column, GLUENT_TYPE_INTEGER_4)
+            return new_column(column, GOE_TYPE_INTEGER_4)
         elif column.data_type == MSSQL_TYPE_BIGINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_8)
+            return new_column(column, GOE_TYPE_INTEGER_8)
         elif column.data_type == MSSQL_TYPE_FLOAT:
-            return new_column(column, GLUENT_TYPE_DOUBLE)
+            return new_column(column, GOE_TYPE_DOUBLE)
         elif column.data_type == MSSQL_TYPE_REAL:
-            return new_column(column, GLUENT_TYPE_FLOAT)
+            return new_column(column, GOE_TYPE_FLOAT)
         elif column.data_type in (MSSQL_TYPE_DECIMAL, MSSQL_TYPE_NUMERIC, MSSQL_TYPE_MONEY, MSSQL_TYPE_SMALLMONEY):
             data_precision = column.data_precision
             data_scale = column.data_scale
@@ -420,32 +420,32 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
             if data_scale == 0:
                 # Integral numbers
                 if data_precision >= 1 and data_precision <= 2:
-                    integral_type = GLUENT_TYPE_INTEGER_1
+                    integral_type = GOE_TYPE_INTEGER_1
                 elif data_precision >= 3 and data_precision <= 4:
-                    integral_type = GLUENT_TYPE_INTEGER_2
+                    integral_type = GOE_TYPE_INTEGER_2
                 elif data_precision >= 5 and data_precision <= 9:
-                    integral_type = GLUENT_TYPE_INTEGER_4
+                    integral_type = GOE_TYPE_INTEGER_4
                 elif data_precision >= 10 and data_precision <= 18:
-                    integral_type = GLUENT_TYPE_INTEGER_8
+                    integral_type = GOE_TYPE_INTEGER_8
                 elif data_precision >= 19 and data_precision <= 38:
-                    integral_type = GLUENT_TYPE_INTEGER_38
+                    integral_type = GOE_TYPE_INTEGER_38
                 else:
                     # The precision overflows our canonical integral types so store as a decimal
-                    integral_type=GLUENT_TYPE_DECIMAL
+                    integral_type=GOE_TYPE_DECIMAL
                 return new_column(column, integral_type, data_precision=data_precision, data_scale=0)
             else:
                 # If precision & scale are None then this is unsafe, otherwise leave it None to let new_column() logic take over
                 safe_mapping = False if data_precision is None and data_scale is None else None
-                return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale,
+                return new_column(column, GOE_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale,
                                   safe_mapping=safe_mapping)
         elif column.data_type == MSSQL_TYPE_DATE:
-            return new_column(column, GLUENT_TYPE_DATE)
+            return new_column(column, GOE_TYPE_DATE)
         elif column.data_type == MSSQL_TYPE_TIME:
-            return new_column(column, GLUENT_TYPE_TIME)
+            return new_column(column, GOE_TYPE_TIME)
         elif column.data_type in (MSSQL_TYPE_SMALLDATETIME, MSSQL_TYPE_DATETIME, MSSQL_TYPE_DATETIME2):
-            return new_column(column, GLUENT_TYPE_TIMESTAMP)
+            return new_column(column, GOE_TYPE_TIMESTAMP)
         elif column.data_type == MSSQL_TYPE_DATETIMEOFFSET:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP_TZ)
+            return new_column(column, GOE_TYPE_TIMESTAMP_TZ)
         else:
             raise NotImplementedError('Unsupported MSSQL data type: %s' % column.data_type)
 

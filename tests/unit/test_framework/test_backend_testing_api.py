@@ -70,15 +70,15 @@ class TestBackendTestingApi(TestCase):
             list,
         )
 
-    def _test_gl_type_mapping_generated_table_col_specs(self):
+    def _test_goe_type_mapping_generated_table_col_specs(self):
         self.assertIsInstance(
-            self.test_api.gl_type_mapping_generated_table_col_specs(), tuple
+            self.test_api.goe_type_mapping_generated_table_col_specs(), tuple
         )
         self.assertIsInstance(
-            self.test_api.gl_type_mapping_generated_table_col_specs()[0], list
+            self.test_api.goe_type_mapping_generated_table_col_specs()[0], list
         )
         self.assertIsInstance(
-            self.test_api.gl_type_mapping_generated_table_col_specs()[1], list
+            self.test_api.goe_type_mapping_generated_table_col_specs()[1], list
         )
 
     def _test_host_compare_sql_projection(self):
@@ -134,7 +134,7 @@ class TestBackendTestingApi(TestCase):
 
     def _run_all_tests(self):
         self._test_create_table_as_select()
-        self._test_gl_type_mapping_generated_table_col_specs()
+        self._test_goe_type_mapping_generated_table_col_specs()
         self._test_host_compare_sql_projection()
         self._test_transient_error_rerunner()
         self._test_unit_test_query_options()

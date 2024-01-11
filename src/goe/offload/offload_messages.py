@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional
 # Third Party Libraries
 import orjson
 
-# Gluent
+# GOE
 from goe.orchestration import orchestration_constants
 from goe.orchestration.command_steps import STEP_TITLES, step_title
 from goe.util.misc_functions import standard_log_name
@@ -23,7 +23,7 @@ from goe.util.redis_tools import cache
 from goe.orchestration import command_steps
 
 if TYPE_CHECKING:
-    # Gluent
+    # GOE
     from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )
@@ -208,7 +208,7 @@ class OffloadMessages(object):
 
     @staticmethod
     def ansi_wrap(txt, color_name, ansi):
-        """Decorated as staticmethod to allow independent use from gluent.py, hence
+        """Decorated as staticmethod to allow independent use from goe.py, hence
         not using self._ansi but passing in as parameter.
         """
         if ansi and color_name:
@@ -291,12 +291,12 @@ class OffloadMessages(object):
     #   Do I use the log function or the info/detail/debug set of functions in my program?
     #   ----------------------------------------------------------------------------------
     #
-    #   1. Most Gluent programs use log because we want all information in the log files at
+    #   1. Most GOE programs use log because we want all information in the log files at
     #      all times, regardless of user's command-line verbosity setting. Something that a
     #      customer might not be able to re-run (such as an offload) but needs support with
     #      clearly has to guarantee sufficient logging at all times.
     #
-    #   2. Some Gluent programs are trivial to re-run and do not require debug-amounts of
+    #   2. Some GOE programs are trivial to re-run and do not require debug-amounts of
     #      logging for everyday use. If an issue occurs and the program is trivial to re-run
     #      with a --vv option to create debug logging, then the program can use the
     #      info/detail/debug functions to express the developer's intention for when the
@@ -337,7 +337,7 @@ class OffloadMessages(object):
         if self.cache_enabled and not self._redis_in_error:
             try:
                 cache.rpush(
-                    f"gluent:run:{self.execution_id}",
+                    f"goe:run:{self.execution_id}",
                     serialize_object(
                         {
                             "message": line,
@@ -611,7 +611,7 @@ class OffloadMessages(object):
 
 
 class OffloadMessagesMixin:
-    """Helper class that injects gluent logging routines into child classes
+    """Helper class that injects goe logging routines into child classes
 
     Usage:
         1. Make OffloadMessagesMixin one of the 'parents'
@@ -692,7 +692,7 @@ def to_message_level(level):
 
 
 def step_title_to_step_id(step_title):
-    """Helper function to share logic between this module and gluent.py"""
+    """Helper function to share logic between this module and goe.py"""
     if step_title:
         return step_title.replace(" ", "_").lower()
     else:
@@ -700,17 +700,17 @@ def step_title_to_step_id(step_title):
 
 
 if __name__ == "__main__":
-    # Gluent
-    from goe.util.misc_functions import set_gluentlib_logging
+    # GOE
+    from goe.util.misc_functions import set_goelib_logging
 
     log_level = sys.argv[-1:][0].upper()
     if log_level not in ("DEBUG", "INFO", "WARNING", "CRITICAL", "ERROR"):
         log_level = "CRITICAL"
 
-    set_gluentlib_logging(log_level)
+    set_goelib_logging(log_level)
 
     log_dir = "/tmp"
-    log_id = "gl_test_log"
+    log_id = "goe_test_log"
 
     print("NORMAL OffloadMessages")
     print("=====================================")

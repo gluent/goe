@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """ BackendSynapseApi: Library for logic/interaction with an Azure Synapse Sql Server backend.
-    Gluent Inc (c) 2015-2020
+    LICENSE_TEXT
 """
 
 from datetime import datetime, timedelta, timezone
@@ -34,26 +34,26 @@ from goe.offload.column_metadata import (
     CanonicalColumn,
     is_safe_mapping,
     valid_column_list,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_BOOLEAN,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIME,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_BOOLEAN,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_DATE,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIME,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_VARIABLE_STRING,
     ALL_CANONICAL_TYPES,
     DATE_CANONICAL_TYPES,
     NUMERIC_CANONICAL_TYPES,
@@ -128,7 +128,7 @@ logger.addHandler(logging.NullHandler())  # Disabling logging by default
 SYNAPSE_INVALID_IDENTIFIER_CHARS_RE = re.compile(r'[\[\]"]', re.I)
 
 # Column statistics object prefix
-SYNAPSE_COLUMN_STAT_PREFIX = "gluent_statistics_"
+SYNAPSE_COLUMN_STAT_PREFIX = "goe_statistics_"
 
 
 # Enums for tuple return values
@@ -752,7 +752,7 @@ class BackendSynapseApi(BackendApiInterface):
 
     def _get_query_option_label_identifier(self):
         """Return a unique identifier for identifying a SQL statement"""
-        return "Gluent Offload Engine (%s)" % id_generator(16)
+        return "GOE (%s)" % id_generator(16)
 
     def _get_query_profile(self, query_identifier=None):
         """Build and return a str payload from _get_query_profile_tuples()"""
@@ -1067,7 +1067,7 @@ class BackendSynapseApi(BackendApiInterface):
         return self.execute_ddl(sqls) if sqls else sqls
 
     def create_database(self, db_name, comment=None, properties=None):
-        """Create a Synapse schema which is a database in Gluent terminology.
+        """Create a Synapse schema which is a database in GOE terminology.
         properties: not applicable
         comment: not applicable
         """
@@ -1682,7 +1682,7 @@ FROM   %(from_db_table)s%(where)s""" % {
     def get_table_ddl(
         self, db_name, table_name, as_list=False, terminate_sql=False, for_replace=False
     ):
-        """Mock up Synapse table DDL based on how GDP code would create a table.
+        """Mock up Synapse table DDL based on how GOE code would create a table.
         This is not ideal but Synapse doesn;t have a readily available DDL retrieval method. What this code
         does is derive the inputs as they should have been at table creation time and feeds them back through
         the same code. The flaw is, if we change our code generator we'll get a different output from this code.
@@ -2457,7 +2457,7 @@ FROM   %(from_db_table)s%(where)s""" % {
             if column.data_type in [SYNAPSE_TYPE_REAL, SYNAPSE_TYPE_FLOAT]:
                 return bool(
                     target_type
-                    in [GLUENT_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE, GLUENT_TYPE_FLOAT]
+                    in [GOE_TYPE_DECIMAL, GOE_TYPE_DOUBLE, GOE_TYPE_FLOAT]
                 )
             else:
                 return target_type in NUMERIC_CANONICAL_TYPES
@@ -2467,13 +2467,13 @@ FROM   %(from_db_table)s%(where)s""" % {
             if column.data_type in [SYNAPSE_TYPE_CHAR, SYNAPSE_TYPE_NCHAR]:
                 return bool(
                     target_type in STRING_CANONICAL_TYPES
-                    or target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY]
+                    or target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY]
                 )
             else:
                 return bool(
                     target_type in STRING_CANONICAL_TYPES
-                    or target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY]
-                    or target_type in [GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM]
+                    or target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY]
+                    or target_type in [GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM]
                 )
         elif target_type not in ALL_CANONICAL_TYPES:
             self._log(
@@ -2483,9 +2483,9 @@ FROM   %(from_db_table)s%(where)s""" % {
         elif column.data_type not in self.supported_backend_data_types():
             return False
         elif column.data_type in [SYNAPSE_TYPE_BINARY, SYNAPSE_TYPE_VARBINARY]:
-            return bool(target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY])
+            return bool(target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY])
         elif column.data_type == SYNAPSE_TYPE_TIME:
-            return bool(target_type == GLUENT_TYPE_TIME)
+            return bool(target_type == GOE_TYPE_TIME)
         return False
 
     def valid_staging_formats(self):
@@ -2509,7 +2509,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         return bool(row)
 
     def to_canonical_column(self, column):
-        """Translate a Synapse SQL column to an internal Gluent column"""
+        """Translate a Synapse SQL column to an internal GOE column"""
 
         def new_column(
             col,
@@ -2547,7 +2547,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         if column.data_type == SYNAPSE_TYPE_CHAR:
             return new_column(
                 column,
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 data_length=column.data_length,
                 char_length=column.char_length,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
@@ -2556,7 +2556,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         elif column.data_type == SYNAPSE_TYPE_NCHAR:
             return new_column(
                 column,
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 data_length=column.data_length,
                 char_length=column.char_length,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
@@ -2565,7 +2565,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         elif column.data_type == SYNAPSE_TYPE_VARCHAR:
             return new_column(
                 column,
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 data_length=column.data_length,
                 char_length=column.char_length,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
@@ -2573,39 +2573,39 @@ FROM   %(from_db_table)s%(where)s""" % {
         elif column.data_type == SYNAPSE_TYPE_NVARCHAR:
             return new_column(
                 column,
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 data_length=column.data_length,
                 char_length=column.char_length,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             )
         elif column.data_type in (SYNAPSE_TYPE_BINARY, SYNAPSE_TYPE_VARBINARY):
             return new_column(
-                column, GLUENT_TYPE_BINARY, data_length=column.data_length
+                column, GOE_TYPE_BINARY, data_length=column.data_length
             )
         elif column.data_type == SYNAPSE_TYPE_TINYINT:
-            # GLUENT_TYPE_INTEGER_1 does not fit in TINYINT but TINYINT *does* fit in GLUENT_TYPE_INTEGER_1
-            return new_column(column, GLUENT_TYPE_INTEGER_1)
+            # GOE_TYPE_INTEGER_1 does not fit in TINYINT but TINYINT *does* fit in GOE_TYPE_INTEGER_1
+            return new_column(column, GOE_TYPE_INTEGER_1)
         elif column.data_type == SYNAPSE_TYPE_SMALLINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_2)
+            return new_column(column, GOE_TYPE_INTEGER_2)
         elif column.data_type == SYNAPSE_TYPE_INT:
-            return new_column(column, GLUENT_TYPE_INTEGER_4)
+            return new_column(column, GOE_TYPE_INTEGER_4)
         elif column.data_type == SYNAPSE_TYPE_BIGINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_8)
+            return new_column(column, GOE_TYPE_INTEGER_8)
         elif column.data_type == SYNAPSE_TYPE_FLOAT:
-            return new_column(column, GLUENT_TYPE_DOUBLE)
+            return new_column(column, GOE_TYPE_DOUBLE)
         elif column.data_type == SYNAPSE_TYPE_REAL:
-            return new_column(column, GLUENT_TYPE_FLOAT)
+            return new_column(column, GOE_TYPE_FLOAT)
         elif column.data_type == SYNAPSE_TYPE_MONEY:
             return new_column(
                 column,
-                GLUENT_TYPE_DECIMAL,
+                GOE_TYPE_DECIMAL,
                 data_precision=column.data_precision or 19,
                 data_scale=column.data_scale or 4,
             )
         elif column.data_type == SYNAPSE_TYPE_SMALLMONEY:
             return new_column(
                 column,
-                GLUENT_TYPE_DECIMAL,
+                GOE_TYPE_DECIMAL,
                 data_precision=column.data_precision or 10,
                 data_scale=column.data_scale or 4,
             )
@@ -2623,18 +2623,18 @@ FROM   %(from_db_table)s%(where)s""" % {
             if data_scale == 0:
                 # Integral numbers
                 if data_precision >= 1 and data_precision <= 2:
-                    integral_type = GLUENT_TYPE_INTEGER_1
+                    integral_type = GOE_TYPE_INTEGER_1
                 elif data_precision >= 3 and data_precision <= 4:
-                    integral_type = GLUENT_TYPE_INTEGER_2
+                    integral_type = GOE_TYPE_INTEGER_2
                 elif data_precision >= 5 and data_precision <= 9:
-                    integral_type = GLUENT_TYPE_INTEGER_4
+                    integral_type = GOE_TYPE_INTEGER_4
                 elif data_precision >= 10 and data_precision <= 18:
-                    integral_type = GLUENT_TYPE_INTEGER_8
+                    integral_type = GOE_TYPE_INTEGER_8
                 elif data_precision >= 19 and data_precision <= 38:
-                    integral_type = GLUENT_TYPE_INTEGER_38
+                    integral_type = GOE_TYPE_INTEGER_38
                 else:
                     # The precision overflows our canonical integral types so store as a decimal.
-                    integral_type = GLUENT_TYPE_DECIMAL
+                    integral_type = GOE_TYPE_DECIMAL
                 return new_column(
                     column, integral_type, data_precision=data_precision, data_scale=0
                 )
@@ -2646,29 +2646,29 @@ FROM   %(from_db_table)s%(where)s""" % {
                 )
                 return new_column(
                     column,
-                    GLUENT_TYPE_DECIMAL,
+                    GOE_TYPE_DECIMAL,
                     data_precision=data_precision,
                     data_scale=data_scale,
                     safe_mapping=safe_mapping,
                 )
         elif column.data_type == SYNAPSE_TYPE_DATE:
-            return new_column(column, GLUENT_TYPE_DATE)
+            return new_column(column, GOE_TYPE_DATE)
         elif column.data_type == SYNAPSE_TYPE_TIME:
-            return new_column(column, GLUENT_TYPE_TIME, data_scale=column.data_scale)
+            return new_column(column, GOE_TYPE_TIME, data_scale=column.data_scale)
         elif column.data_type in (SYNAPSE_TYPE_DATETIME, SYNAPSE_TYPE_DATETIME2):
             return new_column(
-                column, GLUENT_TYPE_TIMESTAMP, data_scale=column.data_scale
+                column, GOE_TYPE_TIMESTAMP, data_scale=column.data_scale
             )
         elif column.data_type == SYNAPSE_TYPE_SMALLDATETIME:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP, data_scale=0)
+            return new_column(column, GOE_TYPE_TIMESTAMP, data_scale=0)
         elif column.data_type == SYNAPSE_TYPE_DATETIMEOFFSET:
             return new_column(
-                column, GLUENT_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale
+                column, GOE_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale
             )
         elif column.data_type == SYNAPSE_TYPE_UNIQUEIDENTIFIER:
             # This mapping was initially BINARY(16) but Hybrid Query required switch to CHAR(36) because:
             #     "JDBC driver gives us a string for a uniqueidentifier and not the underlying bytes"
-            return new_column(column, GLUENT_TYPE_FIXED_STRING, data_length=36)
+            return new_column(column, GOE_TYPE_FIXED_STRING, data_length=36)
         else:
             raise NotImplementedError(
                 "Unsupported Synapse SQL data type: %s" % column.data_type
@@ -2716,7 +2716,7 @@ FROM   %(from_db_table)s%(where)s""" % {
             column, CanonicalColumn
         ), "%s is not instance of CanonicalColumn" % type(column)
 
-        if column.data_type == GLUENT_TYPE_FIXED_STRING:
+        if column.data_type == GOE_TYPE_FIXED_STRING:
             return new_column(
                 column,
                 nchar_or_char(SYNAPSE_TYPE_CHAR, column.char_semantics),
@@ -2724,13 +2724,13 @@ FROM   %(from_db_table)s%(where)s""" % {
                 char_length=column.char_length,
                 safe_mapping=True,
             )
-        elif column.data_type == GLUENT_TYPE_LARGE_STRING:
+        elif column.data_type == GOE_TYPE_LARGE_STRING:
             return new_column(
                 column,
                 nchar_or_char(SYNAPSE_TYPE_VARCHAR, column.char_semantics),
                 data_length=None,
             )
-        elif column.data_type == GLUENT_TYPE_VARIABLE_STRING:
+        elif column.data_type == GOE_TYPE_VARIABLE_STRING:
             return new_column(
                 column,
                 nchar_or_char(SYNAPSE_TYPE_VARCHAR, column.char_semantics),
@@ -2738,20 +2738,20 @@ FROM   %(from_db_table)s%(where)s""" % {
                 char_length=column.char_length,
                 safe_mapping=True,
             )
-        elif column.data_type == GLUENT_TYPE_BINARY:
+        elif column.data_type == GOE_TYPE_BINARY:
             return new_column(
                 column, SYNAPSE_TYPE_VARBINARY, data_length=column.data_length
             )
-        elif column.data_type == GLUENT_TYPE_LARGE_BINARY:
+        elif column.data_type == GOE_TYPE_LARGE_BINARY:
             return new_column(column, SYNAPSE_TYPE_VARBINARY, data_length=None)
         # Synapse tinyint is unsigned, so cannot cater for all INTEGER_1 values; map to smallint
-        elif column.data_type in (GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2):
+        elif column.data_type in (GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2):
             return new_column(column, SYNAPSE_TYPE_SMALLINT, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_4:
+        elif column.data_type == GOE_TYPE_INTEGER_4:
             return new_column(column, SYNAPSE_TYPE_INT, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_8:
+        elif column.data_type == GOE_TYPE_INTEGER_8:
             return new_column(column, SYNAPSE_TYPE_BIGINT, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_38:
+        elif column.data_type == GOE_TYPE_INTEGER_38:
             return new_column(
                 column,
                 SYNAPSE_TYPE_NUMERIC,
@@ -2759,7 +2759,7 @@ FROM   %(from_db_table)s%(where)s""" % {
                 data_scale=0,
                 safe_mapping=True,
             )
-        elif column.data_type == GLUENT_TYPE_DECIMAL:
+        elif column.data_type == GOE_TYPE_DECIMAL:
             if column.data_precision is None and column.data_scale is None:
                 return self.gen_default_numeric_column(column.name)
             else:
@@ -2775,13 +2775,13 @@ FROM   %(from_db_table)s%(where)s""" % {
                     data_scale=column.data_scale,
                     safe_mapping=True,
                 )
-        elif column.data_type == GLUENT_TYPE_DATE:
+        elif column.data_type == GOE_TYPE_DATE:
             return new_column(column, SYNAPSE_TYPE_DATE, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_FLOAT:
+        elif column.data_type == GOE_TYPE_FLOAT:
             return new_column(column, SYNAPSE_TYPE_REAL)
-        elif column.data_type == GLUENT_TYPE_DOUBLE:
+        elif column.data_type == GOE_TYPE_DOUBLE:
             return new_column(column, SYNAPSE_TYPE_FLOAT)
-        elif column.data_type == GLUENT_TYPE_TIME:
+        elif column.data_type == GOE_TYPE_TIME:
             safe_mapping = bool(
                 column.data_scale is None
                 or column.data_scale <= self.max_datetime_scale()
@@ -2797,7 +2797,7 @@ FROM   %(from_db_table)s%(where)s""" % {
                 data_scale=data_scale,
                 safe_mapping=safe_mapping,
             )
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP:
+        elif column.data_type == GOE_TYPE_TIMESTAMP:
             safe_mapping = bool(
                 column.data_scale is None
                 or column.data_scale <= self.max_datetime_scale()
@@ -2813,7 +2813,7 @@ FROM   %(from_db_table)s%(where)s""" % {
                 data_scale=data_scale,
                 safe_mapping=safe_mapping,
             )
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP_TZ:
+        elif column.data_type == GOE_TYPE_TIMESTAMP_TZ:
             safe_mapping = bool(
                 column.data_scale is None
                 or column.data_scale <= self.max_datetime_scale()
@@ -2829,15 +2829,15 @@ FROM   %(from_db_table)s%(where)s""" % {
                 data_scale=data_scale,
                 safe_mapping=safe_mapping,
             )
-        elif column.data_type == GLUENT_TYPE_INTERVAL_DS:
+        elif column.data_type == GOE_TYPE_INTERVAL_DS:
             return new_column(column, SYNAPSE_TYPE_VARCHAR, data_length=100)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_YM:
+        elif column.data_type == GOE_TYPE_INTERVAL_YM:
             return new_column(column, SYNAPSE_TYPE_VARCHAR, data_length=100)
-        elif column.data_type == GLUENT_TYPE_BOOLEAN:
+        elif column.data_type == GOE_TYPE_BOOLEAN:
             return new_column(column, SYNAPSE_TYPE_BIT)
         else:
             raise NotImplementedError(
-                "Unsupported Gluent data type: %s" % column.data_type
+                "Unsupported GOE data type: %s" % column.data_type
             )
 
     def alter_sort_columns(self, db_name, table_name, sort_column_names, sync=None):

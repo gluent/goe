@@ -7,7 +7,7 @@
 
 import logging
 
-from goe.filesystem.gluent_dfs import get_scheme_from_location_uri, OFFLOAD_FS_SCHEME_GS
+from goe.filesystem.goe_dfs import get_scheme_from_location_uri, OFFLOAD_FS_SCHEME_GS
 from goe.offload.bigquery.bigquery_column import (
     BigQueryColumn,
     BIGQUERY_TYPE_INT64,
@@ -28,26 +28,26 @@ from goe.offload.column_metadata import (
     match_table_column,
     CANONICAL_CHAR_SEMANTICS_CHAR,
     CANONICAL_CHAR_SEMANTICS_UNICODE,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_VARIABLE_STRING,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_TIME,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
-    GLUENT_TYPE_BOOLEAN,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_DATE,
+    GOE_TYPE_TIME,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
+    GOE_TYPE_BOOLEAN,
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from tests.testlib.test_framework.test_constants import (
@@ -139,13 +139,13 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
         }
         return BIGQUERY_TYPE_INT64, arg_types[udf_name], udf_expr[udf_name]
 
-    def _gl_type_mapping_column_definitions(self, filter_column=None):
-        """Returns a dict of dicts defining columns for GL_BACKEND_TYPE_MAPPING test table.
+    def _goe_type_mapping_column_definitions(self, filter_column=None):
+        """Returns a dict of dicts defining columns for GOE_BACKEND_TYPE_MAPPING test table.
         filter_column can be used to fetch just a single column dict.
         """
 
         def name(*args):
-            return self._gl_type_mapping_column_name(*args)
+            return self._goe_type_mapping_column_name(*args)
 
         all_columns = {
             name(BIGQUERY_TYPE_BIGNUMERIC): {
@@ -153,36 +153,36 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                     name(BIGQUERY_TYPE_BIGNUMERIC), BIGQUERY_TYPE_BIGNUMERIC
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_BIGNUMERIC), GLUENT_TYPE_DECIMAL
+                    name(BIGQUERY_TYPE_BIGNUMERIC), GOE_TYPE_DECIMAL
                 ),
             },
-            name(BIGQUERY_TYPE_BIGNUMERIC, GLUENT_TYPE_INTEGER_8): {
+            name(BIGQUERY_TYPE_BIGNUMERIC, GOE_TYPE_INTEGER_8): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_BIGNUMERIC, GLUENT_TYPE_INTEGER_8),
+                    name(BIGQUERY_TYPE_BIGNUMERIC, GOE_TYPE_INTEGER_8),
                     BIGQUERY_TYPE_BIGNUMERIC,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_BIGNUMERIC, GLUENT_TYPE_INTEGER_8),
-                    GLUENT_TYPE_INTEGER_8,
+                    name(BIGQUERY_TYPE_BIGNUMERIC, GOE_TYPE_INTEGER_8),
+                    GOE_TYPE_INTEGER_8,
                 ),
                 "present_options": {
                     "integer_8_columns_csv": name(
-                        BIGQUERY_TYPE_BIGNUMERIC, GLUENT_TYPE_INTEGER_8
+                        BIGQUERY_TYPE_BIGNUMERIC, GOE_TYPE_INTEGER_8
                     )
                 },
             },
-            name(BIGQUERY_TYPE_BIGNUMERIC, GLUENT_TYPE_DECIMAL, "38", "18"): {
+            name(BIGQUERY_TYPE_BIGNUMERIC, GOE_TYPE_DECIMAL, "38", "18"): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_BIGNUMERIC, GLUENT_TYPE_DECIMAL, "38", "18"),
+                    name(BIGQUERY_TYPE_BIGNUMERIC, GOE_TYPE_DECIMAL, "38", "18"),
                     BIGQUERY_TYPE_BIGNUMERIC,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_BIGNUMERIC, GLUENT_TYPE_DECIMAL, "38", "18"),
-                    GLUENT_TYPE_DECIMAL,
+                    name(BIGQUERY_TYPE_BIGNUMERIC, GOE_TYPE_DECIMAL, "38", "18"),
+                    GOE_TYPE_DECIMAL,
                 ),
                 "present_options": {
                     "decimal_columns_csv_list": [
-                        name(BIGQUERY_TYPE_BIGNUMERIC, GLUENT_TYPE_DECIMAL, "38", "18")
+                        name(BIGQUERY_TYPE_BIGNUMERIC, GOE_TYPE_DECIMAL, "38", "18")
                     ],
                     "decimal_columns_type_list": ["38,18"],
                 },
@@ -192,41 +192,41 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                     name(BIGQUERY_TYPE_BYTES), BIGQUERY_TYPE_BYTES
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_BYTES), GLUENT_TYPE_BINARY
+                    name(BIGQUERY_TYPE_BYTES), GOE_TYPE_BINARY
                 ),
             },
-            name(BIGQUERY_TYPE_BYTES, GLUENT_TYPE_LARGE_BINARY): {
+            name(BIGQUERY_TYPE_BYTES, GOE_TYPE_LARGE_BINARY): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_BYTES, GLUENT_TYPE_LARGE_BINARY),
+                    name(BIGQUERY_TYPE_BYTES, GOE_TYPE_LARGE_BINARY),
                     BIGQUERY_TYPE_BYTES,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_BYTES, GLUENT_TYPE_LARGE_BINARY),
-                    GLUENT_TYPE_LARGE_BINARY,
+                    name(BIGQUERY_TYPE_BYTES, GOE_TYPE_LARGE_BINARY),
+                    GOE_TYPE_LARGE_BINARY,
                 ),
                 "present_options": {
                     "large_binary_columns_csv": name(
-                        BIGQUERY_TYPE_BYTES, GLUENT_TYPE_LARGE_BINARY
+                        BIGQUERY_TYPE_BYTES, GOE_TYPE_LARGE_BINARY
                     )
                 },
             },
             name(BIGQUERY_TYPE_DATE): {
                 "column": BigQueryColumn(name(BIGQUERY_TYPE_DATE), BIGQUERY_TYPE_DATE),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_DATE), GLUENT_TYPE_DATE
+                    name(BIGQUERY_TYPE_DATE), GOE_TYPE_DATE
                 ),
             },
-            name(BIGQUERY_TYPE_DATE, GLUENT_TYPE_TIMESTAMP): {
+            name(BIGQUERY_TYPE_DATE, GOE_TYPE_TIMESTAMP): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_DATE, GLUENT_TYPE_TIMESTAMP), BIGQUERY_TYPE_DATE
+                    name(BIGQUERY_TYPE_DATE, GOE_TYPE_TIMESTAMP), BIGQUERY_TYPE_DATE
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_DATE, GLUENT_TYPE_TIMESTAMP),
-                    GLUENT_TYPE_TIMESTAMP,
+                    name(BIGQUERY_TYPE_DATE, GOE_TYPE_TIMESTAMP),
+                    GOE_TYPE_TIMESTAMP,
                 ),
                 "present_options": {
                     "timestamp_columns_csv": name(
-                        BIGQUERY_TYPE_DATE, GLUENT_TYPE_TIMESTAMP
+                        BIGQUERY_TYPE_DATE, GOE_TYPE_TIMESTAMP
                     )
                 },
             },
@@ -235,19 +235,19 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                     name(BIGQUERY_TYPE_DATETIME), BIGQUERY_TYPE_DATETIME
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_DATETIME), GLUENT_TYPE_TIMESTAMP
+                    name(BIGQUERY_TYPE_DATETIME), GOE_TYPE_TIMESTAMP
                 ),
             },
-            name(BIGQUERY_TYPE_DATETIME, GLUENT_TYPE_DATE): {
+            name(BIGQUERY_TYPE_DATETIME, GOE_TYPE_DATE): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_DATETIME, GLUENT_TYPE_DATE),
+                    name(BIGQUERY_TYPE_DATETIME, GOE_TYPE_DATE),
                     BIGQUERY_TYPE_DATETIME,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_DATETIME, GLUENT_TYPE_DATE), GLUENT_TYPE_DATE
+                    name(BIGQUERY_TYPE_DATETIME, GOE_TYPE_DATE), GOE_TYPE_DATE
                 ),
                 "present_options": {
-                    "date_columns_csv": name(BIGQUERY_TYPE_DATETIME, GLUENT_TYPE_DATE)
+                    "date_columns_csv": name(BIGQUERY_TYPE_DATETIME, GOE_TYPE_DATE)
                 },
             },
             name(BIGQUERY_TYPE_FLOAT64): {
@@ -255,21 +255,21 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                     name(BIGQUERY_TYPE_FLOAT64), BIGQUERY_TYPE_FLOAT64
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_FLOAT64), GLUENT_TYPE_DOUBLE
+                    name(BIGQUERY_TYPE_FLOAT64), GOE_TYPE_DOUBLE
                 ),
             },
-            name(BIGQUERY_TYPE_FLOAT64, GLUENT_TYPE_DECIMAL, "38", "9"): {
+            name(BIGQUERY_TYPE_FLOAT64, GOE_TYPE_DECIMAL, "38", "9"): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_FLOAT64, GLUENT_TYPE_DECIMAL, "38", "9"),
+                    name(BIGQUERY_TYPE_FLOAT64, GOE_TYPE_DECIMAL, "38", "9"),
                     BIGQUERY_TYPE_FLOAT64,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_FLOAT64, GLUENT_TYPE_DECIMAL, "38", "9"),
-                    GLUENT_TYPE_DECIMAL,
+                    name(BIGQUERY_TYPE_FLOAT64, GOE_TYPE_DECIMAL, "38", "9"),
+                    GOE_TYPE_DECIMAL,
                 ),
                 "present_options": {
                     "decimal_columns_csv_list": [
-                        name(BIGQUERY_TYPE_FLOAT64, GLUENT_TYPE_DECIMAL, "38", "9")
+                        name(BIGQUERY_TYPE_FLOAT64, GOE_TYPE_DECIMAL, "38", "9")
                     ],
                     "decimal_columns_type_list": ["38,9"],
                 },
@@ -279,81 +279,81 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                     name(BIGQUERY_TYPE_INT64), BIGQUERY_TYPE_INT64
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_INT64), GLUENT_TYPE_INTEGER_8
+                    name(BIGQUERY_TYPE_INT64), GOE_TYPE_INTEGER_8
                 ),
             },
-            name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_1): {
+            name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_1): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_1),
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_1),
                     BIGQUERY_TYPE_NUMERIC,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_1),
-                    GLUENT_TYPE_INTEGER_1,
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_1),
+                    GOE_TYPE_INTEGER_1,
                 ),
                 "present_options": {
                     "integer_1_columns_csv": name(
-                        BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_1
+                        BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_1
                     )
                 },
             },
-            name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_2): {
+            name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_2): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_2),
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_2),
                     BIGQUERY_TYPE_NUMERIC,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_2),
-                    GLUENT_TYPE_INTEGER_2,
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_2),
+                    GOE_TYPE_INTEGER_2,
                 ),
                 "present_options": {
                     "integer_2_columns_csv": name(
-                        BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_2
+                        BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_2
                     )
                 },
             },
-            name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_4): {
+            name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_4): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_4),
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_4),
                     BIGQUERY_TYPE_NUMERIC,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_4),
-                    GLUENT_TYPE_INTEGER_4,
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_4),
+                    GOE_TYPE_INTEGER_4,
                 ),
                 "present_options": {
                     "integer_4_columns_csv": name(
-                        BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_4
+                        BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_4
                     )
                 },
             },
-            name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_8): {
+            name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_8): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_8),
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_8),
                     BIGQUERY_TYPE_NUMERIC,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_8),
-                    GLUENT_TYPE_INTEGER_8,
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_8),
+                    GOE_TYPE_INTEGER_8,
                 ),
                 "present_options": {
                     "integer_8_columns_csv": name(
-                        BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_8
+                        BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_8
                     )
                 },
             },
-            name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_38): {
+            name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_38): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_38),
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_38),
                     BIGQUERY_TYPE_NUMERIC,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_38),
-                    GLUENT_TYPE_INTEGER_38,
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_38),
+                    GOE_TYPE_INTEGER_38,
                 ),
                 "present_options": {
                     "integer_38_columns_csv": name(
-                        BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_INTEGER_38
+                        BIGQUERY_TYPE_NUMERIC, GOE_TYPE_INTEGER_38
                     )
                 },
             },
@@ -362,21 +362,21 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                     name(BIGQUERY_TYPE_NUMERIC), BIGQUERY_TYPE_NUMERIC
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_NUMERIC), GLUENT_TYPE_DECIMAL
+                    name(BIGQUERY_TYPE_NUMERIC), GOE_TYPE_DECIMAL
                 ),
             },
-            name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_DECIMAL, "38", "18"): {
+            name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_DECIMAL, "38", "18"): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_DECIMAL, "38", "18"),
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_DECIMAL, "38", "18"),
                     BIGQUERY_TYPE_NUMERIC,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_DECIMAL, "38", "18"),
-                    GLUENT_TYPE_DECIMAL,
+                    name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_DECIMAL, "38", "18"),
+                    GOE_TYPE_DECIMAL,
                 ),
                 "present_options": {
                     "decimal_columns_csv_list": [
-                        name(BIGQUERY_TYPE_NUMERIC, GLUENT_TYPE_DECIMAL, "38", "18")
+                        name(BIGQUERY_TYPE_NUMERIC, GOE_TYPE_DECIMAL, "38", "18")
                     ],
                     "decimal_columns_type_list": ["38,18"],
                 },
@@ -387,30 +387,30 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(BIGQUERY_TYPE_STRING),
-                    GLUENT_TYPE_VARIABLE_STRING,
+                    GOE_TYPE_VARIABLE_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
                 ),
             },
-            name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_STRING): {
+            name(BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_STRING): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_STRING),
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_STRING),
                     BIGQUERY_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_STRING),
-                    GLUENT_TYPE_LARGE_STRING,
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_STRING),
+                    GOE_TYPE_LARGE_STRING,
                 ),
                 "present_options": {
                     "large_string_columns_csv": name(
-                        BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_STRING
+                        BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_STRING
                     )
                 },
             },
-            name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN): {
+            name(BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN): {
                 "column": BigQueryColumn(
                     name(
                         BIGQUERY_TYPE_STRING,
-                        GLUENT_TYPE_LARGE_STRING,
+                        GOE_TYPE_LARGE_STRING,
                         UNICODE_NAME_TOKEN,
                     ),
                     BIGQUERY_TYPE_STRING,
@@ -418,77 +418,77 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                 "expected_canonical_column": CanonicalColumn(
                     name(
                         BIGQUERY_TYPE_STRING,
-                        GLUENT_TYPE_LARGE_STRING,
+                        GOE_TYPE_LARGE_STRING,
                         UNICODE_NAME_TOKEN,
                     ),
-                    GLUENT_TYPE_LARGE_STRING,
+                    GOE_TYPE_LARGE_STRING,
                 ),
                 "present_options": {
                     "large_string_columns_csv": name(
                         BIGQUERY_TYPE_STRING,
-                        GLUENT_TYPE_LARGE_STRING,
+                        GOE_TYPE_LARGE_STRING,
                         UNICODE_NAME_TOKEN,
                     ),
                     "unicode_string_columns_csv": name(
                         BIGQUERY_TYPE_STRING,
-                        GLUENT_TYPE_LARGE_STRING,
+                        GOE_TYPE_LARGE_STRING,
                         UNICODE_NAME_TOKEN,
                     ),
                 },
             },
-            name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_BINARY): {
+            name(BIGQUERY_TYPE_STRING, GOE_TYPE_BINARY): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_BINARY), BIGQUERY_TYPE_STRING
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_BINARY), BIGQUERY_TYPE_STRING
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_BINARY), GLUENT_TYPE_BINARY
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_BINARY), GOE_TYPE_BINARY
                 ),
                 "present_options": {
-                    "binary_columns_csv": name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_BINARY)
+                    "binary_columns_csv": name(BIGQUERY_TYPE_STRING, GOE_TYPE_BINARY)
                 },
             },
-            name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_BINARY): {
+            name(BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_BINARY): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_BINARY),
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_BINARY),
                     BIGQUERY_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_BINARY),
-                    GLUENT_TYPE_LARGE_BINARY,
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_BINARY),
+                    GOE_TYPE_LARGE_BINARY,
                 ),
                 "present_options": {
                     "large_binary_columns_csv": name(
-                        BIGQUERY_TYPE_STRING, GLUENT_TYPE_LARGE_BINARY
+                        BIGQUERY_TYPE_STRING, GOE_TYPE_LARGE_BINARY
                     )
                 },
             },
-            name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_INTERVAL_DS): {
+            name(BIGQUERY_TYPE_STRING, GOE_TYPE_INTERVAL_DS): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_INTERVAL_DS),
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_INTERVAL_DS),
                     BIGQUERY_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_INTERVAL_DS),
-                    GLUENT_TYPE_INTERVAL_DS,
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_INTERVAL_DS),
+                    GOE_TYPE_INTERVAL_DS,
                 ),
                 "present_options": {
                     "interval_ds_columns_csv": name(
-                        BIGQUERY_TYPE_STRING, GLUENT_TYPE_INTERVAL_DS
+                        BIGQUERY_TYPE_STRING, GOE_TYPE_INTERVAL_DS
                     )
                 },
             },
-            name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_INTERVAL_YM): {
+            name(BIGQUERY_TYPE_STRING, GOE_TYPE_INTERVAL_YM): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_INTERVAL_YM),
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_INTERVAL_YM),
                     BIGQUERY_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_STRING, GLUENT_TYPE_INTERVAL_YM),
-                    GLUENT_TYPE_INTERVAL_YM,
+                    name(BIGQUERY_TYPE_STRING, GOE_TYPE_INTERVAL_YM),
+                    GOE_TYPE_INTERVAL_YM,
                 ),
                 "present_options": {
                     "interval_ym_columns_csv": name(
-                        BIGQUERY_TYPE_STRING, GLUENT_TYPE_INTERVAL_YM
+                        BIGQUERY_TYPE_STRING, GOE_TYPE_INTERVAL_YM
                     )
                 },
             },
@@ -498,7 +498,7 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(BIGQUERY_TYPE_STRING, UNICODE_NAME_TOKEN),
-                    GLUENT_TYPE_VARIABLE_STRING,
+                    GOE_TYPE_VARIABLE_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "present_options": {
@@ -510,7 +510,7 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
             name(BIGQUERY_TYPE_TIME): {
                 "column": BigQueryColumn(name(BIGQUERY_TYPE_TIME), BIGQUERY_TYPE_TIME),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_TIME), GLUENT_TYPE_TIME
+                    name(BIGQUERY_TYPE_TIME), GOE_TYPE_TIME
                 ),
             },
             name(BIGQUERY_TYPE_TIMESTAMP): {
@@ -518,33 +518,33 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
                     name(BIGQUERY_TYPE_TIMESTAMP), BIGQUERY_TYPE_TIMESTAMP
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_TIMESTAMP), GLUENT_TYPE_TIMESTAMP_TZ
+                    name(BIGQUERY_TYPE_TIMESTAMP), GOE_TYPE_TIMESTAMP_TZ
                 ),
             },
-            name(BIGQUERY_TYPE_TIMESTAMP, GLUENT_TYPE_DATE): {
+            name(BIGQUERY_TYPE_TIMESTAMP, GOE_TYPE_DATE): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_TIMESTAMP, GLUENT_TYPE_DATE),
+                    name(BIGQUERY_TYPE_TIMESTAMP, GOE_TYPE_DATE),
                     BIGQUERY_TYPE_TIMESTAMP,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_TIMESTAMP, GLUENT_TYPE_DATE), GLUENT_TYPE_DATE
+                    name(BIGQUERY_TYPE_TIMESTAMP, GOE_TYPE_DATE), GOE_TYPE_DATE
                 ),
                 "present_options": {
-                    "date_columns_csv": name(BIGQUERY_TYPE_TIMESTAMP, GLUENT_TYPE_DATE)
+                    "date_columns_csv": name(BIGQUERY_TYPE_TIMESTAMP, GOE_TYPE_DATE)
                 },
             },
-            name(BIGQUERY_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP): {
+            name(BIGQUERY_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP): {
                 "column": BigQueryColumn(
-                    name(BIGQUERY_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP),
+                    name(BIGQUERY_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP),
                     BIGQUERY_TYPE_TIMESTAMP,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(BIGQUERY_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP),
-                    GLUENT_TYPE_TIMESTAMP,
+                    name(BIGQUERY_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP),
+                    GOE_TYPE_TIMESTAMP,
                 ),
                 "present_options": {
                     "timestamp_columns_csv": name(
-                        BIGQUERY_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP
+                        BIGQUERY_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP
                     )
                 },
             },
@@ -585,7 +585,7 @@ class BackendBigQueryTestingApi(BackendTestingApiInterface):
     def backend_test_type_canonical_timestamp_tz(self):
         return BIGQUERY_TYPE_TIMESTAMP
 
-    def create_backend_offload_location(self, gluent_user=None):
+    def create_backend_offload_location(self, goe_user=None):
         """Unsupported for BigQuery"""
         raise NotImplementedError(
             "create_backend_offload_location() unsupported for BigQuery"
@@ -731,14 +731,14 @@ FROM %(db_table)s""" % {
         def is_bigquery_numeric(column):
             return bool(
                 (
-                    column.data_type == GLUENT_TYPE_DECIMAL
+                    column.data_type == GOE_TYPE_DECIMAL
                     and column.data_precision
                     and column.data_precision <= 38
                     and column.data_scale
                     and column.data_scale <= 9
                 )
                 or (
-                    column.data_type == GLUENT_TYPE_INTEGER_38
+                    column.data_type == GOE_TYPE_INTEGER_38
                     and column.data_precision
                     and column.data_precision <= 29
                 )
@@ -767,25 +767,25 @@ FROM %(db_table)s""" % {
             else None
         )
         return {
-            GLUENT_TYPE_FIXED_STRING: BIGQUERY_TYPE_STRING,
-            GLUENT_TYPE_LARGE_STRING: BIGQUERY_TYPE_STRING,
-            GLUENT_TYPE_VARIABLE_STRING: BIGQUERY_TYPE_STRING,
-            GLUENT_TYPE_BINARY: BIGQUERY_TYPE_BYTES,
-            GLUENT_TYPE_LARGE_BINARY: BIGQUERY_TYPE_BYTES,
-            GLUENT_TYPE_INTEGER_1: BIGQUERY_TYPE_INT64,
-            GLUENT_TYPE_INTEGER_2: BIGQUERY_TYPE_INT64,
-            GLUENT_TYPE_INTEGER_4: BIGQUERY_TYPE_INT64,
-            GLUENT_TYPE_INTEGER_8: BIGQUERY_TYPE_INT64,
-            GLUENT_TYPE_INTEGER_38: BIGQUERY_TYPE_BIGNUMERIC,
-            GLUENT_TYPE_DECIMAL: numeric_override or BIGQUERY_TYPE_BIGNUMERIC,
-            GLUENT_TYPE_DOUBLE: BIGQUERY_TYPE_FLOAT64,
-            GLUENT_TYPE_DATE: BIGQUERY_TYPE_DATE,
-            GLUENT_TYPE_TIME: BIGQUERY_TYPE_TIME,
-            GLUENT_TYPE_TIMESTAMP: BIGQUERY_TYPE_DATETIME,
-            GLUENT_TYPE_TIMESTAMP_TZ: BIGQUERY_TYPE_TIMESTAMP,
-            GLUENT_TYPE_INTERVAL_DS: BIGQUERY_TYPE_STRING,
-            GLUENT_TYPE_INTERVAL_YM: BIGQUERY_TYPE_STRING,
-            GLUENT_TYPE_BOOLEAN: BIGQUERY_TYPE_BOOLEAN,
+            GOE_TYPE_FIXED_STRING: BIGQUERY_TYPE_STRING,
+            GOE_TYPE_LARGE_STRING: BIGQUERY_TYPE_STRING,
+            GOE_TYPE_VARIABLE_STRING: BIGQUERY_TYPE_STRING,
+            GOE_TYPE_BINARY: BIGQUERY_TYPE_BYTES,
+            GOE_TYPE_LARGE_BINARY: BIGQUERY_TYPE_BYTES,
+            GOE_TYPE_INTEGER_1: BIGQUERY_TYPE_INT64,
+            GOE_TYPE_INTEGER_2: BIGQUERY_TYPE_INT64,
+            GOE_TYPE_INTEGER_4: BIGQUERY_TYPE_INT64,
+            GOE_TYPE_INTEGER_8: BIGQUERY_TYPE_INT64,
+            GOE_TYPE_INTEGER_38: BIGQUERY_TYPE_BIGNUMERIC,
+            GOE_TYPE_DECIMAL: numeric_override or BIGQUERY_TYPE_BIGNUMERIC,
+            GOE_TYPE_DOUBLE: BIGQUERY_TYPE_FLOAT64,
+            GOE_TYPE_DATE: BIGQUERY_TYPE_DATE,
+            GOE_TYPE_TIME: BIGQUERY_TYPE_TIME,
+            GOE_TYPE_TIMESTAMP: BIGQUERY_TYPE_DATETIME,
+            GOE_TYPE_TIMESTAMP_TZ: BIGQUERY_TYPE_TIMESTAMP,
+            GOE_TYPE_INTERVAL_DS: BIGQUERY_TYPE_STRING,
+            GOE_TYPE_INTERVAL_YM: BIGQUERY_TYPE_STRING,
+            GOE_TYPE_BOOLEAN: BIGQUERY_TYPE_BOOLEAN,
         }
 
     def expected_std_dim_offload_predicates(self) -> list:
@@ -850,14 +850,14 @@ FROM %(db_table)s""" % {
             ),
         ]
 
-    def gl_type_mapping_generated_table_col_specs(self):
-        definitions = self._gl_type_mapping_column_definitions()
-        gl_type_mapping_cols, gl_type_mapping_names = [], []
+    def goe_type_mapping_generated_table_col_specs(self):
+        definitions = self._goe_type_mapping_column_definitions()
+        goe_type_mapping_cols, goe_type_mapping_names = [], []
         for col_dict in [
             definitions[col_name] for col_name in sorted(definitions.keys())
         ]:
             backend_column = col_dict["column"]
-            gl_type_mapping_names.append(backend_column.name)
+            goe_type_mapping_names.append(backend_column.name)
             if backend_column.data_type in [
                 BIGQUERY_TYPE_BIGNUMERIC,
                 BIGQUERY_TYPE_NUMERIC,
@@ -883,11 +883,11 @@ FROM %(db_table)s""" % {
                         TestDecimal.max(precision, scale),
                     ]
                 elif col_dict["expected_canonical_column"].data_type in [
-                    GLUENT_TYPE_INTEGER_1,
-                    GLUENT_TYPE_INTEGER_2,
-                    GLUENT_TYPE_INTEGER_4,
-                    GLUENT_TYPE_INTEGER_8,
-                    GLUENT_TYPE_INTEGER_38,
+                    GOE_TYPE_INTEGER_1,
+                    GOE_TYPE_INTEGER_2,
+                    GOE_TYPE_INTEGER_4,
+                    GOE_TYPE_INTEGER_8,
+                    GOE_TYPE_INTEGER_38,
                 ]:
                     precision = self._canonical_integer_precision(
                         col_dict["expected_canonical_column"].data_type
@@ -899,39 +899,39 @@ FROM %(db_table)s""" % {
                         TestDecimal.rnd(precision),
                         TestDecimal.max(precision),
                     ]
-                gl_type_mapping_cols.append(
+                goe_type_mapping_cols.append(
                     {"column": backend_column, "literals": literals}
                 )
             elif (
                 col_dict["expected_canonical_column"].data_type
-                == GLUENT_TYPE_INTERVAL_DS
+                == GOE_TYPE_INTERVAL_DS
             ):
-                gl_type_mapping_cols.append(
+                goe_type_mapping_cols.append(
                     {
                         "column": backend_column,
-                        "literals": self._gl_type_mapping_interval_ds_test_values(),
+                        "literals": self._goe_type_mapping_interval_ds_test_values(),
                     }
                 )
             elif (
                 col_dict["expected_canonical_column"].data_type
-                == GLUENT_TYPE_INTERVAL_YM
+                == GOE_TYPE_INTERVAL_YM
             ):
-                gl_type_mapping_cols.append(
+                goe_type_mapping_cols.append(
                     {
                         "column": backend_column,
-                        "literals": self._gl_type_mapping_interval_ym_test_values(),
+                        "literals": self._goe_type_mapping_interval_ym_test_values(),
                     }
                 )
-            elif col_dict["expected_canonical_column"].data_type == GLUENT_TYPE_BINARY:
-                gl_type_mapping_cols.append(
+            elif col_dict["expected_canonical_column"].data_type == GOE_TYPE_BINARY:
+                goe_type_mapping_cols.append(
                     {
                         "column": backend_column,
                         "literals": ["binary1", "binary2", "binary3"],
                     }
                 )
             else:
-                gl_type_mapping_cols.append({"column": backend_column})
-        return gl_type_mapping_cols, gl_type_mapping_names
+                goe_type_mapping_cols.append({"column": backend_column})
+        return goe_type_mapping_cols, goe_type_mapping_names
 
     def host_compare_sql_projection(self, column_list: list) -> str:
         """Return a SQL projection (CSV of column expressions) used to validate offloaded data.

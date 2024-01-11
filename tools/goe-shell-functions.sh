@@ -2,14 +2,14 @@
 
 # -- ABOUT: -------------------------------------------------------------------
 #
-# Description:  Gluent functions.
+# Description:  GOE functions.
 # LICENSE_TEXT
 #
 # -- INSTRUCTIONS: ------------------------------------------------------------
 #
 # Execute:
 #   This file contains functions to be used only by shell scripts
-#   provided by Gluent.
+#   provided by GOE.
 #
 
 # ------------------------------------------------------------------------------
@@ -63,11 +63,11 @@ function raise_and_exit {
 }
 
 # ------------------------------------------------------------------------------
-# DESC: Source Gluent environment file
+# DESC: Source GOE environment file
 # ARGS: $1: OFFLOAD_HOME
 # OUTS: None
 # ------------------------------------------------------------------------------
-function source_gluent_env {
+function source_goe_env {
     if [[ ! -f "$1/conf/offload.env" ]]; then
         raise_and_exit ${FUNCNAME[0]} 2 "File does not exist: $1/conf/offload.env"
     fi

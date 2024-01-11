@@ -224,7 +224,7 @@ class TestBackendApi(TestCase):
                     position=0, granularity=10, range_start=0, range_end=1000, digits=6
                 )
                 partition_column = self.api.gen_column_object(
-                    "gl_part_000010_col1",
+                    "goe_part_000010_col1",
                     data_type=self.test_api.backend_test_type_canonical_string(),
                     partition_info=partition_info,
                 )
@@ -529,7 +529,7 @@ class TestBackendApi(TestCase):
                     from_table_name="other_table",
                     row_limit=2,
                     external=True,
-                    table_properties={"Gluent": "rocks"},
+                    table_properties={"GOE": "rocks"},
                 )
             )
 

@@ -8,7 +8,7 @@ from pydantic import BaseSettings as PydanticBaseSettings
 from pydantic import SecretStr
 from pydantic.generics import GenericModel
 
-# Gluent
+# GOE
 from goe.util.json_tools import (
     convert_field_to_camel_case,
     deserialize_object,

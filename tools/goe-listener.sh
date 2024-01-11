@@ -2,14 +2,14 @@
 
 # -- ABOUT: -------------------------------------------------------------------
 #
-# Description:  Startup script for Gluent Data Platform - Listener
+# Description:  Startup script for GOE - Listener
 # LICENSE_TEXT
 #
 # -- INSTRUCTIONS: ------------------------------------------------------------
 #
 # Execute:
 #   For use with systemd only.
-#   Refer to Gluent Product Documentation for installation instructions.
+#   Refer to GOE Documentation for installation instructions.
 #
 # Important:
 #   Update OFFLOAD_HOME in the VARIABLES section if required.
@@ -22,19 +22,19 @@
 # ------------------------------------------------------------------------------
 
 ORACLE_SID=
-OFFLOAD_HOME=/u01/app/gluent/offload
+OFFLOAD_HOME=/u01/app/goe/offload
 
 # ------------------------------------------------------------------------------
 # | FUNCTIONS                                                                  |
 # ------------------------------------------------------------------------------
 
-. $OFFLOAD_HOME/tools/gluent-shell-functions.sh
+. $OFFLOAD_HOME/tools/goe-shell-functions.sh
 
 # ------------------------------------------------------------------------------
 # | MAIN PROGRAM                                                               |
 # ------------------------------------------------------------------------------
 
-source_gluent_env $OFFLOAD_HOME
+source_goe_env $OFFLOAD_HOME
 if [[ -n "$ORACLE_SID" ]]; then
     source_oracle_env $ORACLE_SID
 fi

@@ -2,4 +2,4 @@
 --
 -- LICENSE_TEXT
 --
-store set /tmp/_gl_curr_env.tmp replace
+store set /tmp/_goe_curr_env.tmp replace

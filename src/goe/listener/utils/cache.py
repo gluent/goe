@@ -10,7 +10,7 @@ from redis import asyncio as aioredis
 from redis.asyncio import sentinel as aioredis_sentinel
 from redis.exceptions import RedisError
 
-# Gluent
+# GOE
 from goe.listener.config import settings
 
 

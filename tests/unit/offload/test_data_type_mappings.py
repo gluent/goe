@@ -20,26 +20,26 @@ from goe.offload.column_metadata import (
     CANONICAL_CHAR_SEMANTICS_BYTE,
     CANONICAL_CHAR_SEMANTICS_CHAR,
     CANONICAL_CHAR_SEMANTICS_UNICODE,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_VARIABLE_STRING,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_TIME,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
-    GLUENT_TYPE_BOOLEAN,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_DATE,
+    GOE_TYPE_TIME,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
+    GOE_TYPE_BOOLEAN,
 )
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.hadoop.hadoop_column import HadoopColumn
@@ -228,91 +228,91 @@ class TestDataTypeMappings(TestCase):
 
     def canonical_columns(self):
         return [
-            CanonicalColumn("COL_FIXED_STR", GLUENT_TYPE_FIXED_STRING, data_length=10),
+            CanonicalColumn("COL_FIXED_STR", GOE_TYPE_FIXED_STRING, data_length=10),
             CanonicalColumn(
-                "COL_FIXED_STR_2000", GLUENT_TYPE_FIXED_STRING, data_length=2000
+                "COL_FIXED_STR_2000", GOE_TYPE_FIXED_STRING, data_length=2000
             ),
             CanonicalColumn(
                 "COL_FIXED_STR_2000_C",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 char_length=2000,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
-                "COL_FIXED_STR_2001", GLUENT_TYPE_FIXED_STRING, data_length=2001
+                "COL_FIXED_STR_2001", GOE_TYPE_FIXED_STRING, data_length=2001
             ),
             CanonicalColumn(
                 "COL_FIXED_STR_2001_C",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 char_length=2001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
                 "COL_FIXED_STR_1000_U",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 char_length=1000,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
             ),
             CanonicalColumn(
                 "COL_FIXED_STR_1001_U",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 char_length=1001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
             ),
-            CanonicalColumn("COL_LARGE_STR", GLUENT_TYPE_LARGE_STRING),
-            CanonicalColumn("COL_VARIABLE_STR", GLUENT_TYPE_VARIABLE_STRING),
+            CanonicalColumn("COL_LARGE_STR", GOE_TYPE_LARGE_STRING),
+            CanonicalColumn("COL_VARIABLE_STR", GOE_TYPE_VARIABLE_STRING),
             CanonicalColumn(
-                "COL_VARIABLE_STR_4000", GLUENT_TYPE_VARIABLE_STRING, data_length=4000
+                "COL_VARIABLE_STR_4000", GOE_TYPE_VARIABLE_STRING, data_length=4000
             ),
             CanonicalColumn(
                 "COL_VARIABLE_STR_4000_C",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 char_length=4000,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
-                "COL_VARIABLE_STR_4001", GLUENT_TYPE_VARIABLE_STRING, data_length=4001
+                "COL_VARIABLE_STR_4001", GOE_TYPE_VARIABLE_STRING, data_length=4001
             ),
             CanonicalColumn(
                 "COL_VARIABLE_STR_4001_C",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 char_length=4001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
                 "COL_VARIABLE_STR_2000_U",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 char_length=2000,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
             ),
             CanonicalColumn(
                 "COL_VARIABLE_STR_2001_U",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 char_length=2001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
             ),
-            CanonicalColumn("COL_BINARY", GLUENT_TYPE_BINARY),
-            CanonicalColumn("COL_BINARY_2000", GLUENT_TYPE_BINARY, data_length=2000),
-            CanonicalColumn("COL_BINARY_2001", GLUENT_TYPE_BINARY, data_length=2001),
-            CanonicalColumn("COL_LARGE_BINARY", GLUENT_TYPE_LARGE_BINARY),
-            CanonicalColumn("COL_INT_1", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_INT_2", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INT_4", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_INT_8", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_INT_38", GLUENT_TYPE_INTEGER_38),
-            CanonicalColumn("COL_DEC_NO_P_S", GLUENT_TYPE_DECIMAL),
+            CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY),
+            CanonicalColumn("COL_BINARY_2000", GOE_TYPE_BINARY, data_length=2000),
+            CanonicalColumn("COL_BINARY_2001", GOE_TYPE_BINARY, data_length=2001),
+            CanonicalColumn("COL_LARGE_BINARY", GOE_TYPE_LARGE_BINARY),
+            CanonicalColumn("COL_INT_1", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_INT_2", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT_4", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_INT_8", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_INT_38", GOE_TYPE_INTEGER_38),
+            CanonicalColumn("COL_DEC_NO_P_S", GOE_TYPE_DECIMAL),
             CanonicalColumn(
-                "COL_DEC_10_2", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2
+                "COL_DEC_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
             ),
-            CanonicalColumn("COL_FLOAT", GLUENT_TYPE_FLOAT),
-            CanonicalColumn("COL_DOUBLE", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
-            CanonicalColumn("COL_TIME", GLUENT_TYPE_TIME),
-            CanonicalColumn("COL_TIMESTAMP", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_TIMESTAMP_TZ", GLUENT_TYPE_TIMESTAMP_TZ),
-            CanonicalColumn("COL_INTERVAL_DS", GLUENT_TYPE_INTERVAL_DS),
-            CanonicalColumn("COL_INTERVAL_YM", GLUENT_TYPE_INTERVAL_YM),
-            CanonicalColumn("COL_BOOLEAN", GLUENT_TYPE_BOOLEAN),
+            CanonicalColumn("COL_FLOAT", GOE_TYPE_FLOAT),
+            CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
+            CanonicalColumn("COL_TIME", GOE_TYPE_TIME),
+            CanonicalColumn("COL_TIMESTAMP", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_TIMESTAMP_TZ", GOE_TYPE_TIMESTAMP_TZ),
+            CanonicalColumn("COL_INTERVAL_DS", GOE_TYPE_INTERVAL_DS),
+            CanonicalColumn("COL_INTERVAL_YM", GOE_TYPE_INTERVAL_YM),
+            CanonicalColumn("COL_BOOLEAN", GOE_TYPE_BOOLEAN),
         ]
 
     def column_assertions(self, test_column, expected_column):
@@ -535,48 +535,48 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
         source_columns = self._get_rdbms_source_columns()
         # Expected outcomes of source_columns when converted to canonical
         expected_columns = [
-            CanonicalColumn("COL_CHAR", GLUENT_TYPE_FIXED_STRING, data_length=100),
-            CanonicalColumn("COL_NCHAR", GLUENT_TYPE_FIXED_STRING, data_length=200),
+            CanonicalColumn("COL_CHAR", GOE_TYPE_FIXED_STRING, data_length=100),
+            CanonicalColumn("COL_NCHAR", GOE_TYPE_FIXED_STRING, data_length=200),
             CanonicalColumn(
-                "COL_VARCHAR2", GLUENT_TYPE_VARIABLE_STRING, data_length=1100
+                "COL_VARCHAR2", GOE_TYPE_VARIABLE_STRING, data_length=1100
             ),
             CanonicalColumn(
-                "COL_NVARCHAR2", GLUENT_TYPE_VARIABLE_STRING, data_length=2200
+                "COL_NVARCHAR2", GOE_TYPE_VARIABLE_STRING, data_length=2200
             ),
-            CanonicalColumn("COL_LONG", GLUENT_TYPE_LARGE_STRING),
-            CanonicalColumn("COL_CLOB", GLUENT_TYPE_LARGE_STRING),
-            CanonicalColumn("COL_NCLOB", GLUENT_TYPE_LARGE_STRING),
-            CanonicalColumn("COL_RAW", GLUENT_TYPE_BINARY),
-            CanonicalColumn("COL_LONG_RAW", GLUENT_TYPE_LARGE_BINARY),
-            CanonicalColumn("COL_BLOB", GLUENT_TYPE_LARGE_BINARY),
-            CanonicalColumn("COL_NUMBER_2", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_NUMBER_4", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_NUMBER_9", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_NUMBER_18", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_NUMBER_38", GLUENT_TYPE_INTEGER_38),
-            CanonicalColumn("COL_NUMBER_NO_P_S", GLUENT_TYPE_DECIMAL),
+            CanonicalColumn("COL_LONG", GOE_TYPE_LARGE_STRING),
+            CanonicalColumn("COL_CLOB", GOE_TYPE_LARGE_STRING),
+            CanonicalColumn("COL_NCLOB", GOE_TYPE_LARGE_STRING),
+            CanonicalColumn("COL_RAW", GOE_TYPE_BINARY),
+            CanonicalColumn("COL_LONG_RAW", GOE_TYPE_LARGE_BINARY),
+            CanonicalColumn("COL_BLOB", GOE_TYPE_LARGE_BINARY),
+            CanonicalColumn("COL_NUMBER_2", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_NUMBER_4", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_NUMBER_9", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_NUMBER_18", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_NUMBER_38", GOE_TYPE_INTEGER_38),
+            CanonicalColumn("COL_NUMBER_NO_P_S", GOE_TYPE_DECIMAL),
             CanonicalColumn(
-                "COL_NUMBER_10_2", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2
+                "COL_NUMBER_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
             ),
             CanonicalColumn(
                 "COL_NUMBER_FLOAT",
-                GLUENT_TYPE_DECIMAL,
+                GOE_TYPE_DECIMAL,
                 data_precision=None,
                 data_scale=None,
             ),
-            CanonicalColumn("COL_FLOAT", GLUENT_TYPE_FLOAT),
-            CanonicalColumn("COL_DOUBLE", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_TIMESTAMP_6", GLUENT_TYPE_TIMESTAMP, data_scale=6),
-            CanonicalColumn("COL_TIMESTAMP_3", GLUENT_TYPE_TIMESTAMP, data_scale=3),
+            CanonicalColumn("COL_FLOAT", GOE_TYPE_FLOAT),
+            CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_DATE", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_TIMESTAMP_6", GOE_TYPE_TIMESTAMP, data_scale=6),
+            CanonicalColumn("COL_TIMESTAMP_3", GOE_TYPE_TIMESTAMP, data_scale=3),
             CanonicalColumn(
-                "COL_TIMESTAMP_TZ_6", GLUENT_TYPE_TIMESTAMP_TZ, data_scale=6
+                "COL_TIMESTAMP_TZ_6", GOE_TYPE_TIMESTAMP_TZ, data_scale=6
             ),
             CanonicalColumn(
-                "COL_TIMESTAMP_TZ_9", GLUENT_TYPE_TIMESTAMP_TZ, data_scale=9
+                "COL_TIMESTAMP_TZ_9", GOE_TYPE_TIMESTAMP_TZ, data_scale=9
             ),
-            CanonicalColumn("COL_INTERVAL_DS", GLUENT_TYPE_INTERVAL_DS),
-            CanonicalColumn("COL_INTERVAL_YM", GLUENT_TYPE_INTERVAL_YM),
+            CanonicalColumn("COL_INTERVAL_DS", GOE_TYPE_INTERVAL_DS),
+            CanonicalColumn("COL_INTERVAL_YM", GOE_TYPE_INTERVAL_YM),
         ]
         self.validate_source_vs_expected_columns(source_columns, expected_columns)
 
@@ -593,7 +593,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     def test_canonical_to_oracle(self):
         # No Bool support for Oracle
         canonical_columns = [
-            _ for _ in self.canonical_columns() if _.data_type != GLUENT_TYPE_BOOLEAN
+            _ for _ in self.canonical_columns() if _.data_type != GOE_TYPE_BOOLEAN
         ]
         # Expected outcomes of source_columns when converted to RDBMS
         expected_columns = [
@@ -1262,54 +1262,54 @@ class TestMSSQLDataTypeMappings(TestDataTypeMappings):
         source_columns = self._get_rdbms_source_columns()
         # Expected outcomes of source_columns when converted to canonical
         expected_columns = [
-            CanonicalColumn("COL_BIT", GLUENT_TYPE_BOOLEAN),
-            CanonicalColumn("COL_CHAR", GLUENT_TYPE_FIXED_STRING, data_length=100),
-            CanonicalColumn("COL_NCHAR", GLUENT_TYPE_FIXED_STRING, data_length=200),
+            CanonicalColumn("COL_BIT", GOE_TYPE_BOOLEAN),
+            CanonicalColumn("COL_CHAR", GOE_TYPE_FIXED_STRING, data_length=100),
+            CanonicalColumn("COL_NCHAR", GOE_TYPE_FIXED_STRING, data_length=200),
             CanonicalColumn(
-                "COL_VARCHAR", GLUENT_TYPE_VARIABLE_STRING, data_length=1100
+                "COL_VARCHAR", GOE_TYPE_VARIABLE_STRING, data_length=1100
             ),
             CanonicalColumn(
-                "COL_NVARCHAR", GLUENT_TYPE_VARIABLE_STRING, data_length=2200
+                "COL_NVARCHAR", GOE_TYPE_VARIABLE_STRING, data_length=2200
             ),
-            CanonicalColumn("COL_UNIQ_ID", GLUENT_TYPE_VARIABLE_STRING, data_length=16),
-            CanonicalColumn("COL_TEXT", GLUENT_TYPE_LARGE_STRING),
-            CanonicalColumn("COL_NTEXT", GLUENT_TYPE_LARGE_STRING),
-            CanonicalColumn("COL_BINARY", GLUENT_TYPE_BINARY, data_length=500),
-            CanonicalColumn("COL_VARBINARY", GLUENT_TYPE_BINARY, data_length=500),
-            CanonicalColumn("COL_IMAGE", GLUENT_TYPE_BINARY),
-            CanonicalColumn("COL_DECIMAL_2", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_DECIMAL_4", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_DECIMAL_9", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_DECIMAL_18", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_DECIMAL_38", GLUENT_TYPE_INTEGER_38),
+            CanonicalColumn("COL_UNIQ_ID", GOE_TYPE_VARIABLE_STRING, data_length=16),
+            CanonicalColumn("COL_TEXT", GOE_TYPE_LARGE_STRING),
+            CanonicalColumn("COL_NTEXT", GOE_TYPE_LARGE_STRING),
+            CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY, data_length=500),
+            CanonicalColumn("COL_VARBINARY", GOE_TYPE_BINARY, data_length=500),
+            CanonicalColumn("COL_IMAGE", GOE_TYPE_BINARY),
+            CanonicalColumn("COL_DECIMAL_2", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_DECIMAL_4", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_DECIMAL_9", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_DECIMAL_18", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_DECIMAL_38", GOE_TYPE_INTEGER_38),
             CanonicalColumn(
-                "COL_DECIMAL_10_2", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2
+                "COL_DECIMAL_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
             ),
-            CanonicalColumn("COL_NUMERIC_2", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_NUMERIC_4", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_NUMERIC_9", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_NUMERIC_18", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_NUMERIC_38", GLUENT_TYPE_INTEGER_38),
+            CanonicalColumn("COL_NUMERIC_2", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_NUMERIC_4", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_NUMERIC_9", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_NUMERIC_18", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_NUMERIC_38", GOE_TYPE_INTEGER_38),
             CanonicalColumn(
-                "COL_NUMERIC_10_2", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2
+                "COL_NUMERIC_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
             ),
-            CanonicalColumn("COL_TINYINT", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_SMALLINT", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INT", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_BIGINT", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_REAL", GLUENT_TYPE_FLOAT),
-            CanonicalColumn("COL_FLOAT_4", GLUENT_TYPE_DOUBLE),
-            # CanonicalColumn('COL_FLOAT_4', GLUENT_TYPE_FLOAT),
-            CanonicalColumn("COL_FLOAT_8", GLUENT_TYPE_DOUBLE),
-            # CanonicalColumn('COL_MONEY', GLUENT_TYPE_DECIMAL, data_precision=19, data_scale=4),
-            CanonicalColumn("COL_MONEY", GLUENT_TYPE_DECIMAL, data_scale=4),
-            # CanonicalColumn('COL_SMALLMONEY', GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2),
-            CanonicalColumn("COL_SMALLMONEY", GLUENT_TYPE_DECIMAL, data_scale=2),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
-            CanonicalColumn("COL_TIME", GLUENT_TYPE_TIME),
-            CanonicalColumn("COL_DATETIME", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_DATETIME2", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_SMALLDATETIME", GLUENT_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_TINYINT", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_SMALLINT", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_BIGINT", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_REAL", GOE_TYPE_FLOAT),
+            CanonicalColumn("COL_FLOAT_4", GOE_TYPE_DOUBLE),
+            # CanonicalColumn('COL_FLOAT_4', GOE_TYPE_FLOAT),
+            CanonicalColumn("COL_FLOAT_8", GOE_TYPE_DOUBLE),
+            # CanonicalColumn('COL_MONEY', GOE_TYPE_DECIMAL, data_precision=19, data_scale=4),
+            CanonicalColumn("COL_MONEY", GOE_TYPE_DECIMAL, data_scale=4),
+            # CanonicalColumn('COL_SMALLMONEY', GOE_TYPE_DECIMAL, data_precision=10, data_scale=2),
+            CanonicalColumn("COL_SMALLMONEY", GOE_TYPE_DECIMAL, data_scale=2),
+            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
+            CanonicalColumn("COL_TIME", GOE_TYPE_TIME),
+            CanonicalColumn("COL_DATETIME", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_DATETIME2", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_SMALLDATETIME", GOE_TYPE_TIMESTAMP),
         ]
         self.validate_source_vs_expected_columns(source_columns, expected_columns)
 
@@ -1463,38 +1463,38 @@ class TestNetezzaDataTypeMappings(TestDataTypeMappings):
         source_columns = self._get_rdbms_source_columns()
         # Expected outcomes of source_columns when converted to canonical
         expected_columns = [
-            CanonicalColumn("COL_BOOLEAN", GLUENT_TYPE_BOOLEAN),
-            CanonicalColumn("COL_CHARACTER", GLUENT_TYPE_FIXED_STRING, data_length=100),
+            CanonicalColumn("COL_BOOLEAN", GOE_TYPE_BOOLEAN),
+            CanonicalColumn("COL_CHARACTER", GOE_TYPE_FIXED_STRING, data_length=100),
             CanonicalColumn(
-                "COL_NCHARACTER", GLUENT_TYPE_FIXED_STRING, data_length=200
+                "COL_NCHARACTER", GOE_TYPE_FIXED_STRING, data_length=200
             ),
             CanonicalColumn(
-                "COL_CHARACTERV", GLUENT_TYPE_VARIABLE_STRING, data_length=100
+                "COL_CHARACTERV", GOE_TYPE_VARIABLE_STRING, data_length=100
             ),
             CanonicalColumn(
-                "COL_NCHARACTERV", GLUENT_TYPE_VARIABLE_STRING, data_length=200
+                "COL_NCHARACTERV", GOE_TYPE_VARIABLE_STRING, data_length=200
             ),
-            CanonicalColumn("COL_BINARY", GLUENT_TYPE_BINARY, data_length=5000),
-            CanonicalColumn("COL_ST_GEOMETRY", GLUENT_TYPE_BINARY, data_length=50),
-            CanonicalColumn("COL_NUMERIC_2", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_NUMERIC_4", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_NUMERIC_9", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_NUMERIC_18", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_NUMERIC_38", GLUENT_TYPE_INTEGER_38),
+            CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY, data_length=5000),
+            CanonicalColumn("COL_ST_GEOMETRY", GOE_TYPE_BINARY, data_length=50),
+            CanonicalColumn("COL_NUMERIC_2", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_NUMERIC_4", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_NUMERIC_9", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_NUMERIC_18", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_NUMERIC_38", GOE_TYPE_INTEGER_38),
             CanonicalColumn(
-                "COL_NUMERIC_10_2", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2
+                "COL_NUMERIC_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
             ),
-            CanonicalColumn("COL_BYTEINT", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_SMALLINT", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INTEGER", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_BIGINT", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_REAL", GLUENT_TYPE_FLOAT),
-            CanonicalColumn("COL_DOUBLE", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
-            CanonicalColumn("COL_TIME", GLUENT_TYPE_TIME),
-            CanonicalColumn("COL_TIMESTAMP", GLUENT_TYPE_TIMESTAMP),
-            # CanonicalColumn('COL_INTERVAL', GLUENT_TYPE_INTERVAL),
-            CanonicalColumn("COL_TIME_TZ", GLUENT_TYPE_TIMESTAMP_TZ),
+            CanonicalColumn("COL_BYTEINT", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_SMALLINT", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INTEGER", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_BIGINT", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_REAL", GOE_TYPE_FLOAT),
+            CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
+            CanonicalColumn("COL_TIME", GOE_TYPE_TIME),
+            CanonicalColumn("COL_TIMESTAMP", GOE_TYPE_TIMESTAMP),
+            # CanonicalColumn('COL_INTERVAL', GOE_TYPE_INTERVAL),
+            CanonicalColumn("COL_TIME_TZ", GOE_TYPE_TIMESTAMP_TZ),
         ]
         self.validate_source_vs_expected_columns(source_columns, expected_columns)
 
@@ -1593,33 +1593,33 @@ class TestBackendHiveDataTypeMappings(TestDataTypeMappings):
     def test_hive_to_canonical(self):
         source_columns = self._get_hive_source_columns()
         expected_columns = [
-            CanonicalColumn("COL_FIXED_STR", GLUENT_TYPE_FIXED_STRING, data_length=10),
-            CanonicalColumn("COL_VARIABLE_STR", GLUENT_TYPE_VARIABLE_STRING),
+            CanonicalColumn("COL_FIXED_STR", GOE_TYPE_FIXED_STRING, data_length=10),
+            CanonicalColumn("COL_VARIABLE_STR", GOE_TYPE_VARIABLE_STRING),
             CanonicalColumn(
-                "COL_VARIABLE_STR2", GLUENT_TYPE_VARIABLE_STRING, data_length=10
+                "COL_VARIABLE_STR2", GOE_TYPE_VARIABLE_STRING, data_length=10
             ),
-            CanonicalColumn("COL_BINARY", GLUENT_TYPE_BINARY),
-            CanonicalColumn("COL_INT_1", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_INT_2", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INT_4", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_INT_8", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_INT_P_2", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_INT_P_4", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INT_P_9", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_INT_P_18", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_INT_P_38", GLUENT_TYPE_INTEGER_38),
-            CanonicalColumn("COL_DEC_NO_P_S", GLUENT_TYPE_DECIMAL),
+            CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY),
+            CanonicalColumn("COL_INT_1", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_INT_2", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT_4", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_INT_8", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_INT_P_2", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_INT_P_4", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT_P_9", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_INT_P_18", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_INT_P_38", GOE_TYPE_INTEGER_38),
+            CanonicalColumn("COL_DEC_NO_P_S", GOE_TYPE_DECIMAL),
             CanonicalColumn(
-                "COL_DEC_10_2", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2
+                "COL_DEC_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
             ),
-            CanonicalColumn("COL_FLOAT", GLUENT_TYPE_FLOAT),
-            CanonicalColumn("COL_DOUBLE", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_DOUBLE_PRECISION", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
-            CanonicalColumn("COL_TIMESTAMP", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_INTERVAL_DS", GLUENT_TYPE_INTERVAL_DS),
-            CanonicalColumn("COL_INTERVAL_YM", GLUENT_TYPE_INTERVAL_YM),
-            CanonicalColumn("COL_BOOLEAN", GLUENT_TYPE_BOOLEAN),
+            CanonicalColumn("COL_FLOAT", GOE_TYPE_FLOAT),
+            CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_DOUBLE_PRECISION", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
+            CanonicalColumn("COL_TIMESTAMP", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_INTERVAL_DS", GOE_TYPE_INTERVAL_DS),
+            CanonicalColumn("COL_INTERVAL_YM", GOE_TYPE_INTERVAL_YM),
+            CanonicalColumn("COL_BOOLEAN", GOE_TYPE_BOOLEAN),
         ]
         self.validate_source_vs_expected_columns(source_columns, expected_columns)
 
@@ -1753,29 +1753,29 @@ class TestBackendImpalaDataTypeMappings(TestDataTypeMappings):
     def test_impala_to_canonical(self):
         source_columns = self._get_impala_source_columns()
         expected_columns = [
-            CanonicalColumn("COL_FIXED_STR", GLUENT_TYPE_FIXED_STRING, data_length=10),
-            CanonicalColumn("COL_VARIABLE_STR", GLUENT_TYPE_VARIABLE_STRING),
+            CanonicalColumn("COL_FIXED_STR", GOE_TYPE_FIXED_STRING, data_length=10),
+            CanonicalColumn("COL_VARIABLE_STR", GOE_TYPE_VARIABLE_STRING),
             CanonicalColumn(
-                "COL_VARIABLE_STR2", GLUENT_TYPE_VARIABLE_STRING, data_length=10
+                "COL_VARIABLE_STR2", GOE_TYPE_VARIABLE_STRING, data_length=10
             ),
-            CanonicalColumn("COL_INT_1", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_INT_2", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INT_4", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_INT_8", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_INT_P_2", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_INT_P_4", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INT_P_9", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_INT_P_18", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_INT_P_38", GLUENT_TYPE_INTEGER_38),
-            CanonicalColumn("COL_DEC_NO_P_S", GLUENT_TYPE_DECIMAL),
+            CanonicalColumn("COL_INT_1", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_INT_2", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT_4", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_INT_8", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_INT_P_2", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_INT_P_4", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT_P_9", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_INT_P_18", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_INT_P_38", GOE_TYPE_INTEGER_38),
+            CanonicalColumn("COL_DEC_NO_P_S", GOE_TYPE_DECIMAL),
             CanonicalColumn(
-                "COL_DEC_10_2", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=2
+                "COL_DEC_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
             ),
-            CanonicalColumn("COL_FLOAT", GLUENT_TYPE_FLOAT),
-            CanonicalColumn("COL_DOUBLE", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_REAL", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
-            CanonicalColumn("COL_TIMESTAMP", GLUENT_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_FLOAT", GOE_TYPE_FLOAT),
+            CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_REAL", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
+            CanonicalColumn("COL_TIMESTAMP", GOE_TYPE_TIMESTAMP),
         ]
         self.validate_source_vs_expected_columns(source_columns, expected_columns)
 
@@ -1889,21 +1889,21 @@ class TestBackendBigQueryDataTypeMappings(TestDataTypeMappings):
     def test_bigquery_to_canonical(self):
         source_columns = self._get_bigquery_source_columns()
         expected_columns = [
-            CanonicalColumn("COL_VARIABLE_STR", GLUENT_TYPE_VARIABLE_STRING),
-            CanonicalColumn("COL_BINARY", GLUENT_TYPE_BINARY),
-            CanonicalColumn("COL_INT_8", GLUENT_TYPE_INTEGER_8),
+            CanonicalColumn("COL_VARIABLE_STR", GOE_TYPE_VARIABLE_STRING),
+            CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY),
+            CanonicalColumn("COL_INT_8", GOE_TYPE_INTEGER_8),
             CanonicalColumn(
-                "COL_DEC_NO_P_S", GLUENT_TYPE_DECIMAL, data_precision=76, data_scale=38
+                "COL_DEC_NO_P_S", GOE_TYPE_DECIMAL, data_precision=76, data_scale=38
             ),
             CanonicalColumn(
-                "COL_DEC_10_2", GLUENT_TYPE_DECIMAL, data_precision=38, data_scale=9
+                "COL_DEC_10_2", GOE_TYPE_DECIMAL, data_precision=38, data_scale=9
             ),
-            CanonicalColumn("COL_DOUBLE", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
-            CanonicalColumn("COL_DATETIME", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_TIME", GLUENT_TYPE_TIME),
-            CanonicalColumn("COL_TIMESTAMP", GLUENT_TYPE_TIMESTAMP_TZ),
-            CanonicalColumn("COL_BOOLEAN", GLUENT_TYPE_BOOLEAN),
+            CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
+            CanonicalColumn("COL_DATETIME", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_TIME", GOE_TYPE_TIME),
+            CanonicalColumn("COL_TIMESTAMP", GOE_TYPE_TIMESTAMP_TZ),
+            CanonicalColumn("COL_BOOLEAN", GOE_TYPE_BOOLEAN),
         ]
         self.validate_source_vs_expected_columns(source_columns, expected_columns)
 
@@ -1989,7 +1989,7 @@ class TestBackendBigQueryDataTypeMappings(TestDataTypeMappings):
         )
 
         for source_column in self.canonical_columns():
-            if source_column.data_type == GLUENT_TYPE_FLOAT:
+            if source_column.data_type == GOE_TYPE_FLOAT:
                 # No default mapping for 32bit float
                 continue
             expected_column = match_table_column(source_column.name, expected_columns)
@@ -2331,29 +2331,29 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
     def test_snowflake_to_canonical(self):
         source_columns = self._get_snowflake_source_columns()
         expected_columns = [
-            CanonicalColumn("COL_BINARY", GLUENT_TYPE_BINARY),
-            CanonicalColumn("COL_BINARY_2000", GLUENT_TYPE_BINARY, data_length=2000),
-            CanonicalColumn("COL_BINARY_2001", GLUENT_TYPE_BINARY, data_length=2001),
-            CanonicalColumn("COL_BOOLEAN", GLUENT_TYPE_BOOLEAN),
+            CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY),
+            CanonicalColumn("COL_BINARY_2000", GOE_TYPE_BINARY, data_length=2000),
+            CanonicalColumn("COL_BINARY_2001", GOE_TYPE_BINARY, data_length=2001),
+            CanonicalColumn("COL_BOOLEAN", GOE_TYPE_BOOLEAN),
             # All Snowflake strings are defined in CHARs
             CanonicalColumn(
                 "COL_VARIABLE_STR",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
-            CanonicalColumn("COL_INT_1", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_INT_2", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INT_4", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_INT_8", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_INT_38", GLUENT_TYPE_INTEGER_38),
+            CanonicalColumn("COL_INT_1", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_INT_2", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT_4", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_INT_8", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_INT_38", GOE_TYPE_INTEGER_38),
             CanonicalColumn(
-                "COL_DEC_20_10", GLUENT_TYPE_DECIMAL, data_precision=20, data_scale=10
+                "COL_DEC_20_10", GOE_TYPE_DECIMAL, data_precision=20, data_scale=10
             ),
-            CanonicalColumn("COL_DOUBLE", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
-            CanonicalColumn("COL_TIME", GLUENT_TYPE_TIME),
-            CanonicalColumn("COL_TIMESTAMP", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_TIMESTAMP_TZ", GLUENT_TYPE_TIMESTAMP_TZ),
+            CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
+            CanonicalColumn("COL_TIME", GOE_TYPE_TIME),
+            CanonicalColumn("COL_TIMESTAMP", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_TIMESTAMP_TZ", GOE_TYPE_TIMESTAMP_TZ),
         ]
         self.validate_source_vs_expected_columns(source_columns, expected_columns)
 
@@ -2435,7 +2435,7 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
         )
 
         for source_column in self.canonical_columns():
-            if source_column.data_type == GLUENT_TYPE_FLOAT:
+            if source_column.data_type == GOE_TYPE_FLOAT:
                 # No default mapping for 32bit float
                 continue
             expected_column = match_table_column(source_column.name, expected_columns)
@@ -2545,106 +2545,106 @@ class TestBackendSynapseDataTypeMappings(TestDataTypeMappings):
     def test_synapse_to_canonical(self):
         source_columns = self._get_synapse_source_columns()
         expected_columns = [
-            CanonicalColumn("COL_BIGINT", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_BINARY", GLUENT_TYPE_BINARY),
-            CanonicalColumn("COL_BINARY_2001", GLUENT_TYPE_BINARY, data_length=2001),
+            CanonicalColumn("COL_BIGINT", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY),
+            CanonicalColumn("COL_BINARY_2001", GOE_TYPE_BINARY, data_length=2001),
             CanonicalColumn(
                 "COL_CHAR",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 data_length=3,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
             ),
             CanonicalColumn(
                 "COL_CHAR_1001",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 data_length=1001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
             ),
             CanonicalColumn(
                 "COL_CHAR_2001",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 data_length=2001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
             ),
-            CanonicalColumn("COL_DATE", GLUENT_TYPE_DATE),
-            CanonicalColumn("COL_DATETIME", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_DATETIME2", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_DATETIMEOFFSET", GLUENT_TYPE_TIMESTAMP_TZ),
-            CanonicalColumn("COL_INT_1", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_INT_2", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INT_4", GLUENT_TYPE_INTEGER_4),
-            CanonicalColumn("COL_INT_8", GLUENT_TYPE_INTEGER_8),
-            CanonicalColumn("COL_INT_38", GLUENT_TYPE_INTEGER_38),
+            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
+            CanonicalColumn("COL_DATETIME", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_DATETIME2", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_DATETIMEOFFSET", GOE_TYPE_TIMESTAMP_TZ),
+            CanonicalColumn("COL_INT_1", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_INT_2", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_INT_4", GOE_TYPE_INTEGER_4),
+            CanonicalColumn("COL_INT_8", GOE_TYPE_INTEGER_8),
+            CanonicalColumn("COL_INT_38", GOE_TYPE_INTEGER_38),
             CanonicalColumn(
-                "COL_DEC_20_10", GLUENT_TYPE_DECIMAL, data_precision=20, data_scale=10
+                "COL_DEC_20_10", GOE_TYPE_DECIMAL, data_precision=20, data_scale=10
             ),
-            CanonicalColumn("COL_FLOAT32", GLUENT_TYPE_FLOAT),
-            CanonicalColumn("COL_FLOAT64", GLUENT_TYPE_DOUBLE),
-            CanonicalColumn("COL_INT", GLUENT_TYPE_INTEGER_4),
+            CanonicalColumn("COL_FLOAT32", GOE_TYPE_FLOAT),
+            CanonicalColumn("COL_FLOAT64", GOE_TYPE_DOUBLE),
+            CanonicalColumn("COL_INT", GOE_TYPE_INTEGER_4),
             CanonicalColumn(
-                "COL_MONEY", GLUENT_TYPE_DECIMAL, data_precision=19, data_scale=4
+                "COL_MONEY", GOE_TYPE_DECIMAL, data_precision=19, data_scale=4
             ),
             CanonicalColumn(
                 "COL_NCHAR",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 char_length=3,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
                 "COL_NCHAR_1001",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 char_length=1001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
                 "COL_NCHAR_2001",
-                GLUENT_TYPE_FIXED_STRING,
+                GOE_TYPE_FIXED_STRING,
                 char_length=2001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
                 "COL_NVARCHAR",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 char_length=30,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
                 "COL_NVARCHAR_2001",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 char_length=2001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
             CanonicalColumn(
                 "COL_NVARCHAR_4001",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 char_length=4001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             ),
-            CanonicalColumn("COL_SMALLDATETIME", GLUENT_TYPE_TIMESTAMP),
-            CanonicalColumn("COL_SMALLINT", GLUENT_TYPE_INTEGER_2),
+            CanonicalColumn("COL_SMALLDATETIME", GOE_TYPE_TIMESTAMP),
+            CanonicalColumn("COL_SMALLINT", GOE_TYPE_INTEGER_2),
             CanonicalColumn(
-                "COL_SMALLMONEY", GLUENT_TYPE_DECIMAL, data_precision=10, data_scale=4
+                "COL_SMALLMONEY", GOE_TYPE_DECIMAL, data_precision=10, data_scale=4
             ),
-            CanonicalColumn("COL_TIME", GLUENT_TYPE_TIME),
-            CanonicalColumn("COL_TINYINT", GLUENT_TYPE_INTEGER_1),
-            CanonicalColumn("COL_UNIQUEIDENTIFIER", GLUENT_TYPE_FIXED_STRING),
-            CanonicalColumn("COL_VARBINARY", GLUENT_TYPE_BINARY, data_length=30),
-            CanonicalColumn("COL_VARBINARY_2001", GLUENT_TYPE_BINARY, data_length=2001),
+            CanonicalColumn("COL_TIME", GOE_TYPE_TIME),
+            CanonicalColumn("COL_TINYINT", GOE_TYPE_INTEGER_1),
+            CanonicalColumn("COL_UNIQUEIDENTIFIER", GOE_TYPE_FIXED_STRING),
+            CanonicalColumn("COL_VARBINARY", GOE_TYPE_BINARY, data_length=30),
+            CanonicalColumn("COL_VARBINARY_2001", GOE_TYPE_BINARY, data_length=2001),
             CanonicalColumn(
                 "COL_VARCHAR",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 data_length=30,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
             ),
             CanonicalColumn(
                 "COL_VARCHAR_2001",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 data_length=2001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
             ),
             CanonicalColumn(
                 "COL_VARCHAR_4001",
-                GLUENT_TYPE_VARIABLE_STRING,
+                GOE_TYPE_VARIABLE_STRING,
                 data_length=4001,
                 char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
             ),

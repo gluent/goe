@@ -5,15 +5,15 @@ from goe.offload.column_metadata import (
     CanonicalColumn,
     CANONICAL_TYPE_OPTION_NAMES,
     CANONICAL_CHAR_SEMANTICS_UNICODE,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_VARIABLE_STRING,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_VARIABLE_STRING,
     get_column_names,
     match_table_column,
 )
@@ -37,13 +37,13 @@ class OffloadDataTypeControlsException(Exception):
 ###############################################################################
 
 BACKEND_DATA_TYPE_CONTROL_OPTIONS = {
-    GLUENT_TYPE_INTEGER_1: "--integer-1-columns",
-    GLUENT_TYPE_INTEGER_2: "--integer-2-columns",
-    GLUENT_TYPE_INTEGER_4: "--integer-4-columns",
-    GLUENT_TYPE_INTEGER_8: "--integer-8-columns",
-    GLUENT_TYPE_INTEGER_38: "--integer-38-columns",
-    GLUENT_TYPE_DOUBLE: "--double-columns",
-    GLUENT_TYPE_VARIABLE_STRING: "--variable-string-columns",
+    GOE_TYPE_INTEGER_1: "--integer-1-columns",
+    GOE_TYPE_INTEGER_2: "--integer-2-columns",
+    GOE_TYPE_INTEGER_4: "--integer-4-columns",
+    GOE_TYPE_INTEGER_8: "--integer-8-columns",
+    GOE_TYPE_INTEGER_38: "--integer-38-columns",
+    GOE_TYPE_DOUBLE: "--double-columns",
+    GOE_TYPE_VARIABLE_STRING: "--variable-string-columns",
 }
 
 CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT = "Data type conflict for columns"
@@ -168,7 +168,7 @@ def offload_source_to_canonical_mappings(
 
         if not offload_target_table.canonical_float_supported() and (
             tab_col.data_type == ORACLE_TYPE_BINARY_FLOAT
-            or new_col.data_type == GLUENT_TYPE_FLOAT
+            or new_col.data_type == GOE_TYPE_FLOAT
         ):
             raise OffloadException(
                 "4 byte binary floating point data cannot be offloaded to this backend system: %s"
@@ -302,7 +302,7 @@ def report_data_type_control_options_to_simulate_sampling(
         "Sampled column/data type detail, use explicit data type controls (--*-columns) to override these values:"
     )
     for used_type in canonical_types_used:
-        if used_type == GLUENT_TYPE_DECIMAL:
+        if used_type == GOE_TYPE_DECIMAL:
             # Need to use a combination of options for each precision/scale combo
             ps_tuples = list(
                 set(

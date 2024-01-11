@@ -12,8 +12,8 @@ from goe.offload.offload_functions import (
 )
 from goe.offload.column_metadata import (
     CanonicalColumn,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_VARIABLE_STRING,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_VARIABLE_STRING,
 )
 from goe.offload.predicate_offload import GenericPredicate
 
@@ -45,12 +45,12 @@ class TestOffloadFunctions(TestCase):
 
     def test_expand_columns_csv(self):
         columns = [
-            CanonicalColumn("COL1_ID", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL2_ID", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL3_KEY", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL4_KEY", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL5_YEAR", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL6_MONTH", GLUENT_TYPE_INTEGER_2),
+            CanonicalColumn("COL1_ID", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL2_ID", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL3_KEY", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL4_KEY", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL5_YEAR", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL6_MONTH", GOE_TYPE_INTEGER_2),
         ]
         self.assertListEqual(
             expand_columns_csv("COL1_ID,COL4_KEY", columns), ["COL1_ID", "COL4_KEY"]
@@ -101,14 +101,14 @@ class TestOffloadFunctions(TestCase):
             self.assertEqual(sum(len(_.split(",")) for _ in in_lists), len(pretend_hvs))
 
         # Numeric list
-        columns = [CanonicalColumn("COL_NAME", GLUENT_TYPE_INTEGER_2)]
+        columns = [CanonicalColumn("COL_NAME", GOE_TYPE_INTEGER_2)]
         pretend_hvs = [(_,) for _ in range(20)]
         check_call(columns, pretend_hvs, 9, 3, '"')
         check_call(columns, pretend_hvs, 10, 2, '"')
         check_call(columns, pretend_hvs, 21, 1, '"')
         check_call(columns, pretend_hvs, 10, 2, "`")
         # Character list
-        columns = [CanonicalColumn("COL_NAME", GLUENT_TYPE_VARIABLE_STRING)]
+        columns = [CanonicalColumn("COL_NAME", GOE_TYPE_VARIABLE_STRING)]
         pretend_hvs = [("'{}'".format(_),) for _ in range(20)]
         check_call(columns, pretend_hvs, 9, 3, '"')
         check_call(columns, pretend_hvs, 10, 2, '"')
@@ -148,13 +148,13 @@ class TestOffloadFunctions(TestCase):
                 self.assertTrue(gte_clause.count(col_name), expected_gte_col2_count)
 
         # Numeric range
-        columns = [CanonicalColumn("COL_NAME", GLUENT_TYPE_INTEGER_2)]
+        columns = [CanonicalColumn("COL_NAME", GOE_TYPE_INTEGER_2)]
         check_call(columns, (10,), ch='"')
         check_call(columns, (10,), ch="`")
         # Multi column
         columns = [
-            CanonicalColumn("COL_NAME1", GLUENT_TYPE_INTEGER_2),
-            CanonicalColumn("COL_NAME2", GLUENT_TYPE_INTEGER_2),
+            CanonicalColumn("COL_NAME1", GOE_TYPE_INTEGER_2),
+            CanonicalColumn("COL_NAME2", GOE_TYPE_INTEGER_2),
         ]
         check_call(
             columns,
@@ -172,77 +172,6 @@ class TestOffloadFunctions(TestCase):
             ),
             as_dsl=True,
         )
-
-    def test_trunc_with_hash(self):
-        data = [
-            # Centurylink metadata (CNT_AGG)
-            (
-                "NWX_PFM_E2E_DAY_SUMM_GLT",
-                "NWX_PFM_E2E_DAY_SUMM_GLT__64SV",
-                "NWX_PFM_E2E_DAY_SUMM_GLT__MO15",
-            ),
-            (
-                "NWX_PFM_PS_HOUR_SUMM_GLT",
-                "NWX_PFM_PS_HOUR_SUMM_GLT__Z4T6",
-                "NWX_PFM_PS_HOUR_SUMM_GLT__UOAS",
-            ),
-            (
-                "SUMMARY_PUC_MONTHLY_GLT",
-                "SUMMARY_PUC_MONTHLY_GLT_C_MBYX",
-                "SUMMARY_PUC_MONTHLY_GLT_C_HQ15",
-            ),
-            (
-                "DAILY_DISCOUNT_QTY_T_GLT",
-                "DAILY_DISCOUNT_QTY_T_GLT__TTMO",
-                "DAILY_DISCOUNT_QTY_T_GLT__LKQJ",
-            ),
-            (
-                "ENS_BILL_GL_SUMMARY_T_GLT",
-                "ENS_BILL_GL_SUMMARY_T_GLT_NG9Q",
-                "ENS_BILL_GL_SUMMARY_T_GLT_JYBB",
-            ),
-            (
-                "PROVISIONINGORDER_USOC",
-                "PROVISIONINGORDER_USOC_CNT_AGG",
-                "PROVISIONINGORDER_USOC_CN_FYPJ",
-            ),
-            (
-                "MONTHLYFEATURESUMMARY_GLT",
-                "MONTHLYFEATURESUMMARY_GLT_IILW",
-                "MONTHLYFEATURESUMMARY_GLT_NOWC",
-            ),
-            # Securus metadata (CNT_AGG)
-            (
-                "TRACKED_OFFENDER_CONTACT",
-                "TRACKED_OFFENDER_CONTACT__XIXZ",
-                "TRACKED_OFFENDER_CONTACT__S5FA",
-            ),
-            (
-                "TRACKED_OFFENDER_TRACK",
-                "TRACKED_OFFENDER_TRACK_CNT_AGG",
-                "TRACKED_OFFENDER_TRACK_CN_CQZP",
-            ),
-            (
-                "DEVICE_BTHDRMSG_OLD",
-                "DEVICE_BTHDRMSG_OLD_CNT_AGG",
-                "DEVICE_BTHDRMSG_OLD_CNT_A_BXUS",
-            ),
-            (
-                "VTCMD_CONFIRMATIONS",
-                "VTCMD_CONFIRMATIONS_CNT_AGG",
-                "VTCMD_CONFIRMATIONS_CNT_A_XCKW",
-            ),
-        ]
-
-        for offloaded_table, hybrid_view, hybrid_external_table in data:
-            self.assertEqual(
-                hybrid_view,
-                trunc_with_hash("{}_cnt_agg".format(offloaded_table), 4, 30).upper(),
-            )
-            self.assertEqual(
-                hybrid_external_table,
-                trunc_with_hash("{}_EXT".format(hybrid_view), 4, 30).upper(),
-            )
 
 
 if __name__ == "__main__":

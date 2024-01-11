@@ -8,11 +8,11 @@ from goe.util.password_tools import PasswordTools
 
 class TestPasswordTools(TestCase):
     def test_password_tools_known_key(self):
-        gluent_key = "E7264F9B4E92048857611F310470C7C305AF262EE09BEEBE28B46C219F9697398E3040E24C1B4FB38049678E0E77C0EC"
+        goe_key = "E7264F9B4E92048857611F310470C7C305AF262EE09BEEBE28B46C219F9697398E3040E24C1B4FB38049678E0E77C0EC"
         pass_tool = PasswordTools()
         clear_text_pwd = "A Big Secret"
-        encrypted_pwd = pass_tool.encrypt(clear_text_pwd, gluent_key)
-        decrypted_pwd = pass_tool.decrypt(encrypted_pwd, gluent_key)
+        encrypted_pwd = pass_tool.encrypt(clear_text_pwd, goe_key)
+        decrypted_pwd = pass_tool.decrypt(encrypted_pwd, goe_key)
         self.assertEqual(decrypted_pwd, clear_text_pwd)
 
     def test_password_tools_key_file(self):

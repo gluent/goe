@@ -17,10 +17,10 @@ from goe.offload.column_metadata import ColumnMetadataInterface
 from goe.offload.backend_table import BackendTableInterface, BackendTableException
 from goe.offload.offload_constants import FILE_STORAGE_FORMAT_AVRO
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
-from goe.filesystem.gluent_dfs import AZURE_OFFLOAD_FS_SCHEMES, OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_GS,\
+from goe.filesystem.goe_dfs import AZURE_OFFLOAD_FS_SCHEMES, OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_GS,\
     OFFLOAD_FS_SCHEME_AZURE, OFFLOAD_FS_SCHEME_WASB, OFFLOAD_FS_SCHEME_WASBS,\
     OFFLOAD_FS_SCHEME_ADL, OFFLOAD_FS_SCHEME_ABFS, OFFLOAD_FS_SCHEME_ABFSS
-from goe.filesystem.gluent_azure import azure_fq_container_name
+from goe.filesystem.goe_azure import azure_fq_container_name
 from goe.util.misc_functions import add_suffix_in_same_case
 
 

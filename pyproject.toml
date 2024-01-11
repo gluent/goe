@@ -58,7 +58,7 @@ dependencies = [
     # For Snowflake backend
     "snowflake-connector-python==3.0.0",
 
-    # Gluent Listener packages
+    # GOE Listener packages
     "fastapi==0.77.0",
     "orjson==3.6.8",
     "uvicorn==0.17.6",

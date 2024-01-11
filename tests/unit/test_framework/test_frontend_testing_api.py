@@ -59,14 +59,14 @@ class TestFrontendTestingApi(TestCase):
         except NotImplementedError:
             pass
 
-    def _test_gl_type_mapping_generated_table_col_specs(self):
+    def _test_goe_type_mapping_generated_table_col_specs(self):
         if self.db_type != DBTYPE_ORACLE:
             return
         max_backend_precision = 29
         max_backend_scale = 3
         max_decimal_integral_magnitude = 20
         supported_canonical_types = ALL_CANONICAL_TYPES
-        return_value = self.test_api.gl_type_mapping_generated_table_col_specs(
+        return_value = self.test_api.goe_type_mapping_generated_table_col_specs(
             max_backend_precision,
             max_backend_scale,
             max_decimal_integral_magnitude,
@@ -102,7 +102,7 @@ class TestFrontendTestingApi(TestCase):
     def _run_all_tests(self):
         self._test_drop_table()
         self._test_expected_sales_offload_predicates()
-        self._test_gl_type_mapping_generated_table_col_specs()
+        self._test_goe_type_mapping_generated_table_col_specs()
         self._test_host_compare_sql_projection()
         self._test_test_type_canonical_date()
         self._test_test_type_canonical_decimal()

@@ -13,9 +13,9 @@ import os
 
 from goe.data_governance.hadoop_data_governance import data_governance_register_new_table_step,\
     get_data_governance_register
-from goe.data_governance.hadoop_data_governance_constants import DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_BASE_TABLE, \
-    DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_LOAD_TABLE
-from goe.filesystem.gluent_dfs import gen_load_uri_from_options
+from goe.data_governance.hadoop_data_governance_constants import DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE, \
+    DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE
+from goe.filesystem.goe_dfs import gen_load_uri_from_options
 from goe.offload.column_metadata import ColumnMetadataInterface, get_column_names
 from goe.offload.hadoop import hadoop_predicate
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_BIGINT, HADOOP_TYPE_DATE, HADOOP_TYPE_DOUBLE,\
@@ -37,8 +37,8 @@ from goe.offload.staging.parquet.parquet_column import PARQUET_TYPE_DOUBLE, PARQ
 # CONSTANTS
 ###############################################################################
 
-GLUENT_BUCKET_UDF = 'GLUENT_BUCKET'
-GLUENT_BUCKET_UDF_EXPRESSION = '%(udf_db)sGLUENT_BUCKET(%(dividend)s,%(divisor)s)'
+GOE_BUCKET_UDF = 'GOE_BUCKET'
+GOE_BUCKET_UDF_EXPRESSION = '%(udf_db)sGOE_BUCKET(%(dividend)s,%(divisor)s)'
 
 # Used for test assertions
 COMPUTE_LOAD_TABLE_STATS_LOG_TEXT = 'Config requires compute of stats on load table'
@@ -326,7 +326,7 @@ FROM %s.%s"""% (part_exprs, self.enclose_identifier(self._load_db_name), self.en
         raise NotImplementedError(self._not_implemented_message('Incremental update merge'))
 
     def _recreate_load_table_dir(self, include_remove=True, include_create=True):
-        """ Doing this ensure that the staging table directory is owned by the "gluent" account
+        """ Doing this ensure that the staging table directory is owned by the "goe" account
             This is a requirement of some transport methods which run outside of a SQL engine
         """
         load_table_hdfs_dir = self._get_load_table_hdfs_dir()
@@ -540,7 +540,7 @@ FROM %s.%s"""% (part_exprs, self.enclose_identifier(self._load_db_name), self.en
         pre_register_data_gov_fn, post_register_data_gov_fn = get_data_governance_register(self._data_gov_client, \
                 lambda: data_governance_register_new_table_step(
                     self._load_db_name, self.table_name, self._data_gov_client, self._messages,
-                    DATA_GOVERNANCE_GLUENT_OBJECT_TYPE_LOAD_TABLE, self._orchestration_config
+                    DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE, self._orchestration_config
                 ))
         pre_register_data_gov_fn()
         self._recreate_load_table(staging_file)
@@ -588,9 +588,9 @@ FROM %s.%s"""% (part_exprs, self.enclose_identifier(self._load_db_name), self.en
     def synthetic_bucket_filter_capable_column(self, backend_column):
         assert backend_column
         assert isinstance(backend_column, ColumnMetadataInterface)
-        if self.gluent_udfs_supported() and backend_column.is_number_based() \
+        if self.goe_udfs_supported() and backend_column.is_number_based() \
         and (backend_column.data_type in self._db_api.native_integer_types() or backend_column.data_scale == 0):
-            return GLUENT_BUCKET_UDF, GLUENT_BUCKET_UDF_EXPRESSION
+            return GOE_BUCKET_UDF, GOE_BUCKET_UDF_EXPRESSION
         else:
             return None, self._synthetic_bucket_filter_non_udf_sql_expression()
 

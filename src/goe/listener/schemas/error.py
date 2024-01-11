@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 # Third Party Libraries
 from pydantic import root_validator
 
-# Gluent
+# GOE
 from goe.listener.schemas.base import BaseSchema
 
 

@@ -1,6 +1,6 @@
-""" Core Utliity methods occationally needed for Gluent Listener Service """
+""" Core Utliity methods occationally needed for GOE Listener Service """
 
-# Gluent
+# GOE
 from goe.listener.services.heartbeat import heartbeat
 from goe.listener.services.orchestrate import orchestration_runner
 from goe.listener.services.system import system

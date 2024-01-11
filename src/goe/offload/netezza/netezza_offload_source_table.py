@@ -9,10 +9,10 @@ from typing import Union
 
 from goe.offload.column_metadata import CanonicalColumn, \
     is_safe_mapping, \
-    GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY,\
-    GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4,\
-    GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE,\
-    GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_BOOLEAN, \
+    GOE_TYPE_FIXED_STRING, GOE_TYPE_VARIABLE_STRING, GOE_TYPE_BINARY,\
+    GOE_TYPE_LARGE_BINARY, GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4,\
+    GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38, GOE_TYPE_DECIMAL, GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE,\
+    GOE_TYPE_DATE, GOE_TYPE_TIME, GOE_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ, GOE_TYPE_BOOLEAN, \
     ALL_CANONICAL_TYPES, NUMERIC_CANONICAL_TYPES, STRING_CANONICAL_TYPES
 from goe.offload.netezza.netezza_column import NetezzaColumn, \
     NETEZZA_TYPE_BOOLEAN, NETEZZA_TYPE_BYTEINT, NETEZZA_TYPE_SMALLINT, NETEZZA_TYPE_INTEGER, NETEZZA_TYPE_BIGINT,\
@@ -296,7 +296,7 @@ class NetezzaSourceTable(OffloadSourceTableInterface):
         return []
 
     def to_canonical_column(self, column):
-        """ Translate an Netezza column to an internal Gluent column
+        """ Translate an Netezza column to an internal GOE column
         """
 
         def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, safe_mapping=None):
@@ -313,22 +313,22 @@ class NetezzaSourceTable(OffloadSourceTableInterface):
         assert isinstance(column, NetezzaColumn)
 
         if column.data_type in (NETEZZA_TYPE_CHARACTER, NETEZZA_TYPE_NATIONAL_CHARACTER):
-            return new_column(column, GLUENT_TYPE_FIXED_STRING, data_length=column.data_length, safe_mapping=True)
+            return new_column(column, GOE_TYPE_FIXED_STRING, data_length=column.data_length, safe_mapping=True)
         elif column.data_type in (NETEZZA_TYPE_CHARACTER_VARYING, NETEZZA_TYPE_NATIONAL_CHARACTER_VARYING,
                                   NETEZZA_TYPE_INTERVAL):
-            return new_column(column, GLUENT_TYPE_VARIABLE_STRING, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_VARIABLE_STRING, data_length=column.data_length)
         elif column.data_type in (NETEZZA_TYPE_BINARY_VARYING, NETEZZA_TYPE_ST_GEOMETRY):
-            return new_column(column, GLUENT_TYPE_BINARY, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_BINARY, data_length=column.data_length)
         elif column.data_type == NETEZZA_TYPE_BOOLEAN:
-            return new_column(column, GLUENT_TYPE_BOOLEAN)
+            return new_column(column, GOE_TYPE_BOOLEAN)
         elif column.data_type == NETEZZA_TYPE_BYTEINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_1)
+            return new_column(column, GOE_TYPE_INTEGER_1)
         elif column.data_type == NETEZZA_TYPE_SMALLINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_2)
+            return new_column(column, GOE_TYPE_INTEGER_2)
         elif column.data_type == NETEZZA_TYPE_INTEGER:
-            return new_column(column, GLUENT_TYPE_INTEGER_4)
+            return new_column(column, GOE_TYPE_INTEGER_4)
         elif column.data_type == NETEZZA_TYPE_BIGINT:
-            return new_column(column, GLUENT_TYPE_INTEGER_8)
+            return new_column(column, GOE_TYPE_INTEGER_8)
         elif column.data_type == NETEZZA_TYPE_NUMERIC:
             data_precision = column.data_precision
             data_scale = column.data_scale
@@ -343,35 +343,35 @@ class NetezzaSourceTable(OffloadSourceTableInterface):
             if data_scale == 0:
                 # Integral numbers
                 if data_precision >= 1 and data_precision <= 2:
-                    integral_type = GLUENT_TYPE_INTEGER_1
+                    integral_type = GOE_TYPE_INTEGER_1
                 elif data_precision >= 3 and data_precision <= 4:
-                    integral_type = GLUENT_TYPE_INTEGER_2
+                    integral_type = GOE_TYPE_INTEGER_2
                 elif data_precision >= 5 and data_precision <= 9:
-                    integral_type = GLUENT_TYPE_INTEGER_4
+                    integral_type = GOE_TYPE_INTEGER_4
                 elif data_precision >= 10 and data_precision <= 18:
-                    integral_type = GLUENT_TYPE_INTEGER_8
+                    integral_type = GOE_TYPE_INTEGER_8
                 elif data_precision >= 19 and data_precision <= 38:
-                    integral_type = GLUENT_TYPE_INTEGER_38
+                    integral_type = GOE_TYPE_INTEGER_38
                 else:
                     # The precision overflows our canonical integral types so store as a decimal
-                    integral_type = GLUENT_TYPE_DECIMAL
+                    integral_type = GOE_TYPE_DECIMAL
                 return new_column(column, integral_type, data_precision=data_precision, data_scale=0)
             else:
                 # If precision & scale are None then this is unsafe, otherwise leave it None to let new_column() logic take over
                 safe_mapping = False if data_precision is None and data_scale is None else None
-                return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale, safe_mapping=safe_mapping)
+                return new_column(column, GOE_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale, safe_mapping=safe_mapping)
         elif column.data_type == NETEZZA_TYPE_REAL:
-            return new_column(column, GLUENT_TYPE_FLOAT)
+            return new_column(column, GOE_TYPE_FLOAT)
         elif column.data_type == NETEZZA_TYPE_DOUBLE_PRECISION:
-            return new_column(column, GLUENT_TYPE_DOUBLE)
+            return new_column(column, GOE_TYPE_DOUBLE)
         elif column.data_type == NETEZZA_TYPE_DATE:
-            return new_column(column, GLUENT_TYPE_DATE)
+            return new_column(column, GOE_TYPE_DATE)
         elif column.data_type == NETEZZA_TYPE_TIME:
-            return new_column(column, GLUENT_TYPE_TIME)
+            return new_column(column, GOE_TYPE_TIME)
         elif column.data_type == NETEZZA_TYPE_TIMESTAMP:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP)
+            return new_column(column, GOE_TYPE_TIMESTAMP)
         elif column.data_type == NETEZZA_TYPE_TIME_WITH_TIME_ZONE:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP_TZ)
+            return new_column(column, GOE_TYPE_TIMESTAMP_TZ)
         else:
             raise NotImplementedError('Unsupported Netezza data type: %s' % column.data_type)
 
@@ -423,27 +423,27 @@ class NetezzaSourceTable(OffloadSourceTableInterface):
         else:
             target_type = canonical_override
         if column.data_type == NETEZZA_TYPE_BOOLEAN:
-            return bool(target_type == GLUENT_TYPE_BOOLEAN)
+            return bool(target_type == GOE_TYPE_BOOLEAN)
         elif column.data_type in [NETEZZA_TYPE_CHARACTER, NETEZZA_TYPE_NATIONAL_CHARACTER]:
-            return bool(target_type == GLUENT_TYPE_FIXED_STRING)
+            return bool(target_type == GOE_TYPE_FIXED_STRING)
         elif column.data_type in [NETEZZA_TYPE_CHARACTER_VARYING, NETEZZA_TYPE_NATIONAL_CHARACTER_VARYING,
                                   NETEZZA_TYPE_INTERVAL]:
-            return bool(target_type == GLUENT_TYPE_VARIABLE_STRING)
+            return bool(target_type == GOE_TYPE_VARIABLE_STRING)
         elif column.data_type in [NETEZZA_TYPE_BINARY_VARYING, NETEZZA_TYPE_ST_GEOMETRY]:
-            return bool(target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY])
+            return bool(target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY])
         elif column.data_type == NETEZZA_TYPE_DOUBLE_PRECISION:
-            return bool(target_type == GLUENT_TYPE_DOUBLE)
+            return bool(target_type == GOE_TYPE_DOUBLE)
         elif column.data_type == NETEZZA_TYPE_REAL:
-            return bool(target_type == GLUENT_TYPE_FLOAT)
+            return bool(target_type == GOE_TYPE_FLOAT)
         elif column.is_number_based():
             return target_type in NUMERIC_CANONICAL_TYPES
         elif column.is_date_based() and column.is_time_zone_based():
-            return bool(target_type == GLUENT_TYPE_TIMESTAMP_TZ)
+            return bool(target_type == GOE_TYPE_TIMESTAMP_TZ)
         elif column.is_date_based():
-            return bool(target_type in [GLUENT_TYPE_DATE, GLUENT_TYPE_TIMESTAMP] or
+            return bool(target_type in [GOE_TYPE_DATE, GOE_TYPE_TIMESTAMP] or
                         target_type in STRING_CANONICAL_TYPES)
         elif column.data_type == NETEZZA_TYPE_TIME:
-            return bool(target_type == GLUENT_TYPE_TIME)
+            return bool(target_type == GOE_TYPE_TIME)
         elif target_type not in ALL_CANONICAL_TYPES:
             # Ideally we would log something here but this class has no messages object
             # self._log('Unknown canonical type in mapping: %s' % target_type, detail=VVERBOSE)

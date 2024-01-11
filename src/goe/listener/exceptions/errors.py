@@ -2,7 +2,7 @@
 from fastapi import status
 from pydantic import UUID4
 
-# Gluent
+# GOE
 from goe.listener import schemas
 from goe.listener.exceptions.base import BaseApplicationError
 

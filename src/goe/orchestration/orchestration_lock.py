@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 # Third Party Libraries
 from filelock import FileLock, Timeout
 
-# Gluent
+# GOE
 from goe.persistence.orchestration_metadata import OrchestrationMetadata
 
 logger = logging.getLogger(__name__)

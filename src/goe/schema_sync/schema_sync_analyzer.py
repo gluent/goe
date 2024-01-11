@@ -9,7 +9,7 @@ import pprint
 import traceback
 from operator import itemgetter
 
-from goe.gluent import log
+from goe.goe import log
 from goe.config.orchestration_config import OrchestrationConfig
 import goe.schema_sync.schema_sync_constants as schema_sync_constants
 from goe.offload.column_metadata import get_column_names
@@ -42,7 +42,7 @@ def ddl_compare(cursor, source_object, target_object):
 
     Note:   This select statement must use dba_objects, because all_objects requires the user to
             have the CREATE ANY TRIGGER or DEBUG ANY PROCEDURE privilege for triggers to be visible,
-            and the Gluent ADM user does not possess these privileges.
+            and the GOE ADM user does not possess these privileges.
     """
 
     sql = """
@@ -120,7 +120,7 @@ class SchemaSyncAnalyzer(object):
                 ,       hybrid_view
                 ,       hybrid_external_table
                 FROM    offload_objects
-                WHERE   hybrid_view_type = 'GLUENT_OFFLOAD_HYBRID_VIEW'
+                WHERE   hybrid_view_type = 'GOE_OFFLOAD_HYBRID_VIEW'
                 AND     offloaded_owner IS NOT NULL
                 AND     offloaded_table IS NOT NULL"""
             binds = None
@@ -434,12 +434,12 @@ class SchemaSyncAnalyzer(object):
 
             Run comparisons in the following order:
 
-                1. Compare base Oracle columns with base table offloaded columns (excluding Gluent-operational columns)
+                1. Compare base Oracle columns with base table offloaded columns (excluding GOE-operational columns)
                 2. Compare base Oracle columns with Hybrid External Table and Hybrid View
 
             """
 
-            # 1. Compare base Oracle columns with backend offloaded columns (excluding Gluent-operational columns)
+            # 1. Compare base Oracle columns with backend offloaded columns (excluding GOE-operational columns)
             #
             delta_base_oracle_cols = self.compare_table_columns(
                 (

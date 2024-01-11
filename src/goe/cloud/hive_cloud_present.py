@@ -13,7 +13,7 @@ from collections import defaultdict
 from functools import partial
 
 from goe.util.better_impyla import HiveTable, from_impala_size
-from goe.util.config_file import GluentRemoteConfig
+from goe.util.config_file import GOERemoteConfig
 from goe.util.misc_functions import end_by, get_option
 from goe.util.parallel_exec import ParallelExecutor
 
@@ -24,7 +24,7 @@ from goe.cloud.offload_logic import DST_S3, DST_HDFS
 
 from goe.offload.offload_messages import OffloadMessagesMixin
 
-from goe.util.gluent_log import step
+from goe.util.goe_log import step
 
 
 ###############################################################################
@@ -219,9 +219,9 @@ class HiveCloudPresent(OffloadMessagesMixin, object):
         logger.info("Identified type: %s for section: %s" % (storage_type, storage_section))
 
         if DST_S3 == storage_type:
-            self._storage = S3Store(self._cfg, storage_section, self._cfg.table_url(storage_section, self._db_table))    
+            self._storage = S3Store(self._cfg, storage_section, self._cfg.table_url(storage_section, self._db_table))
         elif DST_HDFS == storage_type:
-            self._storage = HdfsStore(self._cfg, storage_section, self._cfg.table_url(storage_section, self._db_table))    
+            self._storage = HdfsStore(self._cfg, storage_section, self._cfg.table_url(storage_section, self._db_table))
         else:
             raise HiveCloudPresentException("Storage type: %s for section: %s is NOT supported" % \
                 (storage_type, storage_section))
@@ -259,17 +259,17 @@ class HiveCloudPresent(OffloadMessagesMixin, object):
             }
         """
         def step_fn():
-            def extract_gluentts(part_spec):
-                """ Extract gluent 'timestamp' column value from partition specification """
-                gluent_ts = None
- 
+            def extract_goets(part_spec):
+                """ Extract GOE 'timestamp' column value from partition specification """
+                goe_ts = None
+
                 for p in part_spec:
                     name, value = p
-                    if name.startswith('gl_part'):
-                        gluent_ts = value
+                    if name.startswith('goe_part'):
+                        goe_ts = value
                         break
 
-                return gluent_ts
+                return goe_ts
 
             # TODO: maxym@ 2016-12-17
             # I have no idea why this assignment is needed, but the function does not work
@@ -287,20 +287,20 @@ class HiveCloudPresent(OffloadMessagesMixin, object):
                 p_type = p_details['Location'].split(':')[0]
                 if p_type.startswith('s3'):
                     p_type = 's3'
-                p_gluentts = extract_gluentts(p)
+                p_goets = extract_goets(p)
 
                 if not report[p_type]:
                     report[p_type] = {'partitions': [], 'files': 0, 'rows': 0, 'size': 0, 'min_ts': None, 'max_ts': None}
 
                 report[p_type]['partitions'].append(self.hive_table._make_partition_str(p))
 
-                report[p_type]['files'] += p_details['#Files'] 
-                report[p_type]['rows'] += p_details['#Rows'] 
+                report[p_type]['files'] += p_details['#Files']
+                report[p_type]['rows'] += p_details['#Rows']
                 report[p_type]['size'] += from_impala_size(p_details['Size'])
-                report[p_type]['min_ts'] = min(p_gluentts, report[p_type]['min_ts']) \
-                    if report[p_type]['min_ts'] is not None else p_gluentts
-                report[p_type]['max_ts'] = max(p_gluentts, report[p_type]['max_ts']) \
-                    if report[p_type]['max_ts'] is not None else p_gluentts
+                report[p_type]['min_ts'] = min(p_goets, report[p_type]['min_ts']) \
+                    if report[p_type]['min_ts'] is not None else p_goets
+                report[p_type]['max_ts'] = max(p_goets, report[p_type]['max_ts']) \
+                    if report[p_type]['max_ts'] is not None else p_goets
 
             # Calculate (blocking) summary metrics
             for p_type in report:
@@ -392,7 +392,7 @@ class HiveCloudPresent(OffloadMessagesMixin, object):
         # Submit for 'partition location change'
         if filtered_data:
             success, work_done = self._job_change_partition_locations(storage_section, \
-                self._make_base_url(storage_section), filtered_data, parallel) 
+                self._make_base_url(storage_section), filtered_data, parallel)
             if work_done:
                 self._refresh_metadata()
             else:
@@ -447,9 +447,9 @@ class HiveCloudPresent(OffloadMessagesMixin, object):
 if __name__ == "__main__":
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging, options_list_to_namespace, set_option
-    from goe.cloud.gluent_layout import datestr_to_gluentts
-    from goe.util.gluent_log import get_default_options
+    from goe.util.misc_functions import set_goelib_logging, options_list_to_namespace, set_option
+    from goe.cloud.goe_layout import datestr_to_goets
+    from goe.util.goe_log import get_default_options
     from goe.offload.offload_messages import OffloadMessages, to_message_level
 
     def usage(prog_name):
@@ -480,11 +480,11 @@ if __name__ == "__main__":
         log_level = sys.argv[-1:][0].upper()
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level = 'CRITICAL'
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         db_table, section, operation, date_str = sys.argv[1:5]
         db_name, table_name = db_table.split('.')
-        filters=[('timestamp', operation, datestr_to_gluentts(date_str))]
+        filters=[('timestamp', operation, datestr_to_goets(date_str))]
 
         args = [_ for _ in sys.argv[5:] if _.upper() != log_level]
         method_args = vars(options_list_to_namespace(args))

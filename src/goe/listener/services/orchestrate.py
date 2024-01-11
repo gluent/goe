@@ -1,7 +1,7 @@
 # Standard Library
 import logging
 
-# Gluent
+# GOE
 from goe.orchestration.orchestration_runner import OrchestrationRunner
 
 logger = logging.getLogger(__name__)

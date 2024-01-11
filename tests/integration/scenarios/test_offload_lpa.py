@@ -924,9 +924,9 @@ def test_offload_lpa_part_fn(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         messages.log(
-            f"Skipping {id} due to gluent_partition_functions_supported() == False"
+            f"Skipping {id} due to goe_partition_functions_supported() == False"
         )
         return
 

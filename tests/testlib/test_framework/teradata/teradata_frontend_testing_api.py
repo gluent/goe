@@ -14,25 +14,25 @@ from typing import Optional, Union
 
 from goe.offload.column_metadata import (
     CANONICAL_CHAR_SEMANTICS_UNICODE,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_TIME,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_DATE,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_TIME,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_VARIABLE_STRING,
     CanonicalColumn,
 )
 from goe.offload.frontend_api import QueryParameter
@@ -98,7 +98,7 @@ from tests.testlib.test_framework.frontend_testing_api import (
 )
 from tests.testlib.test_framework.test_functions import (
     get_test_set_sql_path,
-    gl_wide_max_columns,
+    goe_wide_max_columns,
 )
 from tests.testlib.test_framework.test_value_generators import TestDecimal
 
@@ -260,7 +260,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 f"Attempt to generate data for unsupported RDBMS type: {column.data_type}"
             )
 
-    def _gl_chars_column_definitions(
+    def _goe_chars_column_definitions(
         self, ascii_only=False, all_chars_notnull=False, supported_canonical_types=None
     ) -> list:
         name_id = 0
@@ -283,7 +283,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
 
         return column_list
 
-    def _gl_type_mapping_column_definitions(
+    def _goe_type_mapping_column_definitions(
         self,
         max_backend_precision,
         max_backend_scale,
@@ -293,7 +293,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
         supported_canonical_types=None,
         filter_column=None,
     ):
-        """Returns a dict of dicts defining columns for GL_TYPE_MAPPING test table.
+        """Returns a dict of dicts defining columns for GOE_TYPE_MAPPING test table.
         Individual backends have an expected_canonical_to_backend_type_map() method defining which of these columns,
         by expected canonical type, are to be included for that implementation.
         filter_column can be used to fetch just a single column dict.
@@ -312,17 +312,17 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_BIGINT), TERADATA_TYPE_BIGINT
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_BIGINT), GLUENT_TYPE_INTEGER_8
+                    name(TERADATA_TYPE_BIGINT), GOE_TYPE_INTEGER_8
                 ),
             },
-            name(TERADATA_TYPE_BIGINT, GLUENT_TYPE_INTEGER_4): {
+            name(TERADATA_TYPE_BIGINT, GOE_TYPE_INTEGER_4): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_BIGINT, GLUENT_TYPE_INTEGER_4),
+                    name(TERADATA_TYPE_BIGINT, GOE_TYPE_INTEGER_4),
                     TERADATA_TYPE_BIGINT,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_BIGINT, GLUENT_TYPE_INTEGER_4),
-                    GLUENT_TYPE_INTEGER_4,
+                    name(TERADATA_TYPE_BIGINT, GOE_TYPE_INTEGER_4),
+                    GOE_TYPE_INTEGER_4,
                 ),
                 "literals": [
                     TestDecimal.min(9),
@@ -333,7 +333,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             name(TERADATA_TYPE_BLOB): {
                 "column": TeradataColumn(name(TERADATA_TYPE_BLOB), TERADATA_TYPE_BLOB),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_BLOB), GLUENT_TYPE_LARGE_BINARY
+                    name(TERADATA_TYPE_BLOB), GOE_TYPE_LARGE_BINARY
                 ),
                 "literals": ["lob-a", "lob-b", "lob-c"],
             },
@@ -342,7 +342,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_BYTE), TERADATA_TYPE_BYTE, data_length=30
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_BYTE), GLUENT_TYPE_BINARY
+                    name(TERADATA_TYPE_BYTE), GOE_TYPE_BINARY
                 ),
             },
             name(TERADATA_TYPE_BYTEINT): {
@@ -350,17 +350,17 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_BYTEINT), TERADATA_TYPE_BYTEINT
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_BYTEINT), GLUENT_TYPE_INTEGER_1
+                    name(TERADATA_TYPE_BYTEINT), GOE_TYPE_INTEGER_1
                 ),
             },
-            name(TERADATA_TYPE_BYTEINT, GLUENT_TYPE_INTEGER_2): {
+            name(TERADATA_TYPE_BYTEINT, GOE_TYPE_INTEGER_2): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_BYTEINT, GLUENT_TYPE_INTEGER_2),
+                    name(TERADATA_TYPE_BYTEINT, GOE_TYPE_INTEGER_2),
                     TERADATA_TYPE_BYTEINT,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_BYTEINT, GLUENT_TYPE_INTEGER_2),
-                    GLUENT_TYPE_INTEGER_2,
+                    name(TERADATA_TYPE_BYTEINT, GOE_TYPE_INTEGER_2),
+                    GOE_TYPE_INTEGER_2,
                 ),
             },
             name(TERADATA_TYPE_CHAR, "3"): {
@@ -369,7 +369,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_CHAR, "3"),
-                    GLUENT_TYPE_FIXED_STRING,
+                    GOE_TYPE_FIXED_STRING,
                     data_length=3,
                 ),
                 "ascii_only": ascii_only,
@@ -383,7 +383,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_CHAR, "3", UNICODE_NAME_TOKEN),
-                    GLUENT_TYPE_FIXED_STRING,
+                    GOE_TYPE_FIXED_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "offload_options": {
@@ -397,7 +397,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             name(TERADATA_TYPE_CLOB): {
                 "column": TeradataColumn(name(TERADATA_TYPE_CLOB), TERADATA_TYPE_CLOB),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_CLOB), GLUENT_TYPE_LARGE_STRING
+                    name(TERADATA_TYPE_CLOB), GOE_TYPE_LARGE_STRING
                 ),
                 "ascii_only": ascii_only,
                 "notnull": all_chars_notnull,
@@ -411,7 +411,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_CLOB, UNICODE_NAME_TOKEN),
-                    GLUENT_TYPE_LARGE_STRING,
+                    GOE_TYPE_LARGE_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "offload_options": {
@@ -427,21 +427,21 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             name(TERADATA_TYPE_DATE): {
                 "column": TeradataColumn(name(TERADATA_TYPE_DATE), TERADATA_TYPE_DATE),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DATE), GLUENT_TYPE_DATE
+                    name(TERADATA_TYPE_DATE), GOE_TYPE_DATE
                 ),
             },
-            name(TERADATA_TYPE_DATE, GLUENT_TYPE_VARIABLE_STRING): {
+            name(TERADATA_TYPE_DATE, GOE_TYPE_VARIABLE_STRING): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_DATE, GLUENT_TYPE_VARIABLE_STRING),
+                    name(TERADATA_TYPE_DATE, GOE_TYPE_VARIABLE_STRING),
                     TERADATA_TYPE_DATE,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DATE, GLUENT_TYPE_VARIABLE_STRING),
-                    GLUENT_TYPE_VARIABLE_STRING,
+                    name(TERADATA_TYPE_DATE, GOE_TYPE_VARIABLE_STRING),
+                    GOE_TYPE_VARIABLE_STRING,
                 ),
                 "offload_options": {
                     "variable_string_columns_csv": name(
-                        TERADATA_TYPE_DATE, GLUENT_TYPE_VARIABLE_STRING
+                        TERADATA_TYPE_DATE, GOE_TYPE_VARIABLE_STRING
                     )
                 },
             },
@@ -450,7 +450,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_DECIMAL), TERADATA_TYPE_DECIMAL
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL), GLUENT_TYPE_INTEGER_4
+                    name(TERADATA_TYPE_DECIMAL), GOE_TYPE_INTEGER_4
                 ),
                 # Naked DECIMAL defaults to DECIMAL(5,0) so we expect INT4 and insert suitable data below.
                 "literals": [
@@ -459,18 +459,18 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(5, 0),
                 ],
             },
-            name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_1): {
+            name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_1): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_1),
+                    name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_1),
                     TERADATA_TYPE_DECIMAL,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_1),
-                    GLUENT_TYPE_INTEGER_1,
+                    name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_1),
+                    GOE_TYPE_INTEGER_1,
                 ),
                 "offload_options": {
                     "integer_1_columns_csv": name(
-                        TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_1
+                        TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_1
                     )
                 },
                 "literals": [
@@ -479,18 +479,18 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(2),
                 ],
             },
-            name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_2): {
+            name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_2): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_2),
+                    name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_2),
                     TERADATA_TYPE_DECIMAL,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_2),
-                    GLUENT_TYPE_INTEGER_2,
+                    name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_2),
+                    GOE_TYPE_INTEGER_2,
                 ),
                 "offload_options": {
                     "integer_2_columns_csv": name(
-                        TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_2
+                        TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_2
                     )
                 },
                 "literals": [
@@ -499,18 +499,18 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(4),
                 ],
             },
-            name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4): {
+            name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_4): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4),
+                    name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_4),
                     TERADATA_TYPE_DECIMAL,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4),
-                    GLUENT_TYPE_INTEGER_4,
+                    name(TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_4),
+                    GOE_TYPE_INTEGER_4,
                 ),
                 "offload_options": {
                     "integer_4_columns_csv": name(
-                        TERADATA_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4
+                        TERADATA_TYPE_DECIMAL, GOE_TYPE_INTEGER_4
                     )
                 },
                 "literals": [
@@ -519,18 +519,18 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(5),
                 ],
             },
-            # Naked DECIMAL cannot hold data beyond GLUENT_TYPE_INTEGER_4 therefore not testing int8/38 mappings.
-            name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE): {
+            # Naked DECIMAL cannot hold data beyond GOE_TYPE_INTEGER_4 therefore not testing int8/38 mappings.
+            name(TERADATA_TYPE_DECIMAL, GOE_TYPE_DOUBLE): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE),
+                    name(TERADATA_TYPE_DECIMAL, GOE_TYPE_DOUBLE),
                     TERADATA_TYPE_DECIMAL,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE), GLUENT_TYPE_DOUBLE
+                    name(TERADATA_TYPE_DECIMAL, GOE_TYPE_DOUBLE), GOE_TYPE_DOUBLE
                 ),
                 "offload_options": {
                     "double_columns_csv": name(
-                        TERADATA_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE
+                        TERADATA_TYPE_DECIMAL, GOE_TYPE_DOUBLE
                     )
                 },
                 "literals": [1.5, 2.5, 3.5],
@@ -543,7 +543,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL, "2"), GLUENT_TYPE_INTEGER_1
+                    name(TERADATA_TYPE_DECIMAL, "2"), GOE_TYPE_INTEGER_1
                 ),
             },
             name(TERADATA_TYPE_DECIMAL, "4"): {
@@ -554,7 +554,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL, "4"), GLUENT_TYPE_INTEGER_2
+                    name(TERADATA_TYPE_DECIMAL, "4"), GOE_TYPE_INTEGER_2
                 ),
             },
             name(TERADATA_TYPE_DECIMAL, "9"): {
@@ -565,7 +565,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL, "9"), GLUENT_TYPE_INTEGER_4
+                    name(TERADATA_TYPE_DECIMAL, "9"), GOE_TYPE_INTEGER_4
                 ),
             },
             name(TERADATA_TYPE_DECIMAL, "18"): {
@@ -576,7 +576,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DECIMAL, "18"), GLUENT_TYPE_INTEGER_8
+                    name(TERADATA_TYPE_DECIMAL, "18"), GOE_TYPE_INTEGER_8
                 ),
             },
             name(TERADATA_TYPE_DECIMAL, "19"): {
@@ -588,7 +588,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_DECIMAL, "19"),
-                    GLUENT_TYPE_INTEGER_38,
+                    GOE_TYPE_INTEGER_38,
                     data_precision=19,
                 ),
             },
@@ -601,7 +601,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_DECIMAL, str(max_decimal_integral_magnitude)),
-                    GLUENT_TYPE_INTEGER_38,
+                    GOE_TYPE_INTEGER_38,
                 ),
             },
             name(TERADATA_TYPE_DECIMAL, str(max_precision), str(generic_scale)): {
@@ -613,15 +613,15 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_DECIMAL, str(max_precision), str(generic_scale)),
-                    GLUENT_TYPE_DECIMAL,
+                    GOE_TYPE_DECIMAL,
                     data_precision=max_precision,
                     data_scale=generic_scale,
                 ),
             },
-            name(TERADATA_TYPE_DECIMAL, "9", "2", GLUENT_TYPE_DECIMAL, "10", "3"): {
+            name(TERADATA_TYPE_DECIMAL, "9", "2", GOE_TYPE_DECIMAL, "10", "3"): {
                 "column": TeradataColumn(
                     name(
-                        TERADATA_TYPE_DECIMAL, "9", "2", GLUENT_TYPE_DECIMAL, "10", "3"
+                        TERADATA_TYPE_DECIMAL, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
                     ),
                     TERADATA_TYPE_DECIMAL,
                     data_precision=9,
@@ -629,9 +629,9 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(
-                        TERADATA_TYPE_DECIMAL, "9", "2", GLUENT_TYPE_DECIMAL, "10", "3"
+                        TERADATA_TYPE_DECIMAL, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
                     ),
-                    GLUENT_TYPE_DECIMAL,
+                    GOE_TYPE_DECIMAL,
                     data_precision=10,
                     data_scale=3,
                 ),
@@ -641,7 +641,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                             TERADATA_TYPE_DECIMAL,
                             "9",
                             "2",
-                            GLUENT_TYPE_DECIMAL,
+                            GOE_TYPE_DECIMAL,
                             "10",
                             "3",
                         )
@@ -659,7 +659,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_DOUBLE), TERADATA_TYPE_DOUBLE
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_DOUBLE), GLUENT_TYPE_DOUBLE
+                    name(TERADATA_TYPE_DOUBLE), GOE_TYPE_DOUBLE
                 ),
             },
             name(TERADATA_TYPE_INTEGER): {
@@ -667,21 +667,21 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_INTEGER), TERADATA_TYPE_INTEGER
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_INTEGER), GLUENT_TYPE_INTEGER_4
+                    name(TERADATA_TYPE_INTEGER), GOE_TYPE_INTEGER_4
                 ),
             },
-            name(TERADATA_TYPE_INTEGER, GLUENT_TYPE_INTEGER_2): {
+            name(TERADATA_TYPE_INTEGER, GOE_TYPE_INTEGER_2): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_INTEGER, GLUENT_TYPE_INTEGER_2),
+                    name(TERADATA_TYPE_INTEGER, GOE_TYPE_INTEGER_2),
                     TERADATA_TYPE_INTEGER,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_INTEGER, GLUENT_TYPE_INTEGER_2),
-                    GLUENT_TYPE_INTEGER_2,
+                    name(TERADATA_TYPE_INTEGER, GOE_TYPE_INTEGER_2),
+                    GOE_TYPE_INTEGER_2,
                 ),
                 "offload_options": {
                     "integer_2_columns_csv": name(
-                        TERADATA_TYPE_INTEGER, GLUENT_TYPE_INTEGER_2
+                        TERADATA_TYPE_INTEGER, GOE_TYPE_INTEGER_2
                     )
                 },
                 "literals": [
@@ -698,7 +698,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=6,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_INTERVAL_DS), GLUENT_TYPE_INTERVAL_DS
+                    name(TERADATA_TYPE_INTERVAL_DS), GOE_TYPE_INTERVAL_DS
                 ),
             },
             name(TERADATA_TYPE_INTERVAL_YM): {
@@ -708,7 +708,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_precision=4,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_INTERVAL_YM), GLUENT_TYPE_INTERVAL_YM
+                    name(TERADATA_TYPE_INTERVAL_YM), GOE_TYPE_INTERVAL_YM
                 ),
             },
             name(TERADATA_TYPE_NUMBER): {
@@ -716,21 +716,21 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_NUMBER), TERADATA_TYPE_NUMBER
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER), GLUENT_TYPE_DECIMAL
+                    name(TERADATA_TYPE_NUMBER), GOE_TYPE_DECIMAL
                 ),
             },
-            name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_1): {
+            name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_1): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_1),
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_1),
                     TERADATA_TYPE_NUMBER,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_1),
-                    GLUENT_TYPE_INTEGER_1,
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_1),
+                    GOE_TYPE_INTEGER_1,
                 ),
                 "offload_options": {
                     "integer_1_columns_csv": name(
-                        TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_1
+                        TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_1
                     )
                 },
                 "literals": [
@@ -739,18 +739,18 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(2),
                 ],
             },
-            name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_2): {
+            name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_2): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_2),
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_2),
                     TERADATA_TYPE_NUMBER,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_2),
-                    GLUENT_TYPE_INTEGER_2,
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_2),
+                    GOE_TYPE_INTEGER_2,
                 ),
                 "offload_options": {
                     "integer_2_columns_csv": name(
-                        TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_2
+                        TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_2
                     )
                 },
                 "literals": [
@@ -759,18 +759,18 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(4),
                 ],
             },
-            name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_4): {
+            name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_4): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_4),
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_4),
                     TERADATA_TYPE_NUMBER,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_4),
-                    GLUENT_TYPE_INTEGER_4,
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_4),
+                    GOE_TYPE_INTEGER_4,
                 ),
                 "offload_options": {
                     "integer_4_columns_csv": name(
-                        TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_4
+                        TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_4
                     )
                 },
                 "literals": [
@@ -779,18 +779,18 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(9),
                 ],
             },
-            name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_8): {
+            name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_8): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_8),
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_8),
                     TERADATA_TYPE_NUMBER,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_8),
-                    GLUENT_TYPE_INTEGER_8,
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_8),
+                    GOE_TYPE_INTEGER_8,
                 ),
                 "offload_options": {
                     "integer_8_columns_csv": name(
-                        TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_8
+                        TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_8
                     )
                 },
                 "literals": [
@@ -799,18 +799,18 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(18),
                 ],
             },
-            name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_38): {
+            name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_38): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_38),
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_38),
                     TERADATA_TYPE_NUMBER,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_38),
-                    GLUENT_TYPE_INTEGER_38,
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_38),
+                    GOE_TYPE_INTEGER_38,
                 ),
                 "offload_options": {
                     "integer_38_columns_csv": name(
-                        TERADATA_TYPE_NUMBER, GLUENT_TYPE_INTEGER_38
+                        TERADATA_TYPE_NUMBER, GOE_TYPE_INTEGER_38
                     )
                 },
                 # 'test' imposes a max precision of 35, I think due to shortcomings of cx-Oracle.
@@ -821,15 +821,15 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(35),
                 ],
             },
-            name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_DOUBLE): {
+            name(TERADATA_TYPE_NUMBER, GOE_TYPE_DOUBLE): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_DOUBLE), TERADATA_TYPE_NUMBER
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_DOUBLE), TERADATA_TYPE_NUMBER
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_DOUBLE), GLUENT_TYPE_DOUBLE
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_DOUBLE), GOE_TYPE_DOUBLE
                 ),
                 "offload_options": {
-                    "double_columns_csv": name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_DOUBLE)
+                    "double_columns_csv": name(TERADATA_TYPE_NUMBER, GOE_TYPE_DOUBLE)
                 },
                 "literals": [1.5, 2.5, 3.5],
             },
@@ -841,7 +841,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, "2"), GLUENT_TYPE_INTEGER_1
+                    name(TERADATA_TYPE_NUMBER, "2"), GOE_TYPE_INTEGER_1
                 ),
             },
             name(TERADATA_TYPE_NUMBER, "4"): {
@@ -852,7 +852,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, "4"), GLUENT_TYPE_INTEGER_2
+                    name(TERADATA_TYPE_NUMBER, "4"), GOE_TYPE_INTEGER_2
                 ),
             },
             name(TERADATA_TYPE_NUMBER, "9"): {
@@ -863,7 +863,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, "9"), GLUENT_TYPE_INTEGER_4
+                    name(TERADATA_TYPE_NUMBER, "9"), GOE_TYPE_INTEGER_4
                 ),
             },
             name(TERADATA_TYPE_NUMBER, "18"): {
@@ -874,7 +874,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, "18"), GLUENT_TYPE_INTEGER_8
+                    name(TERADATA_TYPE_NUMBER, "18"), GOE_TYPE_INTEGER_8
                 ),
             },
             name(TERADATA_TYPE_NUMBER, "19"): {
@@ -886,7 +886,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_NUMBER, "19"),
-                    GLUENT_TYPE_INTEGER_38,
+                    GOE_TYPE_INTEGER_38,
                     data_precision=19,
                 ),
             },
@@ -899,7 +899,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_NUMBER, str(max_decimal_integral_magnitude)),
-                    GLUENT_TYPE_INTEGER_38,
+                    GOE_TYPE_INTEGER_38,
                 ),
             },
             name(TERADATA_TYPE_NUMBER, str(max_precision), str(generic_scale)): {
@@ -911,25 +911,25 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_NUMBER, str(max_precision), str(generic_scale)),
-                    GLUENT_TYPE_DECIMAL,
+                    GOE_TYPE_DECIMAL,
                     data_precision=max_precision,
                     data_scale=generic_scale,
                 ),
             },
-            name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_DECIMAL, "10", "3"): {
+            name(TERADATA_TYPE_NUMBER, GOE_TYPE_DECIMAL, "10", "3"): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_DECIMAL, "10", "3"),
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_DECIMAL, "10", "3"),
                     TERADATA_TYPE_NUMBER,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_DECIMAL, "10", "3"),
-                    GLUENT_TYPE_DECIMAL,
+                    name(TERADATA_TYPE_NUMBER, GOE_TYPE_DECIMAL, "10", "3"),
+                    GOE_TYPE_DECIMAL,
                     data_precision=10,
                     data_scale=3,
                 ),
                 "offload_options": {
                     "decimal_columns_csv_list": [
-                        name(TERADATA_TYPE_NUMBER, GLUENT_TYPE_DECIMAL, "10", "3")
+                        name(TERADATA_TYPE_NUMBER, GOE_TYPE_DECIMAL, "10", "3")
                     ],
                     "decimal_columns_type_list": ["10,3"],
                 },
@@ -939,10 +939,10 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     TestDecimal.max(10, 3),
                 ],
             },
-            name(TERADATA_TYPE_NUMBER, "9", "2", GLUENT_TYPE_DECIMAL, "10", "3"): {
+            name(TERADATA_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"): {
                 "column": TeradataColumn(
                     name(
-                        TERADATA_TYPE_NUMBER, "9", "2", GLUENT_TYPE_DECIMAL, "10", "3"
+                        TERADATA_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
                     ),
                     TERADATA_TYPE_NUMBER,
                     data_precision=9,
@@ -950,9 +950,9 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(
-                        TERADATA_TYPE_NUMBER, "9", "2", GLUENT_TYPE_DECIMAL, "10", "3"
+                        TERADATA_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
                     ),
-                    GLUENT_TYPE_DECIMAL,
+                    GOE_TYPE_DECIMAL,
                     data_precision=10,
                     data_scale=3,
                 ),
@@ -962,7 +962,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                             TERADATA_TYPE_NUMBER,
                             "9",
                             "2",
-                            GLUENT_TYPE_DECIMAL,
+                            GOE_TYPE_DECIMAL,
                             "10",
                             "3",
                         )
@@ -980,21 +980,21 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_SMALLINT), TERADATA_TYPE_SMALLINT
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_SMALLINT), GLUENT_TYPE_INTEGER_4
+                    name(TERADATA_TYPE_SMALLINT), GOE_TYPE_INTEGER_4
                 ),
             },
-            name(TERADATA_TYPE_SMALLINT, GLUENT_TYPE_INTEGER_4): {
+            name(TERADATA_TYPE_SMALLINT, GOE_TYPE_INTEGER_4): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_SMALLINT, GLUENT_TYPE_INTEGER_4),
+                    name(TERADATA_TYPE_SMALLINT, GOE_TYPE_INTEGER_4),
                     TERADATA_TYPE_SMALLINT,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_SMALLINT, GLUENT_TYPE_INTEGER_4),
-                    GLUENT_TYPE_INTEGER_4,
+                    name(TERADATA_TYPE_SMALLINT, GOE_TYPE_INTEGER_4),
+                    GOE_TYPE_INTEGER_4,
                 ),
                 "offload_options": {
                     "integer_4_columns_csv": name(
-                        TERADATA_TYPE_SMALLINT, GLUENT_TYPE_INTEGER_4
+                        TERADATA_TYPE_SMALLINT, GOE_TYPE_INTEGER_4
                     )
                 },
                 "literals": [
@@ -1006,7 +1006,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             name(TERADATA_TYPE_TIME): {
                 "column": TeradataColumn(name(TERADATA_TYPE_TIME), TERADATA_TYPE_TIME),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_TIME), GLUENT_TYPE_TIME
+                    name(TERADATA_TYPE_TIME), GOE_TYPE_TIME
                 ),
             },
             name(TERADATA_TYPE_TIMESTAMP): {
@@ -1014,19 +1014,19 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_TIMESTAMP), TERADATA_TYPE_TIMESTAMP
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_TIMESTAMP), GLUENT_TYPE_TIMESTAMP
+                    name(TERADATA_TYPE_TIMESTAMP), GOE_TYPE_TIMESTAMP
                 ),
             },
-            name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_DATE): {
+            name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_DATE): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_DATE),
+                    name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_DATE),
                     TERADATA_TYPE_TIMESTAMP,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_DATE), GLUENT_TYPE_DATE
+                    name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_DATE), GOE_TYPE_DATE
                 ),
                 "offload_options": {
-                    "date_columns_csv": name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_DATE)
+                    "date_columns_csv": name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_DATE)
                 },
                 # Including 1970-01-01 because Python datetime64 understands this as False due to being Unix epoch.
                 "literals": [
@@ -1036,33 +1036,33 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     datetime.datetime(1971, 2, 2),
                 ],
             },
-            name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ): {
+            name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ),
+                    name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ),
                     TERADATA_TYPE_TIMESTAMP,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ),
-                    GLUENT_TYPE_TIMESTAMP_TZ,
+                    name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ),
+                    GOE_TYPE_TIMESTAMP_TZ,
                 ),
                 "offload_options": {
                     "timestamp_tz_columns_csv": name(
-                        TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ
+                        TERADATA_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ
                     )
                 },
             },
-            name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_VARIABLE_STRING): {
+            name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_VARIABLE_STRING): {
                 "column": TeradataColumn(
-                    name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_VARIABLE_STRING),
+                    name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_VARIABLE_STRING),
                     TERADATA_TYPE_TIMESTAMP,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_VARIABLE_STRING),
-                    GLUENT_TYPE_VARIABLE_STRING,
+                    name(TERADATA_TYPE_TIMESTAMP, GOE_TYPE_VARIABLE_STRING),
+                    GOE_TYPE_VARIABLE_STRING,
                 ),
                 "offload_options": {
                     "variable_string_columns_csv": name(
-                        TERADATA_TYPE_TIMESTAMP, GLUENT_TYPE_VARIABLE_STRING
+                        TERADATA_TYPE_TIMESTAMP, GOE_TYPE_VARIABLE_STRING
                     )
                 },
             },
@@ -1071,7 +1071,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_TIMESTAMP_TZ), TERADATA_TYPE_TIMESTAMP_TZ
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_TIMESTAMP_TZ), GLUENT_TYPE_TIMESTAMP_TZ
+                    name(TERADATA_TYPE_TIMESTAMP_TZ), GOE_TYPE_TIMESTAMP_TZ
                 ),
             },
             name(TERADATA_TYPE_VARBYTE): {
@@ -1079,7 +1079,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_VARBYTE), TERADATA_TYPE_VARBYTE, data_length=30
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_VARBYTE), GLUENT_TYPE_BINARY
+                    name(TERADATA_TYPE_VARBYTE), GOE_TYPE_BINARY
                 ),
             },
             name(TERADATA_TYPE_VARCHAR): {
@@ -1087,7 +1087,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_VARCHAR), TERADATA_TYPE_VARCHAR, data_length=30
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(TERADATA_TYPE_VARCHAR), GLUENT_TYPE_VARIABLE_STRING
+                    name(TERADATA_TYPE_VARCHAR), GOE_TYPE_VARIABLE_STRING
                 ),
                 "ascii_only": ascii_only,
                 "notnull": all_chars_notnull,
@@ -1100,7 +1100,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(TERADATA_TYPE_VARCHAR, UNICODE_NAME_TOKEN),
-                    GLUENT_TYPE_VARIABLE_STRING,
+                    GOE_TYPE_VARIABLE_STRING,
                 ),
                 "offload_options": {
                     "unicode_string_columns_csv": name(
@@ -1116,7 +1116,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
         else:
             return all_columns
 
-    def _gl_types_column_definitions(
+    def _goe_types_column_definitions(
         self,
         ascii_only=False,
         all_chars_notnull=False,
@@ -1217,7 +1217,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
 
         return column_list
 
-    def _gl_wide_column_definitions(
+    def _goe_wide_column_definitions(
         self,
         ascii_only=False,
         all_chars_notnull=False,
@@ -1254,7 +1254,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
         )
 
         extra_column_count = (
-            gl_wide_max_columns(self, backend_max_test_column_count) - 20
+            goe_wide_max_columns(self, backend_max_test_column_count) - 20
         )
 
         extra_cols = [
@@ -1519,7 +1519,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
         row = self.execute_query_fetch_one(sql)
         return row[0] if row else None
 
-    def gl_type_mapping_generated_table_col_specs(
+    def goe_type_mapping_generated_table_col_specs(
         self,
         max_backend_precision,
         max_backend_scale,
@@ -1529,7 +1529,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
     ):
         """This is not required for non-Oracle builds"""
         raise NotImplementedError(
-            "Teradata gl_type_mapping_generated_table_col_specs() not yet implemented"
+            "Teradata goe_type_mapping_generated_table_col_specs() not yet implemented"
         )
 
     def host_compare_sql_projection(self, column_list: list) -> str:

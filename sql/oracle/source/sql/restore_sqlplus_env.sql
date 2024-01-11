@@ -2,6 +2,6 @@
 --
 -- LICENSE_TEXT
 --
-start /tmp/_gl_curr_env.tmp
+start /tmp/_goe_curr_env.tmp
 whenever oserror continue
-host /bin/rm /tmp/_gl_curr_env.tmp
+host /bin/rm /tmp/_goe_curr_env.tmp

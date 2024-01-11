@@ -15,7 +15,7 @@ from numpy import datetime64
 
 from goe.offload.column_metadata import ColumnMetadataInterface, ColumnPartitionInfo, \
     get_column_names, get_partition_columns, match_table_column, valid_column_list,\
-    GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38
+    GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4, GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_constants import INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
@@ -53,7 +53,7 @@ HYBRID_DEPENDENT_HYBRID_VIEWS = ['HYBRID_VIEW', 'JOIN_VIEW', 'AAPD_VIEW']
  HYBRID_OBJECTS_HYBRID_OWNER,
  HYBRID_OBJECTS_HYBRID_NAME,
  HYBRID_OBJECTS_HYBRID_RDBMS_TYPE,
- HYBRID_OBJECTS_HYBRID_GLUENT_TYPE,
+ HYBRID_OBJECTS_HYBRID_GOE_TYPE,
  HYBRID_OBJECTS_HYBRID_GROUP_OWNER,
  HYBRID_OBJECTS_HYBRID_GROUP_NAME,
  HYBRID_OBJECTS_HYBRID_GROUP_TYPE) = list(range(12))
@@ -72,7 +72,7 @@ logger.addHandler(logging.NullHandler())
 ###########################################################################
 
 def convert_high_values_to_python(partition_columns, hvs_individual, partition_type, source_table, strict=True):
-    """ Wrapper for OffloadSourceTable.decode_partition_high_values_with_literals allowing calls from gluent.py
+    """ Wrapper for OffloadSourceTable.decode_partition_high_values_with_literals allowing calls from goe.py
         based on offload metadata rather than an OffloadSourceTable object
     """
     assert isinstance(source_table, OffloadSourceTableInterface),\
@@ -217,15 +217,15 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
         if data_scale == 0:
             # Integral numbers
             if 1 <= (data_precision or 0) <= 2:
-                return GLUENT_TYPE_INTEGER_1
+                return GOE_TYPE_INTEGER_1
             elif 3 <= (data_precision or 0) <= 4:
-                return GLUENT_TYPE_INTEGER_2
+                return GOE_TYPE_INTEGER_2
             elif 5 <= (data_precision or 0) <= 9:
-                return GLUENT_TYPE_INTEGER_4
+                return GOE_TYPE_INTEGER_4
             elif 10 <= (data_precision or 0) <= 18:
-                return GLUENT_TYPE_INTEGER_8
+                return GOE_TYPE_INTEGER_8
             elif 19 <= (data_precision or 0) <= 38:
-                return GLUENT_TYPE_INTEGER_38
+                return GOE_TYPE_INTEGER_38
         return None
 
     def _get_column_details(self):
@@ -584,18 +584,18 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
                 backend_max_decimal_scale: The most digits to the right of the decimal place that the backend can handle
             This code will generate a sampling SQL something along the lines of:
                 SELECT COUNT(*)
-                ,      MAX(CASE WHEN "GLUENT_SAMP_COL_0" = 0 THEN LENGTH("PROD_ID") ELSE "GLUENT_SAMP_COL_0"-1 END)
-                ,      MAX(CASE WHEN "GLUENT_SAMP_COL_0" = 0 THEN 0 ELSE LENGTH("PROD_ID")-"GLUENT_SAMP_COL_0" END)
+                ,      MAX(CASE WHEN "GOE_SAMP_COL_0" = 0 THEN LENGTH("PROD_ID") ELSE "GOE_SAMP_COL_0"-1 END)
+                ,      MAX(CASE WHEN "GOE_SAMP_COL_0" = 0 THEN 0 ELSE LENGTH("PROD_ID")-"GOE_SAMP_COL_0" END)
                 ,      MAX(CASE WHEN INSTR("PROD_ID",'E') > 0 THEN 1 ELSE NULL END)
-                ,      MAX(CASE WHEN "GLUENT_SAMP_COL_1" = 0 THEN LENGTH("CUST_ID") ELSE "GLUENT_SAMP_COL_1"-1 END)
-                ,      MAX(CASE WHEN "GLUENT_SAMP_COL_1" = 0 THEN 0 ELSE LENGTH("CUST_ID")-"GLUENT_SAMP_COL_1" END)
+                ,      MAX(CASE WHEN "GOE_SAMP_COL_1" = 0 THEN LENGTH("CUST_ID") ELSE "GOE_SAMP_COL_1"-1 END)
+                ,      MAX(CASE WHEN "GOE_SAMP_COL_1" = 0 THEN 0 ELSE LENGTH("CUST_ID")-"GOE_SAMP_COL_1" END)
                 ,      MAX(CASE WHEN INSTR("CUST_ID",'E') > 0 THEN 1 ELSE NULL END)
                 FROM   (
                     SELECT /*+ NO_MERGE */
                            "PROD_ID"
-                    ,      INSTR("PROD_ID",'.') AS "GLUENT_SAMP_COL_0"
+                    ,      INSTR("PROD_ID",'.') AS "GOE_SAMP_COL_0"
                     ,      "CUST_ID"
-                    ,      INSTR("CUST_ID",'.') AS "GLUENT_SAMP_COL_1"
+                    ,      INSTR("CUST_ID",'.') AS "GOE_SAMP_COL_1"
                     FROM   (
                         SELECT /*+ NO_PARALLEL */
                                TO_CHAR(ABS("PROD_ID"),'TM') AS "PROD_ID"
@@ -604,8 +604,8 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
                     )
                 )
             Each numeric column sampled will produce 3 columns:
-                MAX(CASE WHEN "GLUENT_SAMP_COL_0" = 0 THEN LENGTH("PROD_ID") ELSE "GLUENT_SAMP_COL_0"-1 END)
-                MAX(CASE WHEN "GLUENT_SAMP_COL_0" = 0 THEN 0 ELSE LENGTH("PROD_ID")-"GLUENT_SAMP_COL_0" END)
+                MAX(CASE WHEN "GOE_SAMP_COL_0" = 0 THEN LENGTH("PROD_ID") ELSE "GOE_SAMP_COL_0"-1 END)
+                MAX(CASE WHEN "GOE_SAMP_COL_0" = 0 THEN 0 ELSE LENGTH("PROD_ID")-"GOE_SAMP_COL_0" END)
                 MAX(CASE WHEN INSTR("PROD_ID",'E') > 0 THEN 1 ELSE NULL END)
             These are:
                 Integral magnitude
@@ -642,7 +642,7 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
             """ Format and run an RDBMS data type sampling query.
                 Also attempts to get representative values from RDBMS optimizer statistics to avoid sampling.
                 columns_affected_by_sampling: This list is appended to during the method call.
-                Fortunately for Gluent so far a very similar SQL format works on both Oracle and Teradata. We will need
+                Fortunately for GOE so far a very similar SQL format works on both Oracle and Teradata. We will need
                 to tease this apart when we choose to implement a 3rd frontend (AKA kicking the can down the road).
             """
             assert isinstance(columns_affected_by_sampling, list)
@@ -650,7 +650,7 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
             cols_abs, cols_with_instr = [], []
             abort = False
             for i, col in enumerate(columns_to_sample):
-                subs = {'col': col.name.upper(), 'col_alias': 'GLUENT_SAMP_COL_%s' % i}
+                subs = {'col': col.name.upper(), 'col_alias': 'GOE_SAMP_COL_%s' % i}
                 if col.is_date_based():
                     min_value = None
                     if self._db_api.low_high_value_from_stats_supported():
@@ -810,7 +810,7 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
     @staticmethod
     @abstractmethod
     def supported_data_types() -> set:
-        """ Returns a set of column data types supported by GDP on the frontend system """
+        """ Returns a set of column data types supported by GOE on the frontend system """
 
     def check_data_types_supported(self, backend_max_datetime_scale, backend_nan_supported,
                                    allow_nanosecond_timestamp_columns=None, allow_floating_point_conversions=None):
@@ -937,7 +937,7 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
 
     def to_canonical_column_with_overrides(self, rdbms_column, canonical_overrides=None, auto_detect_num=True,
                                            auto_detect_dates=True):
-        """ Translate an RDBMS column to an internal Gluent column but only after considering user overrides.
+        """ Translate an RDBMS column to an internal GOE column but only after considering user overrides.
             canonical_overrides: Brings user defined overrides into play, they take precedence over default rules.
             auto_detect_num: Can be set to false to ignore default rules and go for a default data type.
             auto_detect_dates: Can be set to false to ignore default rules and go for a default data type.
@@ -971,11 +971,11 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def to_canonical_column(self, column):
-        """ Translate an RDBMS column to an internal Gluent column """
+        """ Translate an RDBMS column to an internal GOE column """
 
     @abstractmethod
     def from_canonical_column(self, column):
-        """ Translate an internal Gluent column to an RDBMS column """
+        """ Translate an internal GOE column to an RDBMS column """
 
     @abstractmethod
     def gen_column(self, name, data_type, data_length=None, data_precision=None, data_scale=None, nullable=None,
@@ -995,14 +995,14 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
         """ Offload has a number of options for overriding the default canonical mapping in to_canonical_column().
             This method validates the override.
             column: the source RDBMS column object.
-            canonical_override: either a canonical column object or a GLUENT_TYPE_... data type.
+            canonical_override: either a canonical column object or a GOE_TYPE_... data type.
         """
 
-    def gluent_join_pushdown_supported(self):
-        return self._db_api.gluent_join_pushdown_supported()
+    def goe_join_pushdown_supported(self):
+        return self._db_api.goe_join_pushdown_supported()
 
-    def gluent_offload_status_report_supported(self):
-        return self._db_api.gluent_offload_status_report_supported()
+    def goe_offload_status_report_supported(self):
+        return self._db_api.goe_offload_status_report_supported()
 
     def hybrid_schema_supported(self):
         return self._db_api.hybrid_schema_supported()

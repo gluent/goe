@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" Test results parser for Gluent tests
+""" Test results parser for GOE tests
 
     LICENSE_TEXT
 """
@@ -47,7 +47,7 @@ logger.addHandler(logging.NullHandler())  # Disabling logging by default
 
 
 class TestResults(object):
-    """TestResults: Gluent test result aggregator and parser"""
+    """TestResults: GOE test result aggregator and parser"""
 
     def __init__(self, root_cause_file, db_type=None):
         """CONSTRUCTOR

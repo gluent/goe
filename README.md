@@ -1,5 +1,5 @@
 # goe
-Gluent Offload Engine
+GOE
 
 # Prepare the host/cloned repo
 Simple steps to get a working Python
@@ -36,7 +36,7 @@ sed -i "s/OFFLOAD_TRANSPORT_USER=.*/OFFLOAD_TRANSPORT_USER=$USER/" ${OFFLOAD_HOM
 sed -i 's/OFFLOAD_TRANSPORT_CMD_HOST=.*/OFFLOAD_TRANSPORT_CMD_HOST=localhost/' ${OFFLOAD_HOME}/conf/offload.env
 sed -i "s/DB_NAME_PREFIX=.*/DB_NAME_PREFIX=$USER/" ${OFFLOAD_HOME}/conf/offload.env
 sed -i "s/OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=.*/OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=/" ${OFFLOAD_HOME}/conf/offload.env
-sed -i "s/^export OFFLOAD_TRANSPORT_SPARK_PROPERTIES=.*/export OFFLOAD_TRANSPORT_SPARK_PROPERTIES='{\"spark.extraListeners\": \"GluentTaskListener\", \"spark.jars.packages\": \"com.oracle.database.jdbc:ojdbc6:11.2.0.4,org.apache.spark:spark-avro_2.12:3.3.0\"}'/" ${OFFLOAD_HOME}/conf/offload.env
+sed -i "s/^export OFFLOAD_TRANSPORT_SPARK_PROPERTIES=.*/export OFFLOAD_TRANSPORT_SPARK_PROPERTIES='{\"spark.extraListeners\": \"GOETaskListener\", \"spark.jars.packages\": \"com.oracle.database.jdbc:ojdbc6:11.2.0.4,org.apache.spark:spark-avro_2.12:3.3.0\"}'/" ${OFFLOAD_HOME}/conf/offload.env
 vi ${OFFLOAD_HOME}/conf/offload.env
 ```
 
@@ -56,8 +56,8 @@ Install database objects:
 cd ${OFFLOAD_HOME}/setup
 sqlplus sys@${ORA_CONN} as sysdba
 @install_offload
-alter user gluent_adm identified by ...;
-alter user gluent_app identified by ...;
+alter user goe_adm identified by ...;
+alter user goe_app identified by ...;
 ```
 
 # Package

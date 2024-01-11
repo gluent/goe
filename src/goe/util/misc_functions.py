@@ -96,8 +96,8 @@ def chunk_list(lst, chunk_size):
         yield lst[i : i + chunk_size]
 
 
-def set_gluentlib_logging(log_level, extra_loggers=None):
-    """Set "global" logging parameters and exclude all non-gluentlib loggers"""
+def set_goelib_logging(log_level, extra_loggers=None):
+    """Set "global" logging parameters and exclude all non-goelib loggers"""
     if not extra_loggers:
         extra_loggers = []
 
@@ -106,7 +106,7 @@ def set_gluentlib_logging(log_level, extra_loggers=None):
         if (
             logger_name != "__main__"
             and logger_name not in extra_loggers
-            and not logger_name.startswith("gluentlib")
+            and not logger_name.startswith("goelib")
         ):
             logging.getLogger(logger_name).level = logging.CRITICAL
 
@@ -646,12 +646,12 @@ def human_size_to_bytes(size, binary_sizes=True):
 
 # not used tempfile.mkstemp for get_temp_path/write_temp_file as sometimes
 # want to generate a file name to use remotely or fully control the random section
-def get_temp_path(tmp_dir="/tmp", prefix="gl_tmp_", suffix=""):
+def get_temp_path(tmp_dir="/tmp", prefix="goe_tmp_", suffix=""):
     suffix_str = (".%s" % suffix.lstrip(".")) if suffix else ""
     return "%s/%s%s%s" % (tmp_dir, prefix, str(uuid.uuid4()), suffix_str)
 
 
-def write_temp_file(data, prefix="gl_tmp_", suffix=""):
+def write_temp_file(data, prefix="goe_tmp_", suffix=""):
     """writes some data to a temporary file and returns the path to the file"""
     tmp_path = get_temp_path(prefix=prefix, suffix=suffix)
     fh = open(tmp_path, "w")

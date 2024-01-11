@@ -1,8 +1,8 @@
 #! /bin/bash
 
-# Clean Gluent environment variables set by offload.env
+# Clean GOE environment variables set by offload.env
 #
-# Usage: . clean_gluent_env [<env file>]
+# Usage: . clean_goe_env [<env file>]
 #
 # LICENSE_TEXT
 
@@ -17,8 +17,8 @@ function clean_var() {
 }
 
 offload_env_file=$1
-[[ -z "${offload_env_file}" ]] && offload_env_file="${OFFLOAD_CONF}/offload.env"
-[[ "/" == "${offload_env_file}" || ! -f "${offload_env_file}" ]] && echo "Unable to locate offload.env file. Run as: clean_gluent_env <path to offload.env>" && exit
+[[ -z "${offload_env_file}" ]] && offload_env_file="${OFFLOAD_CONFDIR}/offload.env"
+[[ "/" == "${offload_env_file}" || ! -f "${offload_env_file}" ]] && echo "Unable to locate offload.env file. Run as: clean_goe_env <path to offload.env>" && exit
 template_files=$(dirname ${offload_env_file})/*$(basename ${offload_env_file}).template
 echo -e "Reading variable names from files: ${offload_env_file} ${template_files}\n"
 

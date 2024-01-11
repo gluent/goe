@@ -187,7 +187,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         ],
     )
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         # Offload with partition functions when not supported.
         options = {
             "owner_table": schema + "." + DIM_NUM,
@@ -203,7 +203,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         )
 
         messages.log(
-            f"Skipping most of {id} due to gluent_partition_functions_supported() == False"
+            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
         )
         return
 
@@ -308,9 +308,9 @@ def test_offload_part_fn_num(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         messages.log(
-            f"Skipping most of {id} due to gluent_partition_functions_supported() == False"
+            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
         )
         return
 
@@ -399,9 +399,9 @@ def test_offload_part_fn_dec(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         messages.log(
-            f"Skipping most of {id} due to gluent_partition_functions_supported() == False"
+            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
         )
         return
 
@@ -489,9 +489,9 @@ def test_offload_part_fn_str(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         messages.log(
-            f"Skipping most of {id} due to gluent_partition_functions_supported() == False"
+            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
         )
         return
 

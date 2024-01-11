@@ -1,4 +1,4 @@
-""" TestGluentDfs: Unit test library to test API for all supported backend filesystems.
+""" TestGOEDfs: Unit test library to test API for all supported backend filesystems.
     This focuses on API calls that do not need to connect to the system.
     Because there is no connection we can fake any backend and test basic functionality.
 """
@@ -6,14 +6,14 @@ import logging
 import os
 from unittest import main
 
-from goe.filesystem.gluent_dfs import (
-    GluentDfsException,
+from goe.filesystem.goe_dfs import (
+    GOEDfsException,
     DFS_TYPE_DIRECTORY,
     DFS_TYPE_FILE,
 )
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 
-from tests.unit.filesystem.test_gluent_dfs import TestGluentDfs
+from tests.unit.filesystem.test_goe_dfs import TestGOEDfs
 from tests.integration.test_functions import (
     build_current_options,
 )
@@ -36,7 +36,7 @@ logger.addHandler(logging.NullHandler())
 ###############################################################################
 
 
-class TestCurrentDfs(TestGluentDfs):
+class TestCurrentDfs(TestGOEDfs):
     def __init__(self, *args, **kwargs):
         super(TestCurrentDfs, self).__init__(*args, **kwargs)
         self.api = None
@@ -64,7 +64,7 @@ class TestCurrentDfs(TestGluentDfs):
 ###############################################################################
 
 
-class TestCurrentDfsExecuteMode(TestGluentDfs):
+class TestCurrentDfsExecuteMode(TestGOEDfs):
     """This class actually copies files around to prove the API does exactly as it is supposed to
     The API will be used to create a specific structure and then interrogate it ensuring inputs and
     outputs are as expected.
@@ -193,7 +193,7 @@ class TestCurrentDfsExecuteMode(TestGluentDfs):
         stat = self.api.stat(self._remote_path(self._file1))
         self.assertEqual(stat["type"], DFS_TYPE_FILE)
         # File exists and therefore should fail
-        with self.assertRaises(GluentDfsException):
+        with self.assertRaises(GOEDfsException):
             self.api.copy_from_local(
                 self._local_path(self._file1),
                 self._remote_path(self._file1),
@@ -216,7 +216,7 @@ class TestCurrentDfsExecuteMode(TestGluentDfs):
             overwrite=False,
         )
         # File exists and therefore should fail
-        with self.assertRaises(GluentDfsException):
+        with self.assertRaises(GOEDfsException):
             self.api.write(
                 self._remote_path(self._file2),
                 self._test_files[self._file2]["content"],
@@ -257,7 +257,7 @@ class TestCurrentDfsExecuteMode(TestGluentDfs):
         self._check_dir_has_x_entries(self._remote_path(), 3)
 
         # Test copy_to_local
-        with self.assertRaises(GluentDfsException):
+        with self.assertRaises(GOEDfsException):
             self.api.copy_to_local(
                 self._remote_path(self._file1),
                 self._local_path(self._file1),

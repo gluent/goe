@@ -182,7 +182,7 @@ class RandomDataCheck(object):
     ###############################################################################
 
     def _goe_tables(self):
-        """ Part SQL to identify proper GOE tables 
+        """ Part SQL to identify proper GOE tables
 
             This is used across all SQLs in this module, so saving it here
         """
@@ -205,13 +205,13 @@ class RandomDataCheck(object):
                 having count(1) = 2
             )
         """
-        
+
         return sql
 
 
     def _resolve_oracle_date(self, oracle_date):
         """ Run a query to resolve ORACLE date to Python date
-  
+
             Putting it here as I'm feeling lazy to write oracle-to-python data format parser
             Probably, super inefficient, but will see
         """
@@ -347,7 +347,7 @@ class RandomDataCheck(object):
                 raise RandomDataCheckException("This combination of min: %s, max: %s is NOT supported" % \
                     (min_value, max_value))
 
-            return sql, binds 
+            return sql, binds
 
 
         # _generate_validation_sql() begins here
@@ -377,11 +377,11 @@ class RandomDataCheck(object):
             part['VAL_SQL'] = forward_sql % (owner, table_name, where_condition, owner, table_name, where_condition)
             part['VAL_TYPE'] = SQL_TYPE_FORWARD
             yield part
-            
+
             part['VAL_SQL'] = reverse_sql % (owner, table_name, where_condition, owner, table_name, where_condition)
             part['VAL_TYPE'] = SQL_TYPE_REVERSE
             yield part
-            
+
 
     def _select_by_probability(self, partitions, probability):
         """ (randomly) Allow/deny partitions by user supplied 'probability'
@@ -407,7 +407,7 @@ class RandomDataCheck(object):
 
             part['VAL_RESULT'] = query_result[0]
             self._vrb.result(part)
-            yield part 
+            yield part
 
 
     ###############################################################################
@@ -448,7 +448,7 @@ if __name__ == "__main__":
     import os
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
     from goe.util.password_tools import PasswordTools
 
     def usage(cmd):
@@ -471,7 +471,7 @@ if __name__ == "__main__":
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level='CRITICAL'
 
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         db_user = os.environ['ORA_ADM_USER']
         db_passwd = os.environ['ORA_ADM_PASS']

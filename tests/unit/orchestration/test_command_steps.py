@@ -1,7 +1,7 @@
 """
 TestCommandSteps: Unit test constants in command_steps are sound.
     1) Within the module.
-    2) When compared to Gluent Repo data.
+    2) When compared to GOE Repo data.
 """
 from unittest import TestCase, main
 
@@ -16,10 +16,10 @@ KNOWN_MISSING_STEPS = [
     command_steps.STEP_BACKEND_CONFIG,
     command_steps.STEP_BACKEND_LOGS,
     command_steps.STEP_BACKEND_QUERY_LOGS,
-    command_steps.STEP_GDP_LOGS,
-    command_steps.STEP_GDP_PERMISSIONS,
-    command_steps.STEP_GDP_PROCESSES,
-    command_steps.STEP_GDP_TABLE_METADATA,
+    command_steps.STEP_GOE_LOGS,
+    command_steps.STEP_GOE_PERMISSIONS,
+    command_steps.STEP_GOE_PROCESSES,
+    command_steps.STEP_GOE_TABLE_METADATA,
     command_steps.STEP_NORMALIZE_INCLUDES,
     command_steps.STEP_OSR_DEMO_DATA,
     command_steps.STEP_OSR_FIND_TABLES,

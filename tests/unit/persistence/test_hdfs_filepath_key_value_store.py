@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" Test module for gluentlib.persistence.hdfs_filepath_key_value_store
+""" Test module for goelib.persistence.hdfs_filepath_key_value_store
 """
 
 import os

@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" A few simple primitives to integrate (gluent custom) test results with TeamCity:
+""" A few simple primitives to integrate (GOE custom) test results with TeamCity:
 
     https://confluence.jetbrains.com/display/TCDL/Build+Script+Interaction+with+TeamCity
 

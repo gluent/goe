@@ -334,7 +334,7 @@ class CrossDbValidator(OffloadMessagesMixin, object):
     def _get_frontend_table(self):
         if not self._frontend_table:
             # Connection we already have in self._frontend cannot be passed into OffloadSourceTable
-            # because one is GLUENT_APP and the other is GLUENT_ADM
+            # because one is GOE_APP and the other is GOE_ADM
             if self._offload_metadata:
                 self._frontend_table = OffloadSourceTable.create(
                     self._offload_metadata.offloaded_owner,

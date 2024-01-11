@@ -5,10 +5,10 @@ LICENSE_TEXT
 
 # Try not to import any modules in here, this module is widely imported and we've previously had subtle side effects
 
-PRODUCT_NAME_GOE = 'Gluent Offload Engine'
-PRODUCT_NAME_GEL = 'Gluent Enterprise Listener'
+PRODUCT_NAME_GOE = 'GOE'
+PRODUCT_NAME_GEL = 'GOE Listener'
 
-# Command type codes, matches up with data in GLUENT_REPO.COMMAND_TYPES table.
+# Command type codes, matches up with data in GOE_REPO.COMMAND_TYPES table.
 COMMAND_OFFLOAD = 'OFFLOAD'
 COMMAND_OFFLOAD_JOIN = 'OFFJOIN'
 COMMAND_PRESENT = 'PRESENT'
@@ -37,7 +37,7 @@ ALL_COMMAND_CODES = [
     COMMAND_TEST,
 ]
 
-# Command status codes, matches up with data in GLUENT_REPO.STATUS table.
+# Command status codes, matches up with data in GOE_REPO.STATUS table.
 COMMAND_SUCCESS = 'SUCCESS'
 COMMAND_ERROR = 'ERROR'
 COMMAND_EXECUTING = 'EXECUTING'

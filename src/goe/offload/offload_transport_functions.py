@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" OffloadTransportFunctions: Library of functions used in gluent.py and data transport modules
+""" OffloadTransportFunctions: Library of functions used in goe.py and data transport modules
     LICENSE_TEXT
 """
 
@@ -97,7 +97,7 @@ def scp_to_cmd(user, host, from_path, to_path):
     return ['scp', from_path, '%s@%s:%s' % (user, host, to_path)]
 
 
-def get_rdbms_connection_for_oracle(ora_user, ora_pass, ora_dsn, use_oracle_wallet=False, ora_trace_id='GLUENT'):
+def get_rdbms_connection_for_oracle(ora_user, ora_pass, ora_dsn, use_oracle_wallet=False, ora_trace_id='GOE'):
     if use_oracle_wallet:
         ora_conn = cxo.connect(dsn=ora_dsn)
     else:
@@ -220,7 +220,7 @@ def transport_and_load_offload_chunk(data_transport_client: "OffloadTransport",
                                      chunk_count: int = 0, sync: bool = True,
                                      offload_predicate: Optional["GenericPredicate"] = None,
                                      dry_run: bool = False):
-    """ Offload transport steps for a regular offload chunk, used in gluent.py.
+    """ Offload transport steps for a regular offload chunk, used in goe.py.
     """
 
     def get_frontend_bytes():

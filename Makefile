@@ -43,21 +43,21 @@ install-dev:
 target: python-goe spark-listener license-txt offload-env
 	@echo -e "=> \e[92m Building target: $(TARGET_DIR)...\e[0m"
 	mkdir -p $(TARGET_DIR)/bin
-	cp bin/{offload,connect,logmgr,display_gluent_env,clean_gluent_env,listener,agg_validate} $(TARGET_DIR)/bin
+	cp bin/{offload,connect,logmgr,display_goe_env,clean_goe_env,listener,agg_validate} $(TARGET_DIR)/bin
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/connect
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/offload
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/logmgr
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/display_gluent_env
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/clean_gluent_env
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/display_goe_env
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/clean_goe_env
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/listener
 	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/bin/agg_validate
 	mkdir -p $(TARGET_DIR)/tools
-	cp tools/gluent-shell-functions.sh $(TARGET_DIR)/tools
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/tools/gluent-shell-functions.sh
+	cp tools/goe-shell-functions.sh $(TARGET_DIR)/tools
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/tools/goe-shell-functions.sh
 	mkdir -p $(TARGET_DIR)/tools/listener
-	cp tools/gluent-listener{.sh,.service} $(TARGET_DIR)/tools/listener
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/tools/listener/gluent-listener.sh
-	chmod 0755 $(TARGET_DIR)/tools/listener/gluent-listener.sh
+	cp tools/goe-listener{.sh,.service} $(TARGET_DIR)/tools/listener
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/tools/listener/goe-listener.sh
+	chmod 0755 $(TARGET_DIR)/tools/listener/goe-listener.sh
 	chmod 0755 $(TARGET_DIR)/bin/listener
 	rm -rf $(TARGET_DIR)/setup/sql $(TARGET_DIR)/setup/python
 	mkdir -p $(TARGET_DIR)/cache
@@ -70,8 +70,8 @@ target: python-goe spark-listener license-txt offload-env
 	sed -i -e "s/VERSION/$(OFFLOAD_VERSION)/" -e "s/BUILD/$(BUILD)/" $(TARGET_DIR)/setup/sql/{install,upgrade}_env.sql
 	sed -i "s/'%s-SNAPSHOT'/'$(OFFLOAD_VERSION) ($(BUILD))'/" $(TARGET_DIR)/setup/sql/create_offload*_package_spec.sql
 	mkdir -p $(TARGET_DIR)/templates
-	cp -r templates/gl_base.html templates/offload_status_report $(TARGET_DIR)/templates/
-	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/templates/gl_base.html
+	cp -r templates/goe_base.html templates/offload_status_report $(TARGET_DIR)/templates/
+	sed -i "s/LICENSE_TEXT/$(LICENSE_TEXT)/" $(TARGET_DIR)/templates/goe_base.html
 	mkdir -p $(TARGET_DIR)/run $(TARGET_DIR)/log
 	chmod 775 $(TARGET_DIR)/run $(TARGET_DIR)/log
 	chmod 640 $(TARGET_DIR)/conf/*offload.env.template

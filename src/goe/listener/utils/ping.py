@@ -1,5 +1,5 @@
 """
-Simple utility to request status of Gluent Enterprise Listener.
+Simple utility to request status of GOE Listener.
 LICENSE_TEXT
 """
 
@@ -16,12 +16,12 @@ if TYPE_CHECKING:
 
 def ping(orchestration_config: "OrchestrationConfig") -> bool:
     """
-    Submit a status call to Gluent Enterprise Listener.
+    Submit a status call to GOE Listener.
     """
     url = f'http://{orchestration_config.listener_host}:{orchestration_config.listener_port}/api/system/status'
     headers = {"Content-Type": "application/json"}
     if orchestration_config.listener_shared_token:
-        headers.update({"x-gluent-console-key": orchestration_config.listener_shared_token})
+        headers.update({"x-goe-console-key": orchestration_config.listener_shared_token})
     r = requests.get(url, headers=headers)
     if r.ok:
         if r.json().get('status') == STATUS_OK:

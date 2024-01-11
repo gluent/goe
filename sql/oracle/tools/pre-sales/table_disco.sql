@@ -15,8 +15,6 @@
 --                   2) Number of days of ASH history to check. Defaults to 7
 --                   3) Whether to check ASH history or not. Defaults to ASH
 --
--- Author:         Gluent Inc.
---
 -- Copyright:      LICENSE_TEXT
 --
 --------------------------------------------------------------------------------
@@ -66,13 +64,13 @@ BEGIN
 END;
 /
 SET PAGESIZE 0
-COLUMN gl_data FORMAT a10000
-SELECT DBMS_METADATA.GET_DDL('TABLE', table_name, owner) AS gl_data
+COLUMN goe_data FORMAT a10000
+SELECT DBMS_METADATA.GET_DDL('TABLE', table_name, owner) AS goe_data
 FROM   dba_tables
 WHERE  owner = UPPER('&OWN.')
 AND    table_name = UPPER('&TAB.');
 
-SELECT DBMS_METADATA.GET_DDL('INDEX', index_name, owner) AS gl_data
+SELECT DBMS_METADATA.GET_DDL('INDEX', index_name, owner) AS goe_data
 FROM   dba_indexes
 WHERE  table_owner = UPPER('&OWN.')
 AND    table_name = UPPER('&TAB.');

@@ -45,19 +45,19 @@ class PasswordTools(object):
     # PRIVATE ROUTINES
     ###########################################################################
 
-    def _get_cipher_for_gluent_password(self, gluent_key):
+    def _get_cipher_for_goe_password(self, goe_key):
         """ Setup a cipher matching the one used by C++ pass_tool tool
-            gluent_key is the long key stored in the keyfile (PASSWORD_KEY_FILE)
+            goe_key is the long key stored in the keyfile (PASSWORD_KEY_FILE)
         """
-        assert gluent_key
+        assert goe_key
 
         if not self._cipher:
-            logger.debug("Setting up cipher for gluent key")
-            if len(gluent_key) != 96:
+            logger.debug("Setting up cipher for goe key")
+            if len(goe_key) != 96:
                 raise PasswordToolsException('Malformed encryption key')
 
-            key = bytes.fromhex(gluent_key[:64])
-            iv = bytes.fromhex(gluent_key[64:])
+            key = bytes.fromhex(goe_key[:64])
+            iv = bytes.fromhex(goe_key[64:])
 
             backend = default_backend()
             self._cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
@@ -117,34 +117,34 @@ class PasswordTools(object):
 
         try:
             with open(password_key_file, 'r') as fh:
-                gl_key = fh.read().strip('\r\n')
+                goe_key = fh.read().strip('\r\n')
         except IOError as exc:
             if 'No such file or directory' in str(exc):
                 if ignore_absent_keyfile:
-                    gl_key = None
+                    goe_key = None
                 else:
                     raise PasswordToolsException('Decryption string is not base64 encoded')
             else:
                 raise
 
-        if not gl_key:
+        if not goe_key:
             raise PasswordToolsException('No password key retrieved from key file: %s' % password_key_file)
-        return gl_key
+        return goe_key
 
-    def encrypt(self, clear_text, gluent_key=None):
+    def encrypt(self, clear_text, goe_key=None):
         """ Encrypt a string using same algorithm/mode as C++ pass_tool tool
         """
         assert clear_text
 
         logger.debug("Encrypting clear text string")
 
-        if gluent_key:
-            if isinstance(gluent_key, bytes):
-                gluent_key = gluent_key.decode()
+        if goe_key:
+            if isinstance(goe_key, bytes):
+                goe_key = goe_key.decode()
         else:
-            gluent_key = self.get_password_key_from_key_file()
+            goe_key = self.get_password_key_from_key_file()
 
-        cipher = self._get_cipher_for_gluent_password(gluent_key)
+        cipher = self._get_cipher_for_goe_password(goe_key)
 
         # CBC (Cipher Block Chaining) requires padding
         padder = padding.PKCS7(128).padder() # 128 bit
@@ -154,20 +154,20 @@ class PasswordTools(object):
         enc_text = encryptor.update(padded_text) + encryptor.finalize()
         return enc_text
 
-    def decrypt(self, enc_text, gluent_key=None):
+    def decrypt(self, enc_text, goe_key=None):
         """ Decrypt a string using same algorithm/mode as C++ pass_tool tool
         """
         assert enc_text
 
         logger.debug("Decrypting encrypted string")
 
-        if gluent_key:
-            if isinstance(gluent_key, bytes):
-                gluent_key = gluent_key.decode()
+        if goe_key:
+            if isinstance(goe_key, bytes):
+                goe_key = goe_key.decode()
         else:
-            gluent_key = self.get_password_key_from_key_file()
+            goe_key = self.get_password_key_from_key_file()
 
-        cipher = self._get_cipher_for_gluent_password(gluent_key)
+        cipher = self._get_cipher_for_goe_password(goe_key)
 
         decryptor = cipher.decryptor()
         padded_text = decryptor.update(enc_text) + decryptor.finalize()
@@ -177,7 +177,7 @@ class PasswordTools(object):
         clear_text = clear_bytes.decode()
         return clear_text
 
-    def b64decrypt(self, enc_text, gluent_key=None):
+    def b64decrypt(self, enc_text, goe_key=None):
         """ Base 64 decode a password before passing on for decryption
         """
         assert enc_text
@@ -188,7 +188,7 @@ class PasswordTools(object):
                 raise PasswordToolsException('Decryption string is not base64 encoded')
             else:
                 raise
-        return self.decrypt(decode_text, gluent_key=gluent_key)
+        return self.decrypt(decode_text, goe_key=goe_key)
 
     def get_private_key_from_pkcs8_pem_file(self, pem_file, passphrase=None):
         """ This code is based on Snowflake instructions for extracting a private key from a PEM file.
@@ -202,28 +202,28 @@ class PasswordTools(object):
 
 if __name__ == "__main__":
     import sys
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
     from base64 import b64encode
 
     log_level = sys.argv[-1:][0].upper()
     if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
         log_level='CRITICAL'
 
-    set_gluentlib_logging(log_level)
+    set_goelib_logging(log_level)
 
     pass_tool = PasswordTools()
 
     if os.environ.get('PASSWORD_KEY_FILE'):
-        gluent_key = None
+        goe_key = None
     else:
-        # any old string will do, this one came from pass_tool tool with passphrase "gluent"
-        gluent_key = 'E7264F9B4E92048857611F310470C7C305AF262EE09BEEBE28B46C219F9697398E3040E24C1B4FB38049678E0E77C0EC'
+        # any old string will do, this one came from pass_tool tool with passphrase "goe"
+        goe_key = 'E7264F9B4E92048857611F310470C7C305AF262EE09BEEBE28B46C219F9697398E3040E24C1B4FB38049678E0E77C0EC'
 
     clear_text_pwd = 'A Big Secret'
 
-    print('Gluent key:', gluent_key)
-    encrypted_pwd = pass_tool.encrypt(clear_text_pwd, gluent_key)
+    print('GOE key:', goe_key)
+    encrypted_pwd = pass_tool.encrypt(clear_text_pwd, goe_key)
     print('Encrypted b64:', b64encode(encrypted_pwd), [ord(c) for c in b64encode(encrypted_pwd)])
-    decrypted_pwd = pass_tool.decrypt(encrypted_pwd, gluent_key)
+    decrypted_pwd = pass_tool.decrypt(encrypted_pwd, goe_key)
     assert decrypted_pwd == clear_text_pwd
     print(decrypted_pwd, '==', clear_text_pwd)

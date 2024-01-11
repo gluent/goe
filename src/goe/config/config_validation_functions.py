@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" config_validation_functions: Library of functions used in gluent.py and OrchestrationConfig
+""" config_validation_functions: Library of functions used in goe.py and OrchestrationConfig
     LICENSE_TEXT
 """
 
@@ -16,7 +16,7 @@ from goe.data_governance.hadoop_data_governance import (
     is_valid_data_governance_tag,
     is_valid_data_governance_auto_property,
 )
-from goe.filesystem.gluent_dfs import (
+from goe.filesystem.goe_dfs import (
     AZURE_OFFLOAD_FS_SCHEMES,
     OFFLOAD_FS_SCHEME_MAPRFS,
     VALID_OFFLOAD_FS_SCHEMES,
@@ -85,7 +85,7 @@ def verify_json_option(option_name, option_value):
 
 ###########################################################################
 # NORMALISATION FUNCTIONS
-# For the time being these are a lift and shift from gluent.py while we
+# For the time being these are a lift and shift from goe.py while we
 # migrate to OrchestrationConfig.
 ###########################################################################
 
@@ -289,14 +289,14 @@ def normalise_listener_options(options):
         )
     if options.password_key_file:
         pass_tool = PasswordTools()
-        gl_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
+        goe_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
         if options.listener_shared_token:
             options.listener_shared_token = pass_tool.b64decrypt(
-                options.listener_shared_token, gl_key
+                options.listener_shared_token, goe_key
             )
         if options.listener_redis_password:
             options.listener_redis_password = pass_tool.b64decrypt(
-                options.listener_redis_password, gl_key
+                options.listener_redis_password, goe_key
             )
 
 
@@ -474,11 +474,11 @@ def normalise_rdbms_oracle_options(options, exc_cls=OrchestrationConfigException
     if not options.password_key_file:
         return
     pass_tool = PasswordTools()
-    gl_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
+    goe_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
     options.rdbms_app_pass = options.ora_app_pass = pass_tool.b64decrypt(
-        options.rdbms_app_pass, gl_key
+        options.rdbms_app_pass, goe_key
     )
-    options.ora_adm_pass = pass_tool.b64decrypt(options.ora_adm_pass, gl_key)
+    options.ora_adm_pass = pass_tool.b64decrypt(options.ora_adm_pass, goe_key)
 
 
 def normalise_rdbms_wallet_options(options, frontend_api=None):
@@ -545,11 +545,11 @@ def normalise_teradata_options(options, exc_cls=OrchestrationConfigException):
     if not options.password_key_file:
         return
     pass_tool = PasswordTools()
-    gl_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
+    goe_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
     options.rdbms_app_pass = options.teradata_app_pass = pass_tool.b64decrypt(
-        options.teradata_app_pass, gl_key
+        options.teradata_app_pass, goe_key
     )
-    options.teradata_adm_pass = pass_tool.b64decrypt(options.teradata_adm_pass, gl_key)
+    options.teradata_adm_pass = pass_tool.b64decrypt(options.teradata_adm_pass, goe_key)
 
 
 def normalise_size_option(

@@ -134,7 +134,7 @@ class BackendHiveTable(BackendHadoopTable):
     def _tzoffset_to_timestamp_sql_expression(self, col_name):
         """ Hive tzoffset SQL expression """
         udf_db_prefix = self.enclose_identifier(self._udf_db) + '.' if self._udf_db else ''
-        return '%(udf_db_prefix)sGLUENT_TZOFFSET_TO_TIMESTAMP(%(tstz)s)' % {'udf_db_prefix': udf_db_prefix, 'tstz': col_name}
+        return '%(udf_db_prefix)sGOE_TZOFFSET_TO_TIMESTAMP(%(tstz)s)' % {'udf_db_prefix': udf_db_prefix, 'tstz': col_name}
 
     def _validate_staged_data_query_options(self):
         """ Hive override facilitating Load Table stats.

@@ -11,8 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from redis.exceptions import RedisError
 
-# Gluent
-from goe.gluent import strict_version_ready, version
+# GOE
+from goe.goe import strict_version_ready, version
 from goe.listener import exceptions, schemas
 from goe.listener.config import settings
 from goe.listener.config.logging import Logger
@@ -59,9 +59,9 @@ def get_app() -> FastAPI:
         docs_url=None,  # defined in route so that we can host Swagger JS locally
         openapi_url="/api/openapi.json",
         redoc_url=None,  # defined in route so that we can host Swagger JS locally
-        title="Gluent Listener",
-        description="Gluent Listener",
-        terms_of_service="https://gluent.com/terms-of-service/",  # todo: update this/embed a page/add text?
+        title="GOE Listener",
+        description="GOE Listener",
+        terms_of_service="https://goe.com/terms-of-service/",  # todo: update this/embed a page/add text?
         version=strict_version_ready(version()),
         default_response_class=ORJSONResponse,
         on_startup=[events.on_startup],

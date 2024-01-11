@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" GluentGcs: GCS implementation of GluentDfs
+""" GOEGcs: GCS implementation of GOEDfs
     LICENSE_TEXT
 """
 
@@ -10,8 +10,8 @@ from requests import ConnectionError
 from google.api_core import retry, exceptions as google_exceptions
 from google.cloud import storage
 
-from goe.filesystem.gluent_dfs import GluentDfs, GluentDfsDeleteNotComplete, GluentDfsException, gen_fs_uri,\
-    DFS_RETRY_TIMEOUT, DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, GLUENT_DFS_GCS, URI_SEP
+from goe.filesystem.goe_dfs import GOEDfs, GOEDfsDeleteNotComplete, GOEDfsException, gen_fs_uri,\
+    DFS_RETRY_TIMEOUT, DFS_TYPE_DIRECTORY, DFS_TYPE_FILE, GOE_DFS_GCS, URI_SEP
 
 ###############################################################################
 # EXCEPTIONS
@@ -31,11 +31,11 @@ logger.addHandler(logging.NullHandler())
 
 
 ###############################################################################
-# GluentGcs
+# GOEGcs
 ###############################################################################
 
-class GluentGcs(GluentDfs):
-    """ A Gluent wrapper over Google Cloud Storage API.
+class GOEGcs(GOEDfs):
+    """ A GOE wrapper over Google Cloud Storage API.
         https://googleapis.dev/python/storage/latest/client.html
         dry_run: Do not make changes.
         do_not_connect: Do not even connect, used for unit testing.
@@ -44,16 +44,16 @@ class GluentGcs(GluentDfs):
     def __init__(self, messages, dry_run=False, do_not_connect=False, db_path_suffix=None):
         assert messages
 
-        logger.info('Client setup: GluentGcs')
+        logger.info('Client setup: GOEGcs')
 
-        super(GluentGcs, self).__init__(messages, dry_run=dry_run)
+        super(GOEGcs, self).__init__(messages, dry_run=dry_run)
 
         if do_not_connect:
             self._client = None
         else:
             self._client = storage.Client()
         self._db_path_suffix = db_path_suffix
-        self.dfs_mechanism = GLUENT_DFS_GCS
+        self.dfs_mechanism = GOE_DFS_GCS
         self.backend_dfs = 'GCS'
 
     ###########################################################################
@@ -65,10 +65,10 @@ class GluentGcs(GluentDfs):
     ###########################################################################
 
     def chgrp(self, dfs_path, group):
-        raise NotImplementedError('chgrp() not implemented for GluentGcs')
+        raise NotImplementedError('chgrp() not implemented for GOEGcs')
 
     def chmod(self, dfs_path, mode):
-        raise NotImplementedError('chmod() not implemented for GluentGcs')
+        raise NotImplementedError('chmod() not implemented for GOEGcs')
 
     def client(self):
         return self._client
@@ -93,7 +93,7 @@ class GluentGcs(GluentDfs):
             bucket = self._client.get_bucket(container)
             blob = bucket.blob(target_path)
             if blob.exists() and not overwrite:
-                raise GluentDfsException('Cannot copy file over existing file: %s' % target_path)
+                raise GOEDfsException('Cannot copy file over existing file: %s' % target_path)
             blob.upload_from_filename(local_path)
 
     def copy_to_local(self, dfs_path, local_path, overwrite=False):
@@ -108,11 +108,11 @@ class GluentGcs(GluentDfs):
             bucket = self._client.get_bucket(container)
             blob = bucket.blob(path)
             if file_exists(local_path) and not overwrite:
-                raise GluentDfsException('Cannot copy file over existing file: %s' % local_path)
+                raise GOEDfsException('Cannot copy file over existing file: %s' % local_path)
             with open(local_path, 'wb') as file_handle:
                 blob.download_to_file(file_handle)
 
-    @retry.Retry(predicate=retry.if_exception_type(GluentDfsDeleteNotComplete, ConnectionError,
+    @retry.Retry(predicate=retry.if_exception_type(GOEDfsDeleteNotComplete, ConnectionError,
                                                    google_exceptions.ServiceUnavailable),
                  deadline=DFS_RETRY_TIMEOUT)
     def delete(self, dfs_path, recursive=False):
@@ -142,7 +142,7 @@ class GluentGcs(GluentDfs):
             self._post_cloud_delete_wait(scheme)
             if blob.exists():
                 self.debug('GCS delete incomplete, retrying')
-                raise GluentDfsDeleteNotComplete
+                raise GOEDfsDeleteNotComplete
         else:
             self.debug('Recursive delete using directory prefix: %s' % path)
             if not path.endswith(URI_SEP):
@@ -159,7 +159,7 @@ class GluentGcs(GluentDfs):
                 blobs_pending_delete = [_ for _ in self._client.list_blobs(bucket, prefix=path)]
                 if blobs_pending_delete:
                     self.debug('GCS delete incomplete, retrying')
-                    raise GluentDfsDeleteNotComplete
+                    raise GOEDfsDeleteNotComplete
         # If we get this far then it worked
         return True
 
@@ -194,10 +194,10 @@ class GluentGcs(GluentDfs):
             return [self.gen_uri(scheme, container, _) for _ in blob_names]
 
     def list_snapshottable_dirs(self):
-        raise NotImplementedError('list_snapshottable_dirs() not implemented for GluentGcs')
+        raise NotImplementedError('list_snapshottable_dirs() not implemented for GOEGcs')
 
     def list_snapshots(self, snapshottable_dir):
-        raise NotImplementedError('list_snapshots() not implemented for GluentGcs')
+        raise NotImplementedError('list_snapshots() not implemented for GOEGcs')
 
     def mkdir(self, dfs_path):
         """ No mkdir on GCS """
@@ -216,14 +216,14 @@ class GluentGcs(GluentDfs):
         bucket = self._client.get_bucket(container)
         blob = bucket.blob(path)
         if not blob.exists():
-            raise GluentDfsException('Cannot download non-existent file: %s' % path)
+            raise GOEDfsException('Cannot download non-existent file: %s' % path)
         if as_str:
             return blob.download_as_text()
         else:
             return blob.download_as_bytes()
 
     def rename(self, hdfs_src_path, hdfs_dst_path):
-        raise NotImplementedError('rename() not implemented for GluentGcs')
+        raise NotImplementedError('rename() not implemented for GOEGcs')
 
     def rmdir(self, dfs_path, recursive=False):
         return self.delete(dfs_path, recursive=recursive)
@@ -252,7 +252,7 @@ class GluentGcs(GluentDfs):
 
         if len(matched_files) > 1:
             self.debug('Multiple file matches: %s' % str(matched_files))
-            raise GluentDfsException('Path matches multiple files: %s' % dfs_path)
+            raise GOEDfsException('Path matches multiple files: %s' % dfs_path)
         elif matched_files:
             return {'length': matched_files[0].size, 'permission': None, 'type': DFS_TYPE_FILE}
         elif matched_files_by_dir:
@@ -272,5 +272,5 @@ class GluentGcs(GluentDfs):
         bucket = self._client.get_bucket(container)
         blob = bucket.blob(path)
         if blob.exists() and not overwrite:
-            raise GluentDfsException('Cannot write to existing file: %s' % path)
+            raise GOEDfsException('Cannot write to existing file: %s' % path)
         blob.upload_from_string(data)

@@ -22,11 +22,11 @@ from goe.connect.connect_constants import CONNECT_DETAIL, CONNECT_STATUS, CONNEC
 from goe.offload.column_metadata import CanonicalColumn, ColumnMetadataInterface, ColumnPartitionInfo, \
     is_safe_mapping, match_table_column, str_list_of_columns, valid_column_list, \
     CANONICAL_CHAR_SEMANTICS_CHAR, \
-    GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY, \
-    GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4, \
-    GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, \
-    GLUENT_TYPE_DOUBLE, GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, \
-    GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_BOOLEAN, \
+    GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING, GOE_TYPE_BINARY, \
+    GOE_TYPE_LARGE_BINARY, GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4, \
+    GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38, GOE_TYPE_DECIMAL, GOE_TYPE_FLOAT, \
+    GOE_TYPE_DOUBLE, GOE_TYPE_DATE, GOE_TYPE_TIME, GOE_TYPE_TIMESTAMP, \
+    GOE_TYPE_TIMESTAMP_TZ, GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM, GOE_TYPE_BOOLEAN, \
     ALL_CANONICAL_TYPES, DATE_CANONICAL_TYPES, NUMERIC_CANONICAL_TYPES, STRING_CANONICAL_TYPES
 from goe.offload.backend_api import BackendApiInterface, BackendApiException, \
     UdfDetails, UdfParameter, \
@@ -475,15 +475,15 @@ class BackendBigQueryApi(BackendApiInterface):
             self._log(traceback.format_exc(), detail=VVERBOSE)
         return format_list_for_logging(stats)
 
-    def _get_gluent_granularity_for_bq_partitioning_type(self, table):
-        """ Return the gluent granularity for a BigQuery date partition type.
+    def _get_goe_granularity_for_bq_partitioning_type(self, table):
+        """ Return the goe granularity for a BigQuery date partition type.
             table is a table object as returned by self._get_bq_table().
         """
         assert table
         partitioning_type = self._get_bq_table_partition_type(table)
         if partitioning_type not in SUPPORTED_BQ_DATE_PARTITIONING_TYPES:
             raise NotImplementedError('BigQuery partitioning type is not supported: %s' % partitioning_type)
-        # BQ granularities start with same letter as Gluent granularities
+        # BQ granularities start with same letter as GOE granularities
         return partitioning_type[0]
 
     def _get_table_ddl(self, db_name, table_name, terminate_sql=False):
@@ -818,7 +818,7 @@ FROM   %(from_tables)s%(where_clause)s""" \
             return None
 
         if self._get_bq_table_partition_type(table) in SUPPORTED_BQ_DATE_PARTITIONING_TYPES:
-            granularity = self._get_gluent_granularity_for_bq_partitioning_type(table)
+            granularity = self._get_goe_granularity_for_bq_partitioning_type(table)
             # column_name should always be table.time_partitioning.field on BigQuery
             if self._get_bq_table_partition_field(table).upper() != column_name.upper():
                 raise BackendApiException('Partition columns do not match: %s != %s'
@@ -1110,7 +1110,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
         else:
             # Not partitioned
             return None
-        # BigQuery only supports a single partition column but Gluent supports a list, therefore return a list:
+        # BigQuery only supports a single partition column but GOE supports a list, therefore return a list:
         return [part_col]
 
     def get_session_option(self, option_name):
@@ -1601,7 +1601,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             self._log('NotFound exception: {}'.format(str(exc)))
             raise BackendApiException('BigQuery dataset not found: %s' % self._bq_dataset_id(db_name)) from None
         if not rows:
-            # Most of the time we expect the UDF to exist and suit GDP so check parameters first, only go for an
+            # Most of the time we expect the UDF to exist and suit GOE so check parameters first, only go for an
             # extra round trip if things aren't looking good.
             if not self.udf_exists(db_name, udf_name):
                 return []
@@ -1622,13 +1622,13 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             return False
 
     def udf_installation_os(self, user_udf_version):
-        raise NotImplementedError('Gluent UDFs are not supported on BigQuery')
+        raise NotImplementedError('GOE UDFs are not supported on BigQuery')
 
     def udf_installation_sql(self, create_udf_db, udf_db=None):
-        raise NotImplementedError('Gluent UDFs are not supported on BigQuery')
+        raise NotImplementedError('GOE UDFs are not supported on BigQuery')
 
     def udf_installation_test(self, udf_db=None):
-        raise NotImplementedError('Gluent UDFs are not supported on BigQuery')
+        raise NotImplementedError('GOE UDFs are not supported on BigQuery')
 
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, BigQueryColumn)
@@ -1638,26 +1638,26 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
             target_type = canonical_override
         if column.is_number_based():
             if column.data_type == BIGQUERY_TYPE_FLOAT64:
-                return bool(target_type in [GLUENT_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE])
+                return bool(target_type in [GOE_TYPE_DECIMAL, GOE_TYPE_DOUBLE])
             else:
                 return target_type in NUMERIC_CANONICAL_TYPES
         elif column.is_date_based():
             return bool(target_type in DATE_CANONICAL_TYPES)
         elif column.is_string_based():
             return bool(target_type in STRING_CANONICAL_TYPES or
-                        target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY] or
-                        target_type in [GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM])
+                        target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY] or
+                        target_type in [GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM])
         elif target_type not in ALL_CANONICAL_TYPES:
             self._log('Unknown canonical type in mapping: %s' % target_type, detail=VVERBOSE)
             return False
         elif column.data_type not in self.supported_backend_data_types():
             return False
         elif column.data_type == BIGQUERY_TYPE_BOOLEAN:
-            return bool(target_type == GLUENT_TYPE_BOOLEAN)
+            return bool(target_type == GOE_TYPE_BOOLEAN)
         elif column.data_type == BIGQUERY_TYPE_BYTES:
-            return bool(target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY])
+            return bool(target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY])
         elif column.data_type == BIGQUERY_TYPE_TIME:
-            return bool(target_type == GLUENT_TYPE_TIME)
+            return bool(target_type == GOE_TYPE_TIME)
         return False
 
     def valid_staging_formats(self):
@@ -1667,7 +1667,7 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
         return self._object_exists(db_name, view_name, table_type='VIEW')
 
     def to_canonical_column(self, column):
-        """ Translate a BigQuery column to an internal Gluent column """
+        """ Translate a BigQuery column to an internal GOE column """
 
         def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, safe_mapping=None):
             """ Wrapper that carries name...
@@ -1682,39 +1682,39 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
         assert isinstance(column, BigQueryColumn)
 
         if column.data_type == BIGQUERY_TYPE_BOOLEAN:
-            return new_column(column, GLUENT_TYPE_BOOLEAN)
+            return new_column(column, GOE_TYPE_BOOLEAN)
         elif column.data_type == BIGQUERY_TYPE_STRING:
-            return new_column(column, GLUENT_TYPE_VARIABLE_STRING, data_length=column.data_length)
+            return new_column(column, GOE_TYPE_VARIABLE_STRING, data_length=column.data_length)
         elif column.data_type == BIGQUERY_TYPE_BYTES:
-            return new_column(column, GLUENT_TYPE_BINARY)
+            return new_column(column, GOE_TYPE_BINARY)
         elif column.data_type == BIGQUERY_TYPE_INT64:
-            return new_column(column, GLUENT_TYPE_INTEGER_8)
+            return new_column(column, GOE_TYPE_INTEGER_8)
         elif column.data_type == BIGQUERY_TYPE_NUMERIC:
             data_precision = column.data_precision if column.data_precision is not None else 38
             data_scale = column.data_scale if column.data_scale is not None else 9
-            return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale)
+            return new_column(column, GOE_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale)
         elif column.data_type == BIGQUERY_TYPE_BIGNUMERIC:
             if column.data_precision is not None:
                 data_precision = column.data_precision
             else:
                 data_precision = self.max_decimal_precision()
             data_scale = column.data_scale if column.data_scale is not None else self.max_decimal_scale()
-            return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale)
+            return new_column(column, GOE_TYPE_DECIMAL, data_precision=data_precision, data_scale=data_scale)
         elif column.data_type == BIGQUERY_TYPE_FLOAT64:
-            return new_column(column, GLUENT_TYPE_DOUBLE)
+            return new_column(column, GOE_TYPE_DOUBLE)
         elif column.data_type == BIGQUERY_TYPE_DATE:
-            return new_column(column, GLUENT_TYPE_DATE, data_scale=0)
+            return new_column(column, GOE_TYPE_DATE, data_scale=0)
         elif column.data_type == BIGQUERY_TYPE_DATETIME:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP, data_scale=self.max_datetime_scale())
+            return new_column(column, GOE_TYPE_TIMESTAMP, data_scale=self.max_datetime_scale())
         elif column.data_type == BIGQUERY_TYPE_TIME:
-            return new_column(column, GLUENT_TYPE_TIME)
+            return new_column(column, GOE_TYPE_TIME)
         elif column.data_type == BIGQUERY_TYPE_TIMESTAMP:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP_TZ, data_scale=self.max_datetime_scale())
+            return new_column(column, GOE_TYPE_TIMESTAMP_TZ, data_scale=self.max_datetime_scale())
         else:
             raise NotImplementedError('Unsupported backend data type: %s' % column.data_type)
 
     def from_canonical_column(self, column, decimal_padding_digits=0):
-        """ Translate an internal Gluent column to a BigQuery column.
+        """ Translate an internal GOE column to a BigQuery column.
         """
 
         def new_column(col, data_type, data_length=None, data_precision=None, data_scale=None, char_length=None,
@@ -1729,33 +1729,33 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
         assert column
         assert isinstance(column, CanonicalColumn), '%s is not instance of CanonicalColumn' % type(column)
 
-        if column.data_type == GLUENT_TYPE_BOOLEAN:
+        if column.data_type == GOE_TYPE_BOOLEAN:
             return new_column(column, BIGQUERY_TYPE_BOOLEAN, safe_mapping=True)
-        elif column.data_type in (GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING):
+        elif column.data_type in (GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING):
             return new_column(
                 column,
                 BIGQUERY_TYPE_STRING,
                 char_length=column.char_length or column.data_length,
                 safe_mapping=True
             )
-        elif column.data_type in (GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY):
+        elif column.data_type in (GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY):
             return new_column(
                 column,
                 BIGQUERY_TYPE_BYTES,
                 data_length=column.data_length,
                 safe_mapping=True
             )
-        elif column.data_type in (GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2,
-                                  GLUENT_TYPE_INTEGER_4, GLUENT_TYPE_INTEGER_8):
+        elif column.data_type in (GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2,
+                                  GOE_TYPE_INTEGER_4, GOE_TYPE_INTEGER_8):
             # On BigQuery all 4 native integer types map to BIGINT
             return new_column(column, BIGQUERY_TYPE_INT64, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_38:
+        elif column.data_type == GOE_TYPE_INTEGER_38:
             # On BigQuery there is no integral type > INT64 but BIGNUMERIC can hold 38 integral digits
             if column.data_precision and column.data_precision <= 29:
                 return new_column(column, BIGQUERY_TYPE_NUMERIC, data_precision=column.data_precision, data_scale=0, safe_mapping=True)
             else:
                 return new_column(column, BIGQUERY_TYPE_BIGNUMERIC, data_precision=38, data_scale=0, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_DECIMAL:
+        elif column.data_type == GOE_TYPE_DECIMAL:
             if column.data_precision is not None:
                 integral_magnitude = column.data_precision - (column.data_scale or 0)
             else:
@@ -1778,23 +1778,23 @@ FROM   %(from_db_table)s%(where)s""" % {'db_table': self.enclose_object_referenc
                     data_scale=column.data_scale,
                     safe_mapping=False
                 )
-        elif column.data_type in (GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE):
+        elif column.data_type in (GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE):
             return new_column(column, BIGQUERY_TYPE_FLOAT64, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_DATE and not self.canonical_date_supported():
+        elif column.data_type == GOE_TYPE_DATE and not self.canonical_date_supported():
             return new_column(column, BIGQUERY_TYPE_TIMESTAMP)
-        elif column.data_type == GLUENT_TYPE_DATE:
+        elif column.data_type == GOE_TYPE_DATE:
             return new_column(column, BIGQUERY_TYPE_DATE)
-        elif column.data_type == GLUENT_TYPE_TIME:
+        elif column.data_type == GOE_TYPE_TIME:
             safe_mapping = bool(column.data_scale is None or column.data_scale <= self.max_datetime_scale())
             return new_column(column, BIGQUERY_TYPE_TIME, safe_mapping=safe_mapping)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP:
+        elif column.data_type == GOE_TYPE_TIMESTAMP:
             safe_mapping = bool(column.data_scale is None or column.data_scale <= self.max_datetime_scale())
             return new_column(column, BIGQUERY_TYPE_DATETIME, safe_mapping=safe_mapping)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP_TZ:
+        elif column.data_type == GOE_TYPE_TIMESTAMP_TZ:
             return new_column(column, BIGQUERY_TYPE_TIMESTAMP, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_DS:
+        elif column.data_type == GOE_TYPE_INTERVAL_DS:
             return new_column(column, BIGQUERY_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_YM:
+        elif column.data_type == GOE_TYPE_INTERVAL_YM:
             return new_column(column, BIGQUERY_TYPE_STRING, safe_mapping=False)
         else:
-            raise NotImplementedError('Unsupported Gluent data type: %s' % column.data_type)
+            raise NotImplementedError('Unsupported GOE data type: %s' % column.data_type)

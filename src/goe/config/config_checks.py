@@ -9,7 +9,7 @@ import sys
 
 def check_cli_path():
     """Check OFFLOAD_HOME in top level command wrappers
-    This should be imported and called as the first Gluent import, for example:
+    This should be imported and called as the first GOE import, for example:
 
     import os
 

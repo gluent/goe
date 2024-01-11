@@ -283,7 +283,7 @@ class OffloadSourcePartitions(object):
         return OffloadSourcePartitions(partitions)
 
     def as_legacy_list(self):
-        """ For (hopefully short term) use in gluent.py matching gluent.py constants:
+        """ For (hopefully short term) use in goe.py matching goe.py constants:
               pc_name, pc_hv, pc_hv_values, pc_size, pc_rows, pc_hv_literals, pc_common_hwm, subpartitions
         """
         return [_.as_legacy_tuple() for _ in self._partitions]

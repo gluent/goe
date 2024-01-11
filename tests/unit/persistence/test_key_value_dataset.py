@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" Test module for gluentlib.persistence.key_value_dataset.py
+""" Test module for goelib.persistence.key_value_dataset.py
 """
 
 import json

@@ -59,7 +59,7 @@ class TestAvroEncoder(TestCase):
         messages = OffloadMessages()
         encoder = AvroEncoder(SCHEMA_JSON, messages)
         extraction_cursor = FakeDb(ROW_COUNT)
-        local_staging_path = get_temp_path(prefix="gluent-unittest", suffix=".avro")
+        local_staging_path = get_temp_path(prefix="goe-unittest", suffix=".avro")
         rows_imported = encoder.write_from_cursor(
             local_staging_path, extraction_cursor, source_columns
         )

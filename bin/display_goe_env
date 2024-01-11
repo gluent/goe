@@ -1,8 +1,8 @@
 #! /bin/bash
 
-# Display Gluent environment variables set by offload.env
+# Display GOE environment variables set by offload.env
 #
-# Usage: display_gluent_env [<env file>]
+# Usage: display_goe_env [<env file>]
 #
 # LICENSE_TEXT
 
@@ -13,8 +13,8 @@ function display_var() {
 }
 
 offload_env_file=$1
-[[ -z "${offload_env_file}" ]] && offload_env_file="${OFFLOAD_CONF}/offload.env"
-[[ "/" == "${offload_env_file}" || ! -f "${offload_env_file}" ]] && echo "Unable to locate offload.env file. Run as: display_gluent_env <path to offload.env>" && exit
+[[ -z "${offload_env_file}" ]] && offload_env_file="${OFFLOAD_CONFDIR}/offload.env"
+[[ "/" == "${offload_env_file}" || ! -f "${offload_env_file}" ]] && echo "Unable to locate offload.env file. Run as: display_goe_env <path to offload.env>" && exit
 echo -e "Reading variable names from file: ${offload_env_file}\n"
 
 echo -e "Settings in current environment:\n"

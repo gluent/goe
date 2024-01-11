@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Gluent Listener Exceptions."""
-# Gluent
+"""GOE Listener Exceptions."""
+# GOE
 from goe.listener.exceptions.base import (
     ApplicationError,
     BaseApplicationError,

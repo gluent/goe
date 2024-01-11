@@ -24,6 +24,3 @@ def check_cli_path():
             "You should source environment variables first, eg: . ../conf/offload.env"
         )
         sys.exit(1)
-    elif os.path.split(sys.exec_prefix)[-1] != "offload":
-        print("Python path is unexpected, have you sourced ../conf/offload.env?")
-        print()

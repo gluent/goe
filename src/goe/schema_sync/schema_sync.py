@@ -7,9 +7,9 @@ from goe.schema_sync.schema_sync_analyzer import SchemaSyncAnalyzer
 from goe.schema_sync.schema_sync_processor import SchemaSyncProcessor
 from goe.schema_sync.schema_sync_command_file import SchemaSyncCommandFile
 from goe.orchestration import command_steps
-from goe.util.misc_functions import double_quote_sandwich
-from goe.util.orchestration_lock import OrchestrationLockTimeout,\
+from goe.orchestration.orchestration_lock import OrchestrationLockTimeout,\
     orchestration_lock_for_table
+from goe.util.misc_functions import double_quote_sandwich
 
 if TYPE_CHECKING:
     from goe.offload.offload_messages import OffloadMessages

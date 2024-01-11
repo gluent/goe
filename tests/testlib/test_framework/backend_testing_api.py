@@ -352,7 +352,7 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         to do a case conversion and not just use the constants. Unnecessary for test objects.
         """
         if udf:
-            udfs = [udf]
+            udfs = udf if isinstance(udf, list) else [udf]
         else:
             udfs = [
                 test_constants.PARTITION_FUNCTION_TEST_FROM_INT8,
@@ -859,11 +859,13 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def to_canonical_column(self, backend_column):
         return self._db_api.to_canonical_column(backend_column)
 
-    def transient_error_rerunner(self, run_fn, max_retries=1):
+    def transient_error_rerunner(self, run_fn, max_retries=1, pause_seconds=None):
         """Runs callable run_fn() and, if an exception is thrown, retries if the reason is a transient backend issue.
         Obviously run_fn() must me idempotent, ideally a read only operation such as a Hybrid Query.
         """
         assert callable(run_fn)
+        if pause_seconds is None:
+            pause_seconds = TRANSIENT_QUERY_RERUN_PAUSE
         for i in range(max_retries + 1):
             try:
                 return run_fn()
@@ -886,11 +888,11 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
                     )
                     self._log(
                         "Sleeping for {} seconds before re-run".format(
-                            str(TRANSIENT_QUERY_RERUN_PAUSE)
+                            str(pause_seconds)
                         ),
                         detail=VERBOSE,
                     )
-                    time.sleep(TRANSIENT_QUERY_RERUN_PAUSE)
+                    time.sleep(pause_seconds)
                 else:
                     raise
 

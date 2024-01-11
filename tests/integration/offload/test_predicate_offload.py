@@ -10,6 +10,7 @@ import pytest
 from goe.goe import OffloadOperation
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
+from goe.offload.offload import OffloadException
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
@@ -60,7 +61,11 @@ def create_and_offload_dim_table(config, frontend_api, messages, schema):
         frontend_api.standard_dimension_frontend_ddl(schema, DIM_NAME),
     )
     # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
-    run_offload({"owner_table": schema + "." + DIM_NAME})
+    try:
+        run_offload({"owner_table": schema + "." + DIM_NAME})
+    except OffloadException:
+        # If this one fails then we let the exception bubble up.
+        run_offload({"owner_table": schema + "." + DIM_NAME, "reset_backend_table": True})
 
 
 def create_fact_table(config, frontend_api, messages, schema):

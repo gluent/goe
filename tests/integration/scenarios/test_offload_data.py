@@ -181,6 +181,7 @@ def test_offload_data_nan_inf_not_supported(config, schema, data_db):
         "owner_table": schema + "." + NAN_TABLE,
         "allow_floating_point_conversions": True,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -229,6 +230,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
         "owner_table": schema + "." + US_FACT,
         "less_than_value": "2030-01-02",
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -319,6 +321,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
             "owner_table": schema + "." + NS_FACT,
             "allow_nanosecond_timestamp_columns": False,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages, expected_status=False)
 
@@ -337,6 +340,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
             "owner_table": schema + "." + NS_FACT,
             "less_than_value": "2030-01-02",
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
         assert sales_based_fact_assertion(
@@ -422,6 +426,7 @@ def test_offload_data_oracle_xmltype(config, schema, data_db):
     options = {
         "owner_table": schema + "." + XMLTYPE_TABLE,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 

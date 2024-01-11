@@ -166,6 +166,7 @@ def test_cli_offload_full(config, schema, data_db):
                 schema + "." + CLI_DIM,
                 "-x",
                 "--reset-backend-table",
+                "--create-backend-db",
             ]
         ),
     )
@@ -243,6 +244,7 @@ def test_cli_offload_rpa(config, schema, data_db):
                 "-x",
                 f"--older-than-date={test_constants.SALES_BASED_FACT_HV_2}",
                 "--reset-backend-table",
+                "--create-backend-db",
             ]
         ),
     )

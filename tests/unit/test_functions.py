@@ -8,6 +8,7 @@ FAKE_COMMON_ENV = {
     "DB_NAME_PREFIX": "x",
     "OFFLOAD_HOME": "/opt/goe/offload",
     "OFFLOAD_LOG": "/tmp",
+    "OFFLOAD_FS_CONTAINER": "b",
     "OFFLOAD_TRANSPORT_USER": "a",
     "OFFLOAD_TRANSPORT_CMD_HOST": "localhost",
     "OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE": "spark-submit",
@@ -73,8 +74,8 @@ FAKE_ORACLE_BQ_ENV.update(
         "GOOGLE_KMS_KEY_RING_LOCATION": "US",
         "GOOGLE_KMS_KEY_RING_NAME": "ring-name",
         "GOOGLE_KMS_KEY_NAME": "key-name",
-        "OFFLOAD_FS_CONTAINER": "b",
         "OFFLOAD_FS_SCHEME": "gs",
+        "QUERY_ENGINE": "BIGQUERY",
     }
 )
 
@@ -87,8 +88,8 @@ FAKE_ORACLE_HIVE_ENV.update(
         "HDFS_LOAD": "/tmp/a_load",
         "HIVE_SERVER_HOST": "h",
         "HIVE_SERVER_USER": "x",
-        "QUERY_ENGINE": "HIVE",
         "OFFLOAD_FS_SCHEME": "inherit",
+        "QUERY_ENGINE": "HIVE",
     }
 )
 
@@ -100,8 +101,8 @@ FAKE_ORACLE_IMPALA_ENV.update(
         "HDFS_HOME": "/tmp/a",
         "HDFS_LOAD": "/tmp/a_load",
         "HIVE_SERVER_HOST": "h",
-        "QUERY_ENGINE": "IMPALA",
         "OFFLOAD_FS_SCHEME": "inherit",
+        "QUERY_ENGINE": "IMPALA",
     }
 )
 
@@ -109,7 +110,6 @@ FAKE_ORACLE_SNOWFLAKE_ENV = dict(FAKE_ORACLE_ENV)
 FAKE_ORACLE_SNOWFLAKE_ENV.update(
     {
         "BACKEND_DISTRIBUTION": "SNOWFLAKE",
-        "QUERY_ENGINE": "SNOWFLAKE",
         "SNOWFLAKE_USER": "u",
         "SNOWFLAKE_PASS": "p",
         "SNOWFLAKE_ACCOUNT": "a",
@@ -119,8 +119,8 @@ FAKE_ORACLE_SNOWFLAKE_ENV.update(
         "SNOWFLAKE_INTEGRATION": "i",
         "SNOWFLAKE_STAGE": "s",
         "SNOWFLAKE_WAREHOUSE": "w",
-        "OFFLOAD_FS_CONTAINER": "b",
         "OFFLOAD_FS_SCHEME": "gs",
+        "QUERY_ENGINE": "SNOWFLAKE",
     }
 )
 
@@ -129,7 +129,6 @@ FAKE_ORACLE_SYNAPSE_ENV = dict(FAKE_ORACLE_ENV)
 FAKE_ORACLE_SYNAPSE_ENV.update(
     {
         "BACKEND_DISTRIBUTION": "MSAZURE",
-        "QUERY_ENGINE": "SYNAPSE",
         "SYNAPSE_DATABASE": "d",
         "SYNAPSE_SERVER": "p",
         "SYNAPSE_PORT": "123",
@@ -141,6 +140,7 @@ FAKE_ORACLE_SYNAPSE_ENV.update(
         "SYNAPSE_FILE_FORMAT": "f",
         "BACKEND_ODBC_DRIVER_NAME": "ms",
         "OFFLOAD_FS_SCHEME": "wasb",
+        "QUERY_ENGINE": "SYNAPSE",
     }
 )
 

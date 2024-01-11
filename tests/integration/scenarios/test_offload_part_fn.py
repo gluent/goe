@@ -273,6 +273,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         "offload_partition_columns": "TXN_DATE",
         "offload_partition_granularity": "M",
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(
         options,
@@ -344,6 +345,7 @@ def test_offload_part_fn_num(config, schema, data_db):
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert standard_dimension_assertion(
@@ -434,6 +436,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert standard_dimension_assertion(
@@ -526,6 +529,7 @@ def test_offload_part_fn_str(config, schema, data_db):
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert standard_dimension_assertion(

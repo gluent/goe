@@ -413,6 +413,7 @@ def test_offload_pbo_dim(config, schema, data_db):
         "owner_table": schema + "." + DIM_TABLE,
         "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
@@ -586,6 +587,7 @@ def test_offload_pbo_unicode(config, schema, data_db):
             % UCODE_VALUE1
         ),
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
@@ -679,6 +681,7 @@ def test_offload_pbo_char_pad(config, schema, data_db):
         "owner_table": schema + "." + CHAR_TABLE,
         "offload_predicate": GenericPredicate('(column(data) = string("a  "))'),
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
@@ -752,6 +755,7 @@ def test_offload_pbo_ts(config, schema, data_db):
         "offload_predicate": GenericPredicate("(column(ts) < datetime(2020-02-01))"),
         "allow_nanosecond_timestamp_columns": True,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
@@ -838,6 +842,7 @@ def test_offload_pbo_range(config, schema, data_db):
             )
         ),
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -967,6 +972,7 @@ def test_offload_pbo_list(config, schema, data_db):
         "owner_table": "%s.%s" % (schema, LIST_TABLE),
         "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 

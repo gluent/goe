@@ -21,6 +21,14 @@ from goe.offload.offload_messages import OffloadMessages
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )
+from tests.unit.test_functions import (
+    build_mock_options,
+    FAKE_ORACLE_BQ_ENV,
+    FAKE_ORACLE_HIVE_ENV,
+    FAKE_ORACLE_IMPALA_ENV,
+    FAKE_ORACLE_SNOWFLAKE_ENV,
+    FAKE_ORACLE_SYNAPSE_ENV,
+)
 
 
 transient_error_global_counter = 0
@@ -47,6 +55,9 @@ class TestBackendTestingApi(TestCase):
         )
         self.db = "any_db"
         self.table = "some_table"
+
+    def _get_mock_config(self, mock_env: dict):
+        return build_mock_options(mock_env)
 
     def _test_create_table_as_select(self):
         # CTAS with no source table
@@ -147,7 +158,7 @@ class TestBackendTestingApi(TestCase):
 class TestHiveBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_HIVE
-        self.config = OrchestrationConfig.from_dict({"verbose": False})
+        self.config = self._get_mock_config(FAKE_ORACLE_HIVE_ENV)
         super(TestHiveBackendTestingApi, self).setUp()
 
     def test_all_non_connecting_hive_tests(self):
@@ -157,7 +168,7 @@ class TestHiveBackendTestingApi(TestBackendTestingApi):
 class TestImpalaBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_IMPALA
-        self.config = OrchestrationConfig.from_dict({"verbose": False})
+        self.config = self._get_mock_config(FAKE_ORACLE_IMPALA_ENV)
         super(TestImpalaBackendTestingApi, self).setUp()
 
     def test_all_non_connecting_impala_tests(self):
@@ -167,7 +178,7 @@ class TestImpalaBackendTestingApi(TestBackendTestingApi):
 class TestBigQueryBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_BIGQUERY
-        self.config = OrchestrationConfig.from_dict({"verbose": False})
+        self.config = self._get_mock_config(FAKE_ORACLE_BQ_ENV)
         super(TestBigQueryBackendTestingApi, self).setUp()
 
     def test_all_non_connecting_bigquery_tests(self):
@@ -177,7 +188,7 @@ class TestBigQueryBackendTestingApi(TestBackendTestingApi):
 class TestSnowflakeBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_SNOWFLAKE
-        self.config = OrchestrationConfig.from_dict({"verbose": False})
+        self.config = self._get_mock_config(FAKE_ORACLE_SNOWFLAKE_ENV)
         super(TestSnowflakeBackendTestingApi, self).setUp()
 
     def test_all_non_connecting_snowflake_tests(self):
@@ -187,9 +198,7 @@ class TestSnowflakeBackendTestingApi(TestBackendTestingApi):
 class TestSynapseBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_SYNAPSE
-        self.config = OrchestrationConfig.from_dict({"verbose": False})
-        if self.config.synapse_database is None:
-            self.config.synapse_database = "any-db"
+        self.config = self._get_mock_config(FAKE_ORACLE_SYNAPSE_ENV)
         super(TestSynapseBackendTestingApi, self).setUp()
 
     def test_all_non_connecting_synapse_tests(self):

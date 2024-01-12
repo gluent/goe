@@ -12,15 +12,15 @@ from goe.offload.backend_table import (
 )
 from goe.offload.column_metadata import (
     match_table_column,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_VARIABLE_STRING,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_DATE,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_VARIABLE_STRING,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_DATE,
 )
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
@@ -588,7 +588,7 @@ def wildcard_assertion(backend_api, data_db, backend_name):
         if backend_column.name.lower().endswith("_id"):
             expected_backend_type = backend_api.expected_canonical_to_backend_type_map(
                 override_used={"integer_1_columns_csv": backend_column.name}
-            )[GLUENT_TYPE_INTEGER_1]
+            )[GOE_TYPE_INTEGER_1]
             if not check_data_type(backend_column, expected_backend_type):
                 raise ScenarioRunnerException
         if backend_column.name.lower().endswith(
@@ -596,44 +596,44 @@ def wildcard_assertion(backend_api, data_db, backend_name):
         ) or backend_column.name.lower().endswith("_qtr"):
             expected_backend_type = backend_api.expected_canonical_to_backend_type_map(
                 override_used={"integer_2_columns_csv": backend_column.name}
-            )[GLUENT_TYPE_INTEGER_2]
+            )[GOE_TYPE_INTEGER_2]
             if not check_data_type(backend_column, expected_backend_type):
                 raise ScenarioRunnerException
         if backend_column.name.lower().endswith("_month"):
             expected_backend_type = backend_api.expected_canonical_to_backend_type_map(
                 override_used={"integer_4_columns_csv": backend_column.name}
-            )[GLUENT_TYPE_INTEGER_4]
+            )[GOE_TYPE_INTEGER_4]
             if not check_data_type(backend_column, expected_backend_type):
                 raise ScenarioRunnerException
         if backend_column.name.lower().endswith("_day"):
             expected_backend_type = backend_api.expected_canonical_to_backend_type_map(
                 override_used={"integer_8_columns_csv": backend_column.name}
-            )[GLUENT_TYPE_INTEGER_8]
+            )[GOE_TYPE_INTEGER_8]
             if not check_data_type(backend_column, expected_backend_type):
                 raise ScenarioRunnerException
         if backend_column.name.lower().endswith("_date"):
             expected_backend_type = backend_api.expected_canonical_to_backend_type_map(
                 override_used={"date_columns_csv": backend_column.name}
-            )[GLUENT_TYPE_DATE]
+            )[GOE_TYPE_DATE]
             if not check_data_type(backend_column, expected_backend_type):
                 raise ScenarioRunnerException
         if backend_column.name.lower().endswith("_rate"):
             expected_backend_type = backend_api.expected_canonical_to_backend_type_map(
                 override_used={"double_columns_csv": backend_column.name}
-            )[GLUENT_TYPE_DOUBLE]
+            )[GOE_TYPE_DOUBLE]
             if not check_data_type(backend_column, expected_backend_type):
                 raise ScenarioRunnerException
         if backend_column.name.lower().endswith("_amt"):
             expected_backend_type = backend_api.expected_canonical_to_backend_type_map(
                 override_used={"decimal_columns_csv_list": backend_column.name}
-            )[GLUENT_TYPE_DECIMAL]
+            )[GOE_TYPE_DECIMAL]
             if not check_data_type(backend_column, expected_backend_type):
                 raise ScenarioRunnerException
         if backend_column.name.lower().endswith("_desc"):
             input_type = (
-                GLUENT_TYPE_FIXED_STRING
+                GOE_TYPE_FIXED_STRING
                 if backend_column.name.lower() == "sale_desc"
-                else GLUENT_TYPE_VARIABLE_STRING
+                else GOE_TYPE_VARIABLE_STRING
             )
             expected_backend_type = backend_api.expected_canonical_to_backend_type_map(
                 override_used={"unicode_string_columns_csv": backend_column.name}
@@ -723,6 +723,7 @@ def test_numeric_controls(config, schema, data_db):
         "data_sample_pct": 0,
         "reset_backend_table": True,
         "decimal_padding_digits": 2,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     nums_assertion(
@@ -909,6 +910,7 @@ def test_date_controls(config, schema, data_db):
         "owner_table": schema + "." + DATE_DIM,
         "data_sample_pct": 0,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     date_assertion(config, frontend_api, backend_api, messages, data_db, DATE_DIM)
@@ -980,6 +982,7 @@ def test_date_sampling(config, schema, data_db):
         "allow_nanosecond_timestamp_columns": True,
         "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     samp_date_assertion(config, backend_api, frontend_api, messages, data_db, DATE_SDIM)
@@ -1076,6 +1079,7 @@ def test_precision_scale_overflow(config, schema, data_db):
             "owner_table": schema + "." + NUM_TOO_BIG_DIM,
             "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(
             options,
@@ -1145,6 +1149,7 @@ def test_precision_scale_overflow(config, schema, data_db):
         "decimal_columns_type_list": ["20,5"],
         "reset_backend_table": True,
         "decimal_padding_digits": 0,
+        "create_backend_db": True,
     }
     run_offload(
         options,
@@ -1209,6 +1214,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "decimal_columns_type_list": ["12,3"],
         "unicode_string_columns_csv": "*_desc",
         "decimal_padding_digits": 0,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     wildcard_assertion(backend_api, data_db, wildcard_dim_be)
@@ -1348,7 +1354,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         messages,
     )
     assert unicode_assertion(
-        backend_api, data_db, offload_dim_be, {"TXN_DESC": GLUENT_TYPE_VARIABLE_STRING}
+        backend_api, data_db, offload_dim_be, {"TXN_DESC": GOE_TYPE_VARIABLE_STRING}
     )
     # Connections are being left open, explicitly close them.
     frontend_api.close()
@@ -1382,6 +1388,7 @@ def test_column_controls_not_null(config, schema, data_db):
     options = {
         "owner_table": f"{schema}.{NOT_NULL_DIM}",
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(
         options,

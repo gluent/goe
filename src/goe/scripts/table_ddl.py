@@ -12,20 +12,20 @@ import sys
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.util.better_impyla import HiveConnection, HiveTable
 from goe.util.hs2_connection import hs2_connection_from_env, HS2_OPTIONS
-from goe.util.config_file import GluentRemoteConfig
+from goe.util.config_file import GOERemoteConfig
 from goe.util.hive_ddl_transform import DDLTransform
-from goe.util.gluent_log import log
+from goe.util.goe_log import log
 from goe.util.misc_functions import options_list_to_dict, check_offload_env, check_remote_offload_env
 
-from goe.gluent import get_options_from_list, normalise_owner_table_options, init, license, version
+from goe.goe import get_options_from_list, normalise_owner_table_options, init, license, version
 
 
 # -----------------------------------------------------------------------
 # CONSTANTS
 # -----------------------------------------------------------------------
 
-# Gluent.py options "imported" by this tool
-GLUENT_OPTIONS=(
+# GOE.py options "imported" by this tool
+GOE_OPTIONS=(
     'owner_table', 'dev_log_level', 'execute',
     'target_owner_name', 'base_owner_name',
 )
@@ -61,7 +61,7 @@ def parse_args():
     """
       Parse arguments and return "options" object
     """
-    parser = get_options_from_list(GLUENT_OPTIONS + HS2_OPTIONS)
+    parser = get_options_from_list(GOE_OPTIONS + HS2_OPTIONS)
 
     parser.add_option('--as', dest='as_section',
                       help="Adjust table DDL to specific 'configuration section' (specifically: 'location' attribute)")
@@ -72,7 +72,7 @@ def parse_args():
 
     args.transform = options_list_to_dict(re.findall('\S+\s*=\s*\S+', args.transform))
     if args.as_section:
-        args.transform['location'] = GluentRemoteConfig().file_url(args.as_section, args.owner_table, "").rstrip("/")
+        args.transform['location'] = GOERemoteConfig().file_url(args.as_section, args.owner_table, "").rstrip("/")
 
     return args
 
@@ -113,7 +113,7 @@ def main():
     except Exception as e:
         log('Exception: %s' % e, ansi_code='red', options=args)
         sys.exit(-1)
-        
+
 
 #### MAIN PROGRAM BEGINS HERE
 if __name__ == "__main__":

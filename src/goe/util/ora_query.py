@@ -46,7 +46,7 @@ def output_type_handler(cursor, name, defaultType, size, precision, scale):
         return cursor.var(cx_Oracle.LONG_BINARY, arraysize=cursor.arraysize)
 
 
-def get_oracle_connection(ora_user, ora_pass, ora_dsn, ora_wallet=False, ora_proxy_user=None, ora_trace_id='GLUENT'):
+def get_oracle_connection(ora_user, ora_pass, ora_dsn, ora_wallet=False, ora_proxy_user=None, ora_trace_id='GOE'):
     if ora_wallet:
         if ora_proxy_user:
             ora_conn = cx_Oracle.connect('[%s]' % ora_proxy_user, dsn=ora_dsn)

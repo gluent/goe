@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ OrchestrationDefaults: Library of functions providing default values for command line options.
-    This is a temporary measure in order to get the code out of gluent.py and into a single location, in the
+    This is a temporary measure in order to get the code out of goe.py and into a single location, in the
     future we expect to refactor all option processing, including defaults, and this module will hopefully become
     redundant at that time.
     LICENSE_TEXT
@@ -83,7 +83,7 @@ def time_in_seconds_from_string(opt_name, opt_val: str):
 
 
 ###########################################################################
-# GDP DEFAULTS
+# GOE DEFAULTS
 ###########################################################################
 
 
@@ -902,7 +902,7 @@ def sqoop_disable_direct_default() -> bool:
 
 
 def sqoop_outdir_default() -> Optional[str]:
-    return os.environ.get("SQOOP_OUTDIR") or ".glsqoop"
+    return os.environ.get("SQOOP_OUTDIR") or ".goesqoop"
 
 
 def sqoop_overrides_default() -> Optional[str]:
@@ -970,7 +970,7 @@ def spark_thrift_port_default() -> Optional[str]:
 
 
 ###########################################################################
-# GDP LISTENER DEFAULTS
+# GOE LISTENER DEFAULTS
 ###########################################################################
 
 

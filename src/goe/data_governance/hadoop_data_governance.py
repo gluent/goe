@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ Standalone helper functions for data governance
-    Used from gluent.py and other consumers such incremental update
+    Used from goe.py and other consumers such incremental update
     LICENSE_TEXT
 """
 
@@ -29,9 +29,9 @@ def get_hadoop_data_governance_client_from_options(options, messages, dry_run=Fa
     api_pass = options.data_governance_api_pass
     if options.password_key_file:
         pass_tool = PasswordTools()
-        gl_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
+        goe_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
         messages.log("Decrypting %s password" % options.data_governance_api_user, detail=VVERBOSE)
-        api_pass = pass_tool.b64decrypt(api_pass, gl_key)
+        api_pass = pass_tool.b64decrypt(api_pass, goe_key)
 
     # we currently only support Navigator
     navigator_client = ClouderaNavigator(options.data_governance_api_url,
@@ -70,12 +70,12 @@ def is_valid_data_governance_tag(tag):
     return is_valid_data_governance_dynamic_token(tag, VALID_DATA_GOVERNANCE_DYNAMIC_TAGS, custom_strings_allowed=True)
 
 
-def filter_tags_by_gluent_object_type(tag_list, gluent_object_type, messages):
-    if not tag_list or not gluent_object_type:
+def filter_tags_by_goe_object_type(tag_list, goe_object_type, messages):
+    if not tag_list or not goe_object_type:
         return tag_list
     assert type(tag_list) is list
 
-    if gluent_object_type in DATA_GOVERNANCE_GLUENT_DB_OBJECT_TYPES:
+    if goe_object_type in DATA_GOVERNANCE_GOE_DB_OBJECT_TYPES:
         mute_list = MUTED_DATA_GOVERNANCE_DB_TAGS
     else:
         mute_list = MUTED_DATA_GOVERNANCE_OBJECT_TAGS
@@ -103,14 +103,14 @@ def expand_dynamic_data_governance_tag(tag, data_gov_client):
         return tag
 
 
-def expand_data_governance_tags_csv(data_gov_client, messages, gluent_object_type=None):
+def expand_data_governance_tags_csv(data_gov_client, messages, goe_object_type=None):
     """ Merge & expand the two csv option strings
         auto_tags_csv and custom_tags_csv should be cached in data_gov_client before using this function
         No assertions if they are blank, the config may genuinely have them unset
     """
     auto_tags = data_gov_client.auto_tags_csv.split(',') if data_gov_client.auto_tags_csv else []
-    if gluent_object_type:
-        auto_tags = filter_tags_by_gluent_object_type(auto_tags, gluent_object_type, messages)
+    if goe_object_type:
+        auto_tags = filter_tags_by_goe_object_type(auto_tags, goe_object_type, messages)
     custom_tags = data_gov_client.custom_tags_csv.split(',') if data_gov_client.custom_tags_csv else []
     unified_tags = set(auto_tags + custom_tags)
     expanded_tags = [expand_dynamic_data_governance_tag(_, data_gov_client) for _ in unified_tags]
@@ -124,12 +124,12 @@ def is_valid_data_governance_auto_property(tag):
     return is_valid_data_governance_dynamic_token(tag, VALID_DATA_GOVERNANCE_DYNAMIC_TAGS)
 
 
-def filter_properties_by_gluent_object_type(prop_dict, gluent_object_type, messages=None):
-    if not prop_dict or not gluent_object_type:
+def filter_properties_by_goe_object_type(prop_dict, goe_object_type, messages=None):
+    if not prop_dict or not goe_object_type:
         return prop_dict
     assert type(prop_dict) is dict
 
-    if gluent_object_type in DATA_GOVERNANCE_GLUENT_DB_OBJECT_TYPES:
+    if goe_object_type in DATA_GOVERNANCE_GOE_DB_OBJECT_TYPES:
         mute_list = MUTED_DATA_GOVERNANCE_DB_PROPERTIES
     else:
         mute_list = MUTED_DATA_GOVERNANCE_OBJECT_PROPERTIES
@@ -140,7 +140,7 @@ def filter_properties_by_gluent_object_type(prop_dict, gluent_object_type, messa
     return filtered_props
 
 
-def data_governance_auto_property_defaults(rdbms_name, rdbms_schema, source_rdbms_object=None, target_rdbms_object=None, gluent_object_type=None):
+def data_governance_auto_property_defaults(rdbms_name, rdbms_schema, source_rdbms_object=None, target_rdbms_object=None, goe_object_type=None):
     """ Create a dictionary of the default properties for an operation
         These values may not be used or may be merged with other properties at a later point, these are optimistic defaults
     """
@@ -152,29 +152,29 @@ def data_governance_auto_property_defaults(rdbms_name, rdbms_schema, source_rdbm
         property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_SOURCE_RDBMS_OBJECT] = ('%s.%s.%s' % (rdbms_name, rdbms_schema, source_rdbms_object)).upper()
     if target_rdbms_object:
         property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_TARGET_RDBMS_OBJECT] = ('%s.%s.%s' % (rdbms_name, rdbms_schema, target_rdbms_object)).upper()
-    if gluent_object_type:
-        property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_GLUENT_OBJECT_TYPE] = gluent_object_type
-    property_defaults = filter_properties_by_gluent_object_type(property_defaults, gluent_object_type)
+    if goe_object_type:
+        property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_GOE_OBJECT_TYPE] = goe_object_type
+    property_defaults = filter_properties_by_goe_object_type(property_defaults, goe_object_type)
     return property_defaults
 
 
-def expand_data_governance_props(data_gov_client, messages, gluent_object_type=None):
+def expand_data_governance_props(data_gov_client, messages, goe_object_type=None):
     """ Expand the property values defined via offload.env or command line into a single dictionary
         This code relies on values below being cached in data_gov_client:
             rdbms_name, rdbms_schema, source_rdbms_object, target_rdbms_object
             Only 1 of source_rdbms_object_name/target_rdbms_object_name can be used, this dictates which direction we are going in
-        gluent_object_type is only applicable when creating an object, otherwise pass as None
+        goe_object_type is only applicable when creating an object, otherwise pass as None
     """
     assert data_gov_client
     assert not (data_gov_client.source_rdbms_object_name and data_gov_client.target_rdbms_object_name)
-    assert not gluent_object_type or gluent_object_type in VALID_DATA_GOVERNANCE_GLUENT_OBJECT_TYPES, 'Invalid gluent_object_type: %s' % gluent_object_type
+    assert not goe_object_type or goe_object_type in VALID_DATA_GOVERNANCE_GOE_OBJECT_TYPES, 'Invalid goe_object_type: %s' % goe_object_type
 
     auto_props = data_gov_client.auto_properties_csv.split(',') if data_gov_client.auto_properties_csv else []
     data_gov_prop_dict = data_governance_auto_property_defaults(data_gov_client.rdbms_name,
                                                                 data_gov_client.rdbms_schema,
                                                                 source_rdbms_object=data_gov_client.source_rdbms_object_name,
                                                                 target_rdbms_object=data_gov_client.target_rdbms_object_name,
-                                                                gluent_object_type=gluent_object_type)
+                                                                goe_object_type=goe_object_type)
     if data_gov_client.custom_properties:
         if type(data_gov_client.custom_properties) is dict:
             data_gov_custom_prop_dict = data_gov_client.custom_properties
@@ -188,27 +188,27 @@ def expand_data_governance_props(data_gov_client, messages, gluent_object_type=N
     return data_gov_prop_dict
 
 
-def define_data_governance_desc(gluent_object_type):
+def define_data_governance_desc(goe_object_type):
   """ Builds a description of what we've just offloaded or created
       This function seems overkill for what it, it went through a number of version with decreasing detail in the description,
       I've left it as a function so there's a single place to change if we choose to start increasing the detail again.
   """
-  if not gluent_object_type:
+  if not goe_object_type:
       return None
-  dg_desc = 'Gluent Offload %s' % gluent_object_type
+  dg_desc = 'GOE Offload %s' % goe_object_type
   # Just incase an object types start with "Offload"
   dg_desc = dg_desc.replace('Offload Offload', 'Offload')
   return dg_desc
 
 
-def data_governance_register_new_object(hadoop_db, object_name, data_gov_client, messages, gluent_object_type, renaming_from_db=None, renaming_from_object_name=None, dg_object_type=None):
+def data_governance_register_new_object(hadoop_db, object_name, data_gov_client, messages, goe_object_type, renaming_from_db=None, renaming_from_object_name=None, dg_object_type=None):
     """ Update data governance metadata for a new object, most likely a table but could be a view
-        If metadata is already there then we'll update to reflect current config, the Gluent API handles the merging with existing config
-        Located in this module instead of gluent.py to avoid circular dependencies
+        If metadata is already there then we'll update to reflect current config, the GOE API handles the merging with existing config
+        Located in this module instead of goe.py to avoid circular dependencies
     """
-    data_gov_tags = expand_data_governance_tags_csv(data_gov_client, messages, gluent_object_type=gluent_object_type)
-    data_gov_props = expand_data_governance_props(data_gov_client, messages, gluent_object_type=gluent_object_type)
-    data_gov_desc = define_data_governance_desc(gluent_object_type)
+    data_gov_tags = expand_data_governance_tags_csv(data_gov_client, messages, goe_object_type=goe_object_type)
+    data_gov_props = expand_data_governance_props(data_gov_client, messages, goe_object_type=goe_object_type)
+    data_gov_desc = define_data_governance_desc(goe_object_type)
     custom_metadata = data_gov_client.new_custom_metadata(description=data_gov_desc, tags=data_gov_tags, properties=data_gov_props)
 
     # Before we register anything check if there is already some metadata
@@ -252,13 +252,13 @@ def data_governance_update_metadata(hadoop_db, object_name, data_gov_client, mes
         metadata_id = data_gov_client.register_custom_object_metadata(hadoop_db, object_name, metadata_changes)
 
 
-def data_governance_register_new_db(hadoop_db, gluent_object_type, data_gov_client, messages):
+def data_governance_register_new_db(hadoop_db, goe_object_type, data_gov_client, messages):
     """ Update data governance metadata for a new database
-        If metadata is already there then we'll update to reflect current config, the Gluent API handles the merging with existing config
+        If metadata is already there then we'll update to reflect current config, the GOE API handles the merging with existing config
     """
-    data_gov_tags = expand_data_governance_tags_csv(data_gov_client, messages, gluent_object_type=gluent_object_type)
-    data_gov_props = expand_data_governance_props(data_gov_client, messages, gluent_object_type=gluent_object_type)
-    data_gov_desc = define_data_governance_desc(gluent_object_type)
+    data_gov_tags = expand_data_governance_tags_csv(data_gov_client, messages, goe_object_type=goe_object_type)
+    data_gov_props = expand_data_governance_props(data_gov_client, messages, goe_object_type=goe_object_type)
+    data_gov_desc = define_data_governance_desc(goe_object_type)
     custom_metadata = data_gov_client.new_custom_metadata(description=data_gov_desc, tags=data_gov_tags, properties=data_gov_props)
 
     dg_metadata = data_gov_client.get_hive_db_metadata(hadoop_db, ignore_missing_metadata=True)
@@ -275,16 +275,16 @@ def data_governance_register_new_db(hadoop_db, gluent_object_type, data_gov_clie
     messages.log('Metadata id: %s' % metadata_id, detail=VVERBOSE)
 
 
-def data_governance_register_new_db_step(hadoop_db, data_gov_client, messages, gluent_object_type, options=None):
+def data_governance_register_new_db_step(hadoop_db, data_gov_client, messages, goe_object_type, options=None):
     opts_execute = options.execute if options else True
     if data_gov_client:
         def step_fn():
-            data_governance_register_new_db(hadoop_db, gluent_object_type, data_gov_client, messages)
+            data_governance_register_new_db(hadoop_db, goe_object_type, data_gov_client, messages)
         return messages.offload_step(command_steps.STEP_REGISTER_DATA_GOV, step_fn,
                                      execute=opts_execute, optional=True)
 
 
-def data_governance_register_new_object_step(hadoop_db, object_name, data_gov_client, messages, gluent_object_type, options=None, renaming_from_db=None, renaming_from_object_name=None, dg_object_type=None):
+def data_governance_register_new_object_step(hadoop_db, object_name, data_gov_client, messages, goe_object_type, options=None, renaming_from_db=None, renaming_from_object_name=None, dg_object_type=None):
   opts_execute = options.execute if options else True
   if data_gov_client:
     def step_fn():
@@ -292,7 +292,7 @@ def data_governance_register_new_object_step(hadoop_db, object_name, data_gov_cl
                                           object_name,
                                           data_gov_client,
                                           messages,
-                                          gluent_object_type,
+                                          goe_object_type,
                                           renaming_from_db=renaming_from_db,
                                           renaming_from_object_name=renaming_from_object_name,
                                           dg_object_type=dg_object_type)
@@ -300,24 +300,24 @@ def data_governance_register_new_object_step(hadoop_db, object_name, data_gov_cl
                                  execute=opts_execute, optional=True)
 
 
-def data_governance_register_new_table_step(hadoop_db, object_name, data_gov_client, messages, gluent_object_type, options=None, renaming_from_db=None, renaming_from_object_name=None):
+def data_governance_register_new_table_step(hadoop_db, object_name, data_gov_client, messages, goe_object_type, options=None, renaming_from_db=None, renaming_from_object_name=None):
     return data_governance_register_new_object_step(hadoop_db,
                                                     object_name,
                                                     data_gov_client,
                                                     messages,
-                                                    gluent_object_type,
+                                                    goe_object_type,
                                                     options=options,
                                                     renaming_from_db=renaming_from_db,
                                                     renaming_from_object_name=renaming_from_object_name,
                                                     dg_object_type=DATA_GOVERNANCE_OBJECT_TYPE_TABLE)
 
 
-def data_governance_register_new_view_step(hadoop_db, object_name, data_gov_client, messages, gluent_object_type, options=None):
+def data_governance_register_new_view_step(hadoop_db, object_name, data_gov_client, messages, goe_object_type, options=None):
     return data_governance_register_new_object_step(hadoop_db,
                                                     object_name,
                                                     data_gov_client,
                                                     messages,
-                                                    gluent_object_type,
+                                                    goe_object_type,
                                                     options=options,
                                                     dg_object_type=DATA_GOVERNANCE_OBJECT_TYPE_VIEW)
 
@@ -332,16 +332,16 @@ def data_governance_update_metadata_step(hadoop_db, hadoop_object_name, data_gov
 
 
 def data_governance_register_new_multi_db_step(hadoop_db_list, data_gov_client, messages, options=None):
-    """ Accepts a list of new databases as tuples of (db_name, gluent_object_type)
-        This is purely to fit with how we work on a list of CREATE DATABASE sqls in gluent.py
+    """ Accepts a list of new databases as tuples of (db_name, goe_object_type)
+        This is purely to fit with how we work on a list of CREATE DATABASE sqls in goe.py
     """
     assert hadoop_db_list
     assert type(hadoop_db_list) is list
     opts_execute = options.execute if options else True
     if data_gov_client:
         def step_fn():
-            for hadoop_db, gluent_object_type in hadoop_db_list:
-                data_governance_register_new_db(hadoop_db, gluent_object_type, data_gov_client, messages)
+            for hadoop_db, goe_object_type in hadoop_db_list:
+                data_governance_register_new_db(hadoop_db, goe_object_type, data_gov_client, messages)
         return messages.offload_step(command_steps.STEP_REGISTER_DATA_GOV, step_fn,
                                      execute=opts_execute, optional=True)
 
@@ -370,13 +370,13 @@ logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 if __name__ == "__main__":
     import sys
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
 
     log_level = sys.argv[-1:][0].upper()
     if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
         log_level='CRITICAL'
 
-    set_gluentlib_logging(log_level)
+    set_goelib_logging(log_level)
 
     class SomeOpts(object):
         def __init__(self):

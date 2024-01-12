@@ -10,14 +10,14 @@ import decimal
 import logging
 from unittest import TestCase, main
 
-from goe.gluent import OffloadOperation
+from goe.goe import OffloadOperation
 from goe.offload.column_metadata import (
     CanonicalColumn,
     ColumnMetadataInterface,
     get_partition_columns,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
 )
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.offload import OffloadException
@@ -130,10 +130,21 @@ class TestCurrentBackendTable(TestCase):
         )
         # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
         try:
-            run_offload({"owner_table": self.schema + "." + FACT_NAME})
+            run_offload(
+                {
+                    "owner_table": self.schema + "." + FACT_NAME,
+                    "create_backend_db": True,
+                }
+            )
         except OffloadException:
             # If this one fails then we let the exception bubble up.
-            run_offload({"owner_table": self.schema + "." + FACT_NAME, "reset_backend_table": True})
+            run_offload(
+                {
+                    "owner_table": self.schema + "." + FACT_NAME,
+                    "reset_backend_table": True,
+                    "create_backend_db": True,
+                }
+            )
 
     def _compare_sql_and_python_synthetic_part_number_outcomes(
         self, num, num_column, granularity, padding_digits
@@ -450,7 +461,7 @@ class TestCurrentBackendTable(TestCase):
             return
         max_precision = 9
         canonical_column = CanonicalColumn(
-            "A_COLUMN", GLUENT_TYPE_INTEGER_4, from_override=True
+            "A_COLUMN", GOE_TYPE_INTEGER_4, from_override=True
         )
         num_column = self.api.from_canonical_column(canonical_column)
         for granularity in [1000, 10, 512, 1234]:
@@ -466,7 +477,7 @@ class TestCurrentBackendTable(TestCase):
         if not self.api.synthetic_partitioning_supported():
             return
         max_precision = 18
-        canonical_column = CanonicalColumn("A_COLUMN", GLUENT_TYPE_INTEGER_8)
+        canonical_column = CanonicalColumn("A_COLUMN", GOE_TYPE_INTEGER_8)
         num_column = self.api.from_canonical_column(canonical_column)
         for granularity in [1000, 10000, 8192, 1234]:
             for num in partition_key_test_numbers(
@@ -484,7 +495,7 @@ class TestCurrentBackendTable(TestCase):
             return
         max_precision = min(self.api.max_decimal_precision(), 18)
         canonical_column = CanonicalColumn(
-            "A_COLUMN", GLUENT_TYPE_DECIMAL, data_precision=max_precision, data_scale=0
+            "A_COLUMN", GOE_TYPE_DECIMAL, data_precision=max_precision, data_scale=0
         )
         num_column = self.api.from_canonical_column(canonical_column)
         for granularity in [1000, 100000, 8192, 1234]:
@@ -509,7 +520,7 @@ class TestCurrentBackendTable(TestCase):
             return
         max_precision = min(self.api.max_decimal_precision(), 38)
         canonical_column = CanonicalColumn(
-            "A_COLUMN", GLUENT_TYPE_DECIMAL, data_precision=max_precision, data_scale=0
+            "A_COLUMN", GOE_TYPE_DECIMAL, data_precision=max_precision, data_scale=0
         )
         num_column = self.api.from_canonical_column(canonical_column)
         for granularity in [1000, 100000, 16384, 1234]:
@@ -535,7 +546,7 @@ class TestCurrentBackendTable(TestCase):
             return
         # 12399.6 truncates decimal places on CDH 5.15 and rounds on CDH 6.2 therefore a good test value.
         canonical_column = CanonicalColumn(
-            "A_COLUMN", GLUENT_TYPE_DECIMAL, data_precision=18, data_scale=9
+            "A_COLUMN", GOE_TYPE_DECIMAL, data_precision=18, data_scale=9
         )
         num_column = self.api.from_canonical_column(canonical_column)
         for granularity in [1000, 100, 8192, 1234]:
@@ -570,7 +581,7 @@ class TestCurrentBackendTable(TestCase):
             return
         # 12399.6 truncates decimal places on CDH 5.15 and rounds on CDH 6.2 therefore a good test value.
         canonical_column = CanonicalColumn(
-            "A_COLUMN", GLUENT_TYPE_DECIMAL, data_precision=38, data_scale=9
+            "A_COLUMN", GOE_TYPE_DECIMAL, data_precision=38, data_scale=9
         )
         num_column = self.api.from_canonical_column(canonical_column)
         for granularity in [1000, 100, 8192, 1234]:

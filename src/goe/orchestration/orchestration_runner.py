@@ -10,8 +10,8 @@ import sys
 import traceback
 from typing import Optional, TYPE_CHECKING
 
-# Gluent
-from goe.gluent import (
+# GOE
+from goe.goe import (
     OffloadOperation,
     get_log_fh,
     get_offload_target_table,
@@ -209,7 +209,7 @@ class OrchestrationRunner:
     def _gen_config(
         self, config_overrides, dry_run, suppress_stdout=False
     ) -> OrchestrationConfig:
-        # options.execute remains a disease in gluent.py and IU therefore we need this preamble for config
+        # options.execute remains a disease in goe.py and IU therefore we need this preamble for config
         overrides = config_overrides or {}
         if "execute" not in overrides:
             overrides["execute"] = bool(not dry_run)
@@ -331,7 +331,7 @@ class OrchestrationRunner:
             raise
 
     def _init_command_log(self, command: str, params, reuse_log=False) -> None:
-        """Create a log file for the orchestration command and set the global file handle in gluent.py."""
+        """Create a log file for the orchestration command and set the global file handle in goe.py."""
 
         def get_owner_table_for_command():
             if command == COMMAND_ID_CONNECT:
@@ -351,10 +351,10 @@ class OrchestrationRunner:
                     )
                 return owner_table
 
-        # Install current config as global gluent.py options.
+        # Install current config as global goe.py options.
         init(self._config)
         if not reuse_log:
-            # Create log file for command and install it as global gluent.py logging file handle.
+            # Create log file for command and install it as global goe.py logging file handle.
             owner_table_token = get_owner_table_for_command()
             log_prefix = LOG_FILE_PREFIXES[command]
             if owner_table_token:
@@ -435,7 +435,7 @@ class OrchestrationRunner:
         params: Can be a dict or an OptParse object.
         execution_id: A UUID used to uniquely identify the Offload. Can be generted internally or provided as
                       an override.
-        reuse_log: True indicates that there is already a log file installed in gluent.py for us to integrate with.
+        reuse_log: True indicates that there is already a log file installed in goe.py for us to integrate with.
         messages_override: Allows us to pass in an existing messages object so a parent can inspect the messages,
                            used for testing.
         """

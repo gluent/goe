@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ ORACLE insert/update/delete load generator
-    
+
     LICENSE_TEXT
 """
 
@@ -404,7 +404,7 @@ if __name__ == "__main__":
     import os
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
 
     def usage(prog_name):
         print(
@@ -423,7 +423,7 @@ if __name__ == "__main__":
         log_level = sys.argv[-1:][0].upper()
         if log_level not in ("DEBUG", "INFO", "WARNING", "CRITICAL", "ERROR"):
             log_level = "CRITICAL"
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         args = [_ for _ in sys.argv if _.upper() != log_level]
 

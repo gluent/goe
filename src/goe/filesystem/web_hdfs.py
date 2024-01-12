@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" WebHdfs: WebHDFS/HTTPFS implementation of GluentDfs
+""" WebHdfs: WebHDFS/HTTPFS implementation of GOEDfs
     LICENSE_TEXT
 """
 
@@ -17,9 +17,9 @@ from google.api_core import retry
 from hdfs.ext.kerberos import KerberosClient
 from hdfs.util import HdfsError
 
-from goe.filesystem.gluent_dfs import GluentDfs, GluentDfsDeleteNotComplete, GluentDfsException,\
+from goe.filesystem.goe_dfs import GOEDfs, GOEDfsDeleteNotComplete, GOEDfsException,\
     gen_fs_uri,\
-    DFS_RETRY_TIMEOUT, GLUENT_DFS_WEBHDFS, OFFLOAD_FS_SCHEMES_REQUIRING_CONTAINER, OFFLOAD_FS_SCHEME_INHERIT
+    DFS_RETRY_TIMEOUT, GOE_DFS_WEBHDFS, OFFLOAD_FS_SCHEMES_REQUIRING_CONTAINER, OFFLOAD_FS_SCHEME_INHERIT
 
 
 ###############################################################################
@@ -56,10 +56,10 @@ logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 ###############################################################################
-# GluentWebHdfsClient
+# GOEWebHdfsClient
 ###############################################################################
 
-class GluentWebHdfsClient(KerberosClient):
+class GOEWebHdfsClient(KerberosClient):
 
     """ A new client subclass for handling HTTPS connections as well as Kerberos & insecure.
     We have removed "cert" parameter. See link below for "cert" usage.
@@ -73,7 +73,7 @@ class GluentWebHdfsClient(KerberosClient):
     """
 
     def __init__(self, url, verify=None, user=None, **kwargs):
-        super(GluentWebHdfsClient, self).__init__(url, session=get_hdfs_session(verify, user), **kwargs)
+        super(GOEWebHdfsClient, self).__init__(url, session=get_hdfs_session(verify, user), **kwargs)
 
     def __del__(self):
         if hasattr(self, '_session') and self._session:
@@ -84,11 +84,11 @@ class GluentWebHdfsClient(KerberosClient):
 
 
 ###############################################################################
-# GluentWebHdfsClient
+# GOEWebHdfsClient
 ###############################################################################
 
-class WebHdfs(GluentDfs):
-    """ A Gluent wrapper over HDFSCli WebHDFS library
+class WebHdfs(GOEDfs):
+    """ A GOE wrapper over HDFSCli WebHDFS library
         http://hdfscli.readthedocs.org/en/latest/api.html
         verify_ssl_cert: Any of True, False, str(path to cert/bundle) for verify_ssl_cert to enable SSL. None to disable SSL
         dry_run: Do not make changes. stat() continues to function though
@@ -110,11 +110,11 @@ class WebHdfs(GluentDfs):
         self._hdfs_data = hdfs_data
         self._do_not_connect = do_not_connect
         self._hdfs = self._hdfs_client(hdfs_namenode, webhdfs_port, hdfs_user, use_kerberos, verify_ssl_cert, **kwargs)
-        self.dfs_mechanism = GLUENT_DFS_WEBHDFS
+        self.dfs_mechanism = GOE_DFS_WEBHDFS
         self.backend_dfs = 'HDFS'
 
     def _hdfs_client(self, hdfs_namenode, webhdfs_port, hdfs_user, use_kerberos, verify_ssl_cert=None, **kwargs):
-        """ Returns a GluentWebHdfsClient client after first finding an active name node in the csv list of namenodes
+        """ Returns a GOEWebHdfsClient client after first finding an active name node in the csv list of namenodes
             Works on the assumption that kerberos/ssl requirements for WebHdfs also apply to the REST API used to
             identify namenode status.
         """
@@ -169,7 +169,7 @@ class WebHdfs(GluentDfs):
 
         self.debug('Client url: %s' % self._url)
         self.debug('Verify SSL: %s' % verify_ssl_cert)
-        return GluentWebHdfsClient(self._url, verify=verify_ssl_cert, user=auth_user, **kwargs)
+        return GOEWebHdfsClient(self._url, verify=verify_ssl_cert, user=auth_user, **kwargs)
 
     def __str__(self):
         return self._url
@@ -190,7 +190,7 @@ class WebHdfs(GluentDfs):
         if not self._dry_run:
             self._hdfs.makedirs(dfs_path)
 
-    @retry.Retry(predicate=retry.if_exception_type(GluentDfsDeleteNotComplete), deadline=DFS_RETRY_TIMEOUT)
+    @retry.Retry(predicate=retry.if_exception_type(GOEDfsDeleteNotComplete), deadline=DFS_RETRY_TIMEOUT)
     def delete(self, dfs_path, recursive=False):
         """ Delete a file or directory and contents.
         """
@@ -205,7 +205,7 @@ class WebHdfs(GluentDfs):
             self._post_cloud_delete_wait(scheme)
             if scheme in OFFLOAD_FS_SCHEMES_REQUIRING_CONTAINER and self.stat(dfs_path):
                 self.debug('%s delete incomplete, retrying' % scheme)
-                raise GluentDfsDeleteNotComplete
+                raise GOEDfsDeleteNotComplete
 
             # True and False are both success therefore not reacting to res == False
             logger.debug('delete() returning: %s' % res)
@@ -228,11 +228,11 @@ class WebHdfs(GluentDfs):
         # return tuple of 3 parts of e.g. 'g+rw' : ('g', '+', 'rw')
         m = re.match('([ugo]+)([+\-])([rwx]+)', mode)
         if not m or len(m.groups()) != 3:
-            raise GluentDfsException('Invalid chmod delta mode "%s"', mode)
+            raise GOEDfsException('Invalid chmod delta mode "%s"', mode)
         return m.groups()
 
     def octstr_from_human_perm_delta(self, mode):
-        # only supports rwx keys. That should be fine for Gluent usage
+        # only supports rwx keys. That should be fine for GOE usage
         perm_values = {'r': 4, 'w': 2, 'x': 1}
         ugo_values = {'u': 0, 'g': 0, 'o': 0}
         mode_groups = self.regex_mode_delta(mode)
@@ -273,7 +273,7 @@ class WebHdfs(GluentDfs):
                 new_mode = self.apply_mode_delta(perms, mode_delta, self.regex_mode_delta(mode)[1])
                 logger.debug('new_mode: %s' % new_mode)
             else:
-                raise GluentDfsException('Invalid chmod mode "%s"', mode)
+                raise GOEDfsException('Invalid chmod mode "%s"', mode)
 
             if not self._dry_run:
                 if str(perms) != str(new_mode):
@@ -310,7 +310,7 @@ class WebHdfs(GluentDfs):
                 self.debug('copy_from_local() returned: %s' % res)
             except HdfsError as exc:
                 if 'already exists' in str(exc) and not overwrite:
-                    raise GluentDfsException('Cannot copy file over existing file: %s' % dfs_path)
+                    raise GOEDfsException('Cannot copy file over existing file: %s' % dfs_path)
                 else:
                     raise
 
@@ -318,7 +318,7 @@ class WebHdfs(GluentDfs):
         logger.info('copy_to_local(%s, %s)' % (dfs_path, local_path))
         if not self._dry_run:
             if file_exists(local_path) and not overwrite:
-                raise GluentDfsException('Cannot copy file over existing file: %s' % local_path)
+                raise GOEDfsException('Cannot copy file over existing file: %s' % local_path)
             res = self._hdfs.download(dfs_path, local_path, overwrite=overwrite)
             self.debug('copy_to_local() returned: %s' % res)
 
@@ -329,7 +329,7 @@ class WebHdfs(GluentDfs):
                 self._hdfs.write(dfs_path, data, overwrite)
             except HdfsError as exc:
                 if 'already exists' in str(exc) and not overwrite:
-                    raise GluentDfsException('Cannot copy file over existing file: %s' % dfs_path)
+                    raise GOEDfsException('Cannot copy file over existing file: %s' % dfs_path)
                 else:
                     raise
 

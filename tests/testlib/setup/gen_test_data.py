@@ -220,7 +220,7 @@ def gen_interval_ds(precision=9, scale=9):
 def gen_cxo_type_spec(col_type, length=None, precision=None, scale=None):
     if 'CHAR' in col_type:
         return length
-    #GOE-1503: Following workaround now disabled as we've temporarily shrunk GL_TYPES.NUMBER_16 to a NUMBER(36)
+    #GOE-1503: Following workaround now disabled as we've temporarily shrunk GOE_TYPES.NUMBER_16 to a NUMBER(36)
     #elif col_type == 'NUMBER' and precision == 38 and scale in [0, None]: # workaround for cx_Oracle 7.3.0 putting signed integers of 38 digits in as garbage
     #    return cxo.STRING
     elif col_type in ('NUMBER', 'FLOAT'):

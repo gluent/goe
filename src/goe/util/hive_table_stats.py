@@ -41,7 +41,7 @@ COL_STATS = ('ndv', 'num_nulls', 'avg_col_len', 'low_val', 'high_val', 'max_col_
 LOW_CARDINALITY_THRESHOLD = 0.25
 
 # Prefix for a temporary 'stats' view
-TEMP_VIEW_PREFIX='gl_tempview_'
+TEMP_VIEW_PREFIX='goe_tempview_'
 
 # Default 'fudge factor' for num_bytes statistic (issue #263)
 FUDGE_NUM_BYTES=0.25
@@ -322,7 +322,7 @@ class HiveTableStats(object):
                 (hive_table.db_table, col_name))
 
         for partition_spec in hive_table.table_partitions(as_spec=True):
-            # partition_spec: [('offload_bucket_id', 0), ('gl_part_m_time_id', '2012-09')]
+            # partition_spec: [('offload_bucket_id', 0), ('goe_part_m_time_id', '2012-09')]
             for part in partition_spec:
                 name, value = part
                 if col_name == name:
@@ -1125,7 +1125,7 @@ if __name__ == "__main__":
     import os
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
 
 
     def usage(prog_name):
@@ -1145,7 +1145,7 @@ if __name__ == "__main__":
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level='CRITICAL'
 
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         hive_stats = HiveTableStats.construct(db_name, table_name)
 

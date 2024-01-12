@@ -389,7 +389,7 @@
     {%- for value in rdbms_data|sort(attribute="OBJECT_NAME") -%}
     <div class="row table-detail-row">
         <div class="col-md-3 word-break-keep-all">
-            <p class="table-detail-content">{{ value['OBJECT_TYPE_GLUENT']|replace('_', ' ')|capitalize }}</p>
+            <p class="table-detail-content">{{ value['OBJECT_TYPE_GOE']|replace('_', ' ')|capitalize }}</p>
         </div>
         <div class="col-md-6 table-detail-left-border word-break-break-word">
             <p class="table-detail-content">{{ value['OBJECT_OWNER'] }}.{{ value['OBJECT_NAME'] }}</p>
@@ -422,7 +422,7 @@
     {%- for value in hive_data|sort(attribute="OBJECT_NAME") -%}
     <div class="row table-detail-row">
         <div class="col-md-3 word-break-keep-all">
-            <p class="table-detail-content">{{ value['OBJECT_TYPE_GLUENT']|replace('_', ' ')|capitalize }}</p>
+            <p class="table-detail-content">{{ value['OBJECT_TYPE_GOE']|replace('_', ' ')|capitalize }}</p>
         </div>
         <div class="col-md-6 table-detail-left-border word-break-break-word">
             <p class="table-detail-content">{{ value['OBJECT_OWNER'] }}.{{ value['OBJECT_NAME'] }}</p>

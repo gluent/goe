@@ -8,7 +8,7 @@ https://docs.gunicorn.org/en/latest/settings.html
 # Standard Library
 import os
 
-# Gluent
+# GOE
 from goe.listener.config import settings
 from goe.listener.config.logging import Logger, StubbedGunicornLogger
 
@@ -213,7 +213,7 @@ logger_class = StubbedGunicornLogger
 #
 #       A string or None to choose a default of something like 'gunicorn'.
 
-proc_name = "gluent-listener"
+proc_name = "goe-listener"
 
 
 # Server hooks
@@ -247,7 +247,7 @@ def pre_exec(server):
 
 def when_ready(server):
     """Execute just after the server is started."""
-    logger.info("Gluent Listener HTTP workers started successfully.")
+    logger.info("GOE Listener HTTP workers started successfully.")
 
 
 def worker_int(worker):
@@ -259,7 +259,7 @@ def worker_abort(worker):
 
 
 def on_exit(server):
-    logger.info("Gluent Listener HTTP workers stopped")
+    logger.info("GOE Listener HTTP workers stopped")
 
 
 def post_worker_init(worker):

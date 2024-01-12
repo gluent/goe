@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" Gluent Inc (c) 2015-2021
+""" LICENSE_TEXT
 """
 
 from goe.offload.offload_constants import (

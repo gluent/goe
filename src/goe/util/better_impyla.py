@@ -1526,7 +1526,7 @@ def to_hadoop_literal(py_val, target):
 if __name__ == "__main__":
     import sys
 
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.misc_functions import set_goelib_logging
 
     def usage(prog_name):
         print("%s: db.table <operation> [parameters] [debug level]" % prog_name)
@@ -1546,7 +1546,7 @@ if __name__ == "__main__":
         if log_level not in ('DEBUG', 'INFO', 'WARNING', 'CRITICAL', 'ERROR'):
             log_level='CRITICAL'
 
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
         hive_conn = HiveConnection.fromdefault()
         hive_table = HiveTable(db_name, table_name, hive_conn)

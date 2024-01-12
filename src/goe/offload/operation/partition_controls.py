@@ -59,7 +59,7 @@ def default_offload_partition_columns_from_rdbms(rdbms_partition_columns, rdbms_
         # If offload_partition_functions are being specified then we cannot reject string partitioning just yet.
         # If a function is being used on the string column its type may change to a supported type.
         return_cols = [_.name for _ in rdbms_partition_columns if not _.is_string_based()]
-        pf_text = PARTITION_BY_STRING_PARTITION_FUNCTION_SUFFIX if backend_table.gluent_partition_functions_supported() else ''
+        pf_text = PARTITION_BY_STRING_PARTITION_FUNCTION_SUFFIX if backend_table.goe_partition_functions_supported() else ''
         if [_ for _ in rdbms_partition_columns if _.is_string_based()]:
             seed_notice('Character-based', return_cols, messages, middle_text=pf_text)
     return return_cols
@@ -190,7 +190,7 @@ def validate_offload_partition_functions(offload_partition_functions, offload_pa
         assert isinstance(offload_partition_functions, (str, list)),\
             'Type {} is not str or list'.format(type(offload_partition_functions))
 
-    if offload_partition_functions and not backend_table.gluent_partition_functions_supported():
+    if offload_partition_functions and not backend_table.goe_partition_functions_supported():
         raise OffloadPartitionControlsException(
             '%s on %s'
             % (PARTITION_FUNCTIONS_NOT_SUPPORTED_EXCEPTION_TEXT, backend_table.backend_db_name())
@@ -274,7 +274,7 @@ def validate_offload_partition_granularity(offload_partition_granularity, offloa
         if not part_fn:
             # If there's a partition function we don't yet know what data type the backend column will be
             date_as_string = offloading_date_as_string(rdbms_col, backend_column, variable_string_columns_csv)
-            pf_text = PARTITION_BY_STRING_PARTITION_FUNCTION_SUFFIX if backend_table.gluent_partition_functions_supported() else ''
+            pf_text = PARTITION_BY_STRING_PARTITION_FUNCTION_SUFFIX if backend_table.goe_partition_functions_supported() else ''
             if (rdbms_col.is_string_based() or date_as_string) and not backend_table.partition_by_string_supported():
                 raise OffloadPartitionControlsException(
                     '%s%s: %s' % (PARTITION_BY_STRING_NOT_SUPPORTED_EXCEPTION_TEXT, pf_text, col_name)

@@ -16,11 +16,11 @@ from goe.offload.offload_validation import CrossDbValidator, \
     DEFAULT_SELECT_COLS, GROUPBY_PARTITIONS, DEFAULT_AGGS, SUPPORTED_OPERATIONS
 from goe.util.hs2_connection import HS2_OPTIONS
 from goe.util.misc_functions import csv_split, is_number, is_pos_int, parse_python_from_string, check_offload_env
-from goe.util.gluent_log import step, log_exception
+from goe.util.goe_log import step, log_exception
 
 from goe.offload.offload_messages import OffloadMessages
 
-from goe.gluent import get_options_from_list, normalise_owner_table_options,\
+from goe.goe import get_options_from_list, normalise_owner_table_options,\
     init, init_log, log, get_log_fh_name, version, license,\
     get_log_fh, log_timestamp
 
@@ -41,8 +41,8 @@ COPYRIGHT_MSG = "%s" % license()
 
 REGEX_FILTER=re.compile('(\S+)\s+(%s)\s+(\S+)' % "|".join(SUPPORTED_OPERATIONS), re.I)
 
-# Gluent.py options "imported" by this tool
-GLUENT_OPTIONS=(
+# GOE.py options "imported" by this tool
+GOE_OPTIONS=(
     'owner_table', 'dev_log_level', 'execute',
     'target_owner_name', 'base_owner_name', 'target_name',
     'ora_app_user', 'ora_app_pass', 'oracle_dsn',
@@ -143,7 +143,7 @@ def post_process_args(args):
 
 def parse_args():
     """ Parse arguments and return "options" object """
-    parser = get_options_from_list(GLUENT_OPTIONS + HS2_OPTIONS)
+    parser = get_options_from_list(GOE_OPTIONS + HS2_OPTIONS)
 
     parser.add_option(
         '--as-of-scn', type=int, default=None,

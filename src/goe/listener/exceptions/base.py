@@ -10,7 +10,7 @@ from fastapi.responses import ORJSONResponse
 from pydantic import ValidationError
 from redis.exceptions import ConnectionError, RedisError, TimeoutError
 
-# Gluent
+# GOE
 from goe.listener import schemas
 
 

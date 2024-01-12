@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 ##########################################################################
 # exec_in_hdfs: (helper script): Execute HDFS command
-#               Connection is based on gluent configuration
+#               Connection is based on goe configuration
 #
 # LICENSE_TEXT
 ##########################################################################
@@ -10,19 +10,19 @@ import logging
 import sys
 
 from goe.cloud.hdfs_store import HdfsStore
-from goe.util.gluent_log import log
-from goe.util.config_file import GluentRemoteConfig
+from goe.util.goe_log import log
+from goe.util.config_file import GOERemoteConfig
 from goe.util.misc_functions import check_offload_env, check_remote_offload_env
 
-from goe.gluent import get_options_from_list, normalise_db_paths, init
+from goe.goe import get_options_from_list, normalise_db_paths, init
 
 
 # -----------------------------------------------------------------------
 # CONSTANTS
 # -----------------------------------------------------------------------
 
-# Gluent.py options "imported" by this tool
-GLUENT_OPTIONS=(
+# GOE.py options "imported" by this tool
+GOE_OPTIONS=(
     'dev_log_level', 'execute',
 )
 
@@ -48,7 +48,7 @@ def parse_args():
     """
       Parse arguments and return "options" object
     """
-    parser = get_options_from_list(GLUENT_OPTIONS)
+    parser = get_options_from_list(GOE_OPTIONS)
 
     parser.add_option('--in', dest='section', \
         help="Execute in HDFS, defined by remote-offload.conf configuration section")
@@ -78,7 +78,7 @@ def main():
     set_logging(args.dev_log_level)
 
     try:
-        hdfs_cli = HdfsStore.hdfscli_gluent_client(GluentRemoteConfig(), args.section)
+        hdfs_cli = HdfsStore.hdfscli_goe_client(GOERemoteConfig(), args.section)
         log('Connected to: %s' % hdfs_cli, options=args)
 
         result = getattr(hdfs_cli, args.cmd)(*args.options)

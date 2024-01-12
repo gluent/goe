@@ -7,7 +7,7 @@
 from copy import copy
 import pytest
 
-from goe.gluent import OffloadOperation
+from goe.goe import OffloadOperation
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload import OffloadException
@@ -62,10 +62,16 @@ def create_and_offload_dim_table(config, frontend_api, messages, schema):
     )
     # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
     try:
-        run_offload({"owner_table": schema + "." + DIM_NAME})
+        run_offload({"owner_table": schema + "." + DIM_NAME, "create_backend_db": True})
     except OffloadException:
         # If this one fails then we let the exception bubble up.
-        run_offload({"owner_table": schema + "." + DIM_NAME, "reset_backend_table": True})
+        run_offload(
+            {
+                "owner_table": schema + "." + DIM_NAME,
+                "reset_backend_table": True,
+                "create_backend_db": True,
+            }
+        )
 
 
 def create_fact_table(config, frontend_api, messages, schema):

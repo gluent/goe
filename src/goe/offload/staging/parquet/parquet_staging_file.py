@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ OffloadStagingParquetFile: OffloadStagingFile implementation for Parquet
-    Gluent Inc (c) 2015-2021
+    LICENSE_TEXT
 """
 
 import logging
@@ -13,11 +13,11 @@ from goe.offload.staging.parquet.parquet_column import StagingParquetColumn, \
     PARQUET_TYPE_BOOLEAN, PARQUET_TYPE_DOUBLE, PARQUET_TYPE_INT64
 from goe.offload.column_metadata import CanonicalColumn, \
     is_safe_mapping, match_table_column,\
-    GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING, GLUENT_TYPE_BINARY,\
-    GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4,\
-    GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE,\
-    GLUENT_TYPE_DATE, GLUENT_TYPE_TIME, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIMESTAMP_TZ,\
-    GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM, GLUENT_TYPE_BOOLEAN
+    GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING, GOE_TYPE_BINARY,\
+    GOE_TYPE_LARGE_BINARY, GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4,\
+    GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38, GOE_TYPE_DECIMAL, GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE,\
+    GOE_TYPE_DATE, GOE_TYPE_TIME, GOE_TYPE_TIMESTAMP, GOE_TYPE_TIMESTAMP_TZ,\
+    GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM, GOE_TYPE_BOOLEAN
 
 
 ###############################################################################
@@ -55,7 +55,7 @@ class OffloadStagingParquetFile(OffloadStagingFileInterface):
     ###########################################################################
 
     def _from_canonical_column_to_parquet(self, column):
-        """ Translate an internal Gluent column to a Parquet column
+        """ Translate an internal GOE column to a Parquet column
             This is the basic translations, each specific backend may override individual translations
             before calling this method.
         """
@@ -71,61 +71,61 @@ class OffloadStagingParquetFile(OffloadStagingFileInterface):
         assert column
         assert isinstance(column, CanonicalColumn)
 
-        if column.data_type == GLUENT_TYPE_FIXED_STRING:
+        if column.data_type == GOE_TYPE_FIXED_STRING:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_LARGE_STRING:
+        elif column.data_type == GOE_TYPE_LARGE_STRING:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_VARIABLE_STRING:
+        elif column.data_type == GOE_TYPE_VARIABLE_STRING:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_BINARY:
+        elif column.data_type == GOE_TYPE_BINARY:
             data_type = PARQUET_TYPE_STRING if self._binary_data_as_base64 else PARQUET_TYPE_BINARY
             return new_column(column, data_type, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_LARGE_BINARY:
+        elif column.data_type == GOE_TYPE_LARGE_BINARY:
             data_type = PARQUET_TYPE_STRING if self._binary_data_as_base64 else PARQUET_TYPE_BINARY
             return new_column(column, data_type, safe_mapping=True)
-        elif column.data_type in (GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4):
+        elif column.data_type in (GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4):
             if column.safe_mapping:
                 return new_column(column, PARQUET_TYPE_INT32, safe_mapping=True)
             else:
                 return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTEGER_8:
+        elif column.data_type == GOE_TYPE_INTEGER_8:
             if column.safe_mapping:
                 return new_column(column, PARQUET_TYPE_INT64, safe_mapping=True)
             else:
                 return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTEGER_38:
+        elif column.data_type == GOE_TYPE_INTEGER_38:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_DECIMAL:
+        elif column.data_type == GOE_TYPE_DECIMAL:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_FLOAT:
+        elif column.data_type == GOE_TYPE_FLOAT:
             if column.safe_mapping:
                 return new_column(column, PARQUET_TYPE_FLOAT, safe_mapping=True)
             else:
                 return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_DOUBLE:
+        elif column.data_type == GOE_TYPE_DOUBLE:
             if column.safe_mapping:
                 return new_column(column, PARQUET_TYPE_DOUBLE, safe_mapping=True)
             else:
                 return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_DATE:
+        elif column.data_type == GOE_TYPE_DATE:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_TIME:
+        elif column.data_type == GOE_TYPE_TIME:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP:
+        elif column.data_type == GOE_TYPE_TIMESTAMP:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP_TZ:
+        elif column.data_type == GOE_TYPE_TIMESTAMP_TZ:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_DS:
+        elif column.data_type == GOE_TYPE_INTERVAL_DS:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_YM:
+        elif column.data_type == GOE_TYPE_INTERVAL_YM:
             return new_column(column, PARQUET_TYPE_STRING, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_BOOLEAN:
+        elif column.data_type == GOE_TYPE_BOOLEAN:
             return new_column(column, PARQUET_TYPE_BOOLEAN, safe_mapping=True)
         else:
-            raise NotImplementedError('Unsupported Gluent data type: %s' % column.data_type)
+            raise NotImplementedError('Unsupported GOE data type: %s' % column.data_type)
 
     def _from_parquet_to_canonical_column(self, column, use_staging_file_name=False):
-        """ Translate a Parquet column to an internal Gluent column
+        """ Translate a Parquet column to an internal GOE column
             This is the basic translations, each specific backend may override individual translations
             before calling this method.
         """
@@ -143,20 +143,20 @@ class OffloadStagingParquetFile(OffloadStagingFileInterface):
         assert isinstance(column, StagingParquetColumn)
 
         if column.data_type == PARQUET_TYPE_BOOLEAN:
-            return new_column(column, GLUENT_TYPE_BOOLEAN, safe_mapping=True)
+            return new_column(column, GOE_TYPE_BOOLEAN, safe_mapping=True)
         elif column.data_type == PARQUET_TYPE_BINARY:
-            data_type = GLUENT_TYPE_VARIABLE_STRING if self._binary_data_as_base64 else GLUENT_TYPE_BINARY
+            data_type = GOE_TYPE_VARIABLE_STRING if self._binary_data_as_base64 else GOE_TYPE_BINARY
             return new_column(column, data_type, safe_mapping=True)
         elif column.data_type == PARQUET_TYPE_DOUBLE:
-            return new_column(column, GLUENT_TYPE_DOUBLE, safe_mapping=True)
+            return new_column(column, GOE_TYPE_DOUBLE, safe_mapping=True)
         elif column.data_type == PARQUET_TYPE_FLOAT:
-            return new_column(column, GLUENT_TYPE_FLOAT, safe_mapping=True)
+            return new_column(column, GOE_TYPE_FLOAT, safe_mapping=True)
         elif column.data_type == PARQUET_TYPE_INT32:
-            return new_column(column, GLUENT_TYPE_INTEGER_4, safe_mapping=True)
+            return new_column(column, GOE_TYPE_INTEGER_4, safe_mapping=True)
         elif column.data_type == PARQUET_TYPE_INT64:
-            return new_column(column, GLUENT_TYPE_INTEGER_8, safe_mapping=True)
+            return new_column(column, GOE_TYPE_INTEGER_8, safe_mapping=True)
         elif column.data_type == PARQUET_TYPE_STRING:
-            return new_column(column, GLUENT_TYPE_VARIABLE_STRING, safe_mapping=True)
+            return new_column(column, GOE_TYPE_VARIABLE_STRING, safe_mapping=True)
         else:
             raise NotImplementedError('Unsupported Parquet data type: %s' % column.data_type)
 
@@ -172,7 +172,7 @@ class OffloadStagingParquetFile(OffloadStagingFileInterface):
             return JAVA_PRIMITIVE_INTEGER
         elif staging_column.data_type == PARQUET_TYPE_INT64:
             return JAVA_PRIMITIVE_LONG
-        elif canonical_column.data_type not in (GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY):
+        elif canonical_column.data_type not in (GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY):
             return JAVA_PRIMITIVE_STRING
         # Let the calling program use implicit conversion
         return None
@@ -182,12 +182,12 @@ class OffloadStagingParquetFile(OffloadStagingFileInterface):
     ###########################################################################
 
     def from_canonical_column(self, column):
-        """ Translate an internal Gluent column to a Parquet column
+        """ Translate an internal GOE column to a Parquet column
         """
         return self._from_canonical_column_to_parquet(column)
 
     def to_canonical_column(self, column, use_staging_file_name=False):
-        """ Translate a Parquet column to an internal Gluent column
+        """ Translate a Parquet column to an internal GOE column
         """
         return self._from_parquet_to_canonical_column(column, use_staging_file_name=use_staging_file_name)
 

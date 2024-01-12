@@ -152,16 +152,16 @@ def offload_range_ipa_standard_tests(
         offload3_opt_name = less_than_option
         offload3_opt_value = hv_3
 
-    expected_gl_part_name = None
+    expected_goe_part_name = None
     if synthetic_partition_column_expected:
-        expected_gl_part_name = synthetic_part_col_name(
+        expected_goe_part_name = synthetic_part_col_name(
             granularity,
             "time_id",
             partition_function=udf,
             synthetic_partition_digits=synthetic_partition_digits,
         )
-        expected_gl_part_name = convert_backend_identifier_case(
-            config, expected_gl_part_name
+        expected_goe_part_name = convert_backend_identifier_case(
+            config, expected_goe_part_name
         )
 
     backend_name = convert_backend_identifier_case(config, table_name)
@@ -206,6 +206,7 @@ def offload_range_ipa_standard_tests(
         "offload_partition_lower_value": lower_value,
         "offload_partition_upper_value": upper_value,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -222,7 +223,7 @@ def offload_range_ipa_standard_tests(
         incremental_key_type=part_key_type,
         backend_table=backend_name,
         partition_functions=udf,
-        synthetic_partition_column_name=expected_gl_part_name,
+        synthetic_partition_column_name=expected_goe_part_name,
     )
 
     # RANGE Offload 2nd Partition.
@@ -248,7 +249,7 @@ def offload_range_ipa_standard_tests(
         hv_2,
         incremental_key_type=part_key_type,
         partition_functions=udf,
-        synthetic_partition_column_name=expected_gl_part_name,
+        synthetic_partition_column_name=expected_goe_part_name,
     )
 
     # RANGE Offload 3rd Partition - Verification.
@@ -271,7 +272,7 @@ def offload_range_ipa_standard_tests(
         hv_2,
         incremental_key_type=part_key_type,
         partition_functions=udf,
-        synthetic_partition_column_name=expected_gl_part_name,
+        synthetic_partition_column_name=expected_goe_part_name,
     )
 
     # RANGE Offload With Multiple Partition Names - Expect Exception.
@@ -560,9 +561,9 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         messages.log(
-            f"Skipping {id} partition function tests due to gluent_partition_functions_supported() == False"
+            f"Skipping {id} partition function tests due to goe_partition_functions_supported() == False"
         )
         return
 
@@ -604,9 +605,9 @@ def test_offload_rpa_udf_string(config, schema, data_db):
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.gluent_partition_functions_supported():
+    if not backend_api.goe_partition_functions_supported():
         messages.log(
-            f"Skipping {id} partition function tests due to gluent_partition_functions_supported() == False"
+            f"Skipping {id} partition function tests due to goe_partition_functions_supported() == False"
         )
         return
 
@@ -688,6 +689,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
         "less_than_value": "U",
         "offload_partition_granularity": "1",
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -770,6 +772,7 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
         "owner_table": schema + "." + NOSEG_FACT,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(

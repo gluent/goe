@@ -9,7 +9,7 @@ from datetime import datetime
 import logging
 import re
 
-from goe.filesystem.gluent_dfs import (
+from goe.filesystem.goe_dfs import (
     get_scheme_from_location_uri,
     OFFLOAD_FS_SCHEME_HDFS,
     OFFLOAD_FS_SCHEME_MAPRFS,
@@ -17,24 +17,24 @@ from goe.filesystem.gluent_dfs import (
 from goe.offload.column_metadata import (
     CanonicalColumn,
     CANONICAL_CHAR_SEMANTICS_UNICODE,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_VARIABLE_STRING,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_DATE,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
 )
 from goe.offload.hadoop.hadoop_column import (
     HadoopColumn,
@@ -153,19 +153,19 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
         else:
             return [_ for _ in ddl if not re.match(ddl_filter_re, _)]
 
-    def _gl_type_mapping_column_definitions(self, filter_column=None):
-        """Returns a dict of dicts defining columns for GL_BACKEND_TYPE_MAPPING test table.
+    def _goe_type_mapping_column_definitions(self, filter_column=None):
+        """Returns a dict of dicts defining columns for GOE_BACKEND_TYPE_MAPPING test table.
         filter_column can be used to fetch just a single column dict.
         """
 
         def name(*args):
-            return self._gl_type_mapping_column_name(*args)
+            return self._goe_type_mapping_column_name(*args)
 
         all_columns = {
             name(HADOOP_TYPE_BIGINT): {
                 "column": HadoopColumn(name(HADOOP_TYPE_BIGINT), HADOOP_TYPE_BIGINT),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_BIGINT), GLUENT_TYPE_INTEGER_8
+                    name(HADOOP_TYPE_BIGINT), GOE_TYPE_INTEGER_8
                 ),
             },
             name(HADOOP_TYPE_CHAR, "3"): {
@@ -173,7 +173,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     name(HADOOP_TYPE_CHAR, "3"), HADOOP_TYPE_CHAR, data_length=3
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_CHAR, "3"), GLUENT_TYPE_FIXED_STRING
+                    name(HADOOP_TYPE_CHAR, "3"), GOE_TYPE_FIXED_STRING
                 ),
             },
             name(HADOOP_TYPE_CHAR, "3", UNICODE_NAME_TOKEN): {
@@ -184,7 +184,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(HADOOP_TYPE_CHAR, "3", UNICODE_NAME_TOKEN),
-                    GLUENT_TYPE_FIXED_STRING,
+                    GOE_TYPE_FIXED_STRING,
                 ),
                 "present_options": {
                     "unicode_string_columns_csv": name(
@@ -200,7 +200,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, "2", "0"), GLUENT_TYPE_INTEGER_1
+                    name(HADOOP_TYPE_DECIMAL, "2", "0"), GOE_TYPE_INTEGER_1
                 ),
             },
             name(HADOOP_TYPE_DECIMAL, "4", "0"): {
@@ -211,7 +211,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, "4", "0"), GLUENT_TYPE_INTEGER_2
+                    name(HADOOP_TYPE_DECIMAL, "4", "0"), GOE_TYPE_INTEGER_2
                 ),
             },
             name(HADOOP_TYPE_DECIMAL, "9", "0"): {
@@ -222,7 +222,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, "9", "0"), GLUENT_TYPE_INTEGER_4
+                    name(HADOOP_TYPE_DECIMAL, "9", "0"), GOE_TYPE_INTEGER_4
                 ),
             },
             name(HADOOP_TYPE_DECIMAL, "18", "0"): {
@@ -233,7 +233,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, "18", "0"), GLUENT_TYPE_INTEGER_8
+                    name(HADOOP_TYPE_DECIMAL, "18", "0"), GOE_TYPE_INTEGER_8
                 ),
             },
             # Trimmed down to DECIMAL(36) because cx_Oracle has issues beyond that
@@ -245,111 +245,111 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     data_scale=0,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, "36", "0"), GLUENT_TYPE_INTEGER_38
+                    name(HADOOP_TYPE_DECIMAL, "36", "0"), GOE_TYPE_INTEGER_38
                 ),
             },
-            name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_1): {
+            name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_1): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_1),
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_1),
                     HADOOP_TYPE_DECIMAL,
                     data_precision=2,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_1),
-                    GLUENT_TYPE_INTEGER_1,
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_1),
+                    GOE_TYPE_INTEGER_1,
                 ),
                 "present_options": {
                     "integer_1_columns_csv": name(
-                        HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_1
+                        HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_1
                     )
                 },
             },
-            name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_2): {
+            name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_2): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_2),
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_2),
                     HADOOP_TYPE_DECIMAL,
                     data_precision=4,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_2),
-                    GLUENT_TYPE_INTEGER_2,
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_2),
+                    GOE_TYPE_INTEGER_2,
                 ),
                 "present_options": {
                     "integer_2_columns_csv": name(
-                        HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_2
+                        HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_2
                     )
                 },
             },
-            name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4): {
+            name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_4): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4),
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_4),
                     HADOOP_TYPE_DECIMAL,
                     data_precision=9,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4),
-                    GLUENT_TYPE_INTEGER_4,
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_4),
+                    GOE_TYPE_INTEGER_4,
                 ),
                 "present_options": {
                     "integer_4_columns_csv": name(
-                        HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_4
+                        HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_4
                     )
                 },
             },
-            name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_8): {
+            name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_8): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_8),
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_8),
                     HADOOP_TYPE_DECIMAL,
                     data_precision=18,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_8),
-                    GLUENT_TYPE_INTEGER_8,
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_8),
+                    GOE_TYPE_INTEGER_8,
                 ),
                 "present_options": {
                     "integer_8_columns_csv": name(
-                        HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_8
+                        HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_8
                     )
                 },
             },
-            name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_38): {
+            name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_38): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_38),
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_38),
                     HADOOP_TYPE_DECIMAL,
                     data_precision=38,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_38),
-                    GLUENT_TYPE_INTEGER_38,
+                    name(HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_38),
+                    GOE_TYPE_INTEGER_38,
                 ),
                 "present_options": {
                     "integer_38_columns_csv": name(
-                        HADOOP_TYPE_DECIMAL, GLUENT_TYPE_INTEGER_38
+                        HADOOP_TYPE_DECIMAL, GOE_TYPE_INTEGER_38
                     )
                 },
             },
             name(HADOOP_TYPE_DECIMAL): {
                 "column": HadoopColumn(name(HADOOP_TYPE_DECIMAL), HADOOP_TYPE_DECIMAL),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DECIMAL), GLUENT_TYPE_DECIMAL
+                    name(HADOOP_TYPE_DECIMAL), GOE_TYPE_DECIMAL
                 ),
             },
             name(HADOOP_TYPE_DOUBLE): {
                 "column": HadoopColumn(name(HADOOP_TYPE_DOUBLE), HADOOP_TYPE_DOUBLE),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DOUBLE), GLUENT_TYPE_DOUBLE
+                    name(HADOOP_TYPE_DOUBLE), GOE_TYPE_DOUBLE
                 ),
             },
-            name(HADOOP_TYPE_DOUBLE, GLUENT_TYPE_DECIMAL): {
+            name(HADOOP_TYPE_DOUBLE, GOE_TYPE_DECIMAL): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_DOUBLE, GLUENT_TYPE_DECIMAL), HADOOP_TYPE_DOUBLE
+                    name(HADOOP_TYPE_DOUBLE, GOE_TYPE_DECIMAL), HADOOP_TYPE_DOUBLE
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_DOUBLE, GLUENT_TYPE_DECIMAL), GLUENT_TYPE_DECIMAL
+                    name(HADOOP_TYPE_DOUBLE, GOE_TYPE_DECIMAL), GOE_TYPE_DECIMAL
                 ),
                 "present_options": {
                     "decimal_columns_csv_list": [
-                        name(HADOOP_TYPE_DOUBLE, GLUENT_TYPE_DECIMAL)
+                        name(HADOOP_TYPE_DOUBLE, GOE_TYPE_DECIMAL)
                     ],
                     "decimal_columns_type_list": ["38,18"],
                 },
@@ -357,19 +357,19 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
             name(HADOOP_TYPE_FLOAT): {
                 "column": HadoopColumn(name(HADOOP_TYPE_FLOAT), HADOOP_TYPE_FLOAT),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_FLOAT), GLUENT_TYPE_FLOAT
+                    name(HADOOP_TYPE_FLOAT), GOE_TYPE_FLOAT
                 ),
             },
-            name(HADOOP_TYPE_FLOAT, GLUENT_TYPE_DECIMAL): {
+            name(HADOOP_TYPE_FLOAT, GOE_TYPE_DECIMAL): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_FLOAT, GLUENT_TYPE_DECIMAL), HADOOP_TYPE_FLOAT
+                    name(HADOOP_TYPE_FLOAT, GOE_TYPE_DECIMAL), HADOOP_TYPE_FLOAT
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_FLOAT, GLUENT_TYPE_DECIMAL), GLUENT_TYPE_DECIMAL
+                    name(HADOOP_TYPE_FLOAT, GOE_TYPE_DECIMAL), GOE_TYPE_DECIMAL
                 ),
                 "present_options": {
                     "decimal_columns_csv_list": [
-                        name(HADOOP_TYPE_FLOAT, GLUENT_TYPE_DECIMAL)
+                        name(HADOOP_TYPE_FLOAT, GOE_TYPE_DECIMAL)
                     ],
                     "decimal_columns_type_list": ["38,18"],
                 },
@@ -377,7 +377,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
             name(HADOOP_TYPE_INT): {
                 "column": HadoopColumn(name(HADOOP_TYPE_INT), HADOOP_TYPE_INT),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_INT), GLUENT_TYPE_INTEGER_4
+                    name(HADOOP_TYPE_INT), GOE_TYPE_INTEGER_4
                 ),
             },
             name(HADOOP_TYPE_SMALLINT): {
@@ -385,105 +385,105 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     name(HADOOP_TYPE_SMALLINT), HADOOP_TYPE_SMALLINT
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_SMALLINT), GLUENT_TYPE_INTEGER_2
+                    name(HADOOP_TYPE_SMALLINT), GOE_TYPE_INTEGER_2
                 ),
             },
             name(HADOOP_TYPE_STRING): {
                 "column": HadoopColumn(name(HADOOP_TYPE_STRING), HADOOP_TYPE_STRING),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_STRING), GLUENT_TYPE_VARIABLE_STRING
+                    name(HADOOP_TYPE_STRING), GOE_TYPE_VARIABLE_STRING
                 ),
             },
-            name(HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING): {
+            name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING),
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING),
                     HADOOP_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING),
-                    GLUENT_TYPE_LARGE_STRING,
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING),
+                    GOE_TYPE_LARGE_STRING,
                 ),
                 "present_options": {
                     "large_string_columns_csv": name(
-                        HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING
+                        HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING
                     )
                 },
             },
-            name(HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN): {
+            name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN): {
                 "column": HadoopColumn(
                     name(
-                        HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
+                        HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
                     ),
                     HADOOP_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(
-                        HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
+                        HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
                     ),
-                    GLUENT_TYPE_LARGE_STRING,
+                    GOE_TYPE_LARGE_STRING,
                 ),
                 "present_options": {
                     "large_string_columns_csv": name(
-                        HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
+                        HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
                     ),
                     "unicode_string_columns_csv": name(
-                        HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
+                        HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
                     ),
                 },
             },
-            name(HADOOP_TYPE_STRING, GLUENT_TYPE_BINARY): {
+            name(HADOOP_TYPE_STRING, GOE_TYPE_BINARY): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_BINARY), HADOOP_TYPE_STRING
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_BINARY), HADOOP_TYPE_STRING
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_BINARY), GLUENT_TYPE_BINARY
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_BINARY), GOE_TYPE_BINARY
                 ),
                 "present_options": {
-                    "binary_columns_csv": name(HADOOP_TYPE_STRING, GLUENT_TYPE_BINARY)
+                    "binary_columns_csv": name(HADOOP_TYPE_STRING, GOE_TYPE_BINARY)
                 },
             },
-            name(HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_BINARY): {
+            name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_BINARY): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_BINARY),
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_BINARY),
                     HADOOP_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_BINARY),
-                    GLUENT_TYPE_LARGE_BINARY,
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_BINARY),
+                    GOE_TYPE_LARGE_BINARY,
                 ),
                 "present_options": {
                     "large_binary_columns_csv": name(
-                        HADOOP_TYPE_STRING, GLUENT_TYPE_LARGE_BINARY
+                        HADOOP_TYPE_STRING, GOE_TYPE_LARGE_BINARY
                     )
                 },
             },
-            name(HADOOP_TYPE_STRING, GLUENT_TYPE_INTERVAL_DS): {
+            name(HADOOP_TYPE_STRING, GOE_TYPE_INTERVAL_DS): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_INTERVAL_DS),
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_INTERVAL_DS),
                     HADOOP_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_INTERVAL_DS),
-                    GLUENT_TYPE_INTERVAL_DS,
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_INTERVAL_DS),
+                    GOE_TYPE_INTERVAL_DS,
                 ),
                 "present_options": {
                     "interval_ds_columns_csv": name(
-                        HADOOP_TYPE_STRING, GLUENT_TYPE_INTERVAL_DS
+                        HADOOP_TYPE_STRING, GOE_TYPE_INTERVAL_DS
                     )
                 },
             },
-            name(HADOOP_TYPE_STRING, GLUENT_TYPE_INTERVAL_YM): {
+            name(HADOOP_TYPE_STRING, GOE_TYPE_INTERVAL_YM): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_INTERVAL_YM),
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_INTERVAL_YM),
                     HADOOP_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_STRING, GLUENT_TYPE_INTERVAL_YM),
-                    GLUENT_TYPE_INTERVAL_YM,
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_INTERVAL_YM),
+                    GOE_TYPE_INTERVAL_YM,
                 ),
                 "present_options": {
                     "interval_ym_columns_csv": name(
-                        HADOOP_TYPE_STRING, GLUENT_TYPE_INTERVAL_YM
+                        HADOOP_TYPE_STRING, GOE_TYPE_INTERVAL_YM
                     )
                 },
             },
@@ -493,7 +493,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(HADOOP_TYPE_STRING, UNICODE_NAME_TOKEN),
-                    GLUENT_TYPE_VARIABLE_STRING,
+                    GOE_TYPE_VARIABLE_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "present_options": {
@@ -507,24 +507,24 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     name(HADOOP_TYPE_TIMESTAMP), HADOOP_TYPE_TIMESTAMP
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_TIMESTAMP), GLUENT_TYPE_TIMESTAMP
+                    name(HADOOP_TYPE_TIMESTAMP), GOE_TYPE_TIMESTAMP
                 ),
             },
-            name(HADOOP_TYPE_TIMESTAMP, GLUENT_TYPE_DATE): {
+            name(HADOOP_TYPE_TIMESTAMP, GOE_TYPE_DATE): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_TIMESTAMP, GLUENT_TYPE_DATE), HADOOP_TYPE_TIMESTAMP
+                    name(HADOOP_TYPE_TIMESTAMP, GOE_TYPE_DATE), HADOOP_TYPE_TIMESTAMP
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_TIMESTAMP, GLUENT_TYPE_DATE), GLUENT_TYPE_DATE
+                    name(HADOOP_TYPE_TIMESTAMP, GOE_TYPE_DATE), GOE_TYPE_DATE
                 ),
                 "present_options": {
-                    "date_columns_csv": name(HADOOP_TYPE_TIMESTAMP, GLUENT_TYPE_DATE)
+                    "date_columns_csv": name(HADOOP_TYPE_TIMESTAMP, GOE_TYPE_DATE)
                 },
             },
             name(HADOOP_TYPE_TINYINT): {
                 "column": HadoopColumn(name(HADOOP_TYPE_TINYINT), HADOOP_TYPE_TINYINT),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_TINYINT), GLUENT_TYPE_INTEGER_1
+                    name(HADOOP_TYPE_TINYINT), GOE_TYPE_INTEGER_1
                 ),
             },
             name(HADOOP_TYPE_VARCHAR, "4000"): {
@@ -534,7 +534,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     data_length=4000,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_VARCHAR, "4001"), GLUENT_TYPE_VARIABLE_STRING
+                    name(HADOOP_TYPE_VARCHAR, "4001"), GOE_TYPE_VARIABLE_STRING
                 ),
             },
             name(HADOOP_TYPE_VARCHAR, "4001"): {
@@ -544,54 +544,54 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     data_length=4001,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_VARCHAR, "4001"), GLUENT_TYPE_LARGE_STRING
+                    name(HADOOP_TYPE_VARCHAR, "4001"), GOE_TYPE_LARGE_STRING
                 ),
             },
-            name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_BINARY): {
+            name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_BINARY): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_BINARY),
+                    name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_BINARY),
                     HADOOP_TYPE_VARCHAR,
                     data_length=30,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_BINARY),
-                    GLUENT_TYPE_BINARY,
+                    name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_BINARY),
+                    GOE_TYPE_BINARY,
                 ),
                 "present_options": {
                     "binary_columns_csv": name(
-                        HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_BINARY
+                        HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_BINARY
                     )
                 },
             },
-            name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_BINARY): {
+            name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_BINARY): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_BINARY),
+                    name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_BINARY),
                     HADOOP_TYPE_VARCHAR,
                     data_length=30,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_BINARY),
-                    GLUENT_TYPE_LARGE_BINARY,
+                    name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_BINARY),
+                    GOE_TYPE_LARGE_BINARY,
                 ),
                 "present_options": {
                     "large_binary_columns_csv": name(
-                        HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_BINARY
+                        HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_BINARY
                     )
                 },
             },
-            name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_STRING): {
+            name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_STRING): {
                 "column": HadoopColumn(
-                    name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_STRING),
+                    name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_STRING),
                     HADOOP_TYPE_VARCHAR,
                     data_length=30,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_STRING),
-                    GLUENT_TYPE_LARGE_STRING,
+                    name(HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_STRING),
+                    GOE_TYPE_LARGE_STRING,
                 ),
                 "present_options": {
                     "large_string_columns_csv": name(
-                        HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_STRING
+                        HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_STRING
                     )
                 },
             },
@@ -603,7 +603,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(HADOOP_TYPE_VARCHAR, "2000", UNICODE_NAME_TOKEN),
-                    GLUENT_TYPE_VARIABLE_STRING,
+                    GOE_TYPE_VARIABLE_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "present_options": {
@@ -620,7 +620,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 ),
                 "expected_canonical_column": CanonicalColumn(
                     name(HADOOP_TYPE_VARCHAR, "2001", UNICODE_NAME_TOKEN),
-                    GLUENT_TYPE_VARIABLE_STRING,
+                    GOE_TYPE_VARIABLE_STRING,
                     char_semantics=CANONICAL_CHAR_SEMANTICS_UNICODE,
                 ),
                 "present_options": {
@@ -630,13 +630,13 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 },
             },
             name(
-                HADOOP_TYPE_VARCHAR, "30", GLUENT_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
+                HADOOP_TYPE_VARCHAR, "30", GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
             ): {
                 "column": HadoopColumn(
                     name(
                         HADOOP_TYPE_VARCHAR,
                         "30",
-                        GLUENT_TYPE_LARGE_STRING,
+                        GOE_TYPE_LARGE_STRING,
                         UNICODE_NAME_TOKEN,
                     ),
                     HADOOP_TYPE_VARCHAR,
@@ -646,22 +646,22 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     name(
                         HADOOP_TYPE_VARCHAR,
                         "30",
-                        GLUENT_TYPE_LARGE_STRING,
+                        GOE_TYPE_LARGE_STRING,
                         UNICODE_NAME_TOKEN,
                     ),
-                    GLUENT_TYPE_LARGE_STRING,
+                    GOE_TYPE_LARGE_STRING,
                 ),
                 "present_options": {
                     "large_string_columns_csv": name(
                         HADOOP_TYPE_VARCHAR,
                         "30",
-                        GLUENT_TYPE_LARGE_STRING,
+                        GOE_TYPE_LARGE_STRING,
                         UNICODE_NAME_TOKEN,
                     ),
                     "unicode_string_columns_csv": name(
                         HADOOP_TYPE_VARCHAR,
                         "30",
-                        GLUENT_TYPE_LARGE_STRING,
+                        GOE_TYPE_LARGE_STRING,
                         UNICODE_NAME_TOKEN,
                     ),
                 },
@@ -675,21 +675,21 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                             name(HADOOP_TYPE_DATE), HADOOP_TYPE_DATE
                         ),
                         "expected_canonical_column": CanonicalColumn(
-                            name(HADOOP_TYPE_DATE), GLUENT_TYPE_DATE
+                            name(HADOOP_TYPE_DATE), GOE_TYPE_DATE
                         ),
                     },
-                    name(HADOOP_TYPE_DATE, GLUENT_TYPE_TIMESTAMP): {
+                    name(HADOOP_TYPE_DATE, GOE_TYPE_TIMESTAMP): {
                         "column": HadoopColumn(
-                            name(HADOOP_TYPE_DATE, GLUENT_TYPE_TIMESTAMP),
+                            name(HADOOP_TYPE_DATE, GOE_TYPE_TIMESTAMP),
                             HADOOP_TYPE_DATE,
                         ),
                         "expected_canonical_column": CanonicalColumn(
-                            name(HADOOP_TYPE_DATE, GLUENT_TYPE_TIMESTAMP),
-                            GLUENT_TYPE_TIMESTAMP,
+                            name(HADOOP_TYPE_DATE, GOE_TYPE_TIMESTAMP),
+                            GOE_TYPE_TIMESTAMP,
                         ),
                         "present_options": {
                             "timestamp_columns_csv": name(
-                                HADOOP_TYPE_DATE, GLUENT_TYPE_TIMESTAMP
+                                HADOOP_TYPE_DATE, GOE_TYPE_TIMESTAMP
                             )
                         },
                     },
@@ -713,7 +713,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
     # PUBLIC METHODS
     ###########################################################################
 
-    def create_backend_offload_location(self, gluent_user=None):
+    def create_backend_offload_location(self, goe_user=None):
         raise NotImplementedError(
             "create_backend_offload_location() not implemented for common Hadoop class"
         )
@@ -836,7 +836,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
     def expected_backend_precision_scale(
         self, canonical_column, decimal_padding_digits=None
     ):
-        if canonical_column.data_type == GLUENT_TYPE_DECIMAL:
+        if canonical_column.data_type == GOE_TYPE_DECIMAL:
             # On Hadoop we have decimal and scale padding. We don't want to re-use the production logic here
             # because then we're not testing the logic is right. So we have a crude approximation.
             if (
@@ -872,7 +872,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 else:
                     expected_precision = 38
             return expected_precision, expected_scale
-        elif canonical_column.data_type == GLUENT_TYPE_INTEGER_38:
+        elif canonical_column.data_type == GOE_TYPE_INTEGER_38:
             return 38, 0
         else:
             return None
@@ -911,31 +911,31 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 [
                     (
                         f"column({date_column}) = datetime(2010-01-01)",
-                        f"(`{date_column}` = '2010-01-01' AND `GL_PART_D_{date_column}` = '2010-01-01')",
+                        f"(`{date_column}` = '2010-01-01' AND `GOE_PART_D_{date_column}` = '2010-01-01')",
                     ),
                     (
                         f"datetime(2010-01-01) = column({date_column})",
-                        f"('2010-01-01' = `{date_column}` AND '2010-01-01' = `GL_PART_D_{date_column}`)",
+                        f"('2010-01-01' = `{date_column}` AND '2010-01-01' = `GOE_PART_D_{date_column}`)",
                     ),
                     (
                         f"column({date_column}) != datetime(2010-01-01)",
-                        f"(`{date_column}` != '2010-01-01' AND `GL_PART_D_{date_column}` != '2010-01-01')",
+                        f"(`{date_column}` != '2010-01-01' AND `GOE_PART_D_{date_column}` != '2010-01-01')",
                     ),
                     (
                         f"column({date_column}) < datetime(2010-01-01)",
-                        f"(`{date_column}` < '2010-01-01' AND `GL_PART_D_{date_column}` < '2010-01-01')",
+                        f"(`{date_column}` < '2010-01-01' AND `GOE_PART_D_{date_column}` < '2010-01-01')",
                     ),
                     (
                         f"column({date_column}) <= datetime(2010-01-01)",
-                        f"(`{date_column}` <= '2010-01-01' AND `GL_PART_D_{date_column}` <= '2010-01-01')",
+                        f"(`{date_column}` <= '2010-01-01' AND `GOE_PART_D_{date_column}` <= '2010-01-01')",
                     ),
                     (
                         f"column({date_column}) > datetime(2010-01-01)",
-                        f"(`{date_column}` > '2010-01-01' AND `GL_PART_D_{date_column}` > '2010-01-01')",
+                        f"(`{date_column}` > '2010-01-01' AND `GOE_PART_D_{date_column}` > '2010-01-01')",
                     ),
                     (
                         f"column({date_column}) >= datetime(2010-01-01)",
-                        f"(`{date_column}` >= '2010-01-01' AND `GL_PART_D_{date_column}` >= '2010-01-01')",
+                        f"(`{date_column}` >= '2010-01-01' AND `GOE_PART_D_{date_column}` >= '2010-01-01')",
                     ),
                 ],
             ),
@@ -944,11 +944,11 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 [
                     (
                         f"column({date_column}) = datetime(2010-01-01)",
-                        f"(`{date_column}` = '2010-01-01' AND `GL_PART_M_{date_column}` = '2010-01')",
+                        f"(`{date_column}` = '2010-01-01' AND `GOE_PART_M_{date_column}` = '2010-01')",
                     ),
                     (
                         f"datetime(2010-01-01) = column({date_column})",
-                        f"('2010-01-01' = `{date_column}` AND '2010-01' = `GL_PART_M_{date_column}`)",
+                        f"('2010-01-01' = `{date_column}` AND '2010-01' = `GOE_PART_M_{date_column}`)",
                     ),
                 ],
             ),
@@ -957,11 +957,11 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 [
                     (
                         "column({date_column}) = datetime(2010-01-01)",
-                        "(`{date_column}` = '2010-01-01' AND `GL_PART_Y_{date_column}` = '2010')",
+                        "(`{date_column}` = '2010-01-01' AND `GOE_PART_Y_{date_column}` = '2010')",
                     ),
                     (
                         "datetime(2010-01-01) = column({date_column})",
-                        "('2010-01-01' = `{date_column}` AND '2010' = `GL_PART_Y_{date_column}`)",
+                        "('2010-01-01' = `{date_column}` AND '2010' = `GOE_PART_Y_{date_column}`)",
                     ),
                 ],
             ),
@@ -970,11 +970,11 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 [
                     (
                         f"column({number_column}) = numeric(17)",
-                        f"(`{number_column}` = 17 AND `GL_PART_0000001000_{number_column}` = '0000000000')",
+                        f"(`{number_column}` = 17 AND `GOE_PART_0000001000_{number_column}` = '0000000000')",
                     ),
                     (
                         f"column({number_column}) = numeric(1700)",
-                        f"(`{number_column}` = 1700 AND `GL_PART_0000001000_{number_column}` = '0000001000')",
+                        f"(`{number_column}` = 1700 AND `GOE_PART_0000001000_{number_column}` = '0000001000')",
                     ),
                 ],
             ),
@@ -983,11 +983,11 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 [
                     (
                         f"column({number_column}) = numeric(170)",
-                        f"(`{number_column}` = 170 AND `GL_PART_000000010000_{number_column}` = '000000000000')",
+                        f"(`{number_column}` = 170 AND `GOE_PART_000000010000_{number_column}` = '000000000000')",
                     ),
                     (
                         f"column({number_column}) = numeric(17000)",
-                        f"(`{number_column}` = 17000 AND `GL_PART_000000010000_{number_column}` = '000000010000')",
+                        f"(`{number_column}` = 17000 AND `GOE_PART_000000010000_{number_column}` = '000000010000')",
                     ),
                 ],
             ),
@@ -996,11 +996,11 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 [
                     (
                         f'column({string_column}) = string("123456")',
-                        f"(`{string_column}` = '123456' AND `GL_PART_1_{string_column}` = '1')",
+                        f"(`{string_column}` = '123456' AND `GOE_PART_1_{string_column}` = '1')",
                     ),
                     (
                         f'column({string_column}) = string("")',
-                        f"(`{string_column}` = '' AND `GL_PART_1_{string_column}` = '')",
+                        f"(`{string_column}` = '' AND `GOE_PART_1_{string_column}` = '')",
                     ),
                 ],
             ),
@@ -1009,63 +1009,63 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 [
                     (
                         f'column({string_column}) = string("123456")',
-                        f"(`{string_column}` = '123456' AND `GL_PART_2_{string_column}` = '12')",
+                        f"(`{string_column}` = '123456' AND `GOE_PART_2_{string_column}` = '12')",
                     ),
                     (
                         f'column({string_column}) = string("")',
-                        f"(`{string_column}` = '' AND `GL_PART_2_{string_column}` = '')",
+                        f"(`{string_column}` = '' AND `GOE_PART_2_{string_column}` = '')",
                     ),
                 ],
             ),
         ]
 
-    def gl_type_mapping_generated_table_col_specs(self):
-        definitions = self._gl_type_mapping_column_definitions()
-        gl_type_mapping_cols, gl_type_mapping_names = [], []
+    def goe_type_mapping_generated_table_col_specs(self):
+        definitions = self._goe_type_mapping_column_definitions()
+        goe_type_mapping_cols, goe_type_mapping_names = [], []
         for col_dict in [
             definitions[col_name] for col_name in sorted(definitions.keys())
         ]:
             backend_column = col_dict["column"]
-            gl_type_mapping_names.append(backend_column.name)
+            goe_type_mapping_names.append(backend_column.name)
             if backend_column.data_type == HADOOP_TYPE_DECIMAL and (
                 backend_column.data_precision is not None
                 or backend_column.data_scale is not None
             ):
-                gl_type_mapping_cols.append({"column": backend_column})
+                goe_type_mapping_cols.append({"column": backend_column})
             elif (
                 backend_column.data_type == HADOOP_TYPE_DECIMAL
                 and backend_column.data_precision is None
                 and backend_column.data_scale is None
             ):
                 # Hadoop DECIMAL defaults to DECIMAL(9,0). Include small literals here to avoid complications later.
-                gl_type_mapping_cols.append(
+                goe_type_mapping_cols.append(
                     {"column": backend_column, "literals": [100, 200, 300, 400]}
                 )
             elif (
                 col_dict["expected_canonical_column"].data_type
-                == GLUENT_TYPE_INTERVAL_DS
+                == GOE_TYPE_INTERVAL_DS
             ):
-                gl_type_mapping_cols.append(
+                goe_type_mapping_cols.append(
                     {
                         "column": backend_column,
-                        "literals": self._gl_type_mapping_interval_ds_test_values(),
+                        "literals": self._goe_type_mapping_interval_ds_test_values(),
                     }
                 )
             elif (
                 col_dict["expected_canonical_column"].data_type
-                == GLUENT_TYPE_INTERVAL_YM
+                == GOE_TYPE_INTERVAL_YM
             ):
-                gl_type_mapping_cols.append(
+                goe_type_mapping_cols.append(
                     {
                         "column": backend_column,
-                        "literals": self._gl_type_mapping_interval_ym_test_values(),
+                        "literals": self._goe_type_mapping_interval_ym_test_values(),
                     }
                 )
             elif backend_column.is_string_based():
-                gl_type_mapping_cols.append({"column": backend_column})
+                goe_type_mapping_cols.append({"column": backend_column})
             else:
-                gl_type_mapping_cols.append({"column": backend_column})
-        return gl_type_mapping_cols, gl_type_mapping_names
+                goe_type_mapping_cols.append({"column": backend_column})
+        return goe_type_mapping_cols, goe_type_mapping_names
 
     def host_compare_sql_projection(self, column_list: list) -> str:
         """Return a SQL projection (CSV of column expressions) used to validate offloaded data.

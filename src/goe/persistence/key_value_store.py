@@ -35,10 +35,10 @@ class KeyValueStore(object):
 
 
 HDFS_FILEPATH_FLAVOR = "hdfs_filepath"
-GLUENT_REPO_FLAVOR = "gluent_repo"
+GOE_REPO_FLAVOR = "goe_repo"
 # PICKLE_FLAVOR is only for test purposes (not Monster Munch)
 PICKLE_FLAVOR = "pickle_flavor"
-SUPPORTED_KV_STORE_FLAVORS = [HDFS_FILEPATH_FLAVOR, GLUENT_REPO_FLAVOR]
+SUPPORTED_KV_STORE_FLAVORS = [HDFS_FILEPATH_FLAVOR, GOE_REPO_FLAVOR]
 
 
 def build_kv_store(

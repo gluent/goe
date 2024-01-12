@@ -9,26 +9,26 @@ import logging
 
 from goe.offload.column_metadata import (
     CanonicalColumn,
-    GLUENT_TYPE_FIXED_STRING,
-    GLUENT_TYPE_LARGE_STRING,
-    GLUENT_TYPE_VARIABLE_STRING,
-    GLUENT_TYPE_BINARY,
-    GLUENT_TYPE_LARGE_BINARY,
-    GLUENT_TYPE_INTEGER_1,
-    GLUENT_TYPE_INTEGER_2,
-    GLUENT_TYPE_INTEGER_4,
-    GLUENT_TYPE_INTEGER_8,
-    GLUENT_TYPE_INTEGER_38,
-    GLUENT_TYPE_DECIMAL,
-    GLUENT_TYPE_FLOAT,
-    GLUENT_TYPE_DOUBLE,
-    GLUENT_TYPE_DATE,
-    GLUENT_TYPE_TIME,
-    GLUENT_TYPE_TIMESTAMP,
-    GLUENT_TYPE_TIMESTAMP_TZ,
-    GLUENT_TYPE_INTERVAL_DS,
-    GLUENT_TYPE_INTERVAL_YM,
-    GLUENT_TYPE_BOOLEAN,
+    GOE_TYPE_FIXED_STRING,
+    GOE_TYPE_LARGE_STRING,
+    GOE_TYPE_VARIABLE_STRING,
+    GOE_TYPE_BINARY,
+    GOE_TYPE_LARGE_BINARY,
+    GOE_TYPE_INTEGER_1,
+    GOE_TYPE_INTEGER_2,
+    GOE_TYPE_INTEGER_4,
+    GOE_TYPE_INTEGER_8,
+    GOE_TYPE_INTEGER_38,
+    GOE_TYPE_DECIMAL,
+    GOE_TYPE_FLOAT,
+    GOE_TYPE_DOUBLE,
+    GOE_TYPE_DATE,
+    GOE_TYPE_TIME,
+    GOE_TYPE_TIMESTAMP,
+    GOE_TYPE_TIMESTAMP_TZ,
+    GOE_TYPE_INTERVAL_DS,
+    GOE_TYPE_INTERVAL_YM,
+    GOE_TYPE_BOOLEAN,
 )
 from goe.offload.hadoop.hadoop_backend_api import (
     hive_enable_dynamic_partitions_for_insert_sqls,
@@ -109,17 +109,17 @@ class BackendHiveTestingApi(BackendHadoopTestingApi):
             "_define_test_partition_function() not implemented for Hive"
         )
 
-    def _gl_type_mapping_column_definitions(self, filter_column=None):
-        """Returns a dict of dicts defining columns for GL_BACKEND_TYPE_MAPPING test table.
+    def _goe_type_mapping_column_definitions(self, filter_column=None):
+        """Returns a dict of dicts defining columns for GOE_BACKEND_TYPE_MAPPING test table.
         filter_column can be used to fetch just a single column dict.
         """
 
         def name(*args):
-            return self._gl_type_mapping_column_name(*args)
+            return self._goe_type_mapping_column_name(*args)
 
         all_columns = super(
             BackendHiveTestingApi, self
-        )._gl_type_mapping_column_definitions(filter_column=filter_column)
+        )._goe_type_mapping_column_definitions(filter_column=filter_column)
         all_columns.update(
             {
                 name(HADOOP_TYPE_BINARY): {
@@ -127,21 +127,21 @@ class BackendHiveTestingApi(BackendHadoopTestingApi):
                         name(HADOOP_TYPE_BINARY), HADOOP_TYPE_BINARY
                     ),
                     "expected_canonical_column": CanonicalColumn(
-                        name(HADOOP_TYPE_BINARY), GLUENT_TYPE_BINARY
+                        name(HADOOP_TYPE_BINARY), GOE_TYPE_BINARY
                     ),
                 },
-                name(HADOOP_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY): {
+                name(HADOOP_TYPE_BINARY, GOE_TYPE_LARGE_BINARY): {
                     "column": HadoopColumn(
-                        name(HADOOP_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY),
+                        name(HADOOP_TYPE_BINARY, GOE_TYPE_LARGE_BINARY),
                         HADOOP_TYPE_BINARY,
                     ),
                     "expected_canonical_column": CanonicalColumn(
-                        name(HADOOP_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY),
-                        GLUENT_TYPE_LARGE_BINARY,
+                        name(HADOOP_TYPE_BINARY, GOE_TYPE_LARGE_BINARY),
+                        GOE_TYPE_LARGE_BINARY,
                     ),
                     "present_options": {
                         "large_binary_columns_csv": name(
-                            HADOOP_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY
+                            HADOOP_TYPE_BINARY, GOE_TYPE_LARGE_BINARY
                         )
                     },
                 },
@@ -164,14 +164,14 @@ class BackendHiveTestingApi(BackendHadoopTestingApi):
             "backend_test_type_canonical_time() is not implemented for Hive"
         )
 
-    def create_backend_offload_location(self, gluent_user=None):
+    def create_backend_offload_location(self, goe_user=None):
         """Create HDFS_HOME and HDFS_DATA for Hive"""
-        gluent_user = gluent_user or "gluent"
-        user_dir = "/user/%s" % gluent_user
+        goe_user = goe_user or "goe"
+        user_dir = "/user/%s" % goe_user
         data_dir = user_dir + "/offload"
         self._sudo_hdfs_dfs(["-mkdir", "-p", data_dir])
-        self._sudo_hdfs_dfs(["-chown", gluent_user, user_dir])
-        self._sudo_hdfs_dfs(["-chown", "%s:%s" % (gluent_user, "hadoop"), data_dir])
+        self._sudo_hdfs_dfs(["-chown", goe_user, user_dir])
+        self._sudo_hdfs_dfs(["-chown", "%s:%s" % (goe_user, "hadoop"), data_dir])
         self._sudo_hdfs_dfs(["-chmod", "g+w", data_dir])
 
     def create_table_as_select(
@@ -294,26 +294,26 @@ class BackendHiveTestingApi(BackendHadoopTestingApi):
             else None
         )
         return {
-            GLUENT_TYPE_FIXED_STRING: HADOOP_TYPE_STRING,
-            GLUENT_TYPE_LARGE_STRING: HADOOP_TYPE_STRING,
-            GLUENT_TYPE_VARIABLE_STRING: HADOOP_TYPE_STRING,
-            GLUENT_TYPE_BINARY: HADOOP_TYPE_BINARY,
-            GLUENT_TYPE_LARGE_BINARY: HADOOP_TYPE_BINARY,
-            GLUENT_TYPE_INTEGER_1: bigint_override or HADOOP_TYPE_TINYINT,
-            GLUENT_TYPE_INTEGER_2: bigint_override or HADOOP_TYPE_SMALLINT,
-            GLUENT_TYPE_INTEGER_4: bigint_override or HADOOP_TYPE_INT,
-            GLUENT_TYPE_INTEGER_8: HADOOP_TYPE_BIGINT,
-            GLUENT_TYPE_INTEGER_38: HADOOP_TYPE_DECIMAL,
-            GLUENT_TYPE_DECIMAL: HADOOP_TYPE_DECIMAL,
-            GLUENT_TYPE_FLOAT: HADOOP_TYPE_FLOAT,
-            GLUENT_TYPE_DOUBLE: HADOOP_TYPE_DOUBLE,
-            GLUENT_TYPE_DATE: HADOOP_TYPE_DATE,
-            GLUENT_TYPE_TIME: HADOOP_TYPE_STRING,
-            GLUENT_TYPE_TIMESTAMP: HADOOP_TYPE_TIMESTAMP,
-            GLUENT_TYPE_TIMESTAMP_TZ: HADOOP_TYPE_TIMESTAMP,
-            GLUENT_TYPE_INTERVAL_DS: HADOOP_TYPE_STRING,
-            GLUENT_TYPE_INTERVAL_YM: HADOOP_TYPE_STRING,
-            GLUENT_TYPE_BOOLEAN: HADOOP_TYPE_BOOLEAN,
+            GOE_TYPE_FIXED_STRING: HADOOP_TYPE_STRING,
+            GOE_TYPE_LARGE_STRING: HADOOP_TYPE_STRING,
+            GOE_TYPE_VARIABLE_STRING: HADOOP_TYPE_STRING,
+            GOE_TYPE_BINARY: HADOOP_TYPE_BINARY,
+            GOE_TYPE_LARGE_BINARY: HADOOP_TYPE_BINARY,
+            GOE_TYPE_INTEGER_1: bigint_override or HADOOP_TYPE_TINYINT,
+            GOE_TYPE_INTEGER_2: bigint_override or HADOOP_TYPE_SMALLINT,
+            GOE_TYPE_INTEGER_4: bigint_override or HADOOP_TYPE_INT,
+            GOE_TYPE_INTEGER_8: HADOOP_TYPE_BIGINT,
+            GOE_TYPE_INTEGER_38: HADOOP_TYPE_DECIMAL,
+            GOE_TYPE_DECIMAL: HADOOP_TYPE_DECIMAL,
+            GOE_TYPE_FLOAT: HADOOP_TYPE_FLOAT,
+            GOE_TYPE_DOUBLE: HADOOP_TYPE_DOUBLE,
+            GOE_TYPE_DATE: HADOOP_TYPE_DATE,
+            GOE_TYPE_TIME: HADOOP_TYPE_STRING,
+            GOE_TYPE_TIMESTAMP: HADOOP_TYPE_TIMESTAMP,
+            GOE_TYPE_TIMESTAMP_TZ: HADOOP_TYPE_TIMESTAMP,
+            GOE_TYPE_INTERVAL_DS: HADOOP_TYPE_STRING,
+            GOE_TYPE_INTERVAL_YM: HADOOP_TYPE_STRING,
+            GOE_TYPE_BOOLEAN: HADOOP_TYPE_BOOLEAN,
         }
 
     def insert_table_as_select(

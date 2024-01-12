@@ -34,7 +34,6 @@ def copy_rdbms_stats_to_backend(
     """Copy RDBMS stats from source offload table to target table
     Copying stats from RDBMS table has only been implemented for Impala engine, this can be switched on for other backends using
     BackendApi.table_stats_set_supported()
-    General approach to this described in design note: https://gluent.atlassian.net/wiki/display/DEV/Hadoop+Oracle+Stats+Design+Notes
     """
 
     def comparision_tuple_from_hv(rdbms_hv_list, rdbms_synth_expressions):

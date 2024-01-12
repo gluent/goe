@@ -9,7 +9,7 @@ import sys
 
 def check_cli_path():
     """Check OFFLOAD_HOME in top level command wrappers
-    This should be imported and called as the first Gluent import, for example:
+    This should be imported and called as the first GOE import, for example:
 
     import os
 
@@ -24,6 +24,3 @@ def check_cli_path():
             "You should source environment variables first, eg: . ../conf/offload.env"
         )
         sys.exit(1)
-    elif os.path.split(sys.exec_prefix)[-1] != "offload":
-        print("Python path is unexpected, have you sourced ../conf/offload.env?")
-        print()

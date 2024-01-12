@@ -1,7 +1,7 @@
 """
 TestCommandSteps: Unit test constants in command_steps are sound.
     1) Within the module.
-    2) When compared to Gluent Repo data.
+    2) When compared to GOE Repo data.
 """
 from unittest import main
 
@@ -22,7 +22,7 @@ from tests.unit.orchestration.test_command_steps import (
 
 class TestCommandStepsIntegration(TestCommandSteps):
     """
-    TestCommandSteps: Unit test constants in command_steps are sound when compared to Gluent Repo data.
+    TestCommandSteps: Unit test constants in command_steps are sound when compared to GOE Repo data.
     """
 
     def test_command_steps_repo(self):

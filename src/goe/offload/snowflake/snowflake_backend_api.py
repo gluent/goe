@@ -22,11 +22,11 @@ from goe.offload.backend_api import BackendApiInterface, BackendApiException, Ud
     REPORT_ATTR_BACKEND_CLASS, REPORT_ATTR_BACKEND_TYPE,\
     REPORT_ATTR_BACKEND_DISPLAY_NAME, REPORT_ATTR_BACKEND_HOST_INFO_TYPE, REPORT_ATTR_BACKEND_HOST_INFO
 from goe.offload.column_metadata import is_safe_mapping, valid_column_list, CanonicalColumn, \
-    GLUENT_TYPE_BINARY, GLUENT_TYPE_BOOLEAN, GLUENT_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE, GLUENT_TYPE_DATE,\
-    GLUENT_TYPE_FLOAT, GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_INTEGER_1, GLUENT_TYPE_INTEGER_2, GLUENT_TYPE_INTEGER_4,\
-    GLUENT_TYPE_INTEGER_8, GLUENT_TYPE_INTEGER_38, GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM,\
-    GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_TIMESTAMP, GLUENT_TYPE_TIME,\
-    GLUENT_TYPE_TIMESTAMP_TZ, GLUENT_TYPE_VARIABLE_STRING, CANONICAL_CHAR_SEMANTICS_CHAR, \
+    GOE_TYPE_BINARY, GOE_TYPE_BOOLEAN, GOE_TYPE_DECIMAL, GOE_TYPE_DOUBLE, GOE_TYPE_DATE,\
+    GOE_TYPE_FLOAT, GOE_TYPE_FIXED_STRING, GOE_TYPE_INTEGER_1, GOE_TYPE_INTEGER_2, GOE_TYPE_INTEGER_4,\
+    GOE_TYPE_INTEGER_8, GOE_TYPE_INTEGER_38, GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM,\
+    GOE_TYPE_LARGE_BINARY, GOE_TYPE_LARGE_STRING, GOE_TYPE_TIMESTAMP, GOE_TYPE_TIME,\
+    GOE_TYPE_TIMESTAMP_TZ, GOE_TYPE_VARIABLE_STRING, CANONICAL_CHAR_SEMANTICS_CHAR, \
     ALL_CANONICAL_TYPES, DATE_CANONICAL_TYPES, NUMERIC_CANONICAL_TYPES, STRING_CANONICAL_TYPES
 from goe.offload.offload_constants import DBTYPE_SNOWFLAKE, SNOWFLAKE_BACKEND_CAPABILITIES,\
     EMPTY_BACKEND_TABLE_STATS_DICT, EMPTY_BACKEND_COLUMN_STATS_DICT, EMPTY_BACKEND_COLUMN_STATS_LIST,\
@@ -57,7 +57,7 @@ SNOWFLAKE_INVALID_IDENTIFIER_CHARS_RE = re.compile(r'[\"]', re.I)
 # Identifier used when making a connection to Snowflake in order for Snowflake to:
 #   "better understand the usage patterns associated with specific partner integrations"
 # We should not change this without also changing the identifier in the partner portal.
-SNOWFLAKE_CONNECTION_IDENTIFIER = 'Gluent_GluentDataPlatform'
+SNOWFLAKE_CONNECTION_IDENTIFIER = 'GOE'
 
 
 ###########################################################################
@@ -235,7 +235,7 @@ class BackendSnowflakeApi(BackendApiInterface):
     def _fixed_session_parameters():
         """ Dictionary of fixed session parameters for Snowflake """
         return {'AUTOCOMMIT': 'TRUE',
-                'QUERY_TAG': 'Gluent Offload Engine',
+                'QUERY_TAG': 'GOE',
                 'TIMESTAMP_NTZ_OUTPUT_FORMAT': 'YYYY-MM-DD HH24:MI:SS.FF9',
                 'TIMESTAMP_TZ_OUTPUT_FORMAT': 'YYYY-MM-DD HH24:MI:SS.FF9 TZHTZM',
                 'TIME_OUTPUT_FORMAT': 'HH24:MI:SS.FF9'}
@@ -481,7 +481,7 @@ class BackendSnowflakeApi(BackendApiInterface):
         raise NotImplementedError('Compute statistics does not apply for Snowflake')
 
     def create_database(self, db_name, comment=None, properties=None):
-        """ Create a Snowflake schema which is a database in Gluent terminology.
+        """ Create a Snowflake schema which is a database in GOE terminology.
             properties["transient"]: Can be used to create a transient schema if value is truthy.
         """
         assert db_name
@@ -566,7 +566,7 @@ class BackendSnowflakeApi(BackendApiInterface):
 
     def create_udf(self, db_name, udf_name, return_data_type, parameter_tuples, udf_body, or_replace=False,
                    spec_as_string=None, sync=None, log_level=VERBOSE):
-        """ Pending implementation due to no current requirement for Snowflake UDF Support in GDP """
+        """ Pending implementation due to no current requirement for Snowflake UDF Support in GOE """
         raise NotImplementedError('create_udf() is not implemented for Snowflake backend')
 
     def current_date_sql_expression(self):
@@ -1389,13 +1389,13 @@ class BackendSnowflakeApi(BackendApiInterface):
         return udfs
 
     def udf_installation_os(self, user_udf_version):
-        raise NotImplementedError('Gluent UDFs are not supported on Snowflake')
+        raise NotImplementedError('GOE UDFs are not supported on Snowflake')
 
     def udf_installation_sql(self, create_udf_db, udf_db=None):
-        raise NotImplementedError('Gluent UDFs are not supported on Snowflake')
+        raise NotImplementedError('GOE UDFs are not supported on Snowflake')
 
     def udf_installation_test(self, udf_db=None):
-        raise NotImplementedError('Gluent UDFs are not supported on Snowflake')
+        raise NotImplementedError('GOE UDFs are not supported on Snowflake')
 
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, SnowflakeColumn)
@@ -1406,24 +1406,24 @@ class BackendSnowflakeApi(BackendApiInterface):
         if column.is_number_based():
             if column.data_type == SNOWFLAKE_TYPE_FLOAT:
                 # Snowflake FLOAT is always stored as DOUBLE therefore no canonical FLOAT below
-                return bool(target_type in [GLUENT_TYPE_DECIMAL, GLUENT_TYPE_DOUBLE])
+                return bool(target_type in [GOE_TYPE_DECIMAL, GOE_TYPE_DOUBLE])
             else:
                 return target_type in NUMERIC_CANONICAL_TYPES
         elif column.is_date_based():
             return bool(target_type in DATE_CANONICAL_TYPES)
         elif column.is_string_based():
             return bool(target_type in STRING_CANONICAL_TYPES or
-                        target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY] or
-                        target_type in [GLUENT_TYPE_INTERVAL_DS, GLUENT_TYPE_INTERVAL_YM])
+                        target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY] or
+                        target_type in [GOE_TYPE_INTERVAL_DS, GOE_TYPE_INTERVAL_YM])
         elif target_type not in ALL_CANONICAL_TYPES:
             self._log('Unknown canonical type in mapping: %s' % target_type, detail=VVERBOSE)
             return False
         elif column.data_type not in self.supported_backend_data_types():
             return False
         elif column.data_type == SNOWFLAKE_TYPE_BINARY:
-            return bool(target_type in [GLUENT_TYPE_BINARY, GLUENT_TYPE_LARGE_BINARY])
+            return bool(target_type in [GOE_TYPE_BINARY, GOE_TYPE_LARGE_BINARY])
         elif column.data_type == SNOWFLAKE_TYPE_TIME:
-            return bool(target_type == GLUENT_TYPE_TIME)
+            return bool(target_type == GOE_TYPE_TIME)
         return False
 
     def valid_staging_formats(self):
@@ -1453,7 +1453,7 @@ class BackendSnowflakeApi(BackendApiInterface):
         return False
 
     def to_canonical_column(self, column):
-        """ Translate a Snowflake column to an internal Gluent column """
+        """ Translate a Snowflake column to an internal GOE column """
 
         def new_column(col, data_type, data_precision=None, data_scale=None, safe_mapping=None):
             """ Wrapper that carries name forward but applies other attributes as specified """
@@ -1467,39 +1467,39 @@ class BackendSnowflakeApi(BackendApiInterface):
         assert isinstance(column, SnowflakeColumn)
 
         if column.data_type == SNOWFLAKE_TYPE_BOOLEAN:
-            return new_column(column, GLUENT_TYPE_BOOLEAN)
+            return new_column(column, GOE_TYPE_BOOLEAN)
         elif column.data_type == SNOWFLAKE_TYPE_BINARY:
-            return new_column(column, GLUENT_TYPE_BINARY)
+            return new_column(column, GOE_TYPE_BINARY)
         elif column.data_type == SNOWFLAKE_TYPE_DATE:
-            return new_column(column, GLUENT_TYPE_DATE)
+            return new_column(column, GOE_TYPE_DATE)
         elif column.data_type == SNOWFLAKE_TYPE_FLOAT:
-            return new_column(column, GLUENT_TYPE_DOUBLE)
+            return new_column(column, GOE_TYPE_DOUBLE)
         elif column.data_type == SNOWFLAKE_TYPE_INTEGER:
-            return new_column(column, GLUENT_TYPE_INTEGER_38)
+            return new_column(column, GOE_TYPE_INTEGER_38)
         elif column.data_type == SNOWFLAKE_TYPE_NUMBER:
             if column.data_scale == 0:
                 if 1 <= column.data_precision <= 2:
-                    integral_type = GLUENT_TYPE_INTEGER_1
+                    integral_type = GOE_TYPE_INTEGER_1
                 elif 3 <= column.data_precision <= 4:
-                    integral_type = GLUENT_TYPE_INTEGER_2
+                    integral_type = GOE_TYPE_INTEGER_2
                 elif 5 <= column.data_precision <= 9:
-                    integral_type = GLUENT_TYPE_INTEGER_4
+                    integral_type = GOE_TYPE_INTEGER_4
                 elif 10 <= column.data_precision <= 18:
-                    integral_type = GLUENT_TYPE_INTEGER_8
+                    integral_type = GOE_TYPE_INTEGER_8
                 else:
-                    integral_type = GLUENT_TYPE_INTEGER_38
+                    integral_type = GOE_TYPE_INTEGER_38
                 return new_column(column, integral_type)
             else:
-                return new_column(column, GLUENT_TYPE_DECIMAL, data_precision=column.data_precision,
+                return new_column(column, GOE_TYPE_DECIMAL, data_precision=column.data_precision,
                                   data_scale=column.data_scale)
         elif column.data_type == SNOWFLAKE_TYPE_TEXT:
-            return new_column(column, GLUENT_TYPE_VARIABLE_STRING)
+            return new_column(column, GOE_TYPE_VARIABLE_STRING)
         elif column.data_type == SNOWFLAKE_TYPE_TIME:
-            return new_column(column, GLUENT_TYPE_TIME)
+            return new_column(column, GOE_TYPE_TIME)
         elif column.data_type == SNOWFLAKE_TYPE_TIMESTAMP_NTZ:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP, data_scale=self.max_datetime_scale())
+            return new_column(column, GOE_TYPE_TIMESTAMP, data_scale=self.max_datetime_scale())
         elif column.data_type == SNOWFLAKE_TYPE_TIMESTAMP_TZ:
-            return new_column(column, GLUENT_TYPE_TIMESTAMP_TZ, data_scale=self.max_datetime_scale())
+            return new_column(column, GOE_TYPE_TIMESTAMP_TZ, data_scale=self.max_datetime_scale())
         else:
             raise NotImplementedError('Unsupported backend data type: %s' % column.data_type)
 
@@ -1515,43 +1515,43 @@ class BackendSnowflakeApi(BackendApiInterface):
         assert column
         assert isinstance(column, CanonicalColumn), '%s is not instance of CanonicalColumn' % type(column)
 
-        if column.data_type == GLUENT_TYPE_BOOLEAN:
+        if column.data_type == GOE_TYPE_BOOLEAN:
             return new_column(column, SNOWFLAKE_TYPE_BOOLEAN, safe_mapping=True)
-        elif column.data_type in (GLUENT_TYPE_FIXED_STRING, GLUENT_TYPE_LARGE_STRING, GLUENT_TYPE_VARIABLE_STRING):
+        elif column.data_type in (GOE_TYPE_FIXED_STRING, GOE_TYPE_LARGE_STRING, GOE_TYPE_VARIABLE_STRING):
             return new_column(column, SNOWFLAKE_TYPE_TEXT, char_length=column.char_length or column.data_length,
                               safe_mapping=True)
-        elif column.data_type in (GLUENT_TYPE_LARGE_BINARY, GLUENT_TYPE_BINARY):
+        elif column.data_type in (GOE_TYPE_LARGE_BINARY, GOE_TYPE_BINARY):
             return new_column(column, SNOWFLAKE_TYPE_BINARY, data_length=column.data_length)
-        elif column.data_type == GLUENT_TYPE_DATE:
+        elif column.data_type == GOE_TYPE_DATE:
             return new_column(column, SNOWFLAKE_TYPE_DATE, safe_mapping=True)
-        elif column.data_type in (GLUENT_TYPE_FLOAT, GLUENT_TYPE_DOUBLE):
+        elif column.data_type in (GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE):
             return new_column(column, SNOWFLAKE_TYPE_FLOAT, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_1:
+        elif column.data_type == GOE_TYPE_INTEGER_1:
             return new_column(column, SNOWFLAKE_TYPE_NUMBER, data_precision=3, data_scale=0, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_2:
+        elif column.data_type == GOE_TYPE_INTEGER_2:
             return new_column(column, SNOWFLAKE_TYPE_NUMBER, data_precision=5, data_scale=0, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_4:
+        elif column.data_type == GOE_TYPE_INTEGER_4:
             return new_column(column, SNOWFLAKE_TYPE_NUMBER, data_precision=10, data_scale=0, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_8:
+        elif column.data_type == GOE_TYPE_INTEGER_8:
             return new_column(column, SNOWFLAKE_TYPE_NUMBER, data_precision=19, data_scale=0, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_INTEGER_38:
+        elif column.data_type == GOE_TYPE_INTEGER_38:
             return new_column(column, SNOWFLAKE_TYPE_NUMBER, data_precision=38, data_scale=0, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_DECIMAL:
+        elif column.data_type == GOE_TYPE_DECIMAL:
             if column.data_precision is None and column.data_scale is None:
                 return self.gen_default_numeric_column(column.name)
             else:
                 data_precision = column.data_precision if column.data_precision else self.max_decimal_precision()
                 return new_column(column, SNOWFLAKE_TYPE_NUMBER, data_precision=data_precision,
                                   data_scale=column.data_scale, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_TIME:
+        elif column.data_type == GOE_TYPE_TIME:
             return new_column(column, SNOWFLAKE_TYPE_TIME, data_scale=column.data_scale, safe_mapping=True)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP:
+        elif column.data_type == GOE_TYPE_TIMESTAMP:
             return new_column(column, SNOWFLAKE_TYPE_TIMESTAMP_NTZ, data_scale=column.data_scale)
-        elif column.data_type == GLUENT_TYPE_TIMESTAMP_TZ:
+        elif column.data_type == GOE_TYPE_TIMESTAMP_TZ:
             return new_column(column, SNOWFLAKE_TYPE_TIMESTAMP_TZ, data_scale=column.data_scale)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_DS:
+        elif column.data_type == GOE_TYPE_INTERVAL_DS:
             return new_column(column, SNOWFLAKE_TYPE_TEXT, safe_mapping=False)
-        elif column.data_type == GLUENT_TYPE_INTERVAL_YM:
+        elif column.data_type == GOE_TYPE_INTERVAL_YM:
             return new_column(column, SNOWFLAKE_TYPE_TEXT, safe_mapping=False)
         else:
-            raise NotImplementedError('Unsupported Gluent data type: %s' % column.data_type)
+            raise NotImplementedError('Unsupported GOE data type: %s' % column.data_type)

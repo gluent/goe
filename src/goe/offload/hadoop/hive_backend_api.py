@@ -59,51 +59,51 @@ from goe.offload.hadoop.hadoop_column import (
 
 HIVE_UDF_SPECS = [
     (
-        "GLUENT_TZOFFSET_TO_TIMESTAMP",
-        "com.gluent.udf.TzOffsetStrToTimestamp",
+        "GOE_TZOFFSET_TO_TIMESTAMP",
+        "com.goe.udf.TzOffsetStrToTimestamp",
         "'2015-01-01 12:13:14.56789 +02:00'",
     ),
-    ("GLUENT_VERSION", "com.gluent.udf.GluentVersion", ""),
-    ("GLUENT_UPPER", "com.gluent.udf.GluentToUpper", "'Heya!'"),
-    ("GLUENT_LOWER", "com.gluent.udf.GluentToLower", "'Heya!'"),
-    ("GLUENT_DAYOFWEEK", "com.gluent.udf.GluentDayOfWeek", "'2017-10-17'"),
+    ("GOE_VERSION", "com.goe.udf.GOEVersion", ""),
+    ("GOE_UPPER", "com.goe.udf.GOEToUpper", "'Heya!'"),
+    ("GOE_LOWER", "com.goe.udf.GOEToLower", "'Heya!'"),
+    ("GOE_DAYOFWEEK", "com.goe.udf.GOEDayOfWeek", "'2017-10-17'"),
     (
-        "GLUENT_TO_INTERNAL_NUMBER",
-        "com.gluent.udf.ToOracleInternalNumberRaw",
+        "GOE_TO_INTERNAL_NUMBER",
+        "com.goe.udf.ToOracleInternalNumberRaw",
         "CAST(1 AS TINYINT)",
     ),
     (
-        "GLUENT_TO_INTERNAL_DATE",
-        "com.gluent.udf.ToOracleInternalDateRaw",
+        "GOE_TO_INTERNAL_DATE",
+        "com.goe.udf.ToOracleInternalDateRaw",
         "CAST(0 AS TIMESTAMP)",
     ),
     (
-        "GLUENT_TO_INTERNAL_DOUBLE",
-        "com.gluent.udf.ToOracleInternalDouble",
+        "GOE_TO_INTERNAL_DOUBLE",
+        "com.goe.udf.ToOracleInternalDouble",
         "CAST(1.1 AS DOUBLE)",
     ),
     (
-        "GLUENT_TO_INTERNAL_FLOAT",
-        "com.gluent.udf.ToOracleInternalFloat",
+        "GOE_TO_INTERNAL_FLOAT",
+        "com.goe.udf.ToOracleInternalFloat",
         "CAST(1.1 AS FLOAT)",
     ),
     (
-        "GLUENT_ROW_RUN_LENGTH",
-        "com.gluent.udf.OracleRowRunLengthRaw",
+        "GOE_ROW_RUN_LENGTH",
+        "com.goe.udf.OracleRowRunLengthRaw",
         "CAST('rowrow' AS BINARY), 1",
     ),
     (
-        "GLUENT_FIELD_RUN_LENGTH",
-        "com.gluent.udf.OracleFieldRunLengthRaw",
+        "GOE_FIELD_RUN_LENGTH",
+        "com.goe.udf.OracleFieldRunLengthRaw",
         "CAST('foo' AS BINARY), 1",
     ),
     (
-        "GLUENT_UTF8_RUN_LENGTH",
-        "com.gluent.udf.OracleUtf8RunLengthRaw",
+        "GOE_UTF8_RUN_LENGTH",
+        "com.goe.udf.OracleUtf8RunLengthRaw",
         "CAST('bar' AS BINARY), 1",
     ),
-    ("GLUENT_BUCKET", "com.gluent.udf.GluentBucket", "1,16"),
-    ("GLUENT_BUCKET", "com.gluent.udf.GluentBucket", "CAST(1234 AS DECIMAL(38,0)),16"),
+    ("GOE_BUCKET", "com.goe.udf.GOEBucket", "1,16"),
+    ("GOE_BUCKET", "com.goe.udf.GOEBucket", "CAST(1234 AS DECIMAL(38,0)),16"),
 ]
 
 
@@ -242,14 +242,14 @@ OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'"""
         Hive also doesn't universally support listing the columns you plan to insert into. On HDP this is fine
         but on EMR it fails as below:
           0: jdbc:hive2://localhost:10000/default>
-            INSERT INTO `tc_emr_1_SH_TEST`.`gl_backend_types`
+            INSERT INTO `tc_emr_1_SH_TEST`.`goe_backend_types`
             (`ID`,`COLUMN_1`,`COLUMN_2`,`COLUMN_3`,`COLUMN_4`,`COLUMN_5`,`COLUMN_6`,`COLUMN_7`,`COLUMN_8`,`COLUMN_9`,`COLUMN_10`)
             SELECT CAST(0 AS int),CAST(52 AS TINYINT),CAST(4257 AS SMALLINT),CAST(-510192861 AS INT)
             ,CAST(-689489120933 AS BIGINT),NULL,timestamp '2020-11-09 01:40:06',CAST(NULL AS FLOAT)
             ,CAST(2.59692560188e+19 AS DOUBLE),CAST(20052603.16 AS DECIMAL(10,2)),CAST(-998045512624685 AS DECIMAL(15,0));
           Error: Error while compiling statement: FAILED: SemanticException 1:51
             '[COLUMN_6, COLUMN_5, COLUMN_8, COLUMN_7, COLUMN_2, COLUMN_1, COLUMN_10, COLUMN_4, COLUMN_3, ID, COLUMN_9]'
-            in insert schema specification are not found among regular columns of tc_emr_1_SH_TEST.gl_backend_types
+            in insert schema specification are not found among regular columns of tc_emr_1_SH_TEST.goe_backend_types
             nor dynamic partition columns.. Error encountered near token 'COLUMN_10' (state=42000,code=40000)
         """
         join_str = "\nUNION ALL\n" if split_by_cr else " UNION ALL "
@@ -712,7 +712,7 @@ FROM   %(from_db_table)s%(where)s%(dist_by)s%(sort_by)s""" % {
         """Hive
         Returns a list of commands executed
         """
-        if not self.gluent_udfs_supported():
+        if not self.goe_udfs_supported():
             self._messages.log(
                 "Skipping installation of UDFs due to backend: %s" % self._backend_type
             )

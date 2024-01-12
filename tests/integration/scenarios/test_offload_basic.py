@@ -24,7 +24,7 @@ from tests.integration.scenarios.assertion_functions import (
     backend_column_exists,
     backend_table_count,
     backend_table_exists,
-    date_gl_part_column_name,
+    date_goe_part_column_name,
     sales_based_fact_assertion,
     standard_dimension_assertion,
     text_in_events,
@@ -93,11 +93,11 @@ def offload_basic_dim_assertion(backend_api, messages, data_db, backend_name):
                 backend_api,
                 data_db,
                 backend_name,
-                "gl_part_000000000000001_prod_id",
+                "goe_part_000000000000001_prod_id",
             ):
                 return False
             if not backend_column_exists(
-                backend_api, data_db, backend_name, "gl_part_1_txn_code"
+                backend_api, data_db, backend_name, "goe_part_1_txn_code"
             ):
                 return False
 
@@ -118,7 +118,7 @@ def offload_basic_fact_init_assertion(
                 messages,
                 data_db,
                 backend_name,
-                date_gl_part_column_name(backend_api, "TIME_ID"),
+                date_goe_part_column_name(backend_api, "TIME_ID"),
             ):
                 return False
             if not backend_column_exists(
@@ -127,7 +127,7 @@ def offload_basic_fact_init_assertion(
                 messages,
                 data_db,
                 backend_name,
-                "gl_part_000000000000001_channel_id",
+                "goe_part_000000000000001_channel_id",
             ):
                 return False
     if not backend_column_exists(
@@ -303,6 +303,7 @@ def test_offload_basic_dim(config, schema, data_db):
         "preserve_load_table": True,
         "impala_insert_hint": IMPALA_NOSHUFFLE_HINT,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
 
@@ -425,6 +426,7 @@ def test_offload_basic_fact(config, schema, data_db):
             "owner_table": schema + "." + OFFLOAD_FACT,
             "older_than_date": test_constants.SALES_BASED_FACT_PRE_HV,
             "reset_backend_table": True,
+            "create_backend_db": True,
         }
         run_offload(options, config, messages)
 
@@ -452,6 +454,7 @@ def test_offload_basic_fact(config, schema, data_db):
         "decimal_columns_type_list": ["10,2", "20,2"],
         "offload_stats_method": offload_stats_method,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     if backend_api.partition_by_column_supported():
         if config.target == offload_constants.DBTYPE_BIGQUERY:

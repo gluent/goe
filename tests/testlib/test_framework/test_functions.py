@@ -6,7 +6,7 @@
 
 import re
 
-from goe.gluent import (
+from goe.goe import (
     get_log_fh_name,
     get_offload_options,
     get_options,
@@ -134,18 +134,18 @@ def get_test_set_sql_path(directory_name, db_type=None):
     return f"test_sets/{directory_name}/sql/{db_type}"
 
 
-def gl_wide_max_columns(frontend_api, backend_api_or_count):
+def goe_wide_max_columns(frontend_api, backend_api_or_count):
     if backend_api_or_count:
         if isinstance(backend_api_or_count, (int, float)):
             backend_count = backend_api_or_count
         else:
-            backend_count = backend_api_or_count.gl_wide_max_test_column_count()
+            backend_count = backend_api_or_count.goe_wide_max_test_column_count()
         if backend_count:
-            return min(backend_count, frontend_api.gl_wide_max_test_column_count())
+            return min(backend_count, frontend_api.goe_wide_max_test_column_count())
         else:
-            return frontend_api.gl_wide_max_test_column_count()
+            return frontend_api.goe_wide_max_test_column_count()
     else:
-        return frontend_api.gl_wide_max_test_column_count()
+        return frontend_api.goe_wide_max_test_column_count()
 
 
 def log(line: str, detail: int = normal, ansi_code=None):

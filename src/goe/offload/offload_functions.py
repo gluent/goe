@@ -1,10 +1,10 @@
 #! /usr/bin/env python3
-""" offload_functions: Library of functions used in gluent.py and other offload related modules
+""" offload_functions: Library of functions used in goe.py and other offload related modules
     LICENSE_TEXT
 """
 
 # NOTE: the idea of this module is to avoid dependency loops so be careful when importing
-#       from other gluentlib modules
+#       from other goelib modules
 
 from datetime import datetime, date
 import inspect

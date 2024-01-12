@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ OffloadStagingFile: Library for logic/interaction with a staging file/table that will be populated during Offload Transport
-    Gluent Inc (c) 2015-2021
+    LICENSE_TEXT
 """
 from abc import ABCMeta, abstractmethod
 import logging
@@ -106,12 +106,12 @@ class OffloadStagingFileInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def from_canonical_column(self, column):
-        """ Translate an internal Gluent column to a staging file column
+        """ Translate an internal GOE column to a staging file column
         """
 
     @abstractmethod
     def to_canonical_column(self, column):
-        """ Translate a staging file column to an internal Gluent column
+        """ Translate a staging file column to an internal GOE column
         """
 
     @abstractmethod

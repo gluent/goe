@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ SynapseColumn: Synapse implementation of ColumnMetadataInterface
-    Gluent Inc (c) 2015-2021
+    LICENSE_TEXT
 """
 
 from goe.offload.column_metadata import ColumnMetadataInterface,\

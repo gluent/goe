@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ SynapseLiteral: Format an Synapse literal based on data type.
-    Gluent Inc (c) 2015-2021
+    LICENSE_TEXT
 """
 
 from datetime import date, time

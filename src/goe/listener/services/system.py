@@ -6,8 +6,8 @@ from uuid import NAMESPACE_DNS, uuid3
 # Third Party Libraries
 from pydantic import UUID3
 
-# Gluent
-from goe.gluent import version as gluent_version
+# GOE
+from goe.goe import version as goe_version
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.listener import utils
 from goe.listener.config import settings
@@ -48,7 +48,7 @@ class SystemService(object):
         )
 
     async def get_active_listener_endpoints(self):
-        _, keys = await utils.cache.scan("gluent:listener:endpoints:*")
+        _, keys = await utils.cache.scan("goe:listener:endpoints:*")
         return await utils.cache.mget(keys)
 
     def get_db_unique_name(self) -> str:
@@ -61,7 +61,7 @@ class SystemService(object):
         return self.config.db_type
 
     def get_version(self) -> str:
-        return gluent_version()
+        return goe_version()
 
     def get_schemas(self) -> List[Dict[str, Union[str, Any]]]:
         return self.get_repo(self.config, self.messages).get_offloadable_schemas()

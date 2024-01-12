@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
-""" HdfsStore: Gluent HDFS/hive 'file tree' abstractions
+""" HdfsStore: GOE HDFS/hive 'file tree' abstractions
 
     Represents 'HDFS root' as a 'hive table' file list
     with some limited query capabilities
-    
+
     LICENSE_TEXT
 """
 
@@ -13,10 +13,10 @@ import os.path
 import pytz
 import re
 
-from goe.cloud.gluent_layout import GluentHdfsLayout
+from goe.cloud.goe_layout import GOEHdfsLayout
 
 from goe.filesystem.cli_hdfs import CliHdfs
-from goe.filesystem.gluent_dfs import WebHdfs, GluentWebHdfsClient
+from goe.filesystem.goe_dfs import WebHdfs, GOEWebHdfsClient
 from goe.util.jmespath_search import JMESPathSearch
 from goe.util.misc_functions import end_by, parse_python_from_string
 
@@ -56,7 +56,7 @@ logger.addHandler(logging.NullHandler()) # Disabling logging by default
 ###############################################################################
 # CLASS: HdfsStore
 ###############################################################################
-class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
+class HdfsStore(GOEHdfsLayout, JMESPathSearch, object):
     """ HdfsStore: Generic HDFS store abstraction:
             File tree (flattened to {'full_name': {<file properties>}}
             starting from specific 'root'
@@ -79,7 +79,7 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
         # with class: argument in config section and appropriate parameter list
         # See: http://hdfscli.readthedocs.org/en/latest/quickstart.html#configuration
         self._hdfs = HdfsStore.hdfscli_connect(self._cfg, self._cfg_section, dry_run)
-        if not isinstance(self._hdfs, GluentWebHdfsClient):
+        if not isinstance(self._hdfs, GOEWebHdfsClient):
             raise HdfsStoreException("Only webhdfs client is supported in HdfsStore so far")
 
         options = self._cfg.extract_options(self._cfg_section, ('webhdfs_url', 'hdfs_root'))
@@ -102,7 +102,7 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
         return "[section={section} client={client} user={user} url={url}]: hdfs://{root}".format(
             section=self._cfg_section,
             client=self._hdfs,
-            user=self._cfg.get(self._cfg_section, 'hdfs_user', '<current user>'), 
+            user=self._cfg.get(self._cfg_section, 'hdfs_user', '<current user>'),
             url=self._cfg.get(self._cfg_section, 'webhdfs_url', '<unknown>'),
             root=self._root
         )
@@ -113,13 +113,13 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
     ###########################################################################
 
     @staticmethod
-    def hdfscli_gluent_client(cfg, section, dry_run=False):
+    def hdfscli_goe_client(cfg, section, dry_run=False):
         """ Return 'high level' WebHdfs or CliHdfs HDFS client
         """
         def web_client(webhdfs_url):
             """ Return WebHdfs Client
             """
-            logger.debug("hdfscli_gluent_client: Instantiating WebHdfs client")
+            logger.debug("hdfscli_goe_client: Instantiating WebHdfs client")
 
             _, host, port, _ = hdfs_split(webhdfs_url)
             if not host or port is None:
@@ -135,13 +135,13 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
                 'max_concurrency': cfg.getint(section, 'hdfs_request_max_concurrency', 1),
                 'dry_run': dry_run
             }
-            
+
             return WebHdfs(**args)
 
         def ssh_client(user):
             """ Return CliHdfs Client
             """
-            logger.debug("hdfscli_gluent_client: Instantiating CliHdfs client")
+            logger.debug("hdfscli_goe_client: Instantiating CliHdfs client")
 
             hdfs_host = cfg.get(section, 'hdfs_cmd_host') or cfg.get(section, 'hadoop_host')
             if not user or not hdfs_host:
@@ -173,7 +173,7 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
     def hdfscli_connect(cfg, section, dry_run=False):
         """ Return 'raw' hdfscli client (from 'hdfs' library)
         """
-        return HdfsStore.hdfscli_gluent_client(cfg, section, dry_run).client
+        return HdfsStore.hdfscli_goe_client(cfg, section, dry_run).client
 
 
     ###########################################################################
@@ -222,20 +222,20 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
             Emit (file, status), Skip directories
 
             Returns [] if 'root' does not exist
-        """ 
+        """
         logger.debug("Extracting HDFS contents, starting from root: %s" % self._root)
         skip_meta = end_by(self._root, '/') + METANOTE_FOLDER
 
         for root, dirs, files in self._hdfs.walk(hdfs_path=self._root, depth=0, status=True):
             if skip_meta == root[0]:
-                continue 
+                continue
             for f in files:
                 file_name, file_status = f
                 # 'root' is a tuple: ('file name', 'status'). We only need the 1st part
                 abs_file_name = os.path.join(root[0], file_name)
                 logger.debug("Emitting file: %s with status: %s" % (abs_file_name, file_status))
                 yield (abs_file_name, file_status)
-    
+
 
     def _get_file_properties(self, file_name, file_status):
         """ Get 'properties': size, md5, last_modified for a specified file
@@ -255,7 +255,7 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
             #'checksum': self._hdfs.checksum(file_name)['bytes'],
         }
 
-    
+
     def _make_keys(self, file_tuples):
         """ GENERATOR: For each file, emit file metadata records
 
@@ -267,8 +267,8 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
             file_key = file_name.replace(end_by(self._root, '/'), '')
             file_properties['key_name'] = file_key
 
-            # Add gluent timestamp if possible
-            file_properties = self.add_gluentts(file_properties, file_key)
+            # Add GOE timestamp if possible
+            file_properties = self.add_goets(file_properties, file_key)
             # Mine for 'partitions'
             file_properties = self.add_partitions(file_properties, file_key)
 
@@ -292,7 +292,7 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
         else:
             return [_ for _ in file_keys]
 
-    
+
     ###########################################################################
     # PROPERTIES
     ###########################################################################
@@ -336,7 +336,7 @@ class HdfsStore(GluentHdfsLayout, JMESPathSearch, object):
     ###########################################################################
 
     def create(self):
-        """ Create HDFS root directory """ 
+        """ Create HDFS root directory """
         if self._root_exists():
             logger.warning("Ignoring attempt to create already existing root: %s" % self._root)
         else:
@@ -417,8 +417,8 @@ def hdfs_split(hdfs_path):
 if __name__ == "__main__":
     import sys
 
-    from goe.util.config_file import GluentRemoteConfig
-    from goe.util.misc_functions import set_gluentlib_logging
+    from goe.util.config_file import GOERemoteConfig
+    from goe.util.misc_functions import set_goelib_logging
 
     def usage(prog_name):
         print("%s: config root [debug level]" % prog_name)
@@ -434,9 +434,9 @@ if __name__ == "__main__":
         section, relative_root = sys.argv[1:3]
 
         log_level = sys.argv[3].upper() if len(sys.argv) > 3 else 'CRITICAL'
-        set_gluentlib_logging(log_level)
+        set_goelib_logging(log_level)
 
-        hdfs = HdfsStore(GluentRemoteConfig(), section, relative_root)
+        hdfs = HdfsStore(GOERemoteConfig(), section, relative_root)
         print("Using client: %s" % repr(hdfs))
 
         for _ in hdfs.stream:

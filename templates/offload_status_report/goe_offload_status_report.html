@@ -1,4 +1,4 @@
-{% extends "gl_base.html" %}
+{% extends "goe_base.html" %}
 
 {% block pagetitle %}Offload Status Report{% endblock pagetitle %}
 {% block navtitle %}Offload Status Report{% endblock navtitle %}
@@ -31,7 +31,7 @@
 <!-- Load list.min.js for search and filtering -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/1.5.0/list.min.js"></script>
 
-{% include 'offload_status_report/gl_styles.css' %}
+{% include 'offload_status_report/goe_styles.css' %}
 {% endblock head %}
 
 {% block content %}
@@ -96,19 +96,19 @@
 </div>
 
 <!-- Database Summary Section Start -->
-{% include 'offload_status_report/gl_database_summary.html' %}
+{% include 'offload_status_report/goe_database_summary.html' %}
 <!-- Database Summary Section End -->
 
 <!-- Schema Summary Section Start -->
-{% include 'offload_status_report/gl_schema_summary.html' %}
+{% include 'offload_status_report/goe_schema_summary.html' %}
 <!-- Schema Summary Section End -->
 
 <!-- Table Summary Section Start -->
-{% include 'offload_status_report/gl_table_summary.html' %}
+{% include 'offload_status_report/goe_table_summary.html' %}
 <!-- Table Summary Section End -->
 {% endblock content%}
 
 {% block footer %}
 {{ super() }}
-{% include 'offload_status_report/gl_scripts.js' %}
+{% include 'offload_status_report/goe_scripts.js' %}
 {% endblock footer %}

@@ -92,33 +92,33 @@ LOWER_YRMON_NUM = 199000
 UPPER_YRMON_NUM = 204900
 
 # Generated test tables
-GL_BACKEND_TYPE_MAPPING = "GL_BACKEND_TYPE_MAPPING"
-GL_CHARS = "GL_CHARS"
-GL_TYPE_MAPPING = "GL_TYPE_MAPPING"
-GL_TYPES = "GL_TYPES"
-GL_TYPES_QI = "GL_TYPES_QI"
-GL_WIDE = "GL_WIDE"
+GOE_BACKEND_TYPE_MAPPING = "GOE_BACKEND_TYPE_MAPPING"
+GOE_CHARS = "GOE_CHARS"
+GOE_TYPE_MAPPING = "GOE_TYPE_MAPPING"
+GOE_TYPES = "GOE_TYPES"
+GOE_TYPES_QI = "GOE_TYPES_QI"
+GOE_WIDE = "GOE_WIDE"
 
 # Generated tables used for synthetic partition predicate testing
 # Integers at the limit of BIGINT, large granularity aimed at only having around 1000 partitions
-PART_RANGE_TABLE_BIG_INTS1 = "gl_part_range_big_integers1"
-PART_RANGE_TABLE_BIG_INTS2 = "gl_part_range_big_integers2"
+PART_RANGE_TABLE_BIG_INTS1 = "goe_part_range_big_integers1"
+PART_RANGE_TABLE_BIG_INTS2 = "goe_part_range_big_integers2"
 # Decimal integers just above the limit of BIGINT, large granularity aimed at only having around 1000 partitions
-PART_RANGE_TABLE_DEC_INTS1 = "gl_part_range_big_decint1"
-PART_RANGE_TABLE_DEC_INTS2 = "gl_part_range_big_decint2"
+PART_RANGE_TABLE_DEC_INTS1 = "goe_part_range_big_decint1"
+PART_RANGE_TABLE_DEC_INTS2 = "goe_part_range_big_decint2"
 # Decimal integers at the limit of Oracle, large granularity aimed at only having around 1000 partitions
-PART_RANGE_TABLE_DEC_INTS3 = "gl_part_range_big_decint3"
+PART_RANGE_TABLE_DEC_INTS3 = "goe_part_range_big_decint3"
 # 38 digit decimal ints with a small granularity aimed at having large values coming out of the synthetic expression
-PART_RANGE_TABLE_DEC_INTS4 = "gl_part_range_big_decint4"
+PART_RANGE_TABLE_DEC_INTS4 = "goe_part_range_big_decint4"
 # Large fractional decimals with a small granularity aimed at having large values coming out of the synthetic expression
-PART_RANGE_TABLE_BIG_DECS1 = "gl_part_range_big_decimals1"
-PART_RANGE_TABLE_BIG_DECS2 = "gl_part_range_big_decimals2"
+PART_RANGE_TABLE_BIG_DECS1 = "goe_part_range_big_decimals1"
+PART_RANGE_TABLE_BIG_DECS2 = "goe_part_range_big_decimals2"
 
 # Tables for offloading with partition function UDF
-PART_RANGE_TABLE_UNUM = "gl_part_range_unum"
-PART_RANGE_TABLE_UDEC = "gl_part_range_udec"
-PART_RANGE_TABLE_UDEC2 = "gl_part_range_udec2"
-PART_RANGE_TABLE_USTR = "gl_part_range_ustr"
+PART_RANGE_TABLE_UNUM = "goe_part_range_unum"
+PART_RANGE_TABLE_UDEC = "goe_part_range_udec"
+PART_RANGE_TABLE_UDEC2 = "goe_part_range_udec2"
+PART_RANGE_TABLE_USTR = "goe_part_range_ustr"
 # UDF names for offloading with partition functions
 PARTITION_FUNCTION_TEST_FROM_DEC1 = "TEST_UDF_FROM_DEC1"
 PARTITION_FUNCTION_TEST_FROM_DEC2 = "TEST_UDF_FROM_DEC2"
@@ -187,4 +187,4 @@ ALL_TEST_SETS = [
 ]
 
 # Test "namespace" for TeamCity
-TEST_NAMESPACE = "Gluent.TestTool"
+TEST_NAMESPACE = "GOE.TestTool"

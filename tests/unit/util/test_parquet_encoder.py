@@ -23,7 +23,7 @@ class TestParquetEncoder(TestCase):
         messages = OffloadMessages()
         encoder = ParquetEncoder(parquet_schema, messages)
         extraction_cursor = FakeDb(ROW_COUNT)
-        local_staging_path = get_temp_path(prefix="gluent-unittest", suffix=".parquet")
+        local_staging_path = get_temp_path(prefix="goe-unittest", suffix=".parquet")
         rows_imported = encoder.write_from_cursor(
             local_staging_path, extraction_cursor, source_columns
         )

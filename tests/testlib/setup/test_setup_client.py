@@ -30,7 +30,7 @@ logger.addHandler(logging.NullHandler())
 ###########################################################################
 
 def create_partition_functions(backend_api, udf_db, messages, table_name_re):
-    if backend_api.gluent_partition_functions_supported():
+    if backend_api.goe_partition_functions_supported():
         # Create UDFs for programmatic data test tables, this needs to be done before any offloading
         if not table_name_re or table_name_re.search('udf'):
             # "udf" is not much of a filter but keeps it out of the way when filtering for other tests
@@ -108,10 +108,10 @@ class TestSetupClient:
         if table_name in setup_constants.PART_RANGE_PART_FUNCTIONS:
             udf_data_db = get_data_db_for_schema(self._sh_test_user, self._config)
             offload_options.offload_partition_functions = f'{udf_data_db}.{setup_constants.PART_RANGE_PART_FUNCTIONS[table_name]}'
-        if table_name == test_constants.GL_TYPE_MAPPING:
+        if table_name == test_constants.GOE_TYPE_MAPPING:
             # This table has a specific test set for offloading but we still need to get it offloaded in setup
             # in case tests don't run in ideal sequence. The actual test set will still re-offload and verify outcome
-            for offload_opt, offload_val in self._frontend_api.gl_type_mapping_offload_options(
+            for offload_opt, offload_val in self._frontend_api.goe_type_mapping_offload_options(
                     self._backend_api.max_decimal_precision(), self._backend_api.max_decimal_scale(),
                     self._backend_api.max_decimal_integral_magnitude()
             ).items():
@@ -129,13 +129,13 @@ class TestSetupClient:
     ###########################################################################
 
     def create_generated_tables(self):
-        #if self._passes_filter(test_constants.GL_CHARS):
+        #if self._passes_filter(test_constants.GOE_CHARS):
         #    self._sh_test_api.create_generated_table(
-        #        self._sh_test_user, test_constants.GL_CHARS, ascii_only=self._ascii_only,
+        #        self._sh_test_user, test_constants.GOE_CHARS, ascii_only=self._ascii_only,
         #        all_chars_notnull=self._all_chars_notnull
         #    )
-        if self._passes_filter(test_constants.GL_TYPE_MAPPING):
-            self._sh_test_api.create_gl_type_mapping(
+        if self._passes_filter(test_constants.GOE_TYPE_MAPPING):
+            self._sh_test_api.create_goe_type_mapping(
                 self._sh_test_user, ascii_only=self._ascii_only,
                 max_backend_precision=self._backend_api.max_decimal_precision(),
                 max_backend_scale=self._backend_api.max_decimal_scale(),
@@ -143,24 +143,24 @@ class TestSetupClient:
                 all_chars_notnull=self._all_chars_notnull,
                 supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys())
             )
-        #if self._passes_filter(test_constants.GL_TYPES):
+        #if self._passes_filter(test_constants.GOE_TYPES):
         #    self._sh_test_api.create_generated_table(
-        #        self._sh_test_user, test_constants.GL_TYPES, ascii_only=self._ascii_only,
+        #        self._sh_test_user, test_constants.GOE_TYPES, ascii_only=self._ascii_only,
         #        all_chars_notnull=self._all_chars_notnull,
         #        supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys())
         #    )
-        #if self._passes_filter(test_constants.GL_TYPES_QI):
+        #if self._passes_filter(test_constants.GOE_TYPES_QI):
         #    self._sh_test_api.create_generated_table(
-        #        self._sh_test_user, test_constants.GL_TYPES_QI, ascii_only=self._ascii_only,
+        #        self._sh_test_user, test_constants.GOE_TYPES_QI, ascii_only=self._ascii_only,
         #        all_chars_notnull=self._all_chars_notnull,
         #        supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys())
         #    )
-        #if self._passes_filter(test_constants.GL_WIDE):
+        #if self._passes_filter(test_constants.GOE_WIDE):
         #    self._sh_test_api.create_generated_table(
-        #        self._sh_test_user, test_constants.GL_WIDE, ascii_only=self._ascii_only,
+        #        self._sh_test_user, test_constants.GOE_WIDE, ascii_only=self._ascii_only,
         #        all_chars_notnull=self._all_chars_notnull,
         #        supported_canonical_types=list(self._backend_api.expected_canonical_to_backend_type_map().keys()),
-        #        backend_max_test_column_count=self._backend_api.gl_wide_max_test_column_count()
+        #        backend_max_test_column_count=self._backend_api.goe_wide_max_test_column_count()
         #    )
 
     def create_partition_functions(self):
@@ -180,9 +180,9 @@ class TestSetupClient:
             self._sh_test_api.run_tpt_file(script_path, self._sh_test_user)
 
     def offload_generated_tables(self):
-        #for table_name in (test_constants.GL_CHARS, test_constants.GL_TYPE_MAPPING, test_constants.GL_TYPES,
-        #                   test_constants.GL_TYPES_QI, test_constants.GL_WIDE):
-        for table_name in (test_constants.GL_TYPE_MAPPING, ):
+        #for table_name in (test_constants.GOE_CHARS, test_constants.GOE_TYPE_MAPPING, test_constants.GOE_TYPES,
+        #                   test_constants.GOE_TYPES_QI, test_constants.GOE_WIDE):
+        for table_name in (test_constants.GOE_TYPE_MAPPING, ):
             if not self._passes_filter(table_name):
                 continue
             self._offload_generated_table(table_name)

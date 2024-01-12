@@ -10,7 +10,7 @@ import sys
 import traceback
 
 from getpass import getuser
-from goe.gluent import (
+from goe.goe import (
     get_common_options,
     get_log_fh,
     get_log_fh_name,
@@ -50,12 +50,12 @@ from goe.connect.connect_transport import (
     run_sqoop_tests,
     test_credential_api_alias,
 )
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.offload_constants import DBTYPE_IMPALA, LOG_LEVEL_DEBUG
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import ssh_cmd_prefix
 from goe.orchestration import orchestration_constants
-from goe.util.gluent_log import log_exception
+from goe.util.goe_log import log_exception
 from goe.util.redis_tools import RedisClient
 
 
@@ -221,20 +221,6 @@ def test_dir(dir_name, expected_perms):
         success(test_name)
 
 
-def test_log_level(orchestration_config):
-    test_name = "Logging level"
-    test_header(test_name)
-    if orchestration_config.log_level == LOG_LEVEL_DEBUG:
-        detail(
-            'LOG_LEVEL of "%s" should only be used under the guidance of Gluent Support'
-            % orchestration_config.log_level
-        )
-        warning(test_name)
-    else:
-        detail("LOG_LEVEL: %s" % orchestration_config.log_level)
-        success(test_name)
-
-
 def test_listener(orchestration_config):
     test_name = orchestration_constants.PRODUCT_NAME_GEL
     test_header(test_name)
@@ -360,7 +346,7 @@ def upgrade_environment_file(environment_file, template_file):
     if set(template.keys()) - set(configuration.keys()):
         with open(environment_file, "a") as f:
             f.write(
-                "\n# Below variables added by connect --upgrade-environment-file on %s - See docs.gluent.com for their usage.\n"
+                "\n# Below variables added by connect --upgrade-environment-file on %s - See documentation for their usage.\n"
                 % datetime.now().strftime("%x %X")
             )
             for key in sorted(set(template.keys()) - set(configuration.keys())):
@@ -377,7 +363,7 @@ def check_environment(options, orchestration_config):
     warnings = False
     global failures
     failures = False
-    log("\nChecking your current Gluent Offload Engine environment...")
+    log("\nChecking your current GOE environment...")
 
     section_header("Configuration")
 
@@ -385,7 +371,6 @@ def check_environment(options, orchestration_config):
         get_environment_file_path(), get_template_file_path(orchestration_config)
     )
     test_conf_perms()
-    test_log_level(orchestration_config)
 
     # A number of checks require a messages object, rather than creating in multiple place we create early and re-use
     messages = OffloadMessages.from_options(options, get_log_fh())

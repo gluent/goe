@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 # Third Party Libraries
 from pydantic import UUID3, AnyHttpUrl, Json
 
-# Gluent
+# GOE
 from goe.listener.schemas.base import BaseSchema, TotaledResults
 
 
@@ -57,7 +57,7 @@ class ListenerConfig(BaseSchema):
     """Listener Configuration
 
     Attributes:
-        listener_group_id (UUID3): Currently installed version of Gluent running.
+        listener_group_id (UUID3): Currently installed version of GOE running.
 
     Raises:
         pydantic.error_wrappers.ValidationError: If any of provided attribute

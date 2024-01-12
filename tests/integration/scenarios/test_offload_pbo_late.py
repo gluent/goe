@@ -167,6 +167,7 @@ def offload_pbo_late_100_x_tests(
         "offload_type": OFFLOAD_TYPE_FULL,
         "ipa_predicate_type": ipa_predicate_type,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -339,6 +340,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "offload_partition_columns": offload_partition_columns,
         "offload_partition_granularity": offload_partition_granularity,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(

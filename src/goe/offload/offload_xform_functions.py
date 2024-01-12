@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ Library of functions to support offload and present column transformations
-    Initially used to move functions out of gluent.py to make them sharable, in the future this may evolve
+    Initially used to move functions out of goe.py to make them sharable, in the future this may evolve
     to be a class
     LICENSE_TEXT
 """

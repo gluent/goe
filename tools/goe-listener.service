@@ -1,0 +1,15 @@
+[Unit]
+Description=GOE - Listener Service
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=oracle
+Group=oinstall
+Environment=OFFLOAD_HOME=/u01/app/goe/offload
+ExecStart=/bin/bash -c "${OFFLOAD_HOME}/tools/listener/goe-listener.sh"
+
+[Install]
+WantedBy=multi-user.target

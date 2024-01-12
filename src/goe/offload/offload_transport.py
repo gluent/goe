@@ -30,7 +30,7 @@ from goe.offload.offload_constants import (
     FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
     OFFLOAD_TRANSPORT_AUTO,
-    OFFLOAD_TRANSPORT_GLUENT,
+    OFFLOAD_TRANSPORT_GOE,
     OFFLOAD_TRANSPORT_GCP,
     OFFLOAD_TRANSPORT_SQOOP,
     OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
@@ -50,8 +50,8 @@ from goe.offload.offload_xform_functions import apply_transformation
 from goe.offload.operation.data_type_controls import char_semantics_override_map
 from goe.orchestration import command_steps
 
-from goe.filesystem.gluent_dfs import DFS_TYPE_FILE
-from goe.filesystem.gluent_dfs_factory import get_dfs_from_options
+from goe.filesystem.goe_dfs import DFS_TYPE_FILE
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 
 from goe.util.misc_functions import ansi_c_string_safe, bytes_to_human_size, get_os_username, get_temp_path, \
     id_generator, split_not_in_quotes, write_temp_file
@@ -94,12 +94,12 @@ OFFLOAD_TRANSPORT_SPARK_METHODS = [
 
 VALID_OFFLOAD_TRANSPORTS = [
     OFFLOAD_TRANSPORT_AUTO,
-    OFFLOAD_TRANSPORT_GLUENT,
+    OFFLOAD_TRANSPORT_GOE,
     OFFLOAD_TRANSPORT_GCP,
     OFFLOAD_TRANSPORT_SQOOP
 ]
-# Transport methods for the Gluent rule set
-OFFLOAD_TRANSPORT_GLUENT_METHODS = [
+# Transport methods for the GOE rule set
+OFFLOAD_TRANSPORT_GOE_METHODS = [
     OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
@@ -121,12 +121,12 @@ YARN_TRANSPORT_NAME = 'GOE'
 MISSING_ROWS_IMPORTED_WARNING = 'Unable to identify import record count'
 
 # Sqoop constants
-SQOOP_OPTIONS_FILE_PREFIX = 'gl-sqoop-options-'
+SQOOP_OPTIONS_FILE_PREFIX = 'goe-sqoop-options-'
 SQOOP_LOG_ROW_COUNT_PATTERN = r'^.*mapreduce\.ImportJobBase: Retrieved (\d+) records\.\r?$'
 SQOOP_LOG_MODULE_PATTERN = r"^.*dbms_application_info.set_module\(module_name => '(.+)', action_name => '(.+)'\)"
 
 # Spark constants
-SPARK_OPTIONS_FILE_PREFIX = 'gl-spark-options-'
+SPARK_OPTIONS_FILE_PREFIX = 'goe-spark-options-'
 
 SPARK_THRIFT_SERVER_PROPERTY_EXCLUDE_LIST = ['spark.extraListeners', 'spark.driver.memory', 'spark.executor.memory']
 
@@ -393,8 +393,8 @@ def validate_offload_transport_method(offload_transport_method, offload_options,
 def choose_offload_transport_method(offload_operation, offload_source_table, offload_options, messages):
     """ Select the data transport method based on a series of rules:
             AUTO:
-                Work through GLUENT rules and then fall back to SQOOP rules
-            GLUENT:
+                Work through GOE rules and then fall back to SQOOP rules
+            GOE:
                 Pick a method using the following priorities: SPARK_THRIFT, QUERY_IMPORT, SPARK_LIVY, SPARK_SUBMIT
             GCP:
                 Pick a method using the following priorities: SPARK_DATAPROC_GCLOUD, SPARK_BATCHES_GCLOUD
@@ -411,11 +411,11 @@ def choose_offload_transport_method(offload_operation, offload_source_table, off
             # An override was supplied
             rules = [offload_operation.offload_transport_method]
         elif offload_options.offload_transport == OFFLOAD_TRANSPORT_AUTO:
-            rules = (OFFLOAD_TRANSPORT_GLUENT_METHODS +
+            rules = (OFFLOAD_TRANSPORT_GOE_METHODS +
                      OFFLOAD_TRANSPORT_SQOOP_METHODS +
                      OFFLOAD_TRANSPORT_GCP_METHODS)
-        elif offload_options.offload_transport == OFFLOAD_TRANSPORT_GLUENT:
-            rules = OFFLOAD_TRANSPORT_GLUENT_METHODS
+        elif offload_options.offload_transport == OFFLOAD_TRANSPORT_GOE:
+            rules = OFFLOAD_TRANSPORT_GOE_METHODS
         elif offload_options.offload_transport == OFFLOAD_TRANSPORT_SQOOP:
             rules = OFFLOAD_TRANSPORT_SQOOP_METHODS
         elif offload_options.offload_transport == OFFLOAD_TRANSPORT_GCP:
@@ -1014,7 +1014,7 @@ FROM (%(row_source_subquery)s) %(table_alias)s) v2""" % {
 
     def _check_and_log_transported_files(self, row_count) -> Union[int, None]:
         """ Check and list contents of target location.
-            This interface level method assumes we can list contents via GluentDfs and is particularly useful when
+            This interface level method assumes we can list contents via GOEDfs and is particularly useful when
             writing to cloud storage by ensuring filesystems with eventual consistency have made the files visible.
             target_uri: a file or a directory path, this method will only go one level down, we do not recurse.
             row_count: If this is 0 then we don't expect to find any files.
@@ -1596,7 +1596,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                             'spark.ssl.keyPassword',
                             'spark.ssl.keyStorePassword',
                             'spark.ssl.trustStorePassword',
-                            'spark.com.gluent.SparkBasicAuth.params']
+                            'spark.com.goe.SparkBasicAuth.params']
         debug_conf_snippet = dedent("""\
                                     config_blacklist = %s
                                     for kv in sorted(spark.sparkContext.getConf().getAll()):
@@ -1753,7 +1753,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
         self._spark_config_properties.update({'%s.output.codec' % prm_format: codec,
                                               'hive.exec.compress.output': true_or_false})
 
-    def _local_gluent_listener_jar(self):
+    def _local_goe_listener_jar(self):
         """ Returns path to GOETaskListener jar file in $OFFLOAD_HOME/lib directory """
         offload_home = os.environ.get('OFFLOAD_HOME')
         assert offload_home, 'OFFLOAD_HOME is not set, environment is not correct'
@@ -1907,7 +1907,7 @@ class OffloadTransportSparkThrift(OffloadTransportSpark):
         id_str = id_generator()
         rows_imported = None
 
-        temp_vw_name = 'gluent_%s_%s_%s_jdbc_vw' % (self._rdbms_owner.lower(), self._rdbms_table_name.lower(), id_str)
+        temp_vw_name = 'goe_%s_%s_%s_jdbc_vw' % (self._rdbms_owner.lower(), self._rdbms_table_name.lower(), id_str)
         hive_sql_projection = '\n,      '.join(_.name for _ in self._rdbms_columns)
         split_row_source_by = self._get_transport_split_type(partition_chunk)
         rdbms_source_query = self._get_spark_jdbc_query_text(TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
@@ -1986,7 +1986,7 @@ FROM   %(temp_vw_name)s""" % {'temp_vw_name': spark_api.enclose_identifier(temp_
     def _verify_rdbms_connectivity(self):
         """ Use a simple canary query for verification test """
         rdbms_source_query = '(%s) v' % self._rdbms_api.get_rdbms_canary_query()
-        temp_vw_name = 'gluent_canary_jdbc_vw'
+        temp_vw_name = 'goe_canary_jdbc_vw'
         spark_api = backend_api_factory(DBTYPE_SPARK, self._offload_options, self._messages, dry_run=self._dry_run)
         temp_vw_sql = self._get_create_temp_view_sql(temp_vw_name, rdbms_source_query, spark_api,
                                                      connectivity_test_only=True)
@@ -2134,7 +2134,7 @@ class OffloadTransportSparkSubmit(OffloadTransportSpark):
         py_rm_commands, options_file_remote_path = self._remote_copy_spark_control_file(options_file_local_path,
                                                                                         suffix='py')
         if self._spark_listener_included_in_config():
-            spark_listener_jar_local_path = self._local_gluent_listener_jar()
+            spark_listener_jar_local_path = self._local_goe_listener_jar()
             spark_listener_jar_remote_path = self._remote_copy_transport_file(spark_listener_jar_local_path,
                                                                               self._offload_transport_cmd_host)
         else:
@@ -2370,10 +2370,10 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
     def _get_api_sessions_url(self):
         return URL_SEP.join([self._api_url, LIVY_SESSIONS_SUBURL])
 
-    def _copy_gluent_listener_jar_to_dfs(self):
+    def _copy_goe_listener_jar_to_dfs(self):
         """ Copies the jar file to HDFS and returns the remote DFS location """
-        self.debug('_copy_gluent_listener_jar_to_dfs()')
-        spark_listener_jar_local_path = self._local_gluent_listener_jar()
+        self.debug('_copy_goe_listener_jar_to_dfs()')
+        spark_listener_jar_local_path = self._local_goe_listener_jar()
         if self._standalone_spark():
             # Ensure jar file is on transport host local filesystem
             spark_listener_jar_remote_path = self._remote_copy_transport_file(spark_listener_jar_local_path,
@@ -2416,7 +2416,7 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
         last_log_msg, session_url = None, None
 
         if self._spark_listener_included_in_config():
-            remote_jar_file_path = self._copy_gluent_listener_jar_to_dfs()
+            remote_jar_file_path = self._copy_goe_listener_jar_to_dfs()
         else:
             remote_jar_file_path = None
 
@@ -2476,7 +2476,7 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
             resp.raise_for_status()
 
     def _attach_livy_session(self):
-        def is_gluent_usable_session(job_dict, ignore_session_state=False):
+        def is_goe_usable_session(job_dict, ignore_session_state=False):
             if job_dict.get('kind') != 'pyspark' or (job_dict.get('state') != 'idle' and not ignore_session_state):
                 return False
             if self._offload_transport_queue_name:
@@ -2490,21 +2490,21 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
         resp = self._livy_requests.get(self._get_api_sessions_url())
         if resp.ok:
             sessions = resp.json()['sessions'] or []
-            gluent_usable_sessions = [_ for _ in sessions if is_gluent_usable_session(_)]
-            self.log('Found %s usable Livy sessions' % len(gluent_usable_sessions), detail=VVERBOSE)
-            if len(gluent_usable_sessions) > 0:
-                use_session = gluent_usable_sessions.pop()
+            goe_usable_sessions = [_ for _ in sessions if is_goe_usable_session(_)]
+            self.log('Found %s usable Livy sessions' % len(goe_usable_sessions), detail=VVERBOSE)
+            if len(goe_usable_sessions) > 0:
+                use_session = goe_usable_sessions.pop()
                 self.log('Re-using Livy session: %s/%s' % (str(use_session['id']), use_session.get('appId')),
                          detail=VERBOSE)
                 return URL_SEP.join([self._get_api_sessions_url(), str(use_session['id'])])
             else:
-                all_gluent_sessions = [_ for _ in sessions if is_gluent_usable_session(_, ignore_session_state=True)]
-                self.log('No usable Livy sessions out of total: %s' % len(all_gluent_sessions), detail=VVERBOSE)
-                if len(all_gluent_sessions) < self._livy_max_sessions:
+                all_goe_sessions = [_ for _ in sessions if is_goe_usable_session(_, ignore_session_state=True)]
+                self.log('No usable Livy sessions out of total: %s' % len(all_goe_sessions), detail=VVERBOSE)
+                if len(all_goe_sessions) < self._livy_max_sessions:
                     # create and use a new session
                     return self._create_livy_session()
                 else:
-                    self.log('All gluent capable Livy sessions: %s' % str(all_gluent_sessions), detail=VVERBOSE)
+                    self.log('All goe capable Livy sessions: %s' % str(all_goe_sessions), detail=VVERBOSE)
                     raise OffloadTransportException('Exceeded maximum Livy sessions for offload transport: %s'
                                                     % str(self._livy_max_sessions))
         else:
@@ -2749,7 +2749,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         py_rm_commands, options_file_remote_path = self._remote_copy_spark_control_file(options_file_local_path,
                                                                                         suffix='py')
         if self._spark_listener_included_in_config():
-            spark_listener_jar_local_path = self._local_gluent_listener_jar()
+            spark_listener_jar_local_path = self._local_goe_listener_jar()
             spark_listener_jar_remote_path = self._remote_copy_transport_file(spark_listener_jar_local_path,
                                                                               self._offload_transport_cmd_host)
         else:

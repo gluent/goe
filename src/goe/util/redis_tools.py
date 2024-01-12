@@ -12,7 +12,7 @@ import redis
 from redis import sentinel as redis_sentinel
 from redis.exceptions import RedisError
 
-# Gluent
+# GOE
 from goe.config import orchestration_defaults
 
 # this is a synchronous implementation of the caching class in listener.
@@ -99,7 +99,7 @@ class RedisClient(object):
                         **redis_connection_kwargs,
                     },
                 )
-                cls.redis_client = sentinel.master_for("gluent-console")
+                cls.redis_client = sentinel.master_for("goe-console")
             else:
                 proto = "rediss" if redis_use_ssl else "redis"
                 cls.base_redis_init_kwargs.update(

@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 ##########################################################################
 # exec_in_hadoop_db: (helper script): Execute command in Hadoop database
-#                    Connection is based on gluent configuration
+#                    Connection is based on goe configuration
 #
 # LICENSE_TEXT
 ##########################################################################
@@ -13,18 +13,18 @@ import impala
 
 from goe.util.better_impyla import HiveConnection
 from goe.util.hs2_connection import hs2_connection, hs2_section_options, hs2_env_options, HS2_OPTIONS
-from goe.util.gluent_log import log
+from goe.util.goe_log import log
 from goe.util.misc_functions import check_offload_env, check_remote_offload_env
 
-from goe.gluent import get_options_from_list, normalise_db_paths, init
+from goe.goe import get_options_from_list, normalise_db_paths, init
 
 
 # -----------------------------------------------------------------------
 # CONSTANTS
 # -----------------------------------------------------------------------
 
-# Gluent.py options "imported" by this tool
-GLUENT_OPTIONS=(
+# GOE.py options "imported" by this tool
+GOE_OPTIONS=(
     'dev_log_level', 'execute',
 )
 
@@ -50,7 +50,7 @@ def parse_args():
     """
       Parse arguments and return "options" object
     """
-    parser = get_options_from_list(GLUENT_OPTIONS + HS2_OPTIONS)
+    parser = get_options_from_list(GOE_OPTIONS + HS2_OPTIONS)
 
     parser.add_option('--in', dest='section', \
         help="Execute in database, defined by remote-offload.conf configuration section")

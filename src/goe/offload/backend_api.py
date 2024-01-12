@@ -29,7 +29,7 @@
 from abc import ABCMeta, abstractmethod
 import logging
 
-from goe.filesystem.gluent_dfs import OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_WASB, \
+from goe.filesystem.goe_dfs import OFFLOAD_FS_SCHEME_S3A, OFFLOAD_FS_SCHEME_WASB, \
     OFFLOAD_FS_SCHEME_WASBS, OFFLOAD_FS_SCHEME_ADL, OFFLOAD_FS_SCHEME_ABFS, OFFLOAD_FS_SCHEME_ABFSS,\
     OFFLOAD_FS_SCHEME_HDFS, OFFLOAD_FS_SCHEME_INHERIT, OFFLOAD_FS_SCHEME_GS
 from goe.offload.column_metadata import ColumnMetadataInterface,\
@@ -39,9 +39,9 @@ from goe.offload.offload_constants import CAPABILITY_BUCKET_HASH_COLUMN, CAPABIL
     CAPABILITY_CANONICAL_FLOAT, CAPABILITY_CANONICAL_TIME, CAPABILITY_CASE_SENSITIVE, CAPABILITY_COLUMN_STATS_SET,\
     CAPABILITY_CREATE_DB, CAPABILITY_DROP_COLUMN, CAPABILITY_FS_SCHEME_ABFS, CAPABILITY_FS_SCHEME_ADL,\
     CAPABILITY_FS_SCHEME_S3A, CAPABILITY_FS_SCHEME_GS, CAPABILITY_FS_SCHEME_HDFS, CAPABILITY_FS_SCHEME_INHERIT,\
-    CAPABILITY_FS_SCHEME_WASB, CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS, CAPABILITY_GLUENT_JOIN_PUSHDOWN,\
-    CAPABILITY_GLUENT_MATERIALIZED_JOIN, CAPABILITY_GLUENT_PARTITION_FUNCTIONS, CAPABILITY_GLUENT_SEQ_TABLE,\
-    CAPABILITY_GLUENT_UDFS, CAPABILITY_INCREMENTAL_UPDATE, CAPABILITY_INCREMENTAL_UPDATE_COMPACTION,\
+    CAPABILITY_FS_SCHEME_WASB, CAPABILITY_GOE_COLUMN_TRANSFORMATIONS, CAPABILITY_GOE_JOIN_PUSHDOWN,\
+    CAPABILITY_GOE_MATERIALIZED_JOIN, CAPABILITY_GOE_PARTITION_FUNCTIONS, CAPABILITY_GOE_SEQ_TABLE,\
+    CAPABILITY_GOE_UDFS, CAPABILITY_INCREMENTAL_UPDATE, CAPABILITY_INCREMENTAL_UPDATE_COMPACTION,\
     CAPABILITY_LOAD_DB_TRANSPORT, CAPABILITY_NAN, CAPABILITY_NANOSECONDS, CAPABILITY_NOT_NULL_COLUMN, \
     CAPABILITY_PARAMETERIZED_QUERIES, CAPABILITY_PARTITION_BY_COLUMN, CAPABILITY_PARTITION_BY_STRING, \
     CAPABILITY_QUERY_SAMPLE_CLAUSE, CAPABILITY_RANGER, CAPABILITY_SCHEMA_EVOLUTION, \
@@ -275,9 +275,9 @@ class BackendApiInterface(metaclass=ABCMeta):
     def _decrypt_password(self, password):
         if self._connection_options.password_key_file:
             pass_tool = PasswordTools()
-            gl_key = pass_tool.get_password_key_from_key_file(self._connection_options.password_key_file)
+            goe_key = pass_tool.get_password_key_from_key_file(self._connection_options.password_key_file)
             self._log('Decrypting %s password' % self.backend_db_name(), detail=VVERBOSE)
-            clear_password = pass_tool.b64decrypt(password, gl_key)
+            clear_password = pass_tool.b64decrypt(password, goe_key)
             return clear_password
         else:
             return password
@@ -1192,8 +1192,8 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
     @abstractmethod
     def is_valid_partitioning_data_type(self, data_type):
         """ Checks if a data type is valid for use as a backend partition column.
-            This is not saying what the backend supports, it is what Gluent support, some
-            data types may end up being converted to something else via a GL_PART column.
+            This is not saying what the backend supports, it is what GOE support, some
+            data types may end up being converted to something else via a GOE_PART column.
         """
 
     @abstractmethod
@@ -1489,7 +1489,7 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
         """ Present has a number of options for overriding the default canonical mapping in to_canonical_column().
             This method validates the override.
             column: the source backend column object.
-            canonical_override: either a canonical column object or a GLUENT_TYPE_... data type.
+            canonical_override: either a canonical column object or a GOE_TYPE_... data type.
         """
         pass
 
@@ -1503,13 +1503,13 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
 
     @abstractmethod
     def to_canonical_column(self, column):
-        """ Translate a backend column to an internal Gluent column.
+        """ Translate a backend column to an internal GOE column.
         """
         pass
 
     @abstractmethod
     def from_canonical_column(self, column, decimal_padding_digits=0):
-        """ Translate an internal Gluent column to a backend column.
+        """ Translate an internal GOE column to a backend column.
         """
         pass
 
@@ -1581,23 +1581,23 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" \
     def filesystem_scheme_wasb_supported(self):
         return self.is_capability_supported(CAPABILITY_FS_SCHEME_WASB)
 
-    def gluent_column_transformations_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_COLUMN_TRANSFORMATIONS)
+    def goe_column_transformations_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_COLUMN_TRANSFORMATIONS)
 
-    def gluent_join_pushdown_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_JOIN_PUSHDOWN)
+    def goe_join_pushdown_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_JOIN_PUSHDOWN)
 
-    def gluent_materialized_join_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_MATERIALIZED_JOIN)
+    def goe_materialized_join_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_MATERIALIZED_JOIN)
 
-    def gluent_partition_functions_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_PARTITION_FUNCTIONS)
+    def goe_partition_functions_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_PARTITION_FUNCTIONS)
 
-    def gluent_sequence_table_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_SEQ_TABLE)
+    def goe_sequence_table_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_SEQ_TABLE)
 
-    def gluent_udfs_supported(self):
-        return self.is_capability_supported(CAPABILITY_GLUENT_UDFS)
+    def goe_udfs_supported(self):
+        return self.is_capability_supported(CAPABILITY_GOE_UDFS)
 
     def incremental_update_supported(self):
         """ Note that there is an Impala version specific override for this """

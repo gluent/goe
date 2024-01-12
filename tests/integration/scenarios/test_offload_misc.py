@@ -127,6 +127,7 @@ def test_offload_verification_parallel(config, schema, data_db):
         "verify_row_count": "aggregate",
         "data_sample_pct": 0,
         "reset_backend_table": True,
+        "create_backend_db": True,
     }
     log_test_marker(messages, f"{id}4")
     run_offload(options, config, messages)

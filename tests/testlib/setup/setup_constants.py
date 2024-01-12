@@ -4,7 +4,7 @@ from goe.offload.offload_constants import DBTYPE_BIGQUERY
 from tests.testlib.test_framework import test_constants
 
 # Per table defaults for synthetic_partition_digits
-OFFLOAD_CUSTOM_DIGITS = {'gl_range_bigint': '18',
+OFFLOAD_CUSTOM_DIGITS = {'goe_range_bigint': '18',
                          test_constants.PART_RANGE_TABLE_BIG_INTS1: '20',
                          test_constants.PART_RANGE_TABLE_BIG_INTS2: '20',
                          test_constants.PART_RANGE_TABLE_DEC_INTS1: '20',

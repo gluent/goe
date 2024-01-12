@@ -32,7 +32,7 @@ CREATE OR REPLACE TYPE offload_partition_ot AS OBJECT
     partition_name     VARCHAR2(128),
     partition_level    INTEGER,
     partition_bytes    INTEGER,
-    partition_boundary VARCHAR2(4000),
+    partition_boundary CLOB,
     CONSTRUCTOR FUNCTION offload_partition_ot RETURN SELF AS RESULT
 );
 /

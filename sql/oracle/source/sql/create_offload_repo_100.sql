@@ -370,10 +370,11 @@ CREATE TABLE offload_partition (
     name               VARCHAR2(128) NOT NULL,
     bytes              INTEGER NOT NULL,
     partitioning_level INTEGER NOT NULL,
-    boundary           VARCHAR2(4000),
+    boundary           CLOB,
     offload_chunk_id   INTEGER NOT NULL,
     frontend_object_id INTEGER NOT NULL
-) TABLESPACE "&goe_repo_tablespace";
+) TABLESPACE "&goe_repo_tablespace"
+  LOB (boundary) STORE AS offload_partition_lob;
 
 CREATE UNIQUE INDEX offload_partition_pki ON
     offload_partition (id)

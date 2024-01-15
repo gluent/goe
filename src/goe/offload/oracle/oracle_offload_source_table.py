@@ -996,7 +996,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
         """
         if rdbms_literal in ('MAXVALUE', offload_constants.PART_OUT_OF_RANGE):
             return float("inf")
-        elif re.match('^-?\d+$', rdbms_literal.strip("'").strip()):
+        elif re.match(r'^-?\d+$', rdbms_literal.strip("'").strip()):
             # strip(') because Oracle allows single quoted HVs for NUMERIC partitioning
             return int(rdbms_literal.strip("'").strip())
         else:

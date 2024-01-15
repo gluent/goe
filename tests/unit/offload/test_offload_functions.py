@@ -8,7 +8,6 @@ from goe.offload.offload_functions import (
     expand_columns_csv,
     hybrid_threshold_clauses,
     hybrid_view_list_clauses,
-    trunc_with_hash,
 )
 from goe.offload.column_metadata import (
     CanonicalColumn,

@@ -30,6 +30,7 @@ from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import IMPALA_SHUFFLE_HINT, IMPALA_NOSHUFFLE_HINT
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory, get_backend_table_from_metadata
+from goe.offload.factory.offload_transport_factory import offload_transport_factory
 from goe.offload.column_metadata import invalid_column_list_message, match_table_column,\
     is_synthetic_partition_column, valid_column_list, \
     GOE_TYPE_DECIMAL, GOE_TYPE_DATE, GOE_TYPE_DOUBLE,\
@@ -62,7 +63,7 @@ from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.offload.offload_metadata_functions import gen_and_save_offload_metadata
 from goe.offload.offload_validation import BackendCountValidator, CrossDbValidator,\
     build_verification_clauses
-from goe.offload.offload_transport import choose_offload_transport_method, offload_transport_factory, \
+from goe.offload.offload_transport import choose_offload_transport_method, \
     validate_offload_transport_method, \
     VALID_OFFLOAD_TRANSPORT_METHODS
 from goe.offload.operation.data_type_controls import (

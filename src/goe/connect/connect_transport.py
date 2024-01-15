@@ -20,19 +20,7 @@ from goe.connect.connect_functions import (
     success,
     test_header,
 )
-from goe.offload.offload_constants import DBTYPE_SPARK
-from goe.offload.offload_messages import VVERBOSE
-from goe.offload.offload_transport import (
-    OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
-    URL_SEP,
-    LIVY_SESSIONS_SUBURL,
-    spark_submit_executable_exists,
-    is_spark_gcloud_available,
-    is_spark_gcloud_batches_available,
-    is_spark_gcloud_dataproc_available,
-    is_spark_submit_available,
-    is_spark_thrift_available,
-    is_livy_available,
+from goe.offload.factory.offload_transport_factory import (
     spark_dataproc_batches_jdbc_connectivity_checker,
     spark_dataproc_jdbc_connectivity_checker,
     spark_submit_jdbc_connectivity_checker,
@@ -40,11 +28,26 @@ from goe.offload.offload_transport import (
     spark_livy_jdbc_connectivity_checker,
     sqoop_jdbc_connectivity_checker,
 )
+from goe.offload.offload_messages import VVERBOSE
+from goe.offload.offload_transport import (
+    OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
+    spark_submit_executable_exists,
+    is_spark_gcloud_available,
+    is_spark_gcloud_batches_available,
+    is_spark_gcloud_dataproc_available,
+    is_spark_submit_available,
+    is_spark_thrift_available,
+    is_livy_available,
+)
 from goe.offload.offload_transport_functions import (
     credential_provider_path_jvm_override,
     ssh_cmd_prefix,
 )
-from goe.offload.offload_transport_livy_requests import (
+from goe.offload.spark.livy_offload_transport import (
+    URL_SEP,
+    LIVY_SESSIONS_SUBURL,
+)
+from goe.offload.spark.offload_transport_livy_requests import (
     OffloadTransportLivyRequests,
 )
 

@@ -17,7 +17,7 @@ from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_messages import VERBOSE
-from goe.util.misc_functions import double_quote_sandwich, trunc_with_hash
+from goe.util.misc_functions import double_quote_sandwich
 from goe.util.ora_query import OracleQuery
 from goe.util.ora_query import get_oracle_connection
 

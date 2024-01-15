@@ -24,6 +24,7 @@ dependencies = [
     "filelock",
     "lark-parser",
     "numpy",
+    "orjson",
     "python-dateutil",
     "PyYAML",
     "requests",
@@ -38,15 +39,15 @@ dependencies = [
     "azure-storage-blob==12.9.0",
 
     # For Oracle frontend
-    "cx-Oracle==7.3.0",
+    "cx-Oracle",
 
     # For SQL Server frontend
     # If we do this for real we should switch to pyodbc
     "pymssql",
 
     # For BigQuery backend
-    "google-cloud-bigquery==3.4.2",
-    "google-cloud-kms==2.14.1",
+    "google-cloud-bigquery",
+    "google-cloud-kms",
 
     # For Synapse backend/Teradata frontend
     "pyodbc",
@@ -61,10 +62,8 @@ dependencies = [
 
     # GOE Listener packages
     "fastapi==0.77.0",
-    "orjson",
     "uvicorn==0.17.6",
     "redis==4.3.1",
-    "hiredis",
     "gunicorn==20.1.0",
     #git+ssh://git@bitbucket.org/gluent/gluentlib-contrib.git
     "brotli==1.0.9",

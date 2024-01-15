@@ -587,15 +587,9 @@ def normalise_owner_table_options(options):
 
   if len(options.target_owner_name.split('.')) != 2:
     raise OffloadOptionError('Option --target-name required in form SCHEMA.TABLENAME')
-  if len(options.base_owner_name.split('.')) != 2:
-    raise OffloadOptionError('Option --base-name required in form SCHEMA.TABLENAME')
 
   options.target_owner, options.target_name = options.target_owner_name.split('.')
-  # Need to maintain the upper below for backward compatibility if names pass through trunc_with_hash().
   options.base_owner, options.base_name = options.base_owner_name.upper().split('.')
-
-  if options.base_owner_name.upper() != options.owner_table.upper() and options.target_owner.upper() != options.base_owner.upper():
-    raise OffloadOptionError('The SCHEMA provided in options --target-name and --base-name must match')
 
 
 def normalise_datatype_control_options(opts):
@@ -2137,7 +2131,7 @@ def get_options(usage=None, operation_name=None):
 
   opt.add_option('--max-offload-chunk-size', dest='max_offload_chunk_size',
                  default=orchestration_defaults.max_offload_chunk_size_default(),
-                 help='Restrict size of partitions offloaded per cycle. [\d.]+[MG] eg. 100M, 1G, 1.5G')
+                 help='Restrict size of partitions offloaded per cycle. [\\d.]+[MG] eg. 100M, 1G, 1.5G')
   opt.add_option('--max-offload-chunk-count', dest='max_offload_chunk_count',
                  default=orchestration_defaults.max_offload_chunk_count_default(),
                  help='Restrict number of partitions offloaded per cycle. Allowable values between 1 and 1000.')

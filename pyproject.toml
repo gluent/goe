@@ -1,6 +1,6 @@
 [project]
 name = "goe"
-version = "0.6.0-dev"
+version = "1.0.0-dev"
 readme = "README.md"
 requires-python = ">=3.7"
 maintainers = [

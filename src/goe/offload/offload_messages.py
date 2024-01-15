@@ -318,17 +318,17 @@ class OffloadMessages(object):
         def stdout_log(line):
             if not self._stdout_in_error:
                 try:
-                    sys.stdout.write((line or '') + '\n')
+                    sys.stdout.write((line or "") + "\n")
                     sys.stdout.flush()
                 except OSError as exc:
                     # Writing to screen is non-essential, if we lost stdout we are still logging to file.
-                    fh_log('Disabling STDOUT logging due to: {}'.format(str(exc)))
+                    fh_log("Disabling STDOUT logging due to: {}".format(str(exc)))
                     self._stdout_in_error = True
 
         if self._log_fh:
             fh_log(line)
         if self._detail == QUIET:
-            stdout_log('.')
+            stdout_log(".")
         elif (detail is None or detail <= self._detail) and (
             self._detail != SUPPRESS_STDOUT
         ):
@@ -346,7 +346,7 @@ class OffloadMessages(object):
                     ttl=timedelta(hours=48),
                 )
             except Exception as exc:
-                fh_log('Disabling Redis integration due to: {}'.format(str(exc)))
+                fh_log("Disabling Redis integration due to: {}".format(str(exc)))
                 self._redis_in_error = True
 
     def info(self, line, detail=NORMAL, ansi_code=None):
@@ -447,7 +447,9 @@ class OffloadMessages(object):
 
         parent_command_type = command_type or self._command_type
         if step_repo_logging(parent_command_type):
-            assert self._repo_client, f'Repository client must be initialized for command type: {parent_command_type}'
+            assert (
+                self._repo_client
+            ), f"Repository client must be initialized for command type: {parent_command_type}"
 
         title = step_title(step_constant)
 
@@ -494,11 +496,14 @@ class OffloadMessages(object):
         except Exception as exc:
             log_timedelta(ts)
             if step_repo_logging(parent_command_type):
-                error_context = {command_steps.CTX_ERROR_MESSAGE: str(exc),
-                                 command_steps.CTX_EXCEPTION_STACK: traceback.format_exc()}
+                error_context = {
+                    command_steps.CTX_ERROR_MESSAGE: str(exc),
+                    command_steps.CTX_EXCEPTION_STACK: traceback.format_exc(),
+                }
                 self._repo_client.end_command_step(
-                    csid, orchestration_constants.COMMAND_ERROR,
-                    step_details=error_context
+                    csid,
+                    orchestration_constants.COMMAND_ERROR,
+                    step_details=error_context,
                 )
             if optional:
                 self.log(traceback.format_exc(), detail=VVERBOSE)

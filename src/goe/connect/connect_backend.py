@@ -38,7 +38,8 @@ from goe.offload.offload_constants import (
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
     BACKEND_DISTRO_GCP,
 )
-#from goe.util.better_impyla import BetterImpylaException
+
+# from goe.util.better_impyla import BetterImpylaException
 from goe.goe import get_log_fh, verbose
 
 
@@ -208,9 +209,7 @@ def test_webhdfs_config(orchestration_config, messages):
         ["Kerberos"] if orchestration_config.kerberos_service else []
     ) + ([] if orchestration_config.webhdfs_verify_ssl is None else ["SSL"])
     webhdfs_security = (
-        ("using " + " and ".join(webhdfs_security))
-        if webhdfs_security
-        else "unsecured"
+        ("using " + " and ".join(webhdfs_security)) if webhdfs_security else "unsecured"
     )
     detail(
         "HDFS operations will use WebHDFS (%s:%s) %s"
@@ -224,6 +223,7 @@ def test_webhdfs_config(orchestration_config, messages):
 
     # Lazy import of WebHdfs to avoid pulling in dependencies unnecessarily.
     from goe.filesystem.web_hdfs import WebHdfs
+
     hdfs = WebHdfs(
         orchestration_config.webhdfs_host,
         orchestration_config.webhdfs_port,

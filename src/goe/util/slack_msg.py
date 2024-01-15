@@ -13,58 +13,58 @@ import requests
 # CONSTANTS
 ###############################################################################
 
-DEFAULT_WEBHOOK = 'https://hooks.slack.com/services/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'
-DEFAULT_USER = 'linuxbot'
-DEFAULT_ICON = 'robot_face'
+DEFAULT_WEBHOOK = (
+    "https://hooks.slack.com/services/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"
+)
+DEFAULT_USER = "linuxbot"
+DEFAULT_ICON = "robot_face"
+
 
 ###############################################################################
 # EXCEPTIONS
 ###############################################################################
-class SlackMessengerException(Exception): pass
+class SlackMessengerException(Exception):
+    pass
 
 
 ###############################################################################
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+logger.addHandler(logging.NullHandler())  # Disabling logging by default
 
 
 ###########################################################################
 # SlackMessenger class
 ###########################################################################
 
+
 class SlackMessenger(object):
-    """ SlackMessage: Send messages to team's slack
-    """
+    """SlackMessage: Send messages to team's slack"""
 
     def __init__(self, webhook=DEFAULT_WEBHOOK):
-        """ CONSTRUCTOR
-        """
+        """CONSTRUCTOR"""
 
-        self._webhook = webhook   # Slack 'incoming messages' webhook
+        self._webhook = webhook  # Slack 'incoming messages' webhook
 
         self._init_request()
 
         logger.debug("SlackMessenger() object successfully initialized")
-
 
     ###########################################################################
     # PRIVATE METHODS
     ###########################################################################
 
     def _init_request(self):
-        """ Initialize variables for request
-        """
+        """Initialize variables for request"""
 
         self._status = None
         self._error = None
 
-
     def _send(self, channel, message, user, icon):
-        """ Send a message to slack channel and parse response for success
+        """Send a message to slack channel and parse response for success
 
-            Returns True if send was successful, False otherwise
+        Returns True if send was successful, False otherwise
         """
         success = False
 
@@ -72,7 +72,7 @@ class SlackMessenger(object):
             "channel": channel,
             "username": user,
             "text": message,
-            "icon_emoji": icon
+            "icon_emoji": icon,
         }
 
         logger.debug("Sending: %s to slack" % send_data)
@@ -86,8 +86,10 @@ class SlackMessenger(object):
                 success = True
             else:
                 success = False
-            logger.debug("Sending: %s to slack. Response code: %d. Status: %s" % \
-                (send_data, response.status_code, success))
+            logger.debug(
+                "Sending: %s to slack. Response code: %d. Status: %s"
+                % (send_data, response.status_code, success)
+            )
         except requests.exceptions.RequestException as e:
             self._status, self._error = -1, e
             logger.warn("EXCEPTION: %s while sending: %s to slack" % (e, send_data))
@@ -95,44 +97,43 @@ class SlackMessenger(object):
 
         return success
 
-
     ###########################################################################
     # PROPERTIES
     ###########################################################################
 
     @property
     def status(self):
-        """ HTTP status code or -1 if exception """
+        """HTTP status code or -1 if exception"""
         return self._status
-
 
     @property
     def error(self):
-        """ Error message if exception """
+        """Error message if exception"""
         return self._error
-
 
     ###########################################################################
     # PUBLIC METHODS
     ###########################################################################
 
     def send(self, channel, message, user=DEFAULT_USER, icon=DEFAULT_ICON):
-        """ Send slack 'message':
-                - to specified 'channel' (channel='#channel_name') or user: (channel='@username')
-                - from 'user': (name = 'user', icon emoji = :'icon':)
+        """Send slack 'message':
+            - to specified 'channel' (channel='#channel_name') or user: (channel='@username')
+            - from 'user': (name = 'user', icon emoji = :'icon':)
 
-            i.e. slack.send('#integration-tests', 'Heya!', 'maxym', 'unicornface')
+        i.e. slack.send('#integration-tests', 'Heya!', 'maxym', 'unicornface')
 
-            Returns True if successful, False otherwise
+        Returns True if successful, False otherwise
         """
         assert channel and message and user and icon
 
-        if channel[0] not in ('#', '@'):
-            raise SlackMessengerException("'Channel' name must start with either: '#' or '@'")
-        if not icon.startswith(':'):
-            icon = ':' + icon
-        if not icon.endswith(':'):
-            icon = icon + ':'
+        if channel[0] not in ("#", "@"):
+            raise SlackMessengerException(
+                "'Channel' name must start with either: '#' or '@'"
+            )
+        if not icon.startswith(":"):
+            icon = ":" + icon
+        if not icon.endswith(":"):
+            icon = icon + ":"
 
         self._init_request()
 
@@ -154,10 +155,10 @@ if __name__ == "__main__":
     user = sys.argv[3] if len(sys.argv) > 3 else DEFAULT_USER
     icon = sys.argv[4] if len(sys.argv) > 4 else DEFAULT_ICON
 
-    slack = SlackMessenger(webhook = DEFAULT_WEBHOOK)
+    slack = SlackMessenger(webhook=DEFAULT_WEBHOOK)
     if slack.send(channel, message, user, icon):
-        cprint("Success", color='green')
+        cprint("Success", color="green")
         sys.exit(0)
     else:
-        cprint("Error: %s" % slack.error, color='red')
+        cprint("Error: %s" % slack.error, color="red")
         sys.exit(-1)

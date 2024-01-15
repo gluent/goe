@@ -2455,8 +2455,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         if column.is_number_based():
             if column.data_type in [SYNAPSE_TYPE_REAL, SYNAPSE_TYPE_FLOAT]:
                 return bool(
-                    target_type
-                    in [GOE_TYPE_DECIMAL, GOE_TYPE_DOUBLE, GOE_TYPE_FLOAT]
+                    target_type in [GOE_TYPE_DECIMAL, GOE_TYPE_DOUBLE, GOE_TYPE_FLOAT]
                 )
             else:
                 return target_type in NUMERIC_CANONICAL_TYPES
@@ -2578,9 +2577,7 @@ FROM   %(from_db_table)s%(where)s""" % {
                 char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
             )
         elif column.data_type in (SYNAPSE_TYPE_BINARY, SYNAPSE_TYPE_VARBINARY):
-            return new_column(
-                column, GOE_TYPE_BINARY, data_length=column.data_length
-            )
+            return new_column(column, GOE_TYPE_BINARY, data_length=column.data_length)
         elif column.data_type == SYNAPSE_TYPE_TINYINT:
             # GOE_TYPE_INTEGER_1 does not fit in TINYINT but TINYINT *does* fit in GOE_TYPE_INTEGER_1
             return new_column(column, GOE_TYPE_INTEGER_1)
@@ -2655,9 +2652,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         elif column.data_type == SYNAPSE_TYPE_TIME:
             return new_column(column, GOE_TYPE_TIME, data_scale=column.data_scale)
         elif column.data_type in (SYNAPSE_TYPE_DATETIME, SYNAPSE_TYPE_DATETIME2):
-            return new_column(
-                column, GOE_TYPE_TIMESTAMP, data_scale=column.data_scale
-            )
+            return new_column(column, GOE_TYPE_TIMESTAMP, data_scale=column.data_scale)
         elif column.data_type == SYNAPSE_TYPE_SMALLDATETIME:
             return new_column(column, GOE_TYPE_TIMESTAMP, data_scale=0)
         elif column.data_type == SYNAPSE_TYPE_DATETIMEOFFSET:

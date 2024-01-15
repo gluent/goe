@@ -77,9 +77,6 @@
 """
 
 
-
-
-
 import datetime
 from optparse import OptionValueError
 import traceback
@@ -90,97 +87,117 @@ from lark import Tree, Token
 
 import numpy as np
 
-from goe.offload.column_metadata import ColumnMetadataInterface, \
-    get_partition_columns, is_synthetic_partition_column, match_partition_column_by_source
+from goe.offload.column_metadata import (
+    ColumnMetadataInterface,
+    get_partition_columns,
+    is_synthetic_partition_column,
+    match_partition_column_by_source,
+)
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 
 
-dev_log = logging.getLogger('goe')
+dev_log = logging.getLogger("goe")
 
 # usage hints provided in the OptionValueError error text for expected but missing tokens
 RULE_HINT = {
-    'column':                       'column:         column(<column_name>)',
-    'integer_value':                'numeric value:  numeric(<signed_integer>) or numeric(<signed_decimal>)',
-    'decimal_value':                'numeric value:  numeric(<signed_integer>) or numeric(<signed_decimal>)',
-    'datetime_value':               'datetime value: datetime(<yyyy-mm-dd>) or datetime(<yyyy-mm-dd hh24:mi:ss>) or datetime(<yyyy-mm-dd hh24:mi:ss.f9>)',
-    'string_value':                 'string value:   string("<string_value>")',
-    'value_relation':               'operator:       =, !=, >, >=, <, <=',
-    'value_list_relation':          'list operator:  IN, NOT IN',
-    'value_list':                   'value list:     (<value_type>(<value>), <value_type>(<value>), ...) where value_type is string, numeric or datetime',
-    'null_test':                    'null test:      IS NULL, IS NOT NULL',
-    '__and_relation_group_star_0':  'AND:            groups of predicates combined with AND must be surrounded by parentheses',
-    '__or_relation_group_star_1':   'OR:             groups of predicates combined with OR must be surrounded by parentheses',
+    "column": "column:         column(<column_name>)",
+    "integer_value": "numeric value:  numeric(<signed_integer>) or numeric(<signed_decimal>)",
+    "decimal_value": "numeric value:  numeric(<signed_integer>) or numeric(<signed_decimal>)",
+    "datetime_value": "datetime value: datetime(<yyyy-mm-dd>) or datetime(<yyyy-mm-dd hh24:mi:ss>) or datetime(<yyyy-mm-dd hh24:mi:ss.f9>)",
+    "string_value": 'string value:   string("<string_value>")',
+    "value_relation": "operator:       =, !=, >, >=, <, <=",
+    "value_list_relation": "list operator:  IN, NOT IN",
+    "value_list": "value list:     (<value_type>(<value>), <value_type>(<value>), ...) where value_type is string, numeric or datetime",
+    "null_test": "null test:      IS NULL, IS NOT NULL",
+    "__and_relation_group_star_0": "AND:            groups of predicates combined with AND must be surrounded by parentheses",
+    "__or_relation_group_star_1": "OR:             groups of predicates combined with OR must be surrounded by parentheses",
 }
 
 
 def python_timestamp_to_string(python_ts, with_time=True, subsecond=0):
-    """ A function to convert a Python datetime64 or datetime value into a string value.
+    """A function to convert a Python datetime64 or datetime value into a string value.
 
-        The format of the string value is:
-        with_time = False:                          YYYY-MM-DD
-        with_time = True, subsecond=0: YYYY-MM-DD HH:MI:SS
-        with_time = True, subsecond=9:  YYYY-MM-DD HH:MI:SS.FFFFFFFFF
+    The format of the string value is:
+    with_time = False:                          YYYY-MM-DD
+    with_time = True, subsecond=0: YYYY-MM-DD HH:MI:SS
+    with_time = True, subsecond=9:  YYYY-MM-DD HH:MI:SS.FFFFFFFFF
 
-        Implemented as a global function to allow code to be shared with frontend/backend table classes.
+    Implemented as a global function to allow code to be shared with frontend/backend table classes.
     """
     if python_ts is None:
         return None
     if isinstance(python_ts, np.datetime64):
         if with_time and subsecond:
             if subsecond > 6:
-                np_unit = 'ns'
+                np_unit = "ns"
             elif subsecond > 3:
-                np_unit = 'us'
+                np_unit = "us"
             else:
-                np_unit = 'ms'
-            return np.datetime_as_string(python_ts, np_unit).replace('T', ' ')
+                np_unit = "ms"
+            return np.datetime_as_string(python_ts, np_unit).replace("T", " ")
         elif with_time:
-            return np.datetime_as_string(python_ts, 's').replace('T', ' ')
+            return np.datetime_as_string(python_ts, "s").replace("T", " ")
         else:
-            return np.datetime_as_string(python_ts, 'D')
+            return np.datetime_as_string(python_ts, "D")
     elif isinstance(python_ts, datetime.date):
         if with_time and subsecond:
-            return python_ts.strftime('%Y-%m-%d %H:%M:%S.%f')
+            return python_ts.strftime("%Y-%m-%d %H:%M:%S.%f")
         elif with_time:
-            return python_ts.strftime('%Y-%m-%d %H:%M:%S')
+            return python_ts.strftime("%Y-%m-%d %H:%M:%S")
         else:
-            return python_ts.strftime('%Y-%m-%d')
+            return python_ts.strftime("%Y-%m-%d")
 
 
 class handle_parse_errors:
     """context manager for parse/visit error handling: no need to duplicate such logic in DB specialisations
-        (context managers typically have lower-case names but they must be objects)
+    (context managers typically have lower-case names but they must be objects)
     """
+
     def __enter__(self):
         pass
 
     def __exit__(self, exc_type, exc, tb):
-        if isinstance(exc, (lark.exceptions.UnexpectedToken, lark.exceptions.UnexpectedCharacters)):
-            if hasattr(exc, 'considered_tokens'):
+        if isinstance(
+            exc, (lark.exceptions.UnexpectedToken, lark.exceptions.UnexpectedCharacters)
+        ):
+            if hasattr(exc, "considered_tokens"):
                 considered_rules = [t.rule for t in exc.considered_tokens]
             else:
                 considered_rules = exc.considered_rules
 
             expected_rule_names = set([r.origin.name for r in considered_rules])
             if expected_rule_names:
-                expected_hint = 'Expected tokens in this position:\n'
-                expected_hint += '\n'.join(set('- %s' % RULE_HINT[r] for r in expected_rule_names if r in RULE_HINT))
+                expected_hint = "Expected tokens in this position:\n"
+                expected_hint += "\n".join(
+                    set(
+                        "- %s" % RULE_HINT[r]
+                        for r in expected_rule_names
+                        if r in RULE_HINT
+                    )
+                )
             else:
-                expected_hint = ''
+                expected_hint = ""
 
-            message_lines = str(exc).split('\n')
+            message_lines = str(exc).split("\n")
             if len(message_lines) >= 4:
-                statement_hint = '\n'.join(message_lines[2:4])
+                statement_hint = "\n".join(message_lines[2:4])
             else:
-                statement_hint = ''
-            raise OptionValueError('Unexpected offload predicate syntax:\n' + statement_hint + '\n' + expected_hint)
+                statement_hint = ""
+            raise OptionValueError(
+                "Unexpected offload predicate syntax:\n"
+                + statement_hint
+                + "\n"
+                + expected_hint
+            )
         elif isinstance(exc, lark.exceptions.UnexpectedEOF):
-            raise OptionValueError('Encountered EOF before reaching end of valid offload predicate.')
+            raise OptionValueError(
+                "Encountered EOF before reaching end of valid offload predicate."
+            )
         elif isinstance(exc, lark.exceptions.VisitError):
-            dev_log.debug('Exception while processing:')
+            dev_log.debug("Exception while processing:")
             dev_log.debug(exc.obj.pretty())
-            dev_log.debug('Traceback:')
-            dev_log.debug(''.join(traceback.format_tb(tb)))
+            dev_log.debug("Traceback:")
+            dev_log.debug("".join(traceback.format_tb(tb)))
             raise exc.orig_exc
 
 
@@ -196,81 +213,86 @@ class GenericPredicate:
         return self.dsl
 
     def __repr__(self):
-        return '<GenericPredicate: %s>' % self.dsl
+        return "<GenericPredicate: %s>" % self.dsl
 
     def alias_column_names(self):
-        """ Return list of all unique (alias, column) """
+        """Return list of all unique (alias, column)"""
+
         def get_alias_column(node):
             if len(node.children) == 1:
                 return (None, node.children[-1].value)
             else:
                 return tuple(c.value for c in node.children)
 
-        column_nodes = self.ast.find_pred(lambda tree: tree.data == 'column')
+        column_nodes = self.ast.find_pred(lambda tree: tree.data == "column")
         return list(set([get_alias_column(n) for n in column_nodes]))
 
     def column_names(self):
-        """ Find column names in a predicate and return as a list """
-        column_nodes = self.ast.find_pred(lambda tree: tree.data == 'column')
+        """Find column names in a predicate and return as a list"""
+        column_nodes = self.ast.find_pred(lambda tree: tree.data == "column")
         return list(set([n.children[-1].value for n in column_nodes]))
 
     def rename_column(self, original_name, new_name):
-        """ Assume original_name and new_name are case insensitive,
-            and are therefore both uppercased for search and replacement
+        """Assume original_name and new_name are case insensitive,
+        and are therefore both uppercased for search and replacement
         """
         original_name, new_name = original_name.upper(), new_name.upper()
-        target_cols = lambda tree: tree.data == 'column' and tree.children[-1].value == original_name
+        target_cols = (
+            lambda tree: tree.data == "column"
+            and tree.children[-1].value == original_name
+        )
         for column_node in self.ast.find_pred(target_cols):
             column_node.children[-1] = column_node.children[-1].update(value=new_name)
 
     def set_column_alias(self, new_alias):
-        """ Set/replace alias on all columns in AST, new_alias of None removes all aliases """
-        for column_node in self.ast.find_pred(lambda tree: tree.data == 'column'):
+        """Set/replace alias on all columns in AST, new_alias of None removes all aliases"""
+        for column_node in self.ast.find_pred(lambda tree: tree.data == "column"):
             if new_alias is not None:
                 column_node.children = [
-                    Token('ALIAS', new_alias.upper()),
-                    column_node.children[-1]
+                    Token("ALIAS", new_alias.upper()),
+                    column_node.children[-1],
                 ]
             else:
                 column_node.children = [column_node.children[-1]]
 
 
-def parse_predicate_dsl(dsl_str, top_level_node='offload_predicate'):
-    """ Parse predicate offload option string into AST representing the predicate """
+def parse_predicate_dsl(dsl_str, top_level_node="offload_predicate"):
+    """Parse predicate offload option string into AST representing the predicate"""
     with handle_parse_errors():
         raw_ast = get_parser(top_level_node).parse(dsl_str)
         return RawToInternalAST().transform(raw_ast)
 
 
 def create_or_relation_predicate(children_predicates):
-    'Return a GenericPredicate with top-level OR node, <children_predicates> will be children'
+    "Return a GenericPredicate with top-level OR node, <children_predicates> will be children"
     assert all(isinstance(p, GenericPredicate) for p in children_predicates)
     return GenericPredicate(
-        ast=Tree('or_relation_group', [p.ast for p in children_predicates])
+        ast=Tree("or_relation_group", [p.ast for p in children_predicates])
     )
 
 
 def create_and_relation_predicate(children_predicates):
-    'Return a GenericPredicate with top-level AND node, <children_predicates> will be children'
+    "Return a GenericPredicate with top-level AND node, <children_predicates> will be children"
     assert all(isinstance(p, GenericPredicate) for p in children_predicates)
     return GenericPredicate(
-        ast=Tree('and_relation_group', [p.ast for p in children_predicates])
+        ast=Tree("and_relation_group", [p.ast for p in children_predicates])
     )
 
 
 class RawToInternalAST(lark.Transformer):
     'Turn value strings into internal "python values" format, extract infix operators into parent-child relationship'
+
     def quoted_value(self, node_type, items):
         (value,) = items
-        assert(value.startswith('"') and value.endswith('"'))
+        assert value.startswith('"') and value.endswith('"')
         # strip surrounding quotes, remove escape chars
         return Tree(node_type, [value.update(value=value[1:-1].replace('\\"', '"'))])
 
-    literal_value = lambda self, items: self.quoted_value('literal_value', items)
-    string_value = lambda self, items: self.quoted_value('string_value', items)
+    literal_value = lambda self, items: self.quoted_value("literal_value", items)
+    string_value = lambda self, items: self.quoted_value("string_value", items)
 
     def predicate(self, items):
-        'Transform infix AST to correct parent-child relationship between operators and operands'
+        "Transform infix AST to correct parent-child relationship between operators and operands"
         if len(items) == 1:
             return items[0]
         elif len(items) == 2:
@@ -283,129 +305,178 @@ class RawToInternalAST(lark.Transformer):
             return relation
 
     def and_relation_group(self, items):
-        'Remove AND terminals'
+        "Remove AND terminals"
         return Tree(
-            'and_relation_group',
-            [i for i in items if not (isinstance(i, Token) and i.value.lower() == 'and')]
+            "and_relation_group",
+            [
+                i
+                for i in items
+                if not (isinstance(i, Token) and i.value.lower() == "and")
+            ],
         )
 
     def or_relation_group(self, items):
-        'Remove OR terminals'
+        "Remove OR terminals"
         return Tree(
-            'or_relation_group',
-            [i for i in items if not (isinstance(i, Token) and i.value.lower() == 'or')]
+            "or_relation_group",
+            [
+                i
+                for i in items
+                if not (isinstance(i, Token) and i.value.lower() == "or")
+            ],
         )
 
     def column(self, items):
-        return Tree('column', [i.update(value=i.value.upper()) for i in items])
+        return Tree("column", [i.update(value=i.value.upper()) for i in items])
 
     def datetime_value(self, items):
         (value,) = items
-        return Tree('datetime_value', [value.update(value=np.datetime64(value))])
+        return Tree("datetime_value", [value.update(value=np.datetime64(value))])
 
     def integer_value(self, items):
         (value,) = items
-        return Tree('numeric_value', [value.update(value=int(value))])
+        return Tree("numeric_value", [value.update(value=int(value))])
 
     def decimal_value(self, items):
         (value,) = items
-        return Tree('numeric_value', [value.update(value=float(value))])
+        return Tree("numeric_value", [value.update(value=float(value))])
 
 
 class GenericPredicateToTyped(lark.Transformer):
-    '''
+    """
     Transform value nodes into tuples of their value and a DB data type, usually the first step in rendering a predicate to SQL
     Also validate comparison nodes: column types must be compatible with AST value node type.
-    '''
+    """
+
     def __init__(self, columns):
         assert isinstance(columns, list)
         if columns:
-            assert isinstance(columns[0], ColumnMetadataInterface), 'Invalid column type: %s' % type(columns[0])
+            assert isinstance(
+                columns[0], ColumnMetadataInterface
+            ), "Invalid column type: %s" % type(columns[0])
 
         self.column_name_to_type = {col.name.upper(): col.data_type for col in columns}
 
-        self.invalid_data_types = [_.data_type for _ in columns if not _.valid_for_offload_predicate()]
+        self.invalid_data_types = [
+            _.data_type for _ in columns if not _.valid_for_offload_predicate()
+        ]
         # map of node_type (Tree.data member) to list of data types used in columns
         valid_columns = [_ for _ in columns if _.valid_for_offload_predicate()]
         self.valid_node_data_types = {
-            'numeric_value': list(set(_.data_type for _ in valid_columns if _.is_number_based())),
-            'datetime_value': list(set(_.data_type for _ in valid_columns if _.is_date_based())),
-            'string_value': list(set(_.data_type for _ in valid_columns if _.is_string_based()))
+            "numeric_value": list(
+                set(_.data_type for _ in valid_columns if _.is_number_based())
+            ),
+            "datetime_value": list(
+                set(_.data_type for _ in valid_columns if _.is_date_based())
+            ),
+            "string_value": list(
+                set(_.data_type for _ in valid_columns if _.is_string_based())
+            ),
         }
         self.node_names = {
-            'numeric_value': 'numeric',
-            'datetime_value': 'datetime',
-            'string_value': 'string',
+            "numeric_value": "numeric",
+            "datetime_value": "datetime",
+            "string_value": "string",
         }
 
     def resolve_column_type(self, col_name):
         try:
             return self.column_name_to_type[col_name]
         except KeyError:
-            raise OptionValueError("Unable to resolve column '%s' in offload predicate" % col_name)
+            raise OptionValueError(
+                "Unable to resolve column '%s' in offload predicate" % col_name
+            )
 
     def check_data_type(self, node_types, data_type):
         if data_type in self.invalid_data_types:
-            raise OptionValueError('Data type is not supported for offload predicate: %s' % data_type)
+            raise OptionValueError(
+                "Data type is not supported for offload predicate: %s" % data_type
+            )
         for nt in node_types:
-            if nt != 'literal_value' and data_type not in self.valid_node_data_types.get(nt, []):
-                raise OptionValueError('Columns of data type %s cannot be compared to %s values' % (data_type, self.node_names.get(nt, nt)))
+            if (
+                nt != "literal_value"
+                and data_type not in self.valid_node_data_types.get(nt, [])
+            ):
+                raise OptionValueError(
+                    "Columns of data type %s cannot be compared to %s values"
+                    % (data_type, self.node_names.get(nt, nt))
+                )
 
     def enrich_value_type(self, items, node_type):
         lhs, rhs = items
 
-        if lhs.data == 'column':
+        if lhs.data == "column":
             # index -1 because column children may be (schema, column) and we want to look up on column name
             data_type = self.resolve_column_type(lhs.children[-1].value)
-            if rhs.data == 'value_list':
+            if rhs.data == "value_list":
                 self.check_data_type(set(c.data for c in rhs.children), data_type)
-                rhs = Tree(rhs.data, [
-                    Tree(c.data, [v.update(value=(v.value, data_type)) for v in c.children])
-                    for c in rhs.children
-                ])
+                rhs = Tree(
+                    rhs.data,
+                    [
+                        Tree(
+                            c.data,
+                            [v.update(value=(v.value, data_type)) for v in c.children],
+                        )
+                        for c in rhs.children
+                    ],
+                )
             else:
                 self.check_data_type([rhs.data], data_type)
-                rhs = Tree(rhs.data, [v.update(value=(v.value, data_type)) for v in rhs.children])
+                rhs = Tree(
+                    rhs.data,
+                    [v.update(value=(v.value, data_type)) for v in rhs.children],
+                )
 
-        if rhs.data == 'column':
+        if rhs.data == "column":
             data_type = self.resolve_column_type(rhs.children[-1].value)
-            assert(lhs.data != 'value_list')
+            assert lhs.data != "value_list"
             self.check_data_type([lhs.data], data_type)
-            lhs = Tree(lhs.data, [v.update(value=(v.value, data_type)) for v in lhs.children])
+            lhs = Tree(
+                lhs.data, [v.update(value=(v.value, data_type)) for v in lhs.children]
+            )
 
         return Tree(node_type, [lhs, rhs])
 
-    equals = lambda self, items: self.enrich_value_type(items, 'equals')
-    not_equals = lambda self, items: self.enrich_value_type(items, 'not_equals')
-    greater_than = lambda self, items: self.enrich_value_type(items, 'greater_than')
-    greater_than_or_equal = lambda self, items: self.enrich_value_type(items, 'greater_than_or_equal')
-    less_than = lambda self, items: self.enrich_value_type(items, 'less_than')
-    less_than_or_equal = lambda self, items: self.enrich_value_type(items, 'less_than_or_equal')
-    in_relation = lambda self, items: self.enrich_value_type(items, 'in_relation')
-    not_in_relation = lambda self, items: self.enrich_value_type(items, 'not_in_relation')
-
+    equals = lambda self, items: self.enrich_value_type(items, "equals")
+    not_equals = lambda self, items: self.enrich_value_type(items, "not_equals")
+    greater_than = lambda self, items: self.enrich_value_type(items, "greater_than")
+    greater_than_or_equal = lambda self, items: self.enrich_value_type(
+        items, "greater_than_or_equal"
+    )
+    less_than = lambda self, items: self.enrich_value_type(items, "less_than")
+    less_than_or_equal = lambda self, items: self.enrich_value_type(
+        items, "less_than_or_equal"
+    )
+    in_relation = lambda self, items: self.enrich_value_type(items, "in_relation")
+    not_in_relation = lambda self, items: self.enrich_value_type(
+        items, "not_in_relation"
+    )
 
 
 class GenericPredicateToSQL(lark.Transformer):
-    equals = lambda self, items: ' = '.join(items)
-    not_equals = lambda self, items: ' != '.join(items)
-    greater_than = lambda self, items: ' > '.join(items)
-    greater_than_or_equal = lambda self, items: ' >= '.join(items)
-    less_than = lambda self, items: ' < '.join(items)
-    less_than_or_equal = lambda self, items: ' <= '.join(items)
-    in_relation = lambda self, items: ' IN '.join(items)
-    not_in_relation = lambda self, items: ' NOT IN '.join(items)
+    equals = lambda self, items: " = ".join(items)
+    not_equals = lambda self, items: " != ".join(items)
+    greater_than = lambda self, items: " > ".join(items)
+    greater_than_or_equal = lambda self, items: " >= ".join(items)
+    less_than = lambda self, items: " < ".join(items)
+    less_than_or_equal = lambda self, items: " <= ".join(items)
+    in_relation = lambda self, items: " IN ".join(items)
+    not_in_relation = lambda self, items: " NOT IN ".join(items)
 
     offload_predicate = lambda self, items: items[0]
 
-    and_relation_group = lambda self, items: '(' + ' AND '.join('%s' % i for i in items) + ')'
-    or_relation_group = lambda self, items: '(' + ' OR '.join('%s' % i for i in items) + ')'
+    and_relation_group = (
+        lambda self, items: "(" + " AND ".join("%s" % i for i in items) + ")"
+    )
+    or_relation_group = (
+        lambda self, items: "(" + " OR ".join("%s" % i for i in items) + ")"
+    )
 
-    column = lambda self, items: '.'.join(items)
-    value_list = lambda self, items: '(' + ', '.join(items) + ')'
+    column = lambda self, items: ".".join(items)
+    value_list = lambda self, items: "(" + ", ".join(items) + ")"
 
-    is_null = lambda self, items: '%s IS NULL' % items[0]
-    is_not_null = lambda self, items: '%s IS NOT NULL' % items[0]
+    is_null = lambda self, items: "%s IS NULL" % items[0]
+    is_not_null = lambda self, items: "%s IS NOT NULL" % items[0]
 
     literal_value = lambda self, items: items[0].value
 
@@ -414,58 +485,67 @@ class GenericPredicateToSQL(lark.Transformer):
         return template % tuple(format_items)
 
 
-
 class GenericPredicateToDSL(GenericPredicateToSQL):
-    column = lambda self, items: 'column(%s)' % '.'.join(items)
+    column = lambda self, items: "column(%s)" % ".".join(items)
 
     def numeric_value(self, items):
         value = items[0].value
-        value = value[0] if isinstance(value, tuple) else value # deal with typed predicate
-        value = np.format_float_positional(value, trim='-') if isinstance(value, float) else value
-        return 'numeric(%s)' % value
+        value = (
+            value[0] if isinstance(value, tuple) else value
+        )  # deal with typed predicate
+        value = (
+            np.format_float_positional(value, trim="-")
+            if isinstance(value, float)
+            else value
+        )
+        return "numeric(%s)" % value
 
     def string_value(self, items):
         value = items[0].value
-        value = value[0] if isinstance(value, tuple) else value # deal with typed predicate
+        value = (
+            value[0] if isinstance(value, tuple) else value
+        )  # deal with typed predicate
         return 'string("%s")' % value
 
     def datetime_value(self, items):
         value = items[0].value
-        value = value[0] if isinstance(value, tuple) else value # deal with typed predicate
-        assert(isinstance(value, np.datetime64))
-        str_value = str(value).replace('T', ' ')
-        return 'datetime(%s)' % str_value[:29]
+        value = (
+            value[0] if isinstance(value, tuple) else value
+        )  # deal with typed predicate
+        assert isinstance(value, np.datetime64)
+        str_value = str(value).replace("T", " ")
+        return "datetime(%s)" % str_value[:29]
 
 
 class TypedPredicateToTemplate(lark.Transformer):
     def template(self, template, items, node_type):
-        return Tree('template', [template, Tree(node_type, items)])
+        return Tree("template", [template, Tree(node_type, items)])
 
     def bare_template(self, items, node_type):
-        return self.template('%s', items, node_type)
+        return self.template("%s", items, node_type)
 
-    string_value = lambda self, items: self.bare_template(items, 'string_value')
-    numeric_value = lambda self, items: self.bare_template(items, 'numeric_value')
-    datetime_value = lambda self, items: self.bare_template(items, 'datetime_value')
-    literal_value = lambda self, items: self.bare_template(items, 'literal_value')
+    string_value = lambda self, items: self.bare_template(items, "string_value")
+    numeric_value = lambda self, items: self.bare_template(items, "numeric_value")
+    datetime_value = lambda self, items: self.bare_template(items, "datetime_value")
+    literal_value = lambda self, items: self.bare_template(items, "literal_value")
 
 
 class TypedPredicateToLiterals(lark.Transformer):
     def literal_value(self, items):
         value, data_type = items[0].value
-        return Token('LITERAL', str(value))
+        return Token("LITERAL", str(value))
 
     def numeric_value(self, items):
         value, data_type = items[0].value
         # logic here could be based on DB data_type, but that is for subclasses to override
         if isinstance(value, float):
-            return Token('LITERAL', np.format_float_positional(value, trim='-'))
+            return Token("LITERAL", np.format_float_positional(value, trim="-"))
         else:
-            return Token('LITERAL', str(value))
+            return Token("LITERAL", str(value))
 
     def quote_literal(self, items, quote="'"):
         value, data_type = items[0].value
-        return Token('LITERAL', '%s%s%s' % (quote, value, quote))
+        return Token("LITERAL", "%s%s%s" % (quote, value, quote))
 
     string_value = quote_literal
 
@@ -475,17 +555,17 @@ class TypedPredicateToBinds(lark.Transformer):
         self.binds = {}
 
     def __default__(self, data, children, meta):
-        'register self.binds as meta as we ascend up the tree, so the top node will have binds accessible in .meta'
+        "register self.binds as meta as we ascend up the tree, so the top node will have binds accessible in .meta"
         return Tree(data, children, self.binds)
 
     def literal_value(self, items):
         value, data_type = items[0].value
-        return Token('LITERAL', str(value))
+        return Token("LITERAL", str(value))
 
     def next_bind(self, value):
-        bind_name = 'bind_%s' % len(self.binds)
+        bind_name = "bind_%s" % len(self.binds)
         self.binds[bind_name] = value
-        return ':' + bind_name
+        return ":" + bind_name
 
     def create_bind(self, items):
         value, data_type = items[0].value
@@ -499,10 +579,9 @@ class InsertSyntheticPartitionClauses(lark.Transformer):
         self.table_columns = table_columns
 
     def create_synthetic_predicate(self, relation_name, lhs, rhs):
-
-        if lhs.data == 'column':
+        if lhs.data == "column":
             column, value, lhs_is_column = lhs, rhs, True
-        elif rhs.data == 'column':
+        elif rhs.data == "column":
             value, column, lhs_is_column = lhs, rhs, False
         else:
             return None
@@ -510,21 +589,39 @@ class InsertSyntheticPartitionClauses(lark.Transformer):
         value_obj, value_type = value.children[0].value
         column_name = column.children[0].value
 
-        partition_columns = get_partition_columns(self.table_columns, exclude_bucket_column=True)
-        synthetic_part_col = match_partition_column_by_source(column_name, partition_columns)
+        partition_columns = get_partition_columns(
+            self.table_columns, exclude_bucket_column=True
+        )
+        synthetic_part_col = match_partition_column_by_source(
+            column_name, partition_columns
+        )
         if synthetic_part_col and is_synthetic_partition_column(synthetic_part_col):
-            synth_value_literal = SyntheticPartitionLiteral.gen_synthetic_literal(synthetic_part_col,
-                                                                                  self.table_columns, value_obj)
-            synth_column_tree = lark.Tree('column', [lark.Token('COLUMN', synthetic_part_col.name)])
-            new_value_node_name = 'datetime_value' if synthetic_part_col.is_date_based() else 'string_value'
-            synth_value_tree = lark.Tree(new_value_node_name, [lark.Token('ESCAPED_STRING',
-                                                                          (synth_value_literal,
-                                                                           synthetic_part_col.data_type))])
+            synth_value_literal = SyntheticPartitionLiteral.gen_synthetic_literal(
+                synthetic_part_col, self.table_columns, value_obj
+            )
+            synth_column_tree = lark.Tree(
+                "column", [lark.Token("COLUMN", synthetic_part_col.name)]
+            )
+            new_value_node_name = (
+                "datetime_value"
+                if synthetic_part_col.is_date_based()
+                else "string_value"
+            )
+            synth_value_tree = lark.Tree(
+                new_value_node_name,
+                [
+                    lark.Token(
+                        "ESCAPED_STRING",
+                        (synth_value_literal, synthetic_part_col.data_type),
+                    )
+                ],
+            )
             return lark.Tree(
-                relation_name, [
+                relation_name,
+                [
                     synth_column_tree if lhs_is_column else synth_value_tree,
                     synth_value_tree if lhs_is_column else synth_column_tree,
-                ]
+                ],
             )
         return None
 
@@ -533,24 +630,31 @@ class InsertSyntheticPartitionClauses(lark.Transformer):
         synthetic_predicate = self.create_synthetic_predicate(relation_name, lhs, rhs)
         if synthetic_predicate:
             return lark.Tree(
-                'and_relation_group', [
-                    lark.Tree(relation_name, items),
-                    synthetic_predicate
-                ]
+                "and_relation_group",
+                [lark.Tree(relation_name, items), synthetic_predicate],
             )
         else:
             return lark.Tree(relation_name, items)
 
-    equals = lambda self, items: self.insert_synthetic_predicate(items, 'equals')
-    not_equals = lambda self, items: self.insert_synthetic_predicate(items, 'not_equals')
-    greater_than = lambda self, items: self.insert_synthetic_predicate(items, 'greater_than')
-    greater_than_or_equal = lambda self, items: self.insert_synthetic_predicate(items, 'greater_than_or_equal')
-    less_than = lambda self, items: self.insert_synthetic_predicate(items, 'less_than')
-    less_than_or_equal = lambda self, items: self.insert_synthetic_predicate(items, 'less_than_or_equal')
+    equals = lambda self, items: self.insert_synthetic_predicate(items, "equals")
+    not_equals = lambda self, items: self.insert_synthetic_predicate(
+        items, "not_equals"
+    )
+    greater_than = lambda self, items: self.insert_synthetic_predicate(
+        items, "greater_than"
+    )
+    greater_than_or_equal = lambda self, items: self.insert_synthetic_predicate(
+        items, "greater_than_or_equal"
+    )
+    less_than = lambda self, items: self.insert_synthetic_predicate(items, "less_than")
+    less_than_or_equal = lambda self, items: self.insert_synthetic_predicate(
+        items, "less_than_or_equal"
+    )
 
 
-def get_parser(top_level_node='offload_predicate'):
-    return lark.Lark('''
+def get_parser(top_level_node="offload_predicate"):
+    return lark.Lark(
+        """
 %import common.ESCAPED_STRING
 %import common.INT
 %import common.DECIMAL
@@ -611,14 +715,17 @@ COLUMN: /[a-zA-Z0-9\.\$\#_]+/i
 
 SIGNED_INTEGER: ["+"|"-"] INT
 SIGNED_DECIMAL: ["+"|"-"] DECIMAL
-''', start=top_level_node)
+""",
+        start=top_level_node,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     with handle_parse_errors():
         import sys
-        predicate_expr = ' '.join(sys.argv[1:])
+
+        predicate_expr = " ".join(sys.argv[1:])
         ast = parse_predicate_dsl(predicate_expr)
-        print('-' * 5, 'Internal AST', '-' * 5)
+        print("-" * 5, "Internal AST", "-" * 5)
         print(ast.pretty())
         print()

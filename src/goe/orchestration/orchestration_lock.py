@@ -19,48 +19,53 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class OrchestrationLockTimeout(Exception): pass
+class OrchestrationLockTimeout(Exception):
+    pass
 
 
 ###########################################################################
 # CONSTANTS
 ###########################################################################
 
-LOCK_FILE_PREFIX = 'orchestration_'
-LOCK_FILE_SUFFIX = '.lock'
+LOCK_FILE_PREFIX = "orchestration_"
+LOCK_FILE_SUFFIX = ".lock"
 
 
 ###########################################################################
 # GLOBAL FUNCTIONS
 ###########################################################################
 
+
 def orchestration_lock_for_table(owner, table_name, dry_run=False):
-    """ Return lock handler using owner/table_name as lock ids.
-        For now we only support FileLock implementation but others could be slotted in in the future.
+    """Return lock handler using owner/table_name as lock ids.
+    For now we only support FileLock implementation but others could be slotted in in the future.
     """
     return FileLockOrchestrationLock([owner, table_name], dry_run=dry_run)
 
 
 def orchestration_lock_from_hybrid_metadata(hybrid_metadata, dry_run=False):
-    """ Return lock handler using offloaded owner/table metadata as lock ids.
-        For now we only support FileLock implementation but others could be slotted in in the future.
+    """Return lock handler using offloaded owner/table metadata as lock ids.
+    For now we only support FileLock implementation but others could be slotted in in the future.
     """
     assert hybrid_metadata
     assert isinstance(hybrid_metadata, OrchestrationMetadata)
     assert hybrid_metadata.offloaded_owner
     assert hybrid_metadata.offloaded_table
-    return FileLockOrchestrationLock([hybrid_metadata.offloaded_owner, hybrid_metadata.offloaded_table],
-                                     dry_run=dry_run)
+    return FileLockOrchestrationLock(
+        [hybrid_metadata.offloaded_owner, hybrid_metadata.offloaded_table],
+        dry_run=dry_run,
+    )
 
 
 ###########################################################################
 # OrchestrationLockInterface
 ###########################################################################
 
+
 class OrchestrationLockInterface(metaclass=ABCMeta):
-    """ Library providing simple locking mechanism for orchestration commands.
-        In general the lock is expected to be the source owner/table name of a command.
-        Lock files are located in $OFFLOAD_HOME/run.
+    """Library providing simple locking mechanism for orchestration commands.
+    In general the lock is expected to be the source owner/table name of a command.
+    Lock files are located in $OFFLOAD_HOME/run.
     """
 
     def __init__(self, lock_ids, dry_run=False):
@@ -84,7 +89,9 @@ class OrchestrationLockInterface(metaclass=ABCMeta):
     ###########################################################################
 
     def _exception_message(self):
-        return 'Another Orchestration process has locked id: {}'.format('.'.join(self._lock_ids))
+        return "Another Orchestration process has locked id: {}".format(
+            ".".join(self._lock_ids)
+        )
 
     ###########################################################################
     # PUBLIC METHODS
@@ -103,15 +110,16 @@ class OrchestrationLockInterface(metaclass=ABCMeta):
 # FileLockOrchestrationLock
 ###########################################################################
 
+
 class FileLockOrchestrationLock(OrchestrationLockInterface):
-    """ FileLock implementation of OrchestrationLockInterface.
-        Lock files are located in $OFFLOAD_HOME/run.
+    """FileLock implementation of OrchestrationLockInterface.
+    Lock files are located in $OFFLOAD_HOME/run.
     """
 
     def __init__(self, lock_ids, dry_run=False):
         super(FileLockOrchestrationLock, self).__init__(lock_ids, dry_run=dry_run)
         self._file_name = self._lock_file_name()
-        logger.info(f'Orchestration lock filename: {self._file_name}')
+        logger.info(f"Orchestration lock filename: {self._file_name}")
         self._lock = FileLock(self._file_name)
 
     ###########################################################################
@@ -119,8 +127,8 @@ class FileLockOrchestrationLock(OrchestrationLockInterface):
     ###########################################################################
 
     def _lock_file_name(self):
-        file_name = LOCK_FILE_PREFIX + '_'.join(self._lock_ids) + LOCK_FILE_SUFFIX
-        return os.path.join(os.environ.get('OFFLOAD_HOME'), 'run', file_name)
+        file_name = LOCK_FILE_PREFIX + "_".join(self._lock_ids) + LOCK_FILE_SUFFIX
+        return os.path.join(os.environ.get("OFFLOAD_HOME"), "run", file_name)
 
     ###########################################################################
     # PUBLIC METHODS
@@ -135,7 +143,7 @@ class FileLockOrchestrationLock(OrchestrationLockInterface):
                 # running a chmod() after acquiring the lock.
                 self._lock.acquire(timeout=0)
         except Timeout as exc:
-            logger.info('Orchestration lock acquire timeout: {}'.format(str(exc)))
+            logger.info("Orchestration lock acquire timeout: {}".format(str(exc)))
             raise OrchestrationLockTimeout(self._exception_message()) from exc
 
     def release(self):

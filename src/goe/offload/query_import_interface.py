@@ -3,7 +3,11 @@ LICENSE_TEXT
 """
 from abc import ABCMeta, abstractmethod
 import base64
-from goe.offload.oracle.oracle_column import ORACLE_TYPE_BLOB, ORACLE_TYPE_CLOB, ORACLE_TYPE_NCLOB
+from goe.offload.oracle.oracle_column import (
+    ORACLE_TYPE_BLOB,
+    ORACLE_TYPE_CLOB,
+    ORACLE_TYPE_NCLOB,
+)
 from goe.offload.offload_messages import VVERBOSE
 
 
@@ -19,9 +23,10 @@ from goe.offload.offload_messages import VVERBOSE
 # QueryImportInterface
 ###########################################################################
 
+
 class QueryImportInterface(metaclass=ABCMeta):
-    """ Abstract base class which acts as an interface for backend specific Avro and Parquet based sub-classes.
-        Also provides some common functions for the sub-classes.
+    """Abstract base class which acts as an interface for backend specific Avro and Parquet based sub-classes.
+    Also provides some common functions for the sub-classes.
     """
 
     def __init__(self, schema, messages, compression=False, base64_columns=None):
@@ -30,7 +35,11 @@ class QueryImportInterface(metaclass=ABCMeta):
         self._messages = messages
         self._codec = None
         self._base64_columns = base64_columns or []
-        self._source_data_types_requiring_read = [ORACLE_TYPE_BLOB, ORACLE_TYPE_NCLOB, ORACLE_TYPE_CLOB]
+        self._source_data_types_requiring_read = [
+            ORACLE_TYPE_BLOB,
+            ORACLE_TYPE_NCLOB,
+            ORACLE_TYPE_CLOB,
+        ]
 
     ###########################################################################
     # PRIVATE METHODS
@@ -53,18 +62,20 @@ class QueryImportInterface(metaclass=ABCMeta):
         return lambda x: x.read()
 
     def _get_tsltz_encode_fn(self):
-        """ WITH LOCAL TIME ZONE needs UTC suffix to match Sqoop.
-            Can't achieve with NLS_TIMESTAMP_FORMAT because that impacts normal timestamp format.
+        """WITH LOCAL TIME ZONE needs UTC suffix to match Sqoop.
+        Can't achieve with NLS_TIMESTAMP_FORMAT because that impacts normal timestamp format.
         """
-        return lambda x: str(x) + ' UTC'
+        return lambda x: str(x) + " UTC"
 
     def _strip_trailing_dot(self, strval):
-        return strval[:-1] if strval.endswith('.') else strval
+        return strval[:-1] if strval.endswith(".") else strval
 
     ###########################################################################
     # PUBLIC METHODS
     ###########################################################################
 
     @abstractmethod
-    def write_from_cursor(self, local_output_path, extraction_cursor, source_columns, fetch_size=None):
-        """ fetch_size optional because not all frontends take a parameter to fetchmany(). """
+    def write_from_cursor(
+        self, local_output_path, extraction_cursor, source_columns, fetch_size=None
+    ):
+        """fetch_size optional because not all frontends take a parameter to fetchmany()."""

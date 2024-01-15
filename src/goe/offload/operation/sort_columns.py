@@ -19,17 +19,22 @@ class OffloadSortColumnsException(Exception):
 # CONSTANTS
 ###############################################################################
 
-SORT_COLUMN_INVALID_EXCEPTION_TEXT = 'Column is not valid for backend sorting'
-SORT_COLUMN_MAX_EXCEEDED_EXCEPTION_TEXT = 'Too many sort columns specified for backend system'
-SORT_COLUMN_NO_MODIFY_EXCEPTION_TEXT = 'Changing column sorting is not supported'
-UNKNOWN_SORT_COLUMN_EXCEPTION_TEXT = 'Unknown columns specified for backend sorting'
+SORT_COLUMN_INVALID_EXCEPTION_TEXT = "Column is not valid for backend sorting"
+SORT_COLUMN_MAX_EXCEEDED_EXCEPTION_TEXT = (
+    "Too many sort columns specified for backend system"
+)
+SORT_COLUMN_NO_MODIFY_EXCEPTION_TEXT = "Changing column sorting is not supported"
+UNKNOWN_SORT_COLUMN_EXCEPTION_TEXT = "Unknown columns specified for backend sorting"
 
 
 ###############################################################################
 # GLOBAL FUNCTIONS
 ###############################################################################
 
-def default_sort_columns_from_metadata(hybrid_metadata, rdbms_column_names, revalidate_columns=False):
+
+def default_sort_columns_from_metadata(
+    hybrid_metadata, rdbms_column_names, revalidate_columns=False
+):
     sort_columns = None
     if hybrid_metadata and hybrid_metadata.offload_sort_columns:
         sort_columns = csv_split(hybrid_metadata.offload_sort_columns)
@@ -45,7 +50,9 @@ def validate_sort_columns_exist(sort_columns, rdbms_column_names):
     assert isinstance(rdbms_column_names, list)
     bad_cols = list(set(sort_columns) - set(rdbms_column_names))
     if bad_cols:
-        raise OffloadSortColumnsException('%s: %s' % (UNKNOWN_SORT_COLUMN_EXCEPTION_TEXT, bad_cols))
+        raise OffloadSortColumnsException(
+            "%s: %s" % (UNKNOWN_SORT_COLUMN_EXCEPTION_TEXT, bad_cols)
+        )
 
 
 def validate_sort_column_types(sort_columns, backend_cols, backend_api):
@@ -55,33 +62,61 @@ def validate_sort_column_types(sort_columns, backend_cols, backend_api):
         backend_col = match_table_column(sort_col, backend_cols)
         if not backend_api.is_valid_sort_data_type(backend_col.data_type):
             raise OffloadSortColumnsException(
-                '%s: %s/%s' % (SORT_COLUMN_INVALID_EXCEPTION_TEXT, backend_col.name, backend_col.data_type)
+                "%s: %s/%s"
+                % (
+                    SORT_COLUMN_INVALID_EXCEPTION_TEXT,
+                    backend_col.name,
+                    backend_col.data_type,
+                )
             )
 
 
-def sort_columns_csv_to_sort_columns(sort_columns_csv, hybrid_metadata, rdbms_column_names, backend_cols, backend_api,
-                                     metadata_refresh, messages):
+def sort_columns_csv_to_sort_columns(
+    sort_columns_csv,
+    hybrid_metadata,
+    rdbms_column_names,
+    backend_cols,
+    backend_api,
+    metadata_refresh,
+    messages,
+):
     assert isinstance(sort_columns_csv, (str, type(None)))
     sort_columns = None
     if metadata_refresh:
-        sort_columns = default_sort_columns_from_metadata(hybrid_metadata, rdbms_column_names,
-                                                          revalidate_columns=True)
+        sort_columns = default_sort_columns_from_metadata(
+            hybrid_metadata, rdbms_column_names, revalidate_columns=True
+        )
     elif sort_columns_csv == SORT_COLUMNS_NO_CHANGE:
         if hybrid_metadata and hybrid_metadata.offload_sort_columns:
             # Use existing metadata to continue with existing configuration
-            sort_columns = default_sort_columns_from_metadata(hybrid_metadata, rdbms_column_names)
-            messages.log('Retaining SORT BY columns from previous offload: %s' % sort_columns, detail=VVERBOSE)
+            sort_columns = default_sort_columns_from_metadata(
+                hybrid_metadata, rdbms_column_names
+            )
+            messages.log(
+                "Retaining SORT BY columns from previous offload: %s" % sort_columns,
+                detail=VVERBOSE,
+            )
     elif sort_columns_csv:
         # The user gave us a list so use that and ensure all stated SORT BY columns exist
-        sort_columns = expand_columns_csv(sort_columns_csv, rdbms_column_names, retain_non_matching_names=True)
+        sort_columns = expand_columns_csv(
+            sort_columns_csv, rdbms_column_names, retain_non_matching_names=True
+        )
         validate_sort_columns_exist(sort_columns, rdbms_column_names)
         validate_sort_column_types(sort_columns, backend_cols, backend_api)
         if hybrid_metadata and hybrid_metadata.offload_sort_columns:
-            messages.log('New OFFLOAD_SORT_COLUMNS value specified: %s' % ','.join(sort_columns), detail=VVERBOSE)
+            messages.log(
+                "New OFFLOAD_SORT_COLUMNS value specified: %s" % ",".join(sort_columns),
+                detail=VVERBOSE,
+            )
     if sort_columns and len(sort_columns) > backend_api.max_sort_columns():
-        raise OffloadSortColumnsException('%s: %s > %s'
-                                          % (SORT_COLUMN_MAX_EXCEEDED_EXCEPTION_TEXT,
-                                             len(sort_columns), backend_api.max_sort_columns()))
+        raise OffloadSortColumnsException(
+            "%s: %s > %s"
+            % (
+                SORT_COLUMN_MAX_EXCEEDED_EXCEPTION_TEXT,
+                len(sort_columns),
+                backend_api.max_sort_columns(),
+            )
+        )
     return sort_columns
 
 
@@ -89,7 +124,9 @@ def sort_columns_have_changed(offload_source_table, offload_operation):
     if not offload_source_table.sorted_table_supported():
         return False
     existing_metadata = offload_operation.pre_offload_hybrid_metadata
-    prior_sort_columns = existing_metadata.offload_sort_columns if existing_metadata else None
+    prior_sort_columns = (
+        existing_metadata.offload_sort_columns if existing_metadata else None
+    )
     new_sort_columns = offload_sort_columns_to_csv(offload_operation.sort_columns)
     return bool(prior_sort_columns != new_sort_columns)
 

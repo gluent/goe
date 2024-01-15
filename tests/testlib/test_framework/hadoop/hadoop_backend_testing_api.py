@@ -411,15 +411,11 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
             },
             name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN): {
                 "column": HadoopColumn(
-                    name(
-                        HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
-                    ),
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN),
                     HADOOP_TYPE_STRING,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(
-                        HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
-                    ),
+                    name(HADOOP_TYPE_STRING, GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN),
                     GOE_TYPE_LARGE_STRING,
                 ),
                 "present_options": {
@@ -1042,8 +1038,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     {"column": backend_column, "literals": [100, 200, 300, 400]}
                 )
             elif (
-                col_dict["expected_canonical_column"].data_type
-                == GOE_TYPE_INTERVAL_DS
+                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_DS
             ):
                 goe_type_mapping_cols.append(
                     {
@@ -1052,8 +1047,7 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                     }
                 )
             elif (
-                col_dict["expected_canonical_column"].data_type
-                == GOE_TYPE_INTERVAL_YM
+                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_YM
             ):
                 goe_type_mapping_cols.append(
                     {

@@ -172,15 +172,18 @@ class MSSQLFrontendApi(FrontendApiInterface):
                 "Create table partitioning pending implementation"
             )
 
-        sql = dedent(
-            """\
+        sql = (
+            dedent(
+                """\
             CREATE TABLE %(owner_table)s (
             %(col_projection)s
             )"""
-        ) % {
-            "owner_table": self.enclose_object_reference(schema, table_name),
-            "col_projection": col_projection,
-        }
+            )
+            % {
+                "owner_table": self.enclose_object_reference(schema, table_name),
+                "col_projection": col_projection,
+            }
+        )
         return sql
 
     def _disconnect(self, force=False):
@@ -350,10 +353,16 @@ class MSSQLFrontendApi(FrontendApiInterface):
     def close(self, force=False):
         self._disconnect(force=force)
 
-    def agg_validate_sample_column_names(self, schema, table_name, num_required: int=5) -> list:
-        raise NotImplementedError('MSSQL agg_validate_sample_column_names() not implemented.')
+    def agg_validate_sample_column_names(
+        self, schema, table_name, num_required: int = 5
+    ) -> list:
+        raise NotImplementedError(
+            "MSSQL agg_validate_sample_column_names() not implemented."
+        )
 
-    def create_new_connection(self, user_name, user_password, trace_action_override=None):
+    def create_new_connection(
+        self, user_name, user_password, trace_action_override=None
+    ):
         self._debug("Making new connection with user %s" % user_name)
         server, port, database = extract_connection_details_from_dsn(
             self._connection_options.rdbms_dsn

@@ -252,8 +252,8 @@ def test_offload_sorting_dim(config, schema, data_db):
     frontend_api.close()
 
 
-def test_offload_basic_fact(config, schema, data_db):
-    id = "test_offload_basic_fact"
+def test_offload_sorting_fact(config, schema, data_db):
+    id = "test_offload_sorting_fact"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
 

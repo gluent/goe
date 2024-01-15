@@ -1,18 +1,20 @@
 import pytest
 from unittest.mock import Mock
 
+from goe.offload.factory.offload_transport_factory import (
+    offload_transport_factory,
+    spark_dataproc_batches_jdbc_connectivity_checker,
+    spark_dataproc_jdbc_connectivity_checker,
+    spark_submit_jdbc_connectivity_checker,
+    sqoop_jdbc_connectivity_checker,
+)
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport import (
-    offload_transport_factory,
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
     OFFLOAD_TRANSPORT_METHOD_SQOOP,
-    spark_dataproc_jdbc_connectivity_checker,
-    spark_dataproc_batches_jdbc_connectivity_checker,
-    spark_submit_jdbc_connectivity_checker,
-    sqoop_jdbc_connectivity_checker,
 )
 from goe.offload.oracle.oracle_column import (
     OracleColumn,

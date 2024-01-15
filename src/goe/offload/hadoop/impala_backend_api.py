@@ -7,7 +7,6 @@
 """
 
 from copy import copy
-from distutils.version import StrictVersion
 import logging
 import os
 import re
@@ -71,6 +70,7 @@ from goe.offload.hadoop.impala_literal import ImpalaLiteral
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.filesystem.goe_dfs import OFFLOAD_NON_HDFS_FS_SCHEMES
 from goe.util.better_impyla import BetterImpylaException, from_impala_size
+from goe.util.goe_version import GOEVersion
 
 
 ###############################################################################
@@ -551,14 +551,14 @@ class BackendImpalaApi(BackendHadoopApi):
 
     def canonical_date_supported(self):
         if self.is_capability_supported(CAPABILITY_CANONICAL_DATE):
-            return bool(StrictVersion(self.target_version()) >= StrictVersion("3.3.0"))
+            return bool(GOEVersion(self.target_version()) >= GOEVersion("3.3.0"))
         else:
             return False
 
     def column_stats_set_supported(self):
         """Setting column stats is not valid in Impala before v2.6.0"""
         if self.is_capability_supported(CAPABILITY_COLUMN_STATS_SET):
-            return bool(StrictVersion(self.target_version()) >= StrictVersion("2.6.0"))
+            return bool(GOEVersion(self.target_version()) >= GOEVersion("2.6.0"))
         else:
             return False
 
@@ -756,28 +756,28 @@ class BackendImpalaApi(BackendHadoopApi):
         causes an exception
         """
         if self.is_capability_supported(CAPABILITY_DROP_COLUMN):
-            return bool(StrictVersion(self.target_version()) < StrictVersion("3.3.0"))
+            return bool(GOEVersion(self.target_version()) < GOEVersion("3.3.0"))
         else:
             return False
 
     def filesystem_scheme_abfs_supported(self):
         """ABFS is not valid in Impala before v3.1.0"""
         if self.is_capability_supported(CAPABILITY_FS_SCHEME_ABFS):
-            return bool(StrictVersion(self.target_version()) >= StrictVersion("3.1.0"))
+            return bool(GOEVersion(self.target_version()) >= GOEVersion("3.1.0"))
         else:
             return False
 
     def filesystem_scheme_adl_supported(self):
         """ADL is not valid in Impala before v2.9.0"""
         if self.is_capability_supported(CAPABILITY_FS_SCHEME_ADL):
-            return bool(StrictVersion(self.target_version()) >= StrictVersion("2.9.0"))
+            return bool(GOEVersion(self.target_version()) >= GOEVersion("2.9.0"))
         else:
             return False
 
     def filesystem_scheme_s3a_supported(self):
         """S3A is not valid in Impala before v2.6.0"""
         if self.is_capability_supported(CAPABILITY_FS_SCHEME_S3A):
-            return bool(StrictVersion(self.target_version()) >= StrictVersion("2.6.0"))
+            return bool(GOEVersion(self.target_version()) >= GOEVersion("2.6.0"))
         else:
             return False
 
@@ -1080,14 +1080,14 @@ FROM   %(from_db_table)s%(where)s""" % {
         version so using Impala version as a proxy for CDP/CDH version.
         """
         if self.is_capability_supported(CAPABILITY_RANGER):
-            return bool(StrictVersion(self.target_version()) >= StrictVersion("3.3.0"))
+            return bool(GOEVersion(self.target_version()) >= GOEVersion("3.3.0"))
         else:
             return False
 
     def refresh_functions_supported(self):
         """REFRESH FUNCTIONS is not valid in Impala before v2.9.0"""
         if self.is_capability_supported(CAPABILITY_REFRESH_FUNCTIONS):
-            return bool(StrictVersion(self.target_version()) >= StrictVersion("2.9.0"))
+            return bool(GOEVersion(self.target_version()) >= GOEVersion("2.9.0"))
         else:
             return False
 
@@ -1105,7 +1105,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         version so using Impala version as a proxy for CDP/CDH version.
         """
         if self.is_capability_supported(CAPABILITY_SENTRY):
-            return bool(StrictVersion(self.target_version()) < StrictVersion("3.3.0"))
+            return bool(GOEVersion(self.target_version()) < GOEVersion("3.3.0"))
         else:
             return False
 
@@ -1140,7 +1140,7 @@ FROM   %(from_db_table)s%(where)s""" % {
     def sorted_table_supported(self):
         """SORT BY is not valid in Impala before v2.9.0"""
         if self.is_capability_supported(CAPABILITY_SORTED_TABLE):
-            return bool(StrictVersion(self.target_version()) >= StrictVersion("2.9.0"))
+            return bool(GOEVersion(self.target_version()) >= GOEVersion("2.9.0"))
         else:
             return False
 
@@ -1172,7 +1172,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         """CDP uses ACID tables by default.
         We do not currently establish the platform/distribution version so using Impala version as a proxy for CDP version.
         """
-        return bool(StrictVersion(self.target_version()) >= StrictVersion("3.3.0"))
+        return bool(GOEVersion(self.target_version()) >= GOEVersion("3.3.0"))
 
     def udf_details(self, db_name, udf_name):
         rows = self._fetch_show_functions(db_name, udf_name_filter=udf_name)

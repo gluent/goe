@@ -482,7 +482,7 @@ def trunc_with_hash(
         stem = s[: max_length - hash_length - 1]
         # hash -> b64 it into chars -> keep identifier chars and trim to hash_length
         minihash = b64encode(md5(s.encode()).digest()).decode()
-        minihash = re.sub("[\W\s]", "", minihash)[:hash_length]
+        minihash = re.sub(r"[\W\s]", "", minihash)[:hash_length]
         if hash_case_conv_fn:
             minihash = hash_case_conv_fn(minihash)
         return stem + "_" + minihash

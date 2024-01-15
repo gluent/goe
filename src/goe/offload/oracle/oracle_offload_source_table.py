@@ -4,7 +4,6 @@
 """
 
 from datetime import date, datetime
-from distutils.version import LooseVersion
 import logging
 import re
 from typing import Union
@@ -34,6 +33,8 @@ from goe.offload.oracle.oracle_column import OracleColumn, \
     ORACLE_TYPE_TIMESTAMP_TZ, ORACLE_TYPE_TIMESTAMP_LOCAL_TZ, ORACLE_TYPE_INTERVAL_DS, ORACLE_TYPE_INTERVAL_YM, \
     ORACLE_TYPE_XMLTYPE, ORACLE_TIMESTAMP_RE
 from goe.offload.oracle import oracle_predicate
+from goe.util.goe_version import GOEVersion
+
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default
@@ -71,7 +72,7 @@ def oracle_number_literal_to_python(rdbms_literal):
 
 
 def oracle_version_supports_exadata(db_version: str) -> bool:
-    return LooseVersion(db_version) >= LooseVersion(ORACLE_VERSION_WITH_CELL_OFFLOAD_PROCESSING)
+    return GOEVersion(db_version) >= GOEVersion(ORACLE_VERSION_WITH_CELL_OFFLOAD_PROCESSING)
 
 
 ###########################################################################
@@ -806,7 +807,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
             proj_col = to_char_ts_col(min_of_col, part_col.data_type)
             min_sql = None
 
-            if self._offload_by_subpartition and LooseVersion(self._db_version) < LooseVersion(ORACLE_VERSION_WITH_SUBPART_MIN_MAX_OPTIMIZATION):
+            if self._offload_by_subpartition and GOEVersion(self._db_version) < GOEVersion(ORACLE_VERSION_WITH_SUBPART_MIN_MAX_OPTIMIZATION):
                 # In Oracle 11.2 MIN() on subpartition columns does not take advantage of PARTITION RANGE ALL MIN/MAX
                 # here we UNION ALL MIN() queries for each top level partition
                 top_level_partitions = self.get_partitions(populate_hvs=False)
@@ -995,7 +996,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
         """
         if rdbms_literal in ('MAXVALUE', offload_constants.PART_OUT_OF_RANGE):
             return float("inf")
-        elif re.match('^-?\d+$', rdbms_literal.strip("'").strip()):
+        elif re.match(r'^-?\d+$', rdbms_literal.strip("'").strip()):
             # strip(') because Oracle allows single quoted HVs for NUMERIC partitioning
             return int(rdbms_literal.strip("'").strip())
         else:

@@ -301,8 +301,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             log_level=VVERBOSE,
             not_when_dry_running=True,
         )
-        if isinstance(command_execution_id, cx_Oracle.NUMBER):
-            command_execution_id = command_execution_id.getvalue()
+        command_execution_id = command_execution_id.getvalue()
         self._debug(f"command_execution_id: {command_execution_id})")
         return command_execution_id
 
@@ -342,8 +341,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             log_level=VVERBOSE,
             not_when_dry_running=True,
         )
-        if isinstance(command_step_id, cx_Oracle.NUMBER):
-            command_step_id = command_step_id.getvalue()
+        command_step_id = command_step_id.getvalue()
         self._debug(f"command_step_id: {command_step_id})")
         return command_step_id
 
@@ -417,8 +415,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             log_level=VVERBOSE,
             not_when_dry_running=True,
         )
-        if isinstance(chunk_id, cx_Oracle.NUMBER):
-            chunk_id = chunk_id.getvalue()
+        chunk_id = chunk_id.getvalue()
         self._debug(f"chunk_id: {chunk_id})")
         return chunk_id
 

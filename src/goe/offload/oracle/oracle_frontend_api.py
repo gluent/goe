@@ -7,7 +7,6 @@
 # Standard Library
 import logging
 from datetime import datetime
-from distutils.version import LooseVersion
 from textwrap import dedent
 import traceback
 from typing import Optional
@@ -32,6 +31,7 @@ from goe.offload.frontend_api import (
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.oracle.oracle_column import ORACLE_SPLIT_HIGH_VALUE_RE, ORACLE_TYPE_VARCHAR2, OracleColumn
 from goe.offload.oracle.oracle_literal import OracleLiteral
+from goe.util.goe_version import GOEVersion
 from goe.util.misc_functions import double_quote_sandwich, format_list_for_logging
 
 logger = logging.getLogger(__name__)
@@ -1057,7 +1057,7 @@ class OracleFrontendApi(FrontendApiInterface):
         """This maximum identifier length on Oracle changed in 12.2 therefore we must check DB compatible"""
 
         def oracle_max_table_name_length(instance_compatible):
-            if LooseVersion(instance_compatible) >= LooseVersion(
+            if GOEVersion(instance_compatible) >= GOEVersion(
                 ORACLE_VERSION_WITH_128_BYTE_IDENTIFIERS
             ):
                 return 128

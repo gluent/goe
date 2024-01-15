@@ -6,7 +6,6 @@
 import json
 import random
 import re
-from typing import Optional
 
 from goe.config import orchestration_defaults
 from goe.data_governance.hadoop_data_governance_constants import (
@@ -325,10 +324,10 @@ def normalise_offload_transport_config(options, exc_cls=OrchestrationConfigExcep
         options.offload_transport_spark_submit_master_url
         == SPARK_SUBMIT_SPARK_YARN_MASTER
         or re.match(
-            "^local(\[[0-9]\])?$", options.offload_transport_spark_submit_master_url
+            r"^local(\[[0-9]\])?$", options.offload_transport_spark_submit_master_url
         )
         or re.match(
-            "^(spark|mesos|k8s)://.+$",
+            r"^(spark|mesos|k8s)://.+$",
             options.offload_transport_spark_submit_master_url,
         )
     ):

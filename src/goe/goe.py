@@ -3,11 +3,6 @@
 import os
 import sys
 
-if not os.environ.get('OFFLOAD_HOME'):
-    print('OFFLOAD_HOME environment variable missing')
-    print('You should source environment variables first, eg: . ../conf/offload.env')
-    sys.exit(1)
-
 from copy import copy
 from datetime import datetime, timedelta
 import json
@@ -30,6 +25,7 @@ from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import IMPALA_SHUFFLE_HINT, IMPALA_NOSHUFFLE_HINT
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory, get_backend_table_from_metadata
+from goe.offload.factory.offload_transport_factory import offload_transport_factory
 from goe.offload.column_metadata import invalid_column_list_message, match_table_column,\
     is_synthetic_partition_column, valid_column_list, \
     GOE_TYPE_DECIMAL, GOE_TYPE_DATE, GOE_TYPE_DOUBLE,\
@@ -62,7 +58,7 @@ from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.offload.offload_metadata_functions import gen_and_save_offload_metadata
 from goe.offload.offload_validation import BackendCountValidator, CrossDbValidator,\
     build_verification_clauses
-from goe.offload.offload_transport import choose_offload_transport_method, offload_transport_factory, \
+from goe.offload.offload_transport import choose_offload_transport_method, \
     validate_offload_transport_method, \
     VALID_OFFLOAD_TRANSPORT_METHODS
 from goe.offload.operation.data_type_controls import (
@@ -108,7 +104,7 @@ from goe.data_governance.hadoop_data_governance import get_hadoop_data_governanc
     is_valid_data_governance_tag
 
 from goe.util.misc_functions import all_int_chars, csv_split, bytes_to_human_size,\
-    human_size_to_bytes, standard_log_name
+    standard_log_name
 from goe.util.ora_query import get_oracle_connection
 from goe.util.redis_tools import RedisClient
 
@@ -587,15 +583,9 @@ def normalise_owner_table_options(options):
 
   if len(options.target_owner_name.split('.')) != 2:
     raise OffloadOptionError('Option --target-name required in form SCHEMA.TABLENAME')
-  if len(options.base_owner_name.split('.')) != 2:
-    raise OffloadOptionError('Option --base-name required in form SCHEMA.TABLENAME')
 
   options.target_owner, options.target_name = options.target_owner_name.split('.')
-  # Need to maintain the upper below for backward compatibility if names pass through trunc_with_hash().
   options.base_owner, options.base_name = options.base_owner_name.upper().split('.')
-
-  if options.base_owner_name.upper() != options.owner_table.upper() and options.target_owner.upper() != options.base_owner.upper():
-    raise OffloadOptionError('The SCHEMA provided in options --target-name and --base-name must match')
 
 
 def normalise_datatype_control_options(opts):
@@ -839,7 +829,7 @@ def version_abort(check_version, frontend_api):
 
 def strict_version_ready(version_string):
   """ Our offload version can have -RC or -DEV (or both!) appended
-      In order to use StrictVersion we need to tidy this up
+      In order to use GOEVersion we need to tidy this up
       Chop off anything after (and including) a hyphen
   """
   version_string = version_string.split('-')[0] if version_string else version_string
@@ -2137,7 +2127,7 @@ def get_options(usage=None, operation_name=None):
 
   opt.add_option('--max-offload-chunk-size', dest='max_offload_chunk_size',
                  default=orchestration_defaults.max_offload_chunk_size_default(),
-                 help='Restrict size of partitions offloaded per cycle. [\d.]+[MG] eg. 100M, 1G, 1.5G')
+                 help='Restrict size of partitions offloaded per cycle. [\\d.]+[MG] eg. 100M, 1G, 1.5G')
   opt.add_option('--max-offload-chunk-count', dest='max_offload_chunk_count',
                  default=orchestration_defaults.max_offload_chunk_count_default(),
                  help='Restrict number of partitions offloaded per cycle. Allowable values between 1 and 1000.')

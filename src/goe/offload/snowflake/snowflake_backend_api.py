@@ -17,7 +17,7 @@ from numpy import datetime64
 import snowflake.connector
 
 from goe.connect.connect_constants import CONNECT_DETAIL, CONNECT_STATUS, CONNECT_TEST
-from goe.offload.backend_api import BackendApiInterface, BackendApiException, BackendStatsException, UdfDetails,\
+from goe.offload.backend_api import BackendApiInterface, BackendApiException, UdfDetails,\
     FETCH_ACTION_ALL, FETCH_ACTION_CURSOR, FETCH_ACTION_ONE, SORT_COLUMNS_UNLIMITED,\
     REPORT_ATTR_BACKEND_CLASS, REPORT_ATTR_BACKEND_TYPE,\
     REPORT_ATTR_BACKEND_DISPLAY_NAME, REPORT_ATTR_BACKEND_HOST_INFO_TYPE, REPORT_ATTR_BACKEND_HOST_INFO
@@ -38,7 +38,6 @@ from goe.offload.snowflake.snowflake_column import SnowflakeColumn,\
     SNOWFLAKE_TYPE_TIMESTAMP_NTZ, SNOWFLAKE_TYPE_TIME, SNOWFLAKE_TYPE_TIMESTAMP_TZ
 from goe.offload.snowflake.snowflake_literal import SnowflakeLiteral
 
-from goe.util.hive_table_stats import parse_stats_into_tab_col, transform_stats_as_tuples
 from goe.util.misc_functions import backtick_sandwich, format_list_for_logging, unsurround
 from goe.util.password_tools import PasswordTools
 
@@ -1332,7 +1331,7 @@ class BackendSnowflakeApi(BackendApiInterface):
         return False
 
     def target_version(self):
-        """ Return version of the backend SQL engine in x.y.z format that can be used by StrictVersion().
+        """ Return version of the backend SQL engine in x.y.z format that can be used by GOEVersion().
             This is different to backend_version() even though it appears similar in function.
         """
         if self._target_version is None:

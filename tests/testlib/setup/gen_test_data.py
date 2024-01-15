@@ -1,9 +1,8 @@
 """ Library of functions generating data for test tables.
-    shared between legacy 'test --setup' and 'test_setup' scripts.
     LICENSE_TEXT
 """
 
-from datetime import datetime, date, timedelta, time as dt_time
+from datetime import datetime, date, timedelta
 import decimal
 import random
 import uuid

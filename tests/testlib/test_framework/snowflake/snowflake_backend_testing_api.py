@@ -603,9 +603,7 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
                     GOE_TYPE_DATE,
                 ),
                 "present_options": {
-                    "date_columns_csv": name(
-                        SNOWFLAKE_TYPE_TIMESTAMP_TZ, GOE_TYPE_DATE
-                    )
+                    "date_columns_csv": name(SNOWFLAKE_TYPE_TIMESTAMP_TZ, GOE_TYPE_DATE)
                 },
             },
             name(SNOWFLAKE_TYPE_TIMESTAMP_TZ, GOE_TYPE_TIMESTAMP): {
@@ -843,8 +841,7 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
                 else:
                     goe_type_mapping_cols.append({"column": backend_column})
             elif (
-                col_dict["expected_canonical_column"].data_type
-                == GOE_TYPE_INTERVAL_DS
+                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_DS
             ):
                 goe_type_mapping_cols.append(
                     {
@@ -853,8 +850,7 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
                     }
                 )
             elif (
-                col_dict["expected_canonical_column"].data_type
-                == GOE_TYPE_INTERVAL_YM
+                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_YM
             ):
                 goe_type_mapping_cols.append(
                     {

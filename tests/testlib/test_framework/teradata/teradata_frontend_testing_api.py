@@ -529,9 +529,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                     name(TERADATA_TYPE_DECIMAL, GOE_TYPE_DOUBLE), GOE_TYPE_DOUBLE
                 ),
                 "offload_options": {
-                    "double_columns_csv": name(
-                        TERADATA_TYPE_DECIMAL, GOE_TYPE_DOUBLE
-                    )
+                    "double_columns_csv": name(TERADATA_TYPE_DECIMAL, GOE_TYPE_DOUBLE)
                 },
                 "literals": [1.5, 2.5, 3.5],
             },
@@ -620,17 +618,13 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             },
             name(TERADATA_TYPE_DECIMAL, "9", "2", GOE_TYPE_DECIMAL, "10", "3"): {
                 "column": TeradataColumn(
-                    name(
-                        TERADATA_TYPE_DECIMAL, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
-                    ),
+                    name(TERADATA_TYPE_DECIMAL, "9", "2", GOE_TYPE_DECIMAL, "10", "3"),
                     TERADATA_TYPE_DECIMAL,
                     data_precision=9,
                     data_scale=2,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(
-                        TERADATA_TYPE_DECIMAL, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
-                    ),
+                    name(TERADATA_TYPE_DECIMAL, "9", "2", GOE_TYPE_DECIMAL, "10", "3"),
                     GOE_TYPE_DECIMAL,
                     data_precision=10,
                     data_scale=3,
@@ -941,17 +935,13 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             },
             name(TERADATA_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"): {
                 "column": TeradataColumn(
-                    name(
-                        TERADATA_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
-                    ),
+                    name(TERADATA_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"),
                     TERADATA_TYPE_NUMBER,
                     data_precision=9,
                     data_scale=2,
                 ),
                 "expected_canonical_column": CanonicalColumn(
-                    name(
-                        TERADATA_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
-                    ),
+                    name(TERADATA_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"),
                     GOE_TYPE_DECIMAL,
                     data_precision=10,
                     data_scale=3,

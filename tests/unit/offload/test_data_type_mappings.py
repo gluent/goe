@@ -537,9 +537,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
         expected_columns = [
             CanonicalColumn("COL_CHAR", GOE_TYPE_FIXED_STRING, data_length=100),
             CanonicalColumn("COL_NCHAR", GOE_TYPE_FIXED_STRING, data_length=200),
-            CanonicalColumn(
-                "COL_VARCHAR2", GOE_TYPE_VARIABLE_STRING, data_length=1100
-            ),
+            CanonicalColumn("COL_VARCHAR2", GOE_TYPE_VARIABLE_STRING, data_length=1100),
             CanonicalColumn(
                 "COL_NVARCHAR2", GOE_TYPE_VARIABLE_STRING, data_length=2200
             ),
@@ -569,12 +567,8 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
             CanonicalColumn("COL_DATE", GOE_TYPE_TIMESTAMP),
             CanonicalColumn("COL_TIMESTAMP_6", GOE_TYPE_TIMESTAMP, data_scale=6),
             CanonicalColumn("COL_TIMESTAMP_3", GOE_TYPE_TIMESTAMP, data_scale=3),
-            CanonicalColumn(
-                "COL_TIMESTAMP_TZ_6", GOE_TYPE_TIMESTAMP_TZ, data_scale=6
-            ),
-            CanonicalColumn(
-                "COL_TIMESTAMP_TZ_9", GOE_TYPE_TIMESTAMP_TZ, data_scale=9
-            ),
+            CanonicalColumn("COL_TIMESTAMP_TZ_6", GOE_TYPE_TIMESTAMP_TZ, data_scale=6),
+            CanonicalColumn("COL_TIMESTAMP_TZ_9", GOE_TYPE_TIMESTAMP_TZ, data_scale=9),
             CanonicalColumn("COL_INTERVAL_DS", GOE_TYPE_INTERVAL_DS),
             CanonicalColumn("COL_INTERVAL_YM", GOE_TYPE_INTERVAL_YM),
         ]
@@ -1265,12 +1259,8 @@ class TestMSSQLDataTypeMappings(TestDataTypeMappings):
             CanonicalColumn("COL_BIT", GOE_TYPE_BOOLEAN),
             CanonicalColumn("COL_CHAR", GOE_TYPE_FIXED_STRING, data_length=100),
             CanonicalColumn("COL_NCHAR", GOE_TYPE_FIXED_STRING, data_length=200),
-            CanonicalColumn(
-                "COL_VARCHAR", GOE_TYPE_VARIABLE_STRING, data_length=1100
-            ),
-            CanonicalColumn(
-                "COL_NVARCHAR", GOE_TYPE_VARIABLE_STRING, data_length=2200
-            ),
+            CanonicalColumn("COL_VARCHAR", GOE_TYPE_VARIABLE_STRING, data_length=1100),
+            CanonicalColumn("COL_NVARCHAR", GOE_TYPE_VARIABLE_STRING, data_length=2200),
             CanonicalColumn("COL_UNIQ_ID", GOE_TYPE_VARIABLE_STRING, data_length=16),
             CanonicalColumn("COL_TEXT", GOE_TYPE_LARGE_STRING),
             CanonicalColumn("COL_NTEXT", GOE_TYPE_LARGE_STRING),
@@ -1465,9 +1455,7 @@ class TestNetezzaDataTypeMappings(TestDataTypeMappings):
         expected_columns = [
             CanonicalColumn("COL_BOOLEAN", GOE_TYPE_BOOLEAN),
             CanonicalColumn("COL_CHARACTER", GOE_TYPE_FIXED_STRING, data_length=100),
-            CanonicalColumn(
-                "COL_NCHARACTER", GOE_TYPE_FIXED_STRING, data_length=200
-            ),
+            CanonicalColumn("COL_NCHARACTER", GOE_TYPE_FIXED_STRING, data_length=200),
             CanonicalColumn(
                 "COL_CHARACTERV", GOE_TYPE_VARIABLE_STRING, data_length=100
             ),

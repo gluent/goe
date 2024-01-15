@@ -756,9 +756,7 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                 ),
                 "offload_options": {
                     "decimal_columns_csv_list": [
-                        name(
-                            ORACLE_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3"
-                        )
+                        name(ORACLE_TYPE_NUMBER, "9", "2", GOE_TYPE_DECIMAL, "10", "3")
                     ],
                     "decimal_columns_type_list": ["10,3"],
                 },

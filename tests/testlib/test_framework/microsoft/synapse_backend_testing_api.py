@@ -217,9 +217,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     )
                 },
             },
-            name(
-                SYNAPSE_TYPE_CHAR, "3", GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
-            ): {
+            name(SYNAPSE_TYPE_CHAR, "3", GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN): {
                 "column": SynapseColumn(
                     name(
                         SYNAPSE_TYPE_CHAR,
@@ -267,9 +265,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     name(SYNAPSE_TYPE_CHAR, "3", GOE_TYPE_BINARY), GOE_TYPE_BINARY
                 ),
                 "present_options": {
-                    "binary_columns_csv": name(
-                        SYNAPSE_TYPE_CHAR, "3", GOE_TYPE_BINARY
-                    )
+                    "binary_columns_csv": name(SYNAPSE_TYPE_CHAR, "3", GOE_TYPE_BINARY)
                 },
             },
             name(SYNAPSE_TYPE_CHAR, "3", GOE_TYPE_LARGE_BINARY): {
@@ -342,9 +338,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     )
                 },
             },
-            name(
-                SYNAPSE_TYPE_NCHAR, "3", GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN
-            ): {
+            name(SYNAPSE_TYPE_NCHAR, "3", GOE_TYPE_LARGE_STRING, UNICODE_NAME_TOKEN): {
                 "column": SynapseColumn(
                     name(
                         SYNAPSE_TYPE_NCHAR,
@@ -392,9 +386,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     GOE_TYPE_BINARY,
                 ),
                 "present_options": {
-                    "binary_columns_csv": name(
-                        SYNAPSE_TYPE_NCHAR, "3", GOE_TYPE_BINARY
-                    )
+                    "binary_columns_csv": name(SYNAPSE_TYPE_NCHAR, "3", GOE_TYPE_BINARY)
                 },
             },
             name(SYNAPSE_TYPE_NCHAR, "3", GOE_TYPE_LARGE_BINARY): {
@@ -1442,9 +1434,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     GOE_TYPE_TIMESTAMP,
                 ),
                 "present_options": {
-                    "timestamp_columns_csv": name(
-                        SYNAPSE_TYPE_DATE, GOE_TYPE_TIMESTAMP
-                    )
+                    "timestamp_columns_csv": name(SYNAPSE_TYPE_DATE, GOE_TYPE_TIMESTAMP)
                 },
             },
             #
@@ -1468,9 +1458,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     name(SYNAPSE_TYPE_SMALLDATETIME, GOE_TYPE_DATE), GOE_TYPE_DATE
                 ),
                 "present_options": {
-                    "date_columns_csv": name(
-                        SYNAPSE_TYPE_SMALLDATETIME, GOE_TYPE_DATE
-                    )
+                    "date_columns_csv": name(SYNAPSE_TYPE_SMALLDATETIME, GOE_TYPE_DATE)
                 },
             },
             name(SYNAPSE_TYPE_DATETIME): {
@@ -1556,9 +1544,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     GOE_TYPE_DATE,
                 ),
                 "present_options": {
-                    "date_columns_csv": name(
-                        SYNAPSE_TYPE_DATETIMEOFFSET, GOE_TYPE_DATE
-                    )
+                    "date_columns_csv": name(SYNAPSE_TYPE_DATETIMEOFFSET, GOE_TYPE_DATE)
                 },
             },
             name(SYNAPSE_TYPE_DATETIMEOFFSET, GOE_TYPE_TIMESTAMP): {
@@ -1956,8 +1942,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     }
                 )
             elif (
-                col_dict["expected_canonical_column"].data_type
-                == GOE_TYPE_INTERVAL_DS
+                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_DS
             ):
                 goe_type_mapping_cols.append(
                     {
@@ -1966,8 +1951,7 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
                     }
                 )
             elif (
-                col_dict["expected_canonical_column"].data_type
-                == GOE_TYPE_INTERVAL_YM
+                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_YM
             ):
                 goe_type_mapping_cols.append(
                     {

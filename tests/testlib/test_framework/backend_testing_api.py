@@ -572,14 +572,10 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         goe_identifiers_cols = []
         canonical_columns = [
             CanonicalColumn("COL_NUM_UPPER", GOE_TYPE_INTEGER_8),
-            CanonicalColumn(
-                "COL_STR_UPPER", GOE_TYPE_VARIABLE_STRING, data_length=10
-            ),
+            CanonicalColumn("COL_STR_UPPER", GOE_TYPE_VARIABLE_STRING, data_length=10),
             CanonicalColumn("COL_DATE_UPPER", GOE_TYPE_DATE),
             CanonicalColumn("col_num_lower", GOE_TYPE_INTEGER_8),
-            CanonicalColumn(
-                "col_str_lower", GOE_TYPE_VARIABLE_STRING, data_length=10
-            ),
+            CanonicalColumn("col_str_lower", GOE_TYPE_VARIABLE_STRING, data_length=10),
             CanonicalColumn("col_date_lower", GOE_TYPE_DATE),
             CanonicalColumn("Col_Num_CamelCase", GOE_TYPE_INTEGER_8),
             CanonicalColumn(
@@ -602,7 +598,9 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
                 literals = ["blah1", "blah2", "blah3"]
             else:
                 literals = None
-            goe_identifiers_cols.append({"column": backend_column, "literals": literals})
+            goe_identifiers_cols.append(
+                {"column": backend_column, "literals": literals}
+            )
         goe_identifiers_names = [_["column"].name for _ in goe_identifiers_cols]
         return goe_identifiers_cols, goe_identifiers_names
 

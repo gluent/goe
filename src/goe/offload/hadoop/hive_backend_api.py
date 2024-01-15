@@ -727,7 +727,7 @@ FROM   %(from_db_table)s%(where)s%(dist_by)s%(sort_by)s""" % {
         else:
             udf_version = "2.0.0"
 
-        udf_lib_source = re.sub("\.jar$", "-" + udf_version + ".jar", HIVE_UDF_LIB)
+        udf_lib_source = re.sub(r"\.jar$", "-" + udf_version + ".jar", HIVE_UDF_LIB)
         udf_lib_destination = HIVE_UDF_LIB
         cmds.extend(
             self._udf_installation_copy_library_to_hdfs(

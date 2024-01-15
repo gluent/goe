@@ -5,9 +5,7 @@
 
 import requests
 from requests_kerberos import HTTPKerberosAuth, REQUIRED
-from urllib3.exceptions import InsecureRequestWarning, SubjectAltNameWarning
-#from requests.packages.urllib3.exceptions import InsecureRequestWarning, SubjectAltNameWarning
-#from requests.packages.urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning
 from urllib3 import disable_warnings
 
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
@@ -41,7 +39,6 @@ class OffloadTransportLivyRequests(object):
         if offload_options.kerberos_service:
             messages.log('Livy transport is kerberized', detail=VVERBOSE)
         disable_warnings(InsecureRequestWarning)
-        disable_warnings(SubjectAltNameWarning)
 
     ###########################################################################
     # PRIVATE METHODS

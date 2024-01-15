@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" OffloadTransport: Library for offloading data from an RDBMS frontend to a Hadoop backend
+""" OffloadTransport: Library for offloading data from an RDBMS frontend to a cloud backend.
     LICENSE_TEXT
 """
 

@@ -31,6 +31,7 @@ dependencies = [
     "requests-kerberos",
     "termcolor",
     "urllib3",
+    #"urllib3==2.0.0",
 
     # For Cloud storage
     "google-cloud-storage",
@@ -53,9 +54,9 @@ dependencies = [
     "pyodbc",
 
     # For Hadoop backend
-    "hdfs==2.6.0",
-    "impyla==0.17.0",
-    "thrift-sasl==0.4.3",
+    "hdfs",
+    "impyla",
+    "thrift-sasl",
 
     # For Snowflake backend
     "snowflake-connector-python==3.0.0",

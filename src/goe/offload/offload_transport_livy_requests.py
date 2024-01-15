@@ -5,8 +5,10 @@
 
 import requests
 from requests_kerberos import HTTPKerberosAuth, REQUIRED
-from requests.packages.urllib3.exceptions import InsecureRequestWarning, SubjectAltNameWarning
-from requests.packages.urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning, SubjectAltNameWarning
+#from requests.packages.urllib3.exceptions import InsecureRequestWarning, SubjectAltNameWarning
+#from requests.packages.urllib3 import disable_warnings
+from urllib3 import disable_warnings
 
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 

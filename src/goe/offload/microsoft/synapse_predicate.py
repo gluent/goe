@@ -14,20 +14,28 @@ from goe.offload.microsoft.synapse_literal import SynapseLiteral
 
 def predicate_to_template(backend_columns):
     generic_to_typed = predicate_offload.GenericPredicateToTyped(backend_columns)
-    insert_synthetic_partition_clauses = predicate_offload.InsertSyntheticPartitionClauses(backend_columns)
-    return generic_to_typed * insert_synthetic_partition_clauses * TypedPredicateToSynapseTemplate()
+    insert_synthetic_partition_clauses = (
+        predicate_offload.InsertSyntheticPartitionClauses(backend_columns)
+    )
+    return (
+        generic_to_typed
+        * insert_synthetic_partition_clauses
+        * TypedPredicateToSynapseTemplate()
+    )
 
 
 def predicate_to_where_clause(backend_columns, predicate):
     with predicate_offload.handle_parse_errors():
-        to_literal_ast = predicate_to_template(backend_columns) * TypedPredicateToSynapseLiterals()
+        to_literal_ast = (
+            predicate_to_template(backend_columns) * TypedPredicateToSynapseLiterals()
+        )
         to_sql = GenericPredicateToSynapseSQL()
         return (to_literal_ast * to_sql).transform(predicate.ast)
 
 
 class GenericPredicateToSynapseSQL(predicate_offload.GenericPredicateToSQL):
     def column(self, items):
-        return '.'.join('[%s]' % i for i in items)
+        return ".".join("[%s]" % i for i in items)
 
 
 class TypedPredicateToSynapseTemplate(predicate_offload.TypedPredicateToTemplate):
@@ -35,7 +43,6 @@ class TypedPredicateToSynapseTemplate(predicate_offload.TypedPredicateToTemplate
 
 
 class TypedPredicateToSynapseLiterals(predicate_offload.TypedPredicateToLiterals):
-
     def datetime_value(self, items):
         value, data_type = items[0].value
         assert isinstance(value, np.datetime64)

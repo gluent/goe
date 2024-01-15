@@ -25,7 +25,9 @@ from goe.offload.offload_transport_functions import (
     finish_progress_on_stdout,
     write_progress_to_stdout,
 )
-from goe.offload.spark.offload_transport_livy_requests import OffloadTransportLivyRequests
+from goe.offload.spark.offload_transport_livy_requests import (
+    OffloadTransportLivyRequests,
+)
 from goe.orchestration import command_steps
 
 

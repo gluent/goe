@@ -29,7 +29,11 @@ from goe.offload.frontend_api import (
     QueryParameter,
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
-from goe.offload.oracle.oracle_column import ORACLE_SPLIT_HIGH_VALUE_RE, ORACLE_TYPE_VARCHAR2, OracleColumn
+from goe.offload.oracle.oracle_column import (
+    ORACLE_SPLIT_HIGH_VALUE_RE,
+    ORACLE_TYPE_VARCHAR2,
+    OracleColumn,
+)
 from goe.offload.oracle.oracle_literal import OracleLiteral
 from goe.util.goe_version import GOEVersion
 from goe.util.misc_functions import double_quote_sandwich, format_list_for_logging
@@ -533,7 +537,7 @@ class OracleFrontendApi(FrontendApiInterface):
             "_fast_executemany_dml() is not implemented for Oracle"
         )
 
-    def _format_query_options(self, query_options: Optional[dict]=None) -> list:
+    def _format_query_options(self, query_options: Optional[dict] = None) -> list:
         """Format options for Oracle
         query_options: key/value pairs for session settings
         """
@@ -713,8 +717,10 @@ class OracleFrontendApi(FrontendApiInterface):
                     # "ORA-02396: exceeded maximum idle time, please connect again": Session sniped due to profile.
                     # "ORA-03113: end-of-file on communication channel: comes hand in hand with ORA-03114.
                     # "ORA-03114: not connected to Oracle": e.g. when a firewall rule severs an idle session.
-                    self._log(f'Reconnecting to Oracle due to: {str(exc)}', detail=VVERBOSE)
-                    logger.info(f'Reconnecting to Oracle due to: {str(exc)}')
+                    self._log(
+                        f"Reconnecting to Oracle due to: {str(exc)}", detail=VVERBOSE
+                    )
+                    logger.info(f"Reconnecting to Oracle due to: {str(exc)}")
                     self._disconnect(force=True)
                     self._connect()
                     setup_cursor()
@@ -740,9 +746,9 @@ class OracleFrontendApi(FrontendApiInterface):
         return param_dict
 
     def v_session_safe_action(self, action):
-        """ V$SESSION.ACTION is limited to 64 characters. """
+        """V$SESSION.ACTION is limited to 64 characters."""
         if action and isinstance(action, str) and len(action) > 64:
-            action = action[:61] + '...'
+            action = action[:61] + "..."
         return action
 
     ###########################################################################
@@ -752,8 +758,11 @@ class OracleFrontendApi(FrontendApiInterface):
     def close(self, force=False):
         self._disconnect(force=force)
 
-    def agg_validate_sample_column_names(self, schema, table_name, num_required: int=5) -> list:
-        sql = dedent("""\
+    def agg_validate_sample_column_names(
+        self, schema, table_name, num_required: int = 5
+    ) -> list:
+        sql = dedent(
+            """\
         SELECT column_name
         FROM  (
                SELECT column_name
@@ -766,17 +775,22 @@ class OracleFrontendApi(FrontendApiInterface):
                AND    hidden_column = 'NO'
               )
         WHERE  column_id IN (1, last_column_id)
-        OR     ndv_rank <= :REQUIRED_NO""")
+        OR     ndv_rank <= :REQUIRED_NO"""
+        )
         binds = [
-            QueryParameter(param_name='OWNER', param_value=schema),
-            QueryParameter(param_name='TABLE_NAME', param_value=table_name),
-            QueryParameter(param_name='REQUIRED_NO', param_value=num_required)
+            QueryParameter(param_name="OWNER", param_value=schema),
+            QueryParameter(param_name="TABLE_NAME", param_value=table_name),
+            QueryParameter(param_name="REQUIRED_NO", param_value=num_required),
         ]
 
-        query_result = self.execute_query_fetch_all(sql, query_params=binds, log_level=VVERBOSE)
+        query_result = self.execute_query_fetch_all(
+            sql, query_params=binds, log_level=VVERBOSE
+        )
         return [_[0] for _ in query_result]
 
-    def create_new_connection(self, user_name, user_password, trace_action_override=None):
+    def create_new_connection(
+        self, user_name, user_password, trace_action_override=None
+    ):
         self._debug("Making new connection with user %s" % user_name)
         client = cxo.connect(
             user_name, user_password, self._connection_options.rdbms_dsn

@@ -3,11 +3,6 @@
 import os
 import sys
 
-if not os.environ.get('OFFLOAD_HOME'):
-    print('OFFLOAD_HOME environment variable missing')
-    print('You should source environment variables first, eg: . ../conf/offload.env')
-    sys.exit(1)
-
 from copy import copy
 from datetime import datetime, timedelta
 import json

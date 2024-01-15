@@ -14,7 +14,8 @@ from goe.util.misc_functions import typed_property
 ###############################################################################
 # EXCEPTIONS
 ###############################################################################
-class ParallelExecException(Exception): pass
+class ParallelExecException(Exception):
+    pass
 
 
 ###############################################################################
@@ -23,43 +24,39 @@ class ParallelExecException(Exception): pass
 
 # 'not executed' job completion status
 # I.e.: file was not copied because it was deemed the same
-STATUS_NOOP="<noop>"
+STATUS_NOOP = "<noop>"
 
 
 ###############################################################################
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+logger.addHandler(logging.NullHandler())  # Disabling logging by default
 
 
 class ParallelExecutor(object):
-    """ Execute 'tasks' in parallel
-    """
-    submitted = typed_property('submitted', int)
-    executed = typed_property('executed', int)
-    successful = typed_property('successful', int)
-    failed = typed_property('failed', int)
-    noop = typed_property('noop', int)
+    """Execute 'tasks' in parallel"""
+
+    submitted = typed_property("submitted", int)
+    executed = typed_property("executed", int)
+    successful = typed_property("successful", int)
+    failed = typed_property("failed", int)
+    noop = typed_property("noop", int)
 
     def __init__(self):
-        """ CONSTRUCTOR
-        """
+        """CONSTRUCTOR"""
         self._initialize()
 
         logger.debug("ParallelExecutor() object successfully initialized")
 
-
     def _initialize(self):
-        """ Initialize internal counters
-        """
-        self._submitted  = 0 # Number of jobs submitted
-        self._executed   = 0 # .. executed
-        self._successful = 0 # .. successful
-        self._failed     = 0 # .. failed
-        self._noop       = 0 # .. Noop
-        self._tasks      = {} # Task-by-id tracking
-
+        """Initialize internal counters"""
+        self._submitted = 0  # Number of jobs submitted
+        self._executed = 0  # .. executed
+        self._successful = 0  # .. successful
+        self._failed = 0  # .. failed
+        self._noop = 0  # .. Noop
+        self._tasks = {}  # Task-by-id tracking
 
     ###########################################################################
     # PROPERTIES
@@ -69,17 +66,16 @@ class ParallelExecutor(object):
     def tasks(self):
         return self._tasks
 
-
     ###########################################################################
     # PUBLIC ROUTINES
     ###########################################################################
 
     def execute_sequentially(self, job_tasks, ids=False):
-        """ Execute 'job_tasks' sequentially (aka: 'not in threads')
+        """Execute 'job_tasks' sequentially (aka: 'not in threads')
 
-            No need to 'kill_on_first_error' as the first exception will take care of that
+        No need to 'kill_on_first_error' as the first exception will take care of that
 
-            This may be useful for debugging
+        This may be useful for debugging
         """
         assert job_tasks
 
@@ -92,7 +88,9 @@ class ParallelExecutor(object):
             task, args = None, []
             if not isinstance(task_item, list):
                 if ids:
-                    raise ParallelExecException("'ids' parameter is incompatible with 'simple task' mode")
+                    raise ParallelExecException(
+                        "'ids' parameter is incompatible with 'simple task' mode"
+                    )
                 task = task_item
             else:
                 task, args = task_item[0], task_item[1:]
@@ -101,7 +99,7 @@ class ParallelExecutor(object):
                     del args[0]
 
             self._submitted += 1
-            st = task(*args) # Execute the command
+            st = task(*args)  # Execute the command
             logger.debug("Result for job: %s is: %s" % (job_id, st))
             self._tasks[job_id] = st
 
@@ -114,21 +112,31 @@ class ParallelExecutor(object):
                 self._failed += 1
 
         # Display final status
-        logger.debug("OVERALL STATUS=%s. Submitted: %d Executed: %d Successful: %d Failed: %d Noop: %d" % \
-            (self._tasks, self._submitted, self._executed, self._successful, self._failed, self._noop))
+        logger.debug(
+            "OVERALL STATUS=%s. Submitted: %d Executed: %d Successful: %d Failed: %d Noop: %d"
+            % (
+                self._tasks,
+                self._submitted,
+                self._executed,
+                self._successful,
+                self._failed,
+                self._noop,
+            )
+        )
 
         return list(self._tasks.values())
 
+    def execute_in_threads(
+        self, parallel, job_tasks, kill_on_first_error=True, ids=False
+    ):
+        """Execute 'job_tasks' in multiple parallel threads
 
-    def execute_in_threads(self, parallel, job_tasks, kill_on_first_error=True, ids=False):
-        """ Execute 'job_tasks' in multiple parallel threads
+        'job_tasks': List of [callable, arg1, arg2, ...]
+        'kill_on_first_error': Stop executing as soon as the 1st exception is detected
+        'ids': True: Expect an additional 'id' parameter after the task 'function'
+                     + track tasks by id
 
-            'job_tasks': List of [callable, arg1, arg2, ...]
-            'kill_on_first_error': Stop executing as soon as the 1st exception is detected
-            'ids': True: Expect an additional 'id' parameter after the task 'function'
-                         + track tasks by id
-
-            Returns 'overall' status (individual statuses ANDed together)
+        Returns 'overall' status (individual statuses ANDed together)
         """
         assert job_tasks
 
@@ -145,7 +153,9 @@ class ParallelExecutor(object):
             for thread_id, task_item in enumerate(job_tasks):
                 if not isinstance(task_item, list):
                     if ids:
-                        raise ParallelExecException("'ids' parameter is incompatible with 'simple task' mode")
+                        raise ParallelExecException(
+                            "'ids' parameter is incompatible with 'simple task' mode"
+                        )
                     task = task_item
                     submitted_threads[executor.submit(task)] = thread_id
                 else:
@@ -171,7 +181,10 @@ class ParallelExecutor(object):
                     else:
                         self._failed += 1
                 except Exception as e:
-                    msg = "Exception detected: %s in parallel thread: %s" % (e, thread_id)
+                    msg = "Exception detected: %s in parallel thread: %s" % (
+                        e,
+                        thread_id,
+                    )
                     if kill_on_first_error:
                         raise ParallelExecException(msg)
                     else:
@@ -181,9 +194,16 @@ class ParallelExecutor(object):
                     self._failed += 1
 
         # Display final status
-        logger.debug("OVERALL STATUS=%s. Submitted: %d Executed: %d Successful: %d Failed: %d Noop: %d" % \
-            (self._tasks, self._submitted, self._executed, self._successful, self._failed, self._noop))
+        logger.debug(
+            "OVERALL STATUS=%s. Submitted: %d Executed: %d Successful: %d Failed: %d Noop: %d"
+            % (
+                self._tasks,
+                self._submitted,
+                self._executed,
+                self._successful,
+                self._failed,
+                self._noop,
+            )
+        )
 
         return list(self._tasks.values())
-
-

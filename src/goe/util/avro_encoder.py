@@ -12,14 +12,22 @@ from avro import io
 from goe.offload.column_metadata import match_table_column
 from goe.offload.query_import_interface import QueryImportInterface
 from goe.offload.offload_messages import VVERBOSE
-from goe.offload.staging.avro.avro_staging_file import AVRO_TYPE_BOOLEAN, AVRO_TYPE_BYTES, AVRO_TYPE_DOUBLE, \
-    AVRO_TYPE_FLOAT, AVRO_TYPE_INT, AVRO_TYPE_LONG, AVRO_TYPE_STRING
+from goe.offload.staging.avro.avro_staging_file import (
+    AVRO_TYPE_BOOLEAN,
+    AVRO_TYPE_BYTES,
+    AVRO_TYPE_DOUBLE,
+    AVRO_TYPE_FLOAT,
+    AVRO_TYPE_INT,
+    AVRO_TYPE_LONG,
+    AVRO_TYPE_STRING,
+)
 from goe.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP_LOCAL_TZ
 
 
 ###########################################################################
 # AvroEncoder
 ###########################################################################
+
 
 class AvroEncoder(QueryImportInterface):
     """
@@ -34,11 +42,14 @@ class AvroEncoder(QueryImportInterface):
 
     This is not library code - it contains some fairly strong coupling to data formats in the offload process.
     """
+
     def __init__(self, schema, messages, compression=False, base64_columns=None):
-        super(AvroEncoder, self).__init__(schema, messages, compression=compression, base64_columns=base64_columns)
+        super(AvroEncoder, self).__init__(
+            schema, messages, compression=compression, base64_columns=base64_columns
+        )
 
         self.schema = avro.schema.parse(schema)
-        self._codec = b'deflate' if compression else b'null'
+        self._codec = b"deflate" if compression else b"null"
         self._buffer = BytesIO()
         self._encoder = io.BinaryEncoder(self._buffer)
         self._sync_marker = os.urandom(16)
@@ -47,12 +58,16 @@ class AvroEncoder(QueryImportInterface):
     # PRIVATE METHODS
     ###########################################################################
 
-    def _column_encode_fn(self, projection_index, rdbms_column, avro_data_type, write_as_base64=False):
+    def _column_encode_fn(
+        self, projection_index, rdbms_column, avro_data_type, write_as_base64=False
+    ):
         null_index, value_index = None, None
         if type(avro_data_type) == avro.schema.UnionSchema:
             null_index = [str(_) for _ in avro_data_type.schemas].index('"null"')
             value_index = len(avro_data_type.schemas) - 1 - null_index
-            avro_type = [str(s) for s in avro_data_type.schemas if str(s) != '"null"'][0].strip('"')
+            avro_type = [str(s) for s in avro_data_type.schemas if str(s) != '"null"'][
+                0
+            ].strip('"')
         else:
             avro_type = avro_data_type.fullname
 
@@ -98,6 +113,7 @@ class AvroEncoder(QueryImportInterface):
         elif rdbms_column.is_number_based():
             # Writing a number that is not being mapped to an Avro primitive, we expect it to already be a str.
             basic_encode = io.BinaryEncoder.write_utf8
+
             def basic_encode(encoder, val):
                 return io.BinaryEncoder.write_utf8(encoder, val)
 
@@ -121,6 +137,7 @@ class AvroEncoder(QueryImportInterface):
         if null_index is None:
             return lambda encoder, row: basic_encode(encoder, row[projection_index])
         else:
+
             def union_encode(encoder, row):
                 val = row[projection_index]
                 if val is None:
@@ -128,6 +145,7 @@ class AvroEncoder(QueryImportInterface):
                 else:
                     encoder.write_long(value_index)
                     basic_encode(encoder, val)
+
             return union_encode
 
     ###########################################################################
@@ -135,7 +153,8 @@ class AvroEncoder(QueryImportInterface):
     ###########################################################################
 
     def encode_from_cursor(self, extraction_cursor, source_columns, fetch_size=None):
-        """ fetch_size optional because not all frontends take a parameter to fetchmany(). """
+        """fetch_size optional because not all frontends take a parameter to fetchmany()."""
+
         def do_fetch(cursor):
             if fetch_size:
                 return cursor.fetchmany(fetch_size)
@@ -143,11 +162,11 @@ class AvroEncoder(QueryImportInterface):
                 return cursor.fetchmany()
 
         # Encode header
-        self._encoder.write(b'Obj' + bytes([1]))
+        self._encoder.write(b"Obj" + bytes([1]))
         self._encoder.write_long(2)
-        self._encoder.write_utf8('avro.schema')
-        self._encoder.write_bytes(str(self.schema).encode('utf8'))
-        self._encoder.write_utf8('avro.codec')
+        self._encoder.write_utf8("avro.schema")
+        self._encoder.write_bytes(str(self.schema).encode("utf8"))
+        self._encoder.write_utf8("avro.codec")
         self._encoder.write_bytes(self._codec)
         self._encoder.write_long(0)
 
@@ -159,18 +178,28 @@ class AvroEncoder(QueryImportInterface):
 
         avro_conv_fns = []
 
-        self._debug('extraction_cursor format: {}'.format(str(extraction_cursor.description)))
+        self._debug(
+            "extraction_cursor format: {}".format(str(extraction_cursor.description))
+        )
         for f in self.schema.fields:
-            projection_index = [col[0] for col in extraction_cursor.description].index(f.name)
+            projection_index = [col[0] for col in extraction_cursor.description].index(
+                f.name
+            )
             col = source_columns[projection_index]
             avro_conv_fns.append(
-                self._column_encode_fn(projection_index, col, f.type,
-                                       write_as_base64=bool(match_table_column(col.name, self._base64_columns)))
+                self._column_encode_fn(
+                    projection_index,
+                    col,
+                    f.type,
+                    write_as_base64=bool(
+                        match_table_column(col.name, self._base64_columns)
+                    ),
+                )
             )
 
         # encode rows
         batch = 1
-        self._debug(f'Fetching row batch: {batch}')
+        self._debug(f"Fetching row batch: {batch}")
         rows = do_fetch(extraction_cursor)
         while rows:
             record_count = 0
@@ -184,7 +213,7 @@ class AvroEncoder(QueryImportInterface):
             self._buffer.truncate(0)
             self._buffer.seek(0)
 
-            if self._codec == b'deflate':
+            if self._codec == b"deflate":
                 compressed_data = zlib.compress(uncompressed_data)[2:-1]
             else:
                 compressed_data = uncompressed_data
@@ -197,18 +226,22 @@ class AvroEncoder(QueryImportInterface):
             self._buffer.seek(0)
 
             batch += 1
-            self._debug(f'Fetching row batch: {batch}')
+            self._debug(f"Fetching row batch: {batch}")
             rows = do_fetch(extraction_cursor)
 
-    def write_from_cursor(self, local_output_path, extraction_cursor, source_columns, fetch_size=None):
-        """ fetch_size optional because not all frontends take a parameter to fetchmany(). """
+    def write_from_cursor(
+        self, local_output_path, extraction_cursor, source_columns, fetch_size=None
+    ):
+        """fetch_size optional because not all frontends take a parameter to fetchmany()."""
         assert local_output_path
         assert isinstance(local_output_path, str)
         ts1 = time.time()
-        self._log('Writing Avro(compression=%s)' % self._codec, detail=VVERBOSE)
-        with open(local_output_path, 'wb') as writer:
-            for chunk in self.encode_from_cursor(extraction_cursor, source_columns, fetch_size=fetch_size):
+        self._log("Writing Avro(compression=%s)" % self._codec, detail=VVERBOSE)
+        with open(local_output_path, "wb") as writer:
+            for chunk in self.encode_from_cursor(
+                extraction_cursor, source_columns, fetch_size=fetch_size
+            ):
                 writer.write(chunk)
         ts2 = time.time()
-        self._log('Extract & write elapsed: %.1fs' % (ts2 - ts1), detail=VVERBOSE)
+        self._log("Extract & write elapsed: %.1fs" % (ts2 - ts1), detail=VVERBOSE)
         return extraction_cursor.rowcount

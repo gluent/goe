@@ -13,17 +13,14 @@ import subprocess
 ###############################################################################
 # EXCEPTIONS
 ###############################################################################
-class LinuxCmdException(Exception): pass
+class LinuxCmdException(Exception):
+    pass
 
 
 ###############################################################################
 # CONSTANTS
 ###############################################################################
-SSH_DEFAULTS = {
-    'BatchMode': 'yes',
-    'ConnectTimeout': '3',
-    'LogLevel': 'ERROR'
-}
+SSH_DEFAULTS = {"BatchMode": "yes", "ConnectTimeout": "3", "LogLevel": "ERROR"}
 
 
 ###############################################################################
@@ -35,21 +32,19 @@ logger.addHandler(logging.NullHandler())
 
 
 class LinuxCmd(object):
-    """ LinuxCmd: Linux command abstraction
-    """
+    """LinuxCmd: Linux command abstraction"""
 
     def __init__(self):
-        """ CONSTRUCTOR
-        """
+        """CONSTRUCTOR"""
 
-        self._cmd = None          # (last) Linux command
+        self._cmd = None  # (last) Linux command
         self._environment = None  # ... environment (extra os vars to use)
-        self._user = None         # ... user
-        self._host = None         # ... host
-        self._stdout = None       # ... stdout
-        self._stderr = None       # ... stderr
-        self._returncode = None   # ... return code
-        self._success = None      # ... True|False - whether execution was successful
+        self._user = None  # ... user
+        self._host = None  # ... host
+        self._stdout = None  # ... stdout
+        self._stderr = None  # ... stderr
+        self._returncode = None  # ... return code
+        self._success = None  # ... True|False - whether execution was successful
 
         logger.debug("LinuxCmd() object successfully initialized")
 
@@ -58,11 +53,11 @@ class LinuxCmd(object):
     ###########################################################################
 
     def _set_vars(self, vars):
-        """ Add/set environmane variables for the command to run
+        """Add/set environmane variables for the command to run
 
-            If 'vars' are not specified, return os.environ
+        If 'vars' are not specified, return os.environ
         """
-        
+
         if vars:
             logger.debug("Adding environment variables: '%s'" % vars)
             environ_copy = os.environ.copy()
@@ -73,37 +68,53 @@ class LinuxCmd(object):
             return os.environ
 
     def _sshize_by_host_user(self, cmd, user, host, environment):
-        """ Execute command as ssh by user@host
-        """
-        logger.debug("Ssh'izing command: %s to be executed by user: %s on host: %s" % (cmd, user, host))
+        """Execute command as ssh by user@host"""
+        logger.debug(
+            "Ssh'izing command: %s to be executed by user: %s on host: %s"
+            % (cmd, user, host)
+        )
 
-        if user == getpass.getuser() and host in ['localhost', b'localhost']:
-            logger.debug("'user' and 'host' are local. Assuming: 'current user', 'current host'")
+        if user == getpass.getuser() and host in ["localhost", b"localhost"]:
+            logger.debug(
+                "'user' and 'host' are local. Assuming: 'current user', 'current host'"
+            )
             return cmd
 
-        ssh_options = " ".join("-o %s=%s" % (k, v) for k, v in list(SSH_DEFAULTS.items()))
+        ssh_options = " ".join(
+            "-o %s=%s" % (k, v) for k, v in list(SSH_DEFAULTS.items())
+        )
         logger.debug("Adding SSH options: %s" % ssh_options)
 
         ssh_environment = ""
         if environment:
-            ssh_environment = ";".join("%s=%s" % (k, v) for k, v in list(environment.items())) + ';'
+            ssh_environment = (
+                ";".join("%s=%s" % (k, v) for k, v in list(environment.items())) + ";"
+            )
             logger.debug("Adding SSH environment: %s" % ssh_environment)
 
-        ssh_cmd = "ssh -t %s %s@%s '%s %s'" % (ssh_options, user, host, ssh_environment, cmd)
+        ssh_cmd = "ssh -t %s %s@%s '%s %s'" % (
+            ssh_options,
+            user,
+            host,
+            ssh_environment,
+            cmd,
+        )
         logger.debug("Ssh cmd: %s" % ssh_cmd)
 
         return ssh_cmd
 
     def _determine_user_and_host(self, user, host):
-        """ Determine actual 'user' and 'host'
-            by accepting 'defaults' when required
+        """Determine actual 'user' and 'host'
+        by accepting 'defaults' when required
 
-            Returns: ActualUser, ActualHost
+        Returns: ActualUser, ActualHost
         """
 
         # Neither 'user' nor 'host' is supplied - it's a 'local' command
         if not user and not host:
-            logger.debug("Both: 'user' and 'host' are empty. Assuming: 'current user', 'current host'")
+            logger.debug(
+                "Both: 'user' and 'host' are empty. Assuming: 'current user', 'current host'"
+            )
             return None, None
 
         # Either 'user' or 'host' is supplied - it's a 'remote' command
@@ -112,38 +123,41 @@ class LinuxCmd(object):
             logger.debug("Extracting current user: %s from the environment" % user)
 
         if not host:
-            host = 'localhost'
+            host = "localhost"
             logger.debug("Setting 'host' to 'localhost'")
 
         return user, host
 
     def _execute(self, cmd):
-        """ Run 'linux' command: 'cmd', based on:
+        """Run 'linux' command: 'cmd', based on:
 
-            self._environment: Export environment variables: {var: value, ...} before execution
-            self._user:        Execute command as a different user (or 'current' user if None)
-            self._host:        Execute command on a remote host (or 'localhost' if None)
+        self._environment: Export environment variables: {var: value, ...} before execution
+        self._user:        Execute command as a different user (or 'current' user if None)
+        self._host:        Execute command on a remote host (or 'localhost' if None)
 
-            Sets:
-                self._success
-                self._stdout
-                self._stderr
-                self._returncode
+        Sets:
+            self._success
+            self._stdout
+            self._stderr
+            self._returncode
 
-            Returns: True if successful execution, False otherwise
+        Returns: True if successful execution, False otherwise
         """
 
         run_cmd = False
         success, stdout, stderr, returncode = None, None, None, None
 
         if self._host:
-            logger.debug("Preparing to run remote linux command: %s on %s@%s" % (cmd, self._user, self._host))
+            logger.debug(
+                "Preparing to run remote linux command: %s on %s@%s"
+                % (cmd, self._user, self._host)
+            )
         else:
             logger.debug("Preparing to run local linux command: %s" % cmd)
 
         # Decomposing UNIX pipes is too complex to process (especially for $ENVVARS etc)
         # Let's just run the entire thing as shell
-        if '|' in cmd:
+        if "|" in cmd:
             logger.debug("Detected Linux 'pipe'. Prepending 'pipe fail' code")
             run_cmd = "set -e; set -o pipefail; %s" % cmd
         else:
@@ -151,13 +165,20 @@ class LinuxCmd(object):
 
         # If 'host' is supplied, sshize the command by it
         if self._host:
-            run_cmd = self._sshize_by_host_user(run_cmd, self._user, self._host, self._environment)
+            run_cmd = self._sshize_by_host_user(
+                run_cmd, self._user, self._host, self._environment
+            )
 
         # Ok, let's run the command
         logger.debug("Running UNIX command: %s" % run_cmd)
         try:
-            process = subprocess.Popen(run_cmd, shell=True, env=self._set_vars(self._environment),
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(
+                run_cmd,
+                shell=True,
+                env=self._set_vars(self._environment),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
 
             stdout, stderr = process.communicate()
             stdout, stderr = stdout.strip(), stderr.strip()
@@ -172,14 +193,18 @@ class LinuxCmd(object):
                 if not stdout:
                     stdout = None
         except OSError as e:
-            logger.warning("Command: %s failed to execute. Exception: %s" % (run_cmd, e))
+            logger.warning(
+                "Command: %s failed to execute. Exception: %s" % (run_cmd, e)
+            )
             success = False
             returncode = e.errno
             stdout = None
             stderr = e
 
-        logger.debug("Command: %s execution. Success: %s Stdout: %s Stderr: %s" % \
-            (run_cmd, success, stdout, stderr))
+        logger.debug(
+            "Command: %s execution. Success: %s Stdout: %s Stderr: %s"
+            % (run_cmd, success, stdout, stderr)
+        )
 
         self._success = success
         self._stdout = stdout
@@ -216,7 +241,6 @@ class LinuxCmd(object):
     def stderr(self):
         return self._stderr
 
-
     @property
     def returncode(self):
         return self._returncode
@@ -231,12 +255,12 @@ class LinuxCmd(object):
 
     @staticmethod
     def add_to_env(var, value):
-        """ Add (a.k.a. 'prepend') 'value' to environment variable
-            (rather than 'replace')
+        """Add (a.k.a. 'prepend') 'value' to environment variable
+        (rather than 'replace')
         """
 
         if var in os.environ:
-            return value + ':' + os.environ[var]
+            return value + ":" + os.environ[var]
         else:
             return value
 
@@ -245,16 +269,16 @@ class LinuxCmd(object):
     ###########################################################################
 
     def execute(self, cmd, user=None, environment=None, host=None):
-        """ Execute linux command: 'cmd' and store results
+        """Execute linux command: 'cmd' and store results
 
-            'user': Execute command as different user
-                    or 'current' user if None
-            'environment': Export environment variables: {var: value, ...}
-                           before execution
-            'host': Host to execute the command on
-                    or 'localhost' if not supplied
+        'user': Execute command as different user
+                or 'current' user if None
+        'environment': Export environment variables: {var: value, ...}
+                       before execution
+        'host': Host to execute the command on
+                or 'localhost' if not supplied
 
-            Returns: True if successful status, False otherwise
+        Returns: True if successful status, False otherwise
         """
         if not cmd:
             raise LinuxCmdException("Command is NOT supplied in LinuxCmd.execute()")

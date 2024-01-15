@@ -1,17 +1,15 @@
 #! /usr/bin/env python3
 # LICENSE_TEXT
 
-import traceback
 import sys
 
 from goe.config.config_checks import check_cli_path
-from goe.offload.offload import OffloadOptionError
+from goe.offload.offload import OffloadOptionError, get_offload_options
 
 check_cli_path()
 
 from goe.goe import (
     get_log_fh_name,
-    get_offload_options,
     get_options,
     init,
     init_log,

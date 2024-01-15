@@ -903,8 +903,7 @@ FROM %(db_table)s""" % {
                     {"column": backend_column, "literals": literals}
                 )
             elif (
-                col_dict["expected_canonical_column"].data_type
-                == GOE_TYPE_INTERVAL_DS
+                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_DS
             ):
                 goe_type_mapping_cols.append(
                     {
@@ -913,8 +912,7 @@ FROM %(db_table)s""" % {
                     }
                 )
             elif (
-                col_dict["expected_canonical_column"].data_type
-                == GOE_TYPE_INTERVAL_YM
+                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_YM
             ):
                 goe_type_mapping_cols.append(
                     {

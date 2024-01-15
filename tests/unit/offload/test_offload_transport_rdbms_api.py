@@ -1,92 +1,347 @@
 """ TestOffloadTransportRdbmsApi: Unit tests for each Offload Transport RDBMS API.
     LICENSE_TEXT
 """
+import pytest
 
-from unittest import TestCase, main
-
-from goe.offload.offload_messages import OffloadMessages
 from goe.offload.factory.offload_transport_rdbms_api_factory import (
     offload_transport_rdbms_api_factory,
 )
+from goe.offload.offload_messages import OffloadMessages
+from goe.offload.offload_source_data import (
+    OffloadSourcePartition,
+    OffloadSourcePartitions,
+)
+from goe.offload.offload_source_table import OFFLOAD_PARTITION_TYPE_RANGE
+from goe.offload.offload_transport_rdbms_api import (
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION,
+)
 from tests.unit.test_functions import (
     build_mock_options,
+    build_fake_oracle_table,
+    build_fake_oracle_subpartitioned_table,
     FAKE_MSSQL_ENV,
     FAKE_NETEZZA_ENV,
     FAKE_ORACLE_ENV,
     FAKE_TERADATA_ENV,
+    FAKE_ORACLE_PARTITIONS,
+    FAKE_ORACLE_LIST_RANGE_PARTITIONS,
 )
 
 
-class TestOffloadTransportRdbmsApi(TestCase):
-    def _get_mock_config(self, mock_env: dict):
-        return build_mock_options(mock_env)
+@pytest.fixture
+def oracle_config():
+    return build_mock_options(FAKE_ORACLE_ENV)
 
-    def _non_connecting_tests(self, api):
-        def is_list_of_strings(v):
-            self.assertIsInstance(v, list)
-            if v:
-                self.assertIsInstance(v[0], str)
 
-        self.assertIsInstance(api.generate_transport_action(), str)
-        self.assertIsInstance(api.get_rdbms_canary_query(), str)
-        is_list_of_strings(api.sqoop_rdbms_specific_jvm_overrides([]))
-        is_list_of_strings(api.sqoop_rdbms_specific_jvm_overrides(["abc=123"]))
-        is_list_of_strings(api.sqoop_rdbms_specific_jvm_table_options(None))
-        is_list_of_strings(api.sqoop_rdbms_specific_options())
-        is_list_of_strings(
-            api.sqoop_rdbms_specific_table_options("owner", "table-name")
+@pytest.fixture
+def messages():
+    return OffloadMessages()
+
+
+@pytest.fixture
+def fake_oracle_table(oracle_config, messages):
+    return build_fake_oracle_table(oracle_config, messages)
+
+
+@pytest.fixture
+def fake_oracle_subpartitioned_table(oracle_config, messages):
+    return build_fake_oracle_subpartitioned_table(oracle_config, messages)
+
+
+def non_connecting_tests(api):
+    def is_list_of_strings(v):
+        assert isinstance(v, list)
+        if v:
+            assert isinstance(v[0], str)
+
+    assert isinstance(api.generate_transport_action(), str)
+    assert isinstance(api.get_rdbms_canary_query(), str)
+    is_list_of_strings(api.sqoop_rdbms_specific_jvm_overrides([]))
+    is_list_of_strings(api.sqoop_rdbms_specific_jvm_overrides(["abc=123"]))
+    is_list_of_strings(api.sqoop_rdbms_specific_jvm_table_options(None))
+    is_list_of_strings(api.sqoop_rdbms_specific_options())
+    is_list_of_strings(api.sqoop_rdbms_specific_table_options("owner", "table-name"))
+    try:
+        assert isinstance(api.get_transport_row_source_query_hint_block(), str)
+    except NotImplementedError:
+        pass
+    assert isinstance(api.jdbc_url(), str)
+    assert isinstance(api.jdbc_driver_name(), (str, type(None)))
+
+
+def test_mssql_ot_rdbms_api(messages):
+    """Simple check that we can instantiate the MSSQL API"""
+    config = build_mock_options(FAKE_MSSQL_ENV)
+    rdbms_owner = "SH_TEST"
+    rdbms_table = "SALES"
+    api = offload_transport_rdbms_api_factory(
+        rdbms_owner, rdbms_table, config, messages, dry_run=True
+    )
+    non_connecting_tests(api)
+
+
+def test_netezza_ot_rdbms_api(messages):
+    """Simple check that we can instantiate the Netezza API"""
+    config = build_mock_options(FAKE_NETEZZA_ENV)
+    rdbms_owner = "SH_TEST"
+    rdbms_table = "SALES"
+    api = offload_transport_rdbms_api_factory(
+        rdbms_owner, rdbms_table, config, messages, dry_run=True
+    )
+    non_connecting_tests(api)
+
+
+def test_oracle_ot_rdbms_api(oracle_config, messages):
+    """Simple check that we can instantiate the Oracle API"""
+    oracle_config = build_mock_options(FAKE_ORACLE_ENV)
+    rdbms_owner = "SH_TEST"
+    rdbms_table = "SALES"
+    api = offload_transport_rdbms_api_factory(
+        rdbms_owner, rdbms_table, oracle_config, messages, dry_run=True
+    )
+    non_connecting_tests(api)
+
+
+def test_teradata_ot_rdbms_api(messages):
+    """Simple check that we can instantiate the Teradata API"""
+    config = build_mock_options(FAKE_TERADATA_ENV)
+    rdbms_owner = "SH_TEST"
+    rdbms_table = "SALES"
+    api = offload_transport_rdbms_api_factory(
+        rdbms_owner, rdbms_table, config, messages, dry_run=True
+    )
+    non_connecting_tests(api)
+
+
+def offload_partitions_from_rdbms_partitions(rdbms_partitions):
+    partitions = [
+        OffloadSourcePartition(
+            _.partition_name,
+            _.high_values_csv,
+            _.high_values_python,
+            _.high_values_individual,
+            _.partition_size,
+            _.num_rows,
+            None,  # common_partition_literal
+            _.subpartition_names,
         )
-        try:
-            self.assertIsInstance(api.get_transport_row_source_query_hint_block(), str)
-        except NotImplementedError:
-            pass
-        self.assertIsInstance(api.jdbc_url(), str)
-        self.assertIsInstance(api.jdbc_driver_name(), (str, type(None)))
-
-    def test_mssql_ot_rdbms_api(self):
-        """Simple check that we can instantiate the MSSQL API"""
-        messages = OffloadMessages()
-        config = self._get_mock_config(FAKE_MSSQL_ENV)
-        rdbms_owner = "SH_TEST"
-        rdbms_table = "SALES"
-        api = offload_transport_rdbms_api_factory(
-            rdbms_owner, rdbms_table, config, messages
-        )
-        self._non_connecting_tests(api)
-
-    def test_netezza_ot_rdbms_api(self):
-        """Simple check that we can instantiate the Netezza API"""
-        messages = OffloadMessages()
-        config = self._get_mock_config(FAKE_NETEZZA_ENV)
-        rdbms_owner = "SH_TEST"
-        rdbms_table = "SALES"
-        api = offload_transport_rdbms_api_factory(
-            rdbms_owner, rdbms_table, config, messages
-        )
-        self._non_connecting_tests(api)
-
-    def test_oracle_ot_rdbms_api(self):
-        """Simple check that we can instantiate the Oracle API"""
-        messages = OffloadMessages()
-        config = self._get_mock_config(FAKE_ORACLE_ENV)
-        rdbms_owner = "SH_TEST"
-        rdbms_table = "SALES"
-        api = offload_transport_rdbms_api_factory(
-            rdbms_owner, rdbms_table, config, messages
-        )
-        self._non_connecting_tests(api)
-
-    def test_teradata_ot_rdbms_api(self):
-        """Simple check that we can instantiate the Teradata API"""
-        messages = OffloadMessages()
-        config = self._get_mock_config(FAKE_TERADATA_ENV)
-        rdbms_owner = "SH_TEST"
-        rdbms_table = "SALES"
-        api = offload_transport_rdbms_api_factory(
-            rdbms_owner, rdbms_table, config, messages
-        )
-        self._non_connecting_tests(api)
+        for _ in rdbms_partitions
+    ]
+    return OffloadSourcePartitions(partitions)
 
 
-if __name__ == "__main__":
-    main()
+@pytest.mark.parametrize(
+    "parallelism,partition_type,offload_by_subpartition,partition_chunk,expected_split_type,expected_parallelism",
+    [
+        (
+            1,
+            None,
+            False,
+            None,
+            # Non-partitioned tables should always split by ROWID range.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+            1,
+        ),
+        (
+            10,
+            None,
+            False,
+            None,
+            # Non-partitioned tables should always split by ROWID range.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+            10,
+        ),
+    ],
+)
+def test_get_transport_split_type_oracle_heap(
+    oracle_config,
+    messages,
+    fake_oracle_table,
+    parallelism,
+    partition_type,
+    offload_by_subpartition,
+    partition_chunk,
+    expected_split_type,
+    expected_parallelism,
+):
+    api = offload_transport_rdbms_api_factory(
+        fake_oracle_table.owner,
+        fake_oracle_table.table_name,
+        oracle_config,
+        messages,
+        dry_run=True,
+    )
+    rdbms_columns = fake_oracle_table.columns
+    predicate_offload_clause = None
+
+    split_return = api.get_transport_split_type(
+        partition_chunk,
+        fake_oracle_table,
+        parallelism,
+        partition_type,
+        rdbms_columns,
+        offload_by_subpartition,
+        predicate_offload_clause,
+    )
+
+    assert isinstance(split_return, tuple)
+    assert split_return[0] == expected_split_type
+    assert split_return[1] == expected_parallelism
+
+
+@pytest.mark.parametrize(
+    "parallelism,partition_chunk,expected_split_type,expected_parallelism",
+    [
+        # Offload 2 partitions with parallelism of 2.
+        (
+            2,
+            offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
+            # 2 partitions with parallel 2 should split by partition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
+            2,
+        ),
+        # Offload 2 partitions with parallelism of 1.
+        (
+            1,
+            offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
+            # 2 partitions with parallel 1 should split by partition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
+            1,
+        ),
+        # Offload 2 partitions with parallelism of 3.
+        (
+            3,
+            offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
+            # 2 partitions with parallel 3 should split by ROWID range.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+            3,
+        ),
+        # Offload 1 partition with parallelism of 2.
+        (
+            2,
+            offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:1]),
+            # 1 partitions should split by ROWID range.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+            2,
+        ),
+    ],
+)
+def test_get_transport_split_type_oracle_partitioned(
+    oracle_config,
+    messages,
+    fake_oracle_table,
+    parallelism,
+    partition_chunk,
+    expected_split_type,
+    expected_parallelism,
+):
+    api = offload_transport_rdbms_api_factory(
+        fake_oracle_table.owner,
+        fake_oracle_table.table_name,
+        oracle_config,
+        messages,
+        dry_run=True,
+    )
+    rdbms_columns = fake_oracle_table.columns
+    predicate_offload_clause = None
+    offload_by_subpartition = False
+
+    split_return = api.get_transport_split_type(
+        partition_chunk,
+        fake_oracle_table,
+        parallelism,
+        fake_oracle_table.partition_type,
+        rdbms_columns,
+        offload_by_subpartition,
+        predicate_offload_clause,
+    )
+
+    assert isinstance(split_return, tuple)
+    assert split_return[0] == expected_split_type
+    assert split_return[1] == expected_parallelism
+
+
+@pytest.mark.parametrize(
+    "parallelism,partition_chunk,offload_by_subpartition,expected_split_type,expected_parallelism",
+    [
+        # Offload 1 top level partition with parallelism of 2.
+        (
+            2,
+            offload_partitions_from_rdbms_partitions(
+                FAKE_ORACLE_LIST_RANGE_PARTITIONS[:1]
+            ),
+            False,
+            # 4 subpartitions with parallel 2 should split by subpartition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION,
+            2,
+        ),
+        # Offload 1 top level partition with parallelism of 5, greater than 4 subpartitions.
+        (
+            5,
+            offload_partitions_from_rdbms_partitions(
+                FAKE_ORACLE_LIST_RANGE_PARTITIONS[:1]
+            ),
+            False,
+            # 4 subpartitions with parallel 2 should split by subpartition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+            5,
+        ),
+        # Offload 2 top level partitions with parallelism of 2.
+        (
+            2,
+            offload_partitions_from_rdbms_partitions(
+                FAKE_ORACLE_LIST_RANGE_PARTITIONS[:2]
+            ),
+            False,
+            # 2 is enough for top-level partitions, no need to split by subpartition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
+            2,
+        ),
+        # Offload 2 top level partitions with parallelism of 2.
+        (
+            2,
+            offload_partitions_from_rdbms_partitions(
+                FAKE_ORACLE_LIST_RANGE_PARTITIONS[:2]
+            ),
+            True,
+            # 2 is enough for top-level partitions but we asked for subpartition therefore split by subpartition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION,
+            2,
+        ),
+    ],
+)
+def test_get_transport_split_type_oracle_subpartitioned(
+    oracle_config,
+    messages,
+    fake_oracle_subpartitioned_table,
+    parallelism,
+    partition_chunk,
+    offload_by_subpartition,
+    expected_split_type,
+    expected_parallelism,
+):
+    api = offload_transport_rdbms_api_factory(
+        fake_oracle_subpartitioned_table.owner,
+        fake_oracle_subpartitioned_table.table_name,
+        oracle_config,
+        messages,
+        dry_run=True,
+    )
+    rdbms_columns = fake_oracle_subpartitioned_table.columns
+    predicate_offload_clause = None
+
+    split_return = api.get_transport_split_type(
+        partition_chunk,
+        fake_oracle_subpartitioned_table,
+        parallelism,
+        fake_oracle_subpartitioned_table.partition_type,
+        rdbms_columns,
+        offload_by_subpartition,
+        predicate_offload_clause,
+    )
+
+    assert isinstance(split_return, tuple)
+    assert split_return[0] == expected_split_type
+    assert split_return[1] == expected_parallelism

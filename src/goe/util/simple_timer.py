@@ -6,9 +6,9 @@ import time
 
 
 class SimpleTimer(object):
-    """ Library for providing simple elapsed times for logging """
+    """Library for providing simple elapsed times for logging"""
 
-    def __init__(self, name='timer'):
+    def __init__(self, name="timer"):
         self.name = name
         self.start = None
         self.last_call = None
@@ -25,8 +25,12 @@ class SimpleTimer(object):
         self.duration = 0
 
     def show(self):
-        return '{desc} elapsed: {elapsed:5.3f} seconds'.format(desc=self.name, elapsed=self.elapsed)
+        return "{desc} elapsed: {elapsed:5.3f} seconds".format(
+            desc=self.name, elapsed=self.elapsed
+        )
 
     def stop(self):
         self.duration = self.elapsed
-        return '{desc} elapsed: {elapsed:5.3f} seconds'.format(desc=self.name, elapsed=self.duration)
+        return "{desc} elapsed: {elapsed:5.3f} seconds".format(
+            desc=self.name, elapsed=self.duration
+        )

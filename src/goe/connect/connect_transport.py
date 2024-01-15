@@ -279,8 +279,8 @@ def test_spark_submit(orchestration_config, messages):
 def test_spark_gcloud(orchestration_config, messages):
     if (
         not orchestration_config.google_dataproc_cluster
-        or not orchestration_config.offload_transport_cmd_host
-    ):
+        and not orchestration_config.google_dataproc_batches_version
+    ) or not orchestration_config.offload_transport_cmd_host:
         log("Skipping Spark gcloud tests due to absent config", detail=VVERBOSE)
         return
 

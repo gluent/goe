@@ -268,7 +268,9 @@ class OrchestrationMetadata:
 
     def drop(self):
         """Persist metadata"""
-        self._get_client().drop_offload_metadata(self.offloaded_owner, self.offloaded_table)
+        self._get_client().drop_offload_metadata(
+            self.offloaded_owner, self.offloaded_table
+        )
 
     def save(self):
         """Persist metadata"""

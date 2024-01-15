@@ -1,7 +1,17 @@
 import os
 from unittest import mock
 
+import numpy
+
 from goe.config.orchestration_config import OrchestrationConfig
+from goe.offload.column_metadata import ColumnPartitionInfo
+from goe.offload.offload_source_table import RdbmsPartition
+from goe.offload.oracle.oracle_column import (
+    OracleColumn,
+    ORACLE_TYPE_DATE,
+    ORACLE_TYPE_NUMBER,
+)
+from goe.offload.oracle.oracle_offload_source_table import OracleSourceTable
 
 
 FAKE_COMMON_ENV = {
@@ -144,6 +154,126 @@ FAKE_ORACLE_SYNAPSE_ENV.update(
     }
 )
 
+FAKE_ORACLE_COLUMNS = [
+    OracleColumn(
+        "ID",
+        ORACLE_TYPE_NUMBER,
+        data_precision=8,
+        data_scale=0,
+    ),
+    OracleColumn(
+        "TIME_ID",
+        ORACLE_TYPE_DATE,
+        partition_info=ColumnPartitionInfo(
+            position=0, range_end=None, range_start=None, source_column_name=None
+        ),
+    ),
+    OracleColumn(
+        "PROD_ID",
+        ORACLE_TYPE_NUMBER,
+        data_precision=4,
+        data_scale=0,
+    ),
+]
+
+FAKE_ORACLE_PARTITIONS = [
+    RdbmsPartition.by_name(
+        partition_name="P4",
+        partition_count=1,
+        partition_position=8,
+        subpartition_count=0,
+        subpartition_name=None,
+        subpartition_names=None,
+        subpartition_position=None,
+        high_values_csv="TO_DATE(' 2012-04-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
+        high_values_python=(numpy.datetime64("2012-04-01T00:00:00"),),
+        partition_size=1_000_000,
+        num_rows=2,
+        high_values_individual=(
+            "TO_DATE(' 2012-08-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
+        ),
+    ),
+    RdbmsPartition.by_name(
+        partition_name="P3",
+        partition_count=1,
+        partition_position=3,
+        subpartition_count=0,
+        subpartition_name=None,
+        subpartition_names=None,
+        subpartition_position=None,
+        high_values_csv="TO_DATE(' 2012-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
+        high_values_python=(numpy.datetime64("2012-03-01T00:00:00"),),
+        partition_size=1_000_000,
+        num_rows=2,
+        high_values_individual=(
+            "TO_DATE(' 2012-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
+        ),
+    ),
+    RdbmsPartition.by_name(
+        partition_name="P2",
+        partition_count=1,
+        partition_position=2,
+        subpartition_count=0,
+        subpartition_name=None,
+        subpartition_names=None,
+        subpartition_position=None,
+        high_values_csv="TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
+        high_values_python=(numpy.datetime64("2012-02-01T00:00:00"),),
+        partition_size=1_000_000,
+        num_rows=2,
+        high_values_individual=(
+            "TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
+        ),
+    ),
+    RdbmsPartition.by_name(
+        partition_name="P1",
+        partition_count=1,
+        partition_position=1,
+        subpartition_count=0,
+        subpartition_name=None,
+        subpartition_names=None,
+        subpartition_position=None,
+        high_values_csv="TO_DATE(' 2012-01-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
+        high_values_python=(numpy.datetime64("2012-01-01T00:00:00"),),
+        partition_size=1_000_000,
+        num_rows=2,
+        high_values_individual=(
+            "TO_DATE(' 2012-01-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
+        ),
+    ),
+]
+
+FAKE_ORACLE_LIST_RANGE_PARTITIONS = [
+    RdbmsPartition.by_name(
+        partition_name="P3",
+        partition_count=1,
+        partition_position=2,
+        subpartition_count=4,
+        subpartition_name=None,
+        subpartition_names=["P3_201201", "P3_201202", "P3_201204", "P3_201205"],
+        subpartition_position=None,
+        high_values_csv=3,
+        high_values_python=(3,),
+        partition_size=1_000_000,
+        num_rows=2,
+        high_values_individual=("3",),
+    ),
+    RdbmsPartition.by_name(
+        partition_name="P4",
+        partition_count=1,
+        partition_position=2,
+        subpartition_count=4,
+        subpartition_name=None,
+        subpartition_names=["P4_201201", "P4_201202", "P4_201204", "P4_201205"],
+        subpartition_position=None,
+        high_values_csv=4,
+        high_values_python=(4,),
+        partition_size=1_000_000,
+        num_rows=2,
+        high_values_individual=("4",),
+    ),
+]
+
 
 def build_mock_options(mock_env: dict):
     assert mock_env
@@ -159,8 +289,39 @@ def build_mock_offload_operation():
     fake_operation.execute = False
     fake_operation.allow_floating_point_conversions = False
     fake_operation.offload_transport_fetch_size = 100
+    fake_operation.offload_transport_small_table_threshold = 1024 * 1024
     fake_operation.offload_transport_spark_properties = {}
     fake_operation.unicode_string_columns_csv = None
     fake_operation.max_offload_chunk_size = 100 * 1024 * 1024
     fake_operation.max_offload_chunk_count = 100
     return fake_operation
+
+
+def build_fake_oracle_table(config, messages) -> OracleSourceTable:
+    """Return a fake OracleSourceTable partitioned by RANGE with 4 partitions."""
+    test_table_object = OracleSourceTable(
+        "no_user",
+        "no_table",
+        config,
+        messages,
+        dry_run=True,
+        do_not_connect=True,
+    )
+    test_table_object._columns = FAKE_ORACLE_COLUMNS
+    test_table_object._columns_with_partition_info = FAKE_ORACLE_COLUMNS
+    test_table_object._primary_key_columns = ["ID"]
+    test_table_object._partitions = FAKE_ORACLE_PARTITIONS
+    test_table_object._subpartitions = None
+    test_table_object._partition_type = "RANGE"
+    test_table_object._subpartition_type = None
+    test_table_object._iot_type = None
+    return test_table_object
+
+
+def build_fake_oracle_subpartitioned_table(config, messages) -> OracleSourceTable:
+    """Return a fake OracleSourceTable partitioned by RANGE with 2 partitions, each with 4 subpartitions."""
+    test_table_object = build_fake_oracle_table(config, messages)
+    test_table_object._partition_type = "LIST"
+    test_table_object._subpartition_type = "RANGE"
+    test_table_object._partitions = FAKE_ORACLE_LIST_RANGE_PARTITIONS
+    return test_table_object

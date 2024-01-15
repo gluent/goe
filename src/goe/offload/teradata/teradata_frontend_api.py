@@ -55,6 +55,7 @@ logger.addHandler(logging.NullHandler())
 # GLOBAL FUNCTIONS
 ###########################################################################
 
+
 def teradata_get_primary_partition_expression(
     owner: str, table_name: str, query_runner: FrontendApiInterface
 ) -> Optional[TeradataPartitionExpression]:
@@ -141,7 +142,11 @@ class TeradataFrontendApi(FrontendApiInterface):
         Those operations have None in the description property on the cursor so we
         check for it before trying to close.
         """
-        if self._client and self._cursor and getattr(self._cursor, 'description', None) is not None:
+        if (
+            self._client
+            and self._cursor
+            and getattr(self._cursor, "description", None) is not None
+        ):
             try:
                 self._cursor.close()
             except Exception as exc:
@@ -218,16 +223,19 @@ class TeradataFrontendApi(FrontendApiInterface):
                 "Create table partitioning pending implementation"
             )
 
-        sql = dedent(
-            """\
+        sql = (
+            dedent(
+                """\
             CREATE TABLE %(owner_table)s (
                 %(col_projection)s
             )%(partition_clause)s"""
-        ) % {
-            "owner_table": self.enclose_object_reference(schema, table_name),
-            "col_projection": col_projection,
-            "partition_clause": partition_clause,
-        }
+            )
+            % {
+                "owner_table": self.enclose_object_reference(schema, table_name),
+                "col_projection": col_projection,
+                "partition_clause": partition_clause,
+            }
+        )
         return sql
 
     def _disconnect(self, force=False):
@@ -318,8 +326,11 @@ class TeradataFrontendApi(FrontendApiInterface):
             )
             if query_params:
                 self._log_or_not(
-                    '%s SQL parameters: %s'
-                    % (self._sql_engine_name, self._to_native_query_params(query_params)),
+                    "%s SQL parameters: %s"
+                    % (
+                        self._sql_engine_name,
+                        self._to_native_query_params(query_params),
+                    ),
                     log_level=log_level,
                 )
 
@@ -388,7 +399,10 @@ class TeradataFrontendApi(FrontendApiInterface):
         return_list = []
         if query_options:
             for prep_sql in self._format_query_options(query_options):
-                self._log_or_not('%s SQL: %s' % (self._sql_engine_name, prep_sql), log_level=log_level)
+                self._log_or_not(
+                    "%s SQL: %s" % (self._sql_engine_name, prep_sql),
+                    log_level=log_level,
+                )
                 if self._client:
                     self._cursor.execute(prep_sql)
                 return_list.append(prep_sql)
@@ -494,9 +508,9 @@ class TeradataFrontendApi(FrontendApiInterface):
         return run_opts + [sql]
 
     def _fixed_session_parameters(self) -> dict:
-        return {'time zone': "'+00:00'"}
+        return {"time zone": "'+00:00'"}
 
-    def _format_query_options(self, query_options: Optional[dict]=None) -> list:
+    def _format_query_options(self, query_options: Optional[dict] = None) -> list:
         """
         Format options for Teradata
         query_options: key/value pairs for session settings
@@ -529,8 +543,11 @@ class TeradataFrontendApi(FrontendApiInterface):
     def close(self, force=False):
         self._disconnect(force=force)
 
-    def agg_validate_sample_column_names(self, schema, table_name, num_required: int=5) -> list:
-        sql = dedent("""\
+    def agg_validate_sample_column_names(
+        self, schema, table_name, num_required: int = 5
+    ) -> list:
+        sql = dedent(
+            """\
         SELECT ColumnName
         FROM  (
                SELECT c.ColumnName
@@ -546,12 +563,16 @@ class TeradataFrontendApi(FrontendApiInterface):
                AND    c.TableName = ?
               ) AS v
         WHERE  ColumnId IN (first_column_id, last_column_id)
-        OR     ndv_rank <= ?""")
-        rows = self.execute_query_fetch_all(sql, query_params=[schema, table_name, num_required],
-                                                    log_level=VVERBOSE)
+        OR     ndv_rank <= ?"""
+        )
+        rows = self.execute_query_fetch_all(
+            sql, query_params=[schema, table_name, num_required], log_level=VVERBOSE
+        )
         return [_[0] for _ in rows] if rows else []
 
-    def create_new_connection(self, user_name, user_password, trace_action_override=None):
+    def create_new_connection(
+        self, user_name, user_password, trace_action_override=None
+    ):
         self._debug("Making new connection with user %s" % user_name)
         odbc_url = self._connect_url(user_name, user_password)
         client = pyodbc.connect(odbc_url)
@@ -708,11 +729,20 @@ class TeradataFrontendApi(FrontendApiInterface):
     def get_partition_columns(self, schema, table_name):
         """Return columns in the first row partition expression, i.e. we skip columnar partitioning."""
         try:
-            partition_expression = teradata_get_primary_partition_expression(schema, table_name, self)
-        except (UnsupportedCaseNPartitionExpression, UnsupportedPartitionExpression) as exc:
+            partition_expression = teradata_get_primary_partition_expression(
+                schema, table_name, self
+            )
+        except (
+            UnsupportedCaseNPartitionExpression,
+            UnsupportedPartitionExpression,
+        ) as exc:
             # Treat tables with unsupported partition expressions as non-partitioned.
-            self._log('Cannot retrieve partition column from partition expression: {}'.format(str(exc)),
-                      detail=VVERBOSE)
+            self._log(
+                "Cannot retrieve partition column from partition expression: {}".format(
+                    str(exc)
+                ),
+                detail=VVERBOSE,
+            )
             return []
         if partition_expression:
             table_columns = self.get_columns(schema, table_name)
@@ -826,7 +856,7 @@ class TeradataFrontendApi(FrontendApiInterface):
     def split_partition_high_value_string(self, hv_string):
         if not hv_string:
             return []
-        tokens = split_not_in_quotes(hv_string, sep=',')
+        tokens = split_not_in_quotes(hv_string, sep=",")
         return tokens
 
     def table_exists(self, schema, table_name) -> bool:

@@ -376,7 +376,9 @@ def decode_metadata_incremental_high_values(
         return partition_columns, hv_real_vals, hv_indiv_vals
 
 
-def split_metadata_incremental_high_values(base_metadata: OrchestrationMetadata, frontend_api):
+def split_metadata_incremental_high_values(
+    base_metadata: OrchestrationMetadata, frontend_api
+):
     """Equivalent of decode_metadata_incremental_high_values() above but for when we don't have access
     to an RDBMS base table.
     This means we can only decode as far as string HVs, no conversion to real Python values.

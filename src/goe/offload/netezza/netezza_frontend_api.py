@@ -308,10 +308,16 @@ class NetezzaFrontendApi(FrontendApiInterface):
     def close(self, force=False):
         self._disconnect(force=force)
 
-    def agg_validate_sample_column_names(self, schema, table_name, num_required: int=5) -> list:
-        raise NotImplementedError('Netezza agg_validate_sample_column_names() not implemented.')
+    def agg_validate_sample_column_names(
+        self, schema, table_name, num_required: int = 5
+    ) -> list:
+        raise NotImplementedError(
+            "Netezza agg_validate_sample_column_names() not implemented."
+        )
 
-    def create_new_connection(self, user_name, user_password, trace_action_override=None):
+    def create_new_connection(
+        self, user_name, user_password, trace_action_override=None
+    ):
         self._debug("Making new connection with user %s" % user_name)
         server, port, database = extract_connection_details_from_dsn(
             self._connection_options.rdbms_dsn

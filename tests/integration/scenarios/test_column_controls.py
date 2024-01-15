@@ -33,6 +33,7 @@ from goe.offload.offload_source_table import (
     DATETIME_STATS_SAMPLING_OPT_ACTION_TEXT,
     COLUMNS_FAILED_SAMPLING_EXCEPTION_TEXT,
 )
+from goe.offload.offload_transport import OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
 from goe.offload.operation.data_type_controls import (
     CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT,
     DECIMAL_COL_TYPE_SYNTAX_TEMPLATE,
@@ -751,27 +752,16 @@ def test_numeric_controls(config, schema, data_db):
         config, frontend_api, backend_api, messages, data_db, NUMS_DIM, detect=True
     )
 
-    # Offload table with assorted number columns with number detection enabled and type overrides.
-    options = {
-        "owner_table": schema + "." + NUMS_DIM,
-        "offload_transport_method": no_query_import_transport_method(config),
-        "reset_backend_table": True,
-        "decimal_columns_csv_list": [
-            STORY_TEST_OFFLOAD_NUMS_DEC_10_0,
-            STORY_TEST_OFFLOAD_NUMS_DEC_13_9,
-            STORY_TEST_OFFLOAD_NUMS_DEC_15_9,
-            STORY_TEST_OFFLOAD_NUMS_DEC_36_3,
-            STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
-            STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
-        ],
-        "decimal_columns_type_list": ["10,0", "13,9", "15,9", "36,3", "37,3", "38,3"],
-        "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
-        "decimal_padding_digits": 2,
-    }
-    run_offload(options, config, messages)
-    nums_assertion(
-        config, frontend_api, backend_api, messages, data_db, NUMS_DIM, detect=True
-    )
+    if (
+        no_query_import_transport_method(config)
+        != OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
+    ):
+        # Offload table with assorted number columns with number detection enabled and type overrides.
+        options["offload_transport_method"] = no_query_import_transport_method(config)
+        run_offload(options, config, messages)
+        nums_assertion(
+            config, frontend_api, backend_api, messages, data_db, NUMS_DIM, detect=True
+        )
 
     # Offload table with assorted number columns with number detection for sampling.
     # Check the DEC_ columns have correct precision/scale.

@@ -12,17 +12,37 @@ import sys
 
 from goe.config import config_descriptions, orchestration_defaults
 from goe.config.orchestration_config import OrchestrationConfig
-from goe.offload.offload_validation import CrossDbValidator, \
-    DEFAULT_SELECT_COLS, GROUPBY_PARTITIONS, DEFAULT_AGGS, SUPPORTED_OPERATIONS
+from goe.offload.offload_validation import (
+    CrossDbValidator,
+    DEFAULT_SELECT_COLS,
+    GROUPBY_PARTITIONS,
+    DEFAULT_AGGS,
+    SUPPORTED_OPERATIONS,
+)
 from goe.util.hs2_connection import HS2_OPTIONS
-from goe.util.misc_functions import csv_split, is_number, is_pos_int, parse_python_from_string, check_offload_env
+from goe.util.misc_functions import (
+    csv_split,
+    is_number,
+    is_pos_int,
+    parse_python_from_string,
+    check_offload_env,
+)
 from goe.util.goe_log import step, log_exception
 
 from goe.offload.offload_messages import OffloadMessages
 
-from goe.goe import get_options_from_list, normalise_owner_table_options,\
-    init, init_log, log, get_log_fh_name, version, license,\
-    get_log_fh, log_timestamp
+from goe.goe import (
+    get_options_from_list,
+    normalise_owner_table_options,
+    init,
+    init_log,
+    log,
+    get_log_fh_name,
+    version,
+    license,
+    get_log_fh,
+    log_timestamp,
+)
 
 
 # -----------------------------------------------------------------------
@@ -39,15 +59,23 @@ class AggValidateException(Exception):
 PROG_BANNER = "Validate (agg_validate) v%s" % version()
 COPYRIGHT_MSG = "%s" % license()
 
-REGEX_FILTER=re.compile('(\S+)\s+(%s)\s+(\S+)' % "|".join(SUPPORTED_OPERATIONS), re.I)
+REGEX_FILTER = re.compile("(\S+)\s+(%s)\s+(\S+)" % "|".join(SUPPORTED_OPERATIONS), re.I)
 
 # GOE.py options "imported" by this tool
-GOE_OPTIONS=(
-    'owner_table', 'dev_log_level', 'execute',
-    'target_owner_name', 'base_owner_name', 'target_name',
-    'ora_app_user', 'ora_app_pass', 'oracle_dsn',
-    'backend_session_parameters',
-    'quiet', 'verbose', 'vverbose',
+GOE_OPTIONS = (
+    "owner_table",
+    "dev_log_level",
+    "execute",
+    "target_owner_name",
+    "base_owner_name",
+    "target_name",
+    "ora_app_user",
+    "ora_app_pass",
+    "oracle_dsn",
+    "backend_session_parameters",
+    "quiet",
+    "verbose",
+    "vverbose",
 )
 
 
@@ -61,16 +89,17 @@ logger = logging.getLogger("agg_validate")
 # SCRIPT ROUTINES
 # -----------------------------------------------------------------------
 
+
 def validate_table(args, messages):
-    """ Validate specific table
-    """
+    """Validate specific table"""
+
     def step_fn():
-        config = OrchestrationConfig.from_dict({'verbose': args.verbose})
+        config = OrchestrationConfig.from_dict({"verbose": args.verbose})
         validator = CrossDbValidator(
             db_name=args.owner,
             table_name=args.table_name,
             connection_options=config,
-            messages=messages
+            messages=messages,
         )
 
         status, _ = validator.validate(
@@ -81,7 +110,7 @@ def validate_table(args, messages):
             safe=not args.skip_boundary_check,
             as_of_scn=args.as_of_scn,
             execute=args.execute,
-            frontend_parallelism=args.frontend_parallelism
+            frontend_parallelism=args.frontend_parallelism,
         )
         if status:
             messages.log("[OK]", ansi_code="green")
@@ -90,38 +119,50 @@ def validate_table(args, messages):
             messages.log("[ERROR]", ansi_code="red")
             return False
 
-    return step("Validating table: %s.%s" % (args.owner, args.table_name), step_fn,
-                execute=args.execute, options=args, messages=messages) or False
+    return (
+        step(
+            "Validating table: %s.%s" % (args.owner, args.table_name),
+            step_fn,
+            execute=args.execute,
+            options=args,
+            messages=messages,
+        )
+        or False
+    )
 
 
 def set_logging(log_level):
-    """ Set "global" logging parameters
-    """
+    """Set "global" logging parameters"""
 
     logging.basicConfig(
         level=logging.getLevelName(log_level),
-        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
 
 def print_title():
-    """ Print utility title """
+    """Print utility title"""
 
     print("%s\n%s\n" % (PROG_BANNER, COPYRIGHT_MSG))
 
 
 def post_process_args(args):
-    """ Post process arguments """
+    """Post process arguments"""
+
     def parse_filters(filters):
         def parse_single_filter(filt):
             match = REGEX_FILTER.match(filt)
             if match:
-                return (match.group(1), match.group(2), parse_python_from_string(match.group(3)))
+                return (
+                    match.group(1),
+                    match.group(2),
+                    parse_python_from_string(match.group(3)),
+                )
             else:
                 raise AggValidateException("Invalid FILTER expression: %s" % filt)
 
-        return [parse_single_filter(_.strip()) for _ in filters.split(',')]
+        return [parse_single_filter(_.strip()) for _ in filters.split(",")]
 
     if args.filters:
         args.filters = parse_filters(args.filters)
@@ -136,42 +177,60 @@ def post_process_args(args):
         args.aggregate_functions = csv_split(args.aggregate_functions)
     if args.frontend_parallelism:
         if not is_pos_int(args.frontend_parallelism):
-            raise AggValidateException("Invalid frontend parallelism: %s" % args.frontend_parallelism)
+            raise AggValidateException(
+                "Invalid frontend parallelism: %s" % args.frontend_parallelism
+            )
         else:
             args.frontend_parallelism = int(args.frontend_parallelism)
 
 
 def parse_args():
-    """ Parse arguments and return "options" object """
+    """Parse arguments and return "options" object"""
     parser = get_options_from_list(GOE_OPTIONS + HS2_OPTIONS)
 
     parser.add_option(
-        '--as-of-scn', type=int, default=None,
-        help="Execute validation on front-end site as-of specified SCN (assumes 'ORACLE' front-end)"
+        "--as-of-scn",
+        type=int,
+        default=None,
+        help="Execute validation on front-end site as-of specified SCN (assumes 'ORACLE' front-end)",
     )
     parser.add_option(
-        '-S', '--selects', default=[DEFAULT_SELECT_COLS],
-        help="SELECTs: <List of columns> OR <Number of columns> to run aggregations on. If <number> is specified -> the first and last columns and the <number>-2 highests cardinality columns will be selected. Default: %s" % DEFAULT_SELECT_COLS
+        "-S",
+        "--selects",
+        default=[DEFAULT_SELECT_COLS],
+        help="SELECTs: <List of columns> OR <Number of columns> to run aggregations on. If <number> is specified -> the first and last columns and the <number>-2 highests cardinality columns will be selected. Default: %s"
+        % DEFAULT_SELECT_COLS,
     )
     parser.add_option(
-        '-F', '--filters', default=None,
-        help="FILTERs: List of: (<column> <operation> <value>) expressions, separated by ',' e.g. PROD_ID < 12, CUST_ID >= 1000. Expressions must be supported in both FRONT-END and BACK-END databases"
+        "-F",
+        "--filters",
+        default=None,
+        help="FILTERs: List of: (<column> <operation> <value>) expressions, separated by ',' e.g. PROD_ID < 12, CUST_ID >= 1000. Expressions must be supported in both FRONT-END and BACK-END databases",
     )
     parser.add_option(
-        '-G', '--group-bys', default=None,
-        help="GROUP BYs: List of group by expressions, separated by ',' e.g. COL1, COL2. Expressions must be supported in both FRONT-END and BACK-END databases. Default: %s" % None
+        "-G",
+        "--group-bys",
+        default=None,
+        help="GROUP BYs: List of group by expressions, separated by ',' e.g. COL1, COL2. Expressions must be supported in both FRONT-END and BACK-END databases. Default: %s"
+        % None,
     )
     parser.add_option(
-        '-A', '--aggregate-functions', default=DEFAULT_AGGS,
-        help="AGGREGATE FUNCTIONSs: List of aggregate functions to apply, separated by ',' e.g. max, min, count. Functions need to be available and use the same arguments in both FRONT-END and BACK-END databases. Default: %s" % [DEFAULT_AGGS]
+        "-A",
+        "--aggregate-functions",
+        default=DEFAULT_AGGS,
+        help="AGGREGATE FUNCTIONSs: List of aggregate functions to apply, separated by ',' e.g. max, min, count. Functions need to be available and use the same arguments in both FRONT-END and BACK-END databases. Default: %s"
+        % [DEFAULT_AGGS],
     )
     parser.add_option(
-        '--frontend-parallelism', default=orchestration_defaults.verify_parallelism_default(), type=int,
-        help=config_descriptions.VERIFY_PARALLELISM
+        "--frontend-parallelism",
+        default=orchestration_defaults.verify_parallelism_default(),
+        type=int,
+        help=config_descriptions.VERIFY_PARALLELISM,
     )
     parser.add_option(
-        '--skip-boundary-check', action='store_true',
-        help="Do NOT include 'offloaded boundary check' in the list of filters 'offloaded boundary check' filter defines data that was offloaded to BACK-END database (as opposed to data that 'is sourced' from FRONT-END). For example: WHERE TIME_ID < timestamp '2015-07-01 00:00:00' which resulted from applying e.g. --older-than-date=2015-07-01 filter during offload."
+        "--skip-boundary-check",
+        action="store_true",
+        help="Do NOT include 'offloaded boundary check' in the list of filters 'offloaded boundary check' filter defines data that was offloaded to BACK-END database (as opposed to data that 'is sourced' from FRONT-END). For example: WHERE TIME_ID < timestamp '2015-07-01 00:00:00' which resulted from applying e.g. --older-than-date=2015-07-01 filter during offload.",
     )
 
     args, _ = parser.parse_args()
@@ -183,7 +242,7 @@ def parse_args():
 
 def main():
     """
-      MAIN ROUTINE
+    MAIN ROUTINE
     """
 
     check_offload_env()
@@ -191,10 +250,10 @@ def main():
     args = parse_args()
     init(args)
 
-    init_log('agg_validate_%s' % args.owner_table)
-    log('')
-    log(PROG_BANNER, ansi_code='underline')
-    log('Log file: %s' % get_log_fh_name())
+    init_log("agg_validate_%s" % args.owner_table)
+    log("")
+    log(PROG_BANNER, ansi_code="underline")
+    log("Log file: %s" % get_log_fh_name())
 
     normalise_owner_table_options(args)
 
@@ -203,12 +262,9 @@ def main():
     try:
         messages = OffloadMessages.from_options(args)
 
-        ret = validate_table(
-            args = args,
-            messages = messages
-        )
+        ret = validate_table(args=args, messages=messages)
     except Exception as exc:
-        log('Exception caught at top-level', ansi_code='red')
+        log("Exception caught at top-level", ansi_code="red")
         log_timestamp()
         log_exception(exc, log_fh=get_log_fh(), options=args)
         sys.exit(1)

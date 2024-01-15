@@ -12,24 +12,27 @@ class ForcedOrchestrationException(Exception):
 # CONSTANTS
 ###########################################################################
 
-EXCEPTION_TRIGGERED_TEXT = 'Exception triggered for token'
+EXCEPTION_TRIGGERED_TEXT = "Exception triggered for token"
 
-INCREMENTAL_MERGE_POST_INSERT = 'IU_IUD_POST_INSERT'
-INCREMENTAL_MERGE_POST_UPDATE = 'IU_IUD_POST_UPDATE'
-INCREMENTAL_MERGE_POST_DELETE = 'IU_IUD_POST_DELETE'
+INCREMENTAL_MERGE_POST_INSERT = "IU_IUD_POST_INSERT"
+INCREMENTAL_MERGE_POST_UPDATE = "IU_IUD_POST_UPDATE"
+INCREMENTAL_MERGE_POST_DELETE = "IU_IUD_POST_DELETE"
 
 
 ###########################################################################
 # GLOBAL FUNCTIONS
 ###########################################################################
 
+
 def trigger_exception(token, orchestration_config):
-    """ If a token is in orchestration_config then trigger an artifical exception.
-        orchestration_config can be an options namespace or the str defined in error_on_token.
+    """If a token is in orchestration_config then trigger an artifical exception.
+    orchestration_config can be an options namespace or the str defined in error_on_token.
     """
     if isinstance(orchestration_config, str):
         error_on_token = orchestration_config
     else:
         error_on_token = orchestration_config.error_on_token
     if token and token == error_on_token:
-        raise ForcedOrchestrationException(f'{EXCEPTION_TRIGGERED_TEXT}: {error_on_token}')
+        raise ForcedOrchestrationException(
+            f"{EXCEPTION_TRIGGERED_TEXT}: {error_on_token}"
+        )

@@ -4,11 +4,13 @@ Ideally these would migrate to better locations in time.
 """
 
 from datetime import datetime, timedelta
-from optparse import OptionValueError
+from optparse import OptionValueError, SUPPRESS_HELP
 import re
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
+from goe.config import config_descriptions, orchestration_defaults
+from goe.filesystem.goe_dfs import VALID_OFFLOAD_FS_SCHEMES
 from goe.data_governance.hadoop_data_governance_constants import (
     DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
 )
@@ -16,20 +18,7 @@ from goe.offload.column_metadata import (
     get_column_names,
 )
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
-from goe.offload.offload_constants import (
-    DBTYPE_IMPALA,
-    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
-    IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
-    CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
-    OFFLOAD_STATS_METHOD_COPY,
-    OFFLOAD_STATS_METHOD_HISTORY,
-    OFFLOAD_STATS_METHOD_NATIVE,
-    OFFLOAD_STATS_METHOD_NONE,
-    OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT,
-    OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT,
-    OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT,
-    RESET_HYBRID_VIEW_EXCEPTION_TEXT,
-)
+from goe.offload import offload_constants
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
 from goe.offload.offload_metadata_functions import (
     decode_metadata_incremental_high_values_from_metadata,
@@ -41,7 +30,9 @@ from goe.offload.offload_source_table import (
     OFFLOAD_PARTITION_TYPE_RANGE,
     OFFLOAD_PARTITION_TYPE_LIST,
 )
+from goe.offload.offload_transport import VALID_OFFLOAD_TRANSPORT_METHODS
 from goe.offload.operation.sort_columns import check_and_alter_backend_sort_columns
+from goe.offload.operation.data_type_controls import DECIMAL_COL_TYPE_SYNTAX_TEMPLATE
 from goe.offload.predicate_offload import GenericPredicate
 from goe.orchestration import command_steps
 from goe.persistence.orchestration_metadata import (
@@ -98,7 +89,7 @@ def check_ipa_predicate_type_option_conflicts(
             raise exc_cls(
                 "LIST %s with %s: %s"
                 % (
-                    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                    offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
                     ipa_predicate_type,
                     ", ".join(active_lpa_opts),
                 )
@@ -112,7 +103,7 @@ def check_ipa_predicate_type_option_conflicts(
                 raise exc_cls(
                     "RANGE %s with partition data types: %s"
                     % (
-                        IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                        offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
                         ", ".join(unsupported_types),
                     )
                 )
@@ -121,14 +112,16 @@ def check_ipa_predicate_type_option_conflicts(
             raise exc_cls(
                 "RANGE %s with %s: %s"
                 % (
-                    IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                    offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
                     ipa_predicate_type,
                     ", ".join(active_rpa_opts),
                 )
             )
     elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_PREDICATE:
         if not options.offload_predicate:
-            raise exc_cls(IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT)
+            raise exc_cls(
+                offload_constants.IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT
+            )
 
 
 def check_opt_is_posint(
@@ -432,7 +425,9 @@ def offload_type_force_effects(
         ) == ("FULL", "INCREMENTAL"):
             # Once we have switched to FULL we cannot trust the HWM with subpartition offloads,
             # what if another HWM appeared for already offloaded HWM!
-            raise OffloadException(OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT)
+            raise OffloadException(
+                offload_constants.OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT
+            )
 
         if hybrid_operation.ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST and (
             original_offload_type,
@@ -446,10 +441,15 @@ def offload_type_force_effects(
             if active_lpa_opts:
                 messages.notice(
                     "%s, only the partitions identified by %s will be queried from offloaded data"
-                    % (OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT, active_lpa_opts[0])
+                    % (
+                        offload_constants.OFFLOAD_TYPE_CHANGE_FOR_LIST_MESSAGE_TEXT,
+                        active_lpa_opts[0],
+                    )
                 )
             else:
-                raise OffloadException(OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT)
+                raise OffloadException(
+                    offload_constants.OFFLOAD_TYPE_CHANGE_FOR_LIST_EXCEPTION_TEXT
+                )
 
         if not hybrid_operation.force:
             new_inc_key = None
@@ -577,11 +577,14 @@ def normalise_less_than_options(options, exc_cls=OffloadException):
     if len(active_pa_opts) > 1:
         raise exc_cls(
             "%s: %s"
-            % (CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT, ", ".join(active_pa_opts))
+            % (
+                offload_constants.CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
+                ", ".join(active_pa_opts),
+            )
         )
 
     if options.reset_hybrid_view and len(active_pa_opts) == 0:
-        raise exc_cls(RESET_HYBRID_VIEW_EXCEPTION_TEXT)
+        raise exc_cls(offload_constants.RESET_HYBRID_VIEW_EXCEPTION_TEXT)
 
     if options.older_than_date:
         try:
@@ -624,21 +627,270 @@ def normalise_offload_predicate_options(options):
 
 def normalise_stats_options(options, target_backend):
     if options.offload_stats_method not in [
-        OFFLOAD_STATS_METHOD_NATIVE,
-        OFFLOAD_STATS_METHOD_HISTORY,
-        OFFLOAD_STATS_METHOD_COPY,
-        OFFLOAD_STATS_METHOD_NONE,
+        offload_constants.OFFLOAD_STATS_METHOD_NATIVE,
+        offload_constants.OFFLOAD_STATS_METHOD_HISTORY,
+        offload_constants.OFFLOAD_STATS_METHOD_COPY,
+        offload_constants.OFFLOAD_STATS_METHOD_NONE,
     ]:
         raise OffloadOptionError(
             "Unsupported value for --offload-stats: %s" % options.offload_stats_method
         )
 
     if (
-        options.offload_stats_method == OFFLOAD_STATS_METHOD_HISTORY
-        and target_backend == DBTYPE_IMPALA
+        options.offload_stats_method == offload_constants.OFFLOAD_STATS_METHOD_HISTORY
+        and target_backend == offload_constants.DBTYPE_IMPALA
     ):
-        options.offload_stats_method = OFFLOAD_STATS_METHOD_NATIVE
+        options.offload_stats_method = offload_constants.OFFLOAD_STATS_METHOD_NATIVE
 
 
 def parse_yyyy_mm_dd(ds):
     return datetime.strptime(ds, "%Y-%m-%d")
+
+
+def list_for_option_help(opt_list):
+    return "|".join(opt_list) if opt_list else None
+
+
+def get_offload_options(opt):
+    """Options applicable to offload only"""
+
+    opt.add_option(
+        "--allow-decimal-scale-rounding",
+        dest="allow_decimal_scale_rounding",
+        default=orchestration_defaults.allow_decimal_scale_rounding_default(),
+        action="store_true",
+        help="Confirm it is acceptable for offload to round decimal places when loading data into a backend system",
+    )
+    opt.add_option(
+        "--allow-floating-point-conversions",
+        dest="allow_floating_point_conversions",
+        default=orchestration_defaults.allow_floating_point_conversions_default(),
+        action="store_true",
+        help="Confirm it is acceptable for offload to convert NaN/Inf values to NULL when loading data into a backend system",
+    )
+    opt.add_option(
+        "--allow-nanosecond-timestamp-columns",
+        dest="allow_nanosecond_timestamp_columns",
+        default=orchestration_defaults.allow_nanosecond_timestamp_columns_default(),
+        action="store_true",
+        help="Confirm it is safe to offload timestamp column with nanosecond capability",
+    )
+    opt.add_option(
+        "--compress-load-table",
+        dest="compress_load_table",
+        action="store_true",
+        default=orchestration_defaults.compress_load_table_default(),
+        help="Compress the contents of the load table during offload",
+    )
+    opt.add_option(
+        "--compute-load-table-stats",
+        dest="compute_load_table_stats",
+        action="store_true",
+        default=orchestration_defaults.compute_load_table_stats_default(),
+        help="Compute statistics on the load table during each offload chunk",
+    )
+    opt.add_option(
+        "--data-sample-percent",
+        dest="data_sample_pct",
+        default=orchestration_defaults.data_sample_pct_default(),
+        help="Sample RDBMS data for columns with no precision/scale properties. 0 = no sampling",
+    )
+    opt.add_option(
+        "--data-sample-parallelism",
+        type=int,
+        dest="data_sample_parallelism",
+        default=orchestration_defaults.data_sample_parallelism_default(),
+        help=config_descriptions.DATA_SAMPLE_PARALLELISM,
+    )
+    opt.add_option(
+        "--not-null-columns",
+        dest="not_null_columns_csv",
+        help="CSV list of columns to offload with a NOT NULL constraint",
+    )
+    opt.add_option(
+        "--offload-predicate-type",
+        dest="ipa_predicate_type",
+        help="Override the default INCREMENTAL_PREDICATE_TYPE for a partitioned table. Used to offload LIST partitioned tables using RANGE logic with --offload-predicate-type=%s or used for specialized cases of Incremental Partition Append and Predicate-Based Offload offloading"
+        % INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+    )
+    opt.add_option(
+        "--offload-fs-scheme",
+        dest="offload_fs_scheme",
+        default=orchestration_defaults.offload_fs_scheme_default(),
+        help="%s. Filesystem type for Offloaded tables"
+        % list_for_option_help(VALID_OFFLOAD_FS_SCHEMES),
+    )
+    opt.add_option(
+        "--offload-fs-prefix",
+        dest="offload_fs_prefix",
+        help='The path with which to prefix offloaded table paths. Takes precedence over --hdfs-data when --offload-fs-scheme != "inherit"',
+    )
+    opt.add_option(
+        "--offload-fs-container",
+        dest="offload_fs_container",
+        help="A valid bucket name when offloading to cloud storage",
+    )
+    opt.add_option(
+        "--offload-type",
+        dest="offload_type",
+        help="Identifies a range partitioned offload as FULL or INCREMENTAL. FULL dictates that all data is offloaded. INCREMENTAL dictates that data up to an incremental threshold will be offloaded",
+    )
+
+    opt.add_option(
+        "--integer-1-columns",
+        dest="integer_1_columns_csv",
+        help="CSV list of columns to offload as a 1-byte integer (only effective for numeric columns)",
+    )
+    opt.add_option(
+        "--integer-2-columns",
+        dest="integer_2_columns_csv",
+        help="CSV list of columns to offload as a 2-byte integer (only effective for numeric columns)",
+    )
+    opt.add_option(
+        "--integer-4-columns",
+        dest="integer_4_columns_csv",
+        help="CSV list of columns to offload as a 4-byte integer (only effective for numeric columns)",
+    )
+    opt.add_option(
+        "--integer-8-columns",
+        dest="integer_8_columns_csv",
+        help="CSV list of columns to offload as a 8-byte integer (only effective for numeric columns)",
+    )
+    opt.add_option(
+        "--integer-38-columns",
+        dest="integer_38_columns_csv",
+        help="CSV list of columns to offload as a 38 digit integer (only effective for numeric columns)",
+    )
+
+    opt.add_option(
+        "--decimal-columns",
+        dest="decimal_columns_csv_list",
+        action="append",
+        help='CSV list of columns to offload as DECIMAL(p,s) where "p,s" is specified in a paired --decimal-columns-type option. --decimal-columns and --decimal-columns-type allow repeat inclusion for flexible data type specification, for example "--decimal-columns-type=18,2 --decimal-columns=price,cost --decimal-columns-type=6,4 --decimal-columns=location" (only effective for numeric columns)',
+    )
+    opt.add_option(
+        "--decimal-columns-type",
+        dest="decimal_columns_type_list",
+        action="append",
+        help="State the precision and scale of columns listed in a paired --decimal-columns option, "
+        + DECIMAL_COL_TYPE_SYNTAX_TEMPLATE.format(p="38", s="38")
+        + '. e.g. "--decimal-columns-type=18,2"',
+    )
+
+    opt.add_option(
+        "--date-columns",
+        dest="date_columns_csv",
+        help="CSV list of columns to offload as a date (no time element, only effective for date based columns)",
+    )
+
+    opt.add_option(
+        "--unicode-string-columns",
+        dest="unicode_string_columns_csv",
+        help="CSV list of columns to offload as Unicode string (only effective for string columns)",
+    )
+    opt.add_option(
+        "--double-columns",
+        dest="double_columns_csv",
+        help="CSV list of columns to offload as a double-precision floating point number (only effective for numeric columns)",
+    )
+    opt.add_option(
+        "--variable-string-columns",
+        dest="variable_string_columns_csv",
+        help="CSV list of columns to offload as a variable string type (only effective for date based columns)",
+    )
+    opt.add_option(
+        "--timestamp-tz-columns",
+        dest="timestamp_tz_columns_csv",
+        help="CSV list of columns to offload as a time zoned column (only effective for date based columns)",
+    )
+
+    opt.add_option(
+        "--offload-transport-consistent-read",
+        dest="offload_transport_consistent_read",
+        default=orchestration_defaults.offload_transport_consistent_read_default(),
+        help="Parallel data transport tasks should have a consistent point in time when reading RDBMS data",
+    )
+    opt.add_option(
+        "--offload-transport-dsn",
+        dest="offload_transport_dsn",
+        default=orchestration_defaults.offload_transport_dsn_default(),
+        help="DSN override for RDBMS connection during data transport.",
+    )
+    opt.add_option(
+        "--offload-transport-fetch-size",
+        dest="offload_transport_fetch_size",
+        default=orchestration_defaults.offload_transport_fetch_size_default(),
+        help="Number of records to fetch in a single batch from the RDBMS during Offload",
+    )
+    opt.add_option(
+        "--offload-transport-jvm-overrides",
+        dest="offload_transport_jvm_overrides",
+        help='JVM overrides (inserted right after "sqoop import" or "spark-submit")',
+    )
+    opt.add_option(
+        "--offload-transport-method",
+        dest="offload_transport_method",
+        choices=VALID_OFFLOAD_TRANSPORT_METHODS,
+        help=SUPPRESS_HELP,
+    )
+    opt.add_option(
+        "--offload-transport-parallelism",
+        dest="offload_transport_parallelism",
+        default=orchestration_defaults.offload_transport_parallelism_default(),
+        help="Number of slaves to use when transporting data during an Offload.",
+    )
+    opt.add_option(
+        "--offload-transport-queue-name",
+        dest="offload_transport_queue_name",
+        help="Yarn queue name to be used for Offload transport jobs.",
+    )
+    opt.add_option(
+        "--offload-transport-small-table-threshold",
+        dest="offload_transport_small_table_threshold",
+        default=orchestration_defaults.offload_transport_small_table_threshold_default(),
+        help="Threshold above which Query Import is no longer considered the correct offload choice for non-partitioned tables. [\\d.]+[MG] eg. 100M, 0.5G, 1G",
+    )
+    opt.add_option(
+        "--offload-transport-spark-properties",
+        dest="offload_transport_spark_properties",
+        default=orchestration_defaults.offload_transport_spark_properties_default(),
+        help="Override defaults for Spark configuration properties using key/value pairs in JSON format",
+    )
+    opt.add_option(
+        "--offload-transport-validation-polling-interval",
+        dest="offload_transport_validation_polling_interval",
+        default=orchestration_defaults.offload_transport_validation_polling_interval_default(),
+        help="Polling interval in seconds for validation of Spark transport row count. -1 disables retrieval of RDBMS SQL statistics. 0 disables polling resulting in a single capture of SQL statistics. A value greater than 0 polls transport SQL statistics using the specified interval",
+    )
+
+    opt.add_option(
+        "--sqoop-additional-options",
+        dest="sqoop_additional_options",
+        default=orchestration_defaults.sqoop_additional_options_default(),
+        help="Sqoop additional options (added to the end of the command line)",
+    )
+    opt.add_option(
+        "--sqoop-mapreduce-map-memory-mb",
+        dest="sqoop_mapreduce_map_memory_mb",
+        help="Sqoop specific setting for mapreduce.map.memory.mb",
+    )
+    opt.add_option(
+        "--sqoop-mapreduce-map-java-opts",
+        dest="sqoop_mapreduce_map_java_opts",
+        help="Sqoop specific setting for mapreduce.map.java.opts",
+    )
+
+    opt.add_option("--no-verify", dest="verify_row_count", action="store_false")
+    opt.add_option(
+        "--verify",
+        dest="verify_row_count",
+        choices=["minus", "aggregate"],
+        default=orchestration_defaults.verify_row_count_default(),
+    )
+    opt.add_option(
+        "--verify-parallelism",
+        dest="verify_parallelism",
+        type=int,
+        default=orchestration_defaults.verify_parallelism_default(),
+        help=config_descriptions.VERIFY_PARALLELISM,
+    )

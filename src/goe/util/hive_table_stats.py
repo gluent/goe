@@ -8,16 +8,16 @@ import random
 import re
 
 from collections import defaultdict
-from distutils.version import StrictVersion
 from termcolor import colored, cprint
 
 from goe.offload.offload_constants import DBTYPE_IMPALA, DBTYPE_HIVE, \
     EMPTY_BACKEND_COLUMN_STATS_DICT, EMPTY_BACKEND_TABLE_STATS_DICT
-from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_messages import VERBOSE
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_BIGINT, \
     HADOOP_TYPE_INT, HADOOP_TYPE_SMALLINT, HADOOP_TYPE_TINYINT, \
     HADOOP_TYPE_DOUBLE, HADOOP_TYPE_FLOAT, HADOOP_TYPE_REAL, HADOOP_TYPE_TIMESTAMP
 from goe.util.better_impyla import HiveConnection, HiveTable
+from goe.util.goe_version import GOEVersion
 from goe.util.hive_ddl_transform import DDLTransform
 from goe.util.misc_functions import is_number
 
@@ -860,7 +860,7 @@ class HiveTableStats(object):
                     first_column = self._table.table_columns(as_dict=True)[0]['col_name']
                     sql_engine_version = self._table.connection.sql_engine_version()
                     if self._table.db_type == DBTYPE_HIVE and \
-                        (sql_engine_version is None or StrictVersion(sql_engine_version) < StrictVersion('2.0.0')):
+                        (sql_engine_version is None or GOEVersion(sql_engine_version) < GOEVersion('2.0.0')):
                         # old HiveQL format
                         sql = "DESCRIBE FORMATTED %s.%s %s PARTITION (%s)" \
                             % (self._table.db_name, self._table.table_name, first_column, part_string)

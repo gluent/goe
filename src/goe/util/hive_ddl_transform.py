@@ -18,10 +18,10 @@ class HiveDDLTransformException(Exception): pass
 ###############################################################################
 
 # 'CREATE TABLE' pattern
-RE_CREATE_TABLE = re.compile('(create\s+)(external\s+)?(table\s+)(if not exists\s+)?(`)?(\w+\.)?(\w+)(`)?(.*)$', re.I | re.S)
+RE_CREATE_TABLE = re.compile(r'(create\s+)(external\s+)?(table\s+)(if not exists\s+)?(`)?(\w+\.)?(\w+)(`)?(.*)$', re.I | re.S)
 
 # 'CREATE VIEW' pattern
-RE_CREATE_VIEW = re.compile('(create\s+)?(view\s+)(if not exists\s+)?(`)?(\w+\.)?(\w+)(`)?(.*)$', re.I | re.S)
+RE_CREATE_VIEW = re.compile(r'(create\s+)?(view\s+)(if not exists\s+)?(`)?(\w+\.)?(\w+)(`)?(.*)$', re.I | re.S)
 
 
 ###############################################################################
@@ -48,7 +48,7 @@ class DDLTransform(object):
 
     def _parse_create_table(self, table_ddl, options):
         """ Change 'create table' components in 'table_ddl' """
-        ddl_separator = re.compile(';\s*$')
+        ddl_separator = re.compile(r';\s*$')
 
         match_ddl = RE_CREATE_TABLE.match(table_ddl)
         if match_ddl:
@@ -126,9 +126,9 @@ class DDLTransform(object):
         """ Adjust table columns, i.e. surround their names with `s
         """
 
-        columns_pattern = re.compile('(create[^(]+)(\()(.*?)(\)\s*)(PARTITIONED BY|STORED AS|ROW FORMAT)(.*)$', re.I | re.S)
-        single_col_pattern = re.compile('^(\S+)\s+(.*),?$')
-        col_split_pattern = re.compile(',(?!(\s*\d+))')
+        columns_pattern = re.compile(r'(create[^(]+)(\()(.*?)(\)\s*)(PARTITIONED BY|STORED AS|ROW FORMAT)(.*)$', re.I | re.S)
+        single_col_pattern = re.compile(r'^(\S+)\s+(.*),?$')
+        col_split_pattern = re.compile(r',(?!(\s*\d+))')
 
         match_ddl = columns_pattern.match(table_ddl)
         if match_ddl:
@@ -154,9 +154,9 @@ class DDLTransform(object):
         """ Adjust 'partitioned by' part, i.e. surround column names with `s
         """
 
-        partitioned_pattern = re.compile('(create.*)(PARTITIONED BY\s*\()([^)]+)(.*)$', re.I | re.S)
-        single_col_pattern = re.compile('^(\S+)\s+(.*),?$')
-        col_split_pattern = re.compile(',(?!(\s*\d+))')
+        partitioned_pattern = re.compile(r'(create.*)(PARTITIONED BY\s*\()([^)]+)(.*)$', re.I | re.S)
+        single_col_pattern = re.compile(r'^(\S+)\s+(.*),?$')
+        col_split_pattern = re.compile(r',(?!(\s*\d+))')
 
         match_ddl = partitioned_pattern.match(table_ddl)
         if match_ddl:
@@ -181,10 +181,10 @@ class DDLTransform(object):
 
     def _parse_location(self, table_ddl, options):
         """ Change 'location' components in table_ddl """
-        location_pattern = re.compile('^(.*)(location\s+)(\'\S+\'\s+)(.*)$', re.I | re.S)
-        hdfs_host_pattern = re.compile('^\'(\w+:\/\/([^/:]+)(:\d+)?)\/.*$', re.I | re.S)
-        db_url_pattern = re.compile('^.*\/(\S+)\/(\S+)\'$', re.I | re.S)
-        maprfs_pattern = re.compile('^\'?(maprfs:)\/.*$', re.I | re.S)
+        location_pattern = re.compile(r'^(.*)(location\s+)(\'\S+\'\s+)(.*)$', re.I | re.S)
+        hdfs_host_pattern = re.compile(r'^\'(\w+:\/\/([^/:]+)(:\d+)?)\/.*$', re.I | re.S)
+        db_url_pattern = re.compile(r'^.*\/(\S+)\/(\S+)\'$', re.I | re.S)
+        maprfs_pattern = re.compile(r'^\'?(maprfs:)\/.*$', re.I | re.S)
 
         match_ddl = location_pattern.match(table_ddl)
         if match_ddl:
@@ -230,8 +230,8 @@ class DDLTransform(object):
 
     def _inject_where_clause(self, view_ddl, where):
         """ Inject additional where clause into view definition """
-        where_pattern = re.compile('^(.*)(select\s+)(.*)(from\s)(.*)(where\s+)(.*?)(group by|order by|limit|;|$)(.*)', re.I | re.S)
-        no_where_pattern = re.compile('^(.*)(select\s+)(.*)(from\s)(.*?)(group by|order by|limit|;|$)(.*)', re.I | re.S)
+        where_pattern = re.compile(r'^(.*)(select\s+)(.*)(from\s)(.*)(where\s+)(.*?)(group by|order by|limit|;|$)(.*)', re.I | re.S)
+        no_where_pattern = re.compile(r'^(.*)(select\s+)(.*)(from\s)(.*?)(group by|order by|limit|;|$)(.*)', re.I | re.S)
 
         ddl_chunks = None
 

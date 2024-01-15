@@ -24,7 +24,7 @@ from goe.persistence.orchestration_metadata import INCREMENTAL_PREDICATE_TYPE_LI
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE_AND_PREDICATE, \
     INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE
 from goe.util.misc_functions import backtick_sandwich, case_insensitive_in, csv_split, substitute_in_same_case,\
-    trunc_with_hash, wildcard_matches_in_list
+    wildcard_matches_in_list
 
 
 class OffloadFunctionException(Exception):

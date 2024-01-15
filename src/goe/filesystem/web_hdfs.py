@@ -11,7 +11,7 @@ from requests import Session
 from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 from requests_kerberos.exceptions import MutualAuthenticationError
 from urllib3 import disable_warnings
-from urllib3.exceptions import InsecureRequestWarning, SubjectAltNameWarning
+from urllib3.exceptions import InsecureRequestWarning
 
 from google.api_core import retry
 from hdfs.ext.kerberos import KerberosClient
@@ -37,7 +37,6 @@ from goe.filesystem.goe_dfs import GOEDfs, GOEDfsDeleteNotComplete, GOEDfsExcept
 def get_hdfs_session(verify=None, user=None):
     """ Construct 'HDFS session' object """
     disable_warnings(InsecureRequestWarning)
-    disable_warnings(SubjectAltNameWarning)
     session = Session()
     session.verify = verify
 
@@ -226,7 +225,7 @@ class WebHdfs(GOEDfs):
 
     def regex_mode_delta(self, mode):
         # return tuple of 3 parts of e.g. 'g+rw' : ('g', '+', 'rw')
-        m = re.match('([ugo]+)([+\-])([rwx]+)', mode)
+        m = re.match(r'([ugo]+)([+\-])([rwx]+)', mode)
         if not m or len(m.groups()) != 3:
             raise GOEDfsException('Invalid chmod delta mode "%s"', mode)
         return m.groups()

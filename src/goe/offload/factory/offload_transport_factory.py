@@ -108,7 +108,7 @@ def offload_transport_factory(
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD:
-        from goe.offload.offload_transport import OffloadTransportSparkDataprocGcloud
+        from goe.offload.spark.dataproc_offload_transport import OffloadTransportSparkDataprocGcloud
 
         messages.log(
             "Data transport method: OffloadTransportSparkDataprocGcloud",
@@ -125,7 +125,7 @@ def offload_transport_factory(
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD:
-        from goe.offload.offload_transport import OffloadTransportSparkBatchesGcloud
+        from goe.offload.spark.dataproc_offload_transport import OffloadTransportSparkBatchesGcloud
 
         messages.log(
             "Data transport method: OffloadTransportSparkBatchesGcloud", detail=VVERBOSE
@@ -196,7 +196,7 @@ def spark_dataproc_jdbc_connectivity_checker(offload_options, messages):
     """Connect needs a cut down client to simply check RDBMS connectivity from Dataproc
     back to the source RDBMS is correctly configured
     """
-    from goe.offload.offload_transport import OffloadTransportSparkDataprocGcloudCanary
+    from goe.offload.spark.dataproc_offload_transport import OffloadTransportSparkDataprocGcloudCanary
 
     messages.log("Invoking OffloadTransportSparkDataprocGcloudCanary", detail=VVERBOSE)
     return OffloadTransportSparkDataprocGcloudCanary(offload_options, messages)
@@ -206,7 +206,7 @@ def spark_dataproc_batches_jdbc_connectivity_checker(offload_options, messages):
     """Connect needs a cut down client to simply check RDBMS connectivity from Dataproc Batches
     back to the source RDBMS is correctly configured
     """
-    from goe.offload.offload_transport import OffloadTransportSparkBatchesGcloudCanary
+    from goe.offload.spark.dataproc_offload_transport import OffloadTransportSparkBatchesGcloudCanary
 
     messages.log("Invoking OffloadTransportSparkBatchesGcloudCanary", detail=VVERBOSE)
     return OffloadTransportSparkBatchesGcloudCanary(offload_options, messages)

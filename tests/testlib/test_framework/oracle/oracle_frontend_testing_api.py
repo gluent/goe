@@ -2055,14 +2055,16 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         )
 
         ins = """INSERT INTO %(schema)s.%(table)s
-            SELECT sales.*, %(yrmon_expr)s AS yrmon
-            FROM %(schema)s.sales
-            WHERE TO_CHAR(time_id,'YYYYMM') = '%(next_y)s%(next_m)s'""" % {
+            SELECT s.*, %(yrmon_expr)s AS yrmon
+            FROM (%(sales_gen_subquery)s) s""" % {
             "schema": schema,
             "table": table_name,
             "next_y": next_y,
             "next_m": next_m,
             "yrmon_expr": yrmon_expr,
+            "sales_gen_subquery": self._sales_gen_subquery(
+                f"DATE'{next_y}-{next_m}-10'", rows=60
+            ),
         }
         self._log("Add DDL: %s" % alt, detail=VERBOSE)
         self._log("Ins DML: %s" % ins, detail=VERBOSE)

@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from goe.offload import offload_constants
@@ -60,7 +61,7 @@ LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2 = "2012-01-01", "2012-02-01"
 LPA_DT_PART2_KEY1 = "2012-03-01"
 
 LPA_FACT_TABLE = "STORY_LPA_FACT"
-LPA_FULL_FACT_TABLE = "STORY_LPA_FULL_DEF_FACT"
+LPA_FULL_TABLE = "STORY_LPA_FULL_FACT"
 
 LPA_UNICODE_FACT_TABLE = "STORY_LPA_UNI_FACT"
 LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2 = "\u00f6", "o"
@@ -621,6 +622,11 @@ def test_offload_lpa_ts(config, schema, data_db):
 def test_offload_lpa_unicode(config, schema, data_db):
     id = "test_offload_lpa_unicode"
     messages = get_test_messages(config, id)
+
+    if not os.environ.get("NLS_LANG"):
+        messages.log(f"Skipping {id} because NLS_LANG is not set")
+        return
+
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(
@@ -918,6 +924,18 @@ def test_offload_lpa_fact(config, schema, data_db):
         incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
     )
 
+    # Now we've offloaded the default partition we can't go back to 90/10.
+    options = {
+        "owner_table": schema + "." + LPA_FACT_TABLE,
+        "offload_type": OFFLOAD_TYPE_INCREMENTAL,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=INCREMENTAL_OFFLOAD_DEFAULT_PARTITION_EXCEPTION_TEXT,
+    )
+
 
 def test_offload_lpa_part_fn(config, schema, data_db):
     id = "test_offload_lpa_part_fn"
@@ -1003,4 +1021,79 @@ def test_offload_lpa_part_fn(config, schema, data_db):
     )
 
 
-# TODO Need to convert offload_list_partition_append_full_story_tests
+def test_offload_lpa_full(config, schema, data_db):
+    id = "test_offload_lpa_full"
+    messages = get_test_messages(config, id)
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+            schema,
+            LPA_FULL_TABLE,
+            default_partition=False,
+        ),
+        python_fns=lambda: drop_backend_test_table(
+            config, backend_api, messages, data_db, LPA_FULL_TABLE
+        ),
+    )
+
+    # Offload 100/0 LIST partitioned table.
+    options = {
+        "owner_table": schema + "." + LPA_FULL_TABLE,
+        "offload_partition_lower_value": test_constants.LOWER_YRMON_NUM,
+        "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
+        "reset_backend_table": True,
+        "create_backend_db": True,
+    }
+    run_offload(options, config, messages)
+    assert offload_lpa_fact_assertion(
+        schema,
+        data_db,
+        LPA_FACT_TABLE,
+        config,
+        backend_api,
+        messages,
+        repo_client,
+        None,
+        offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
+        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+    )
+
+    # Add a new partition.
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_list_fact_add_partition_ddl(
+            schema,
+            LPA_FULL_TABLE,
+        ),
+    )
+
+    # Offload new partition to 100/0 list fact.
+    options = {
+        "owner_table": schema + "." + LPA_FULL_TABLE,
+    }
+    run_offload(options, config, messages)
+    assert offload_lpa_fact_assertion(
+        schema,
+        data_db,
+        LPA_FACT_TABLE,
+        config,
+        backend_api,
+        messages,
+        repo_client,
+        None,
+        offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
+        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+    )

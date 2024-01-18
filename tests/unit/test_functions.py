@@ -159,6 +159,7 @@ def build_mock_offload_operation():
     fake_operation.execute = False
     fake_operation.allow_floating_point_conversions = False
     fake_operation.offload_transport_fetch_size = 100
+    fake_operation.offload_transport_small_table_threshold = 1024 * 1024
     fake_operation.offload_transport_spark_properties = {}
     fake_operation.unicode_string_columns_csv = None
     fake_operation.max_offload_chunk_size = 100 * 1024 * 1024

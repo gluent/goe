@@ -11,6 +11,7 @@ from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
 )
+from goe.offload.offload_transport import OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
@@ -430,12 +431,16 @@ def test_offload_data_oracle_xmltype(config, schema, data_db):
     }
     run_offload(options, config, messages)
 
-    # Offload XMLTYPE (no Query Import).
-    options = {
-        "owner_table": schema + "." + XMLTYPE_TABLE,
-        "offload_transport_method": no_query_import_transport_method(
-            config, no_table_centric_sqoop=True
-        ),
-        "reset_backend_table": True,
-    }
-    run_offload(options, config, messages)
+    if (
+        no_query_import_transport_method(config)
+        != OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
+    ):
+        # Offload XMLTYPE (no Query Import).
+        options = {
+            "owner_table": schema + "." + XMLTYPE_TABLE,
+            "offload_transport_method": no_query_import_transport_method(
+                config, no_table_centric_sqoop=True
+            ),
+            "reset_backend_table": True,
+        }
+        run_offload(options, config, messages)

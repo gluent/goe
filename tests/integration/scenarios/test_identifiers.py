@@ -402,6 +402,9 @@ def test_identifiers_table_name_change_100_0(config, schema, data_db):
     # )
     # assert not backend_table_exists(config, backend_api, messages, data_db, NEW_NAME_DIM1)
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_identifiers_table_name_change_90_10(config, schema, data_db):
     id = "test_identifiers_table_name_change_90_10"
@@ -411,7 +414,6 @@ def test_identifiers_table_name_change_90_10(config, schema, data_db):
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"
     )
-    new_name_fact2_be = convert_backend_identifier_case(config, NEW_NAME_FACT2)
 
     # Setup
     run_setup(
@@ -464,3 +466,6 @@ def test_identifiers_table_name_change_90_10(config, schema, data_db):
     # Uncomment this test after completing GOE-1461
     # run_offload(options, config, messages)
     # assert not backend_table_exists(config, backend_api, messages, data_db, NEW_NAME_DIM1)
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

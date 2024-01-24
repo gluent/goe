@@ -1,36 +1,46 @@
+"""Integration tests for Offload Transport specifics."""
+
 import pytest
 
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
-from goe.offload.backend_api import IMPALA_NOSHUFFLE_HINT
-from goe.offload.column_metadata import (
-    match_table_column,
-    str_list_of_columns,
-)
-from goe.offload import offload_constants
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
     load_db_name,
 )
-from goe.offload.offload_metadata_functions import (
-    INCREMENTAL_PREDICATE_TYPE_LIST,
-    INCREMENTAL_PREDICATE_TYPE_RANGE,
+from goe.offload.offload_messages import VVERBOSE
+from goe.offload.offload_transport import (
+    MISSING_ROWS_IMPORTED_WARNING,
+    OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
+    OFFLOAD_TRANSPORT_METHOD_SQOOP,
+    OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
+    OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
+    POLLING_VALIDATION_TEXT,
+    is_spark_gcloud_batches_available,
+    is_spark_gcloud_dataproc_available,
+    is_livy_available,
+    is_spark_submit_available,
+    is_spark_thrift_available,
+    is_sqoop_available,
+    is_sqoop_by_query_available,
 )
-from goe.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
-from goe.offload.offload_transport import OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
+from goe.offload.offload_transport_rdbms_api import (
+    OFFLOAD_TRANSPORT_SQL_STATISTICS_TITLE,
+)
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
 from tests.integration.scenarios.assertion_functions import (
-    backend_column_exists,
-    backend_table_count,
     backend_table_exists,
-    date_goe_part_column_name,
     load_table_is_compressed,
-    sales_based_fact_assertion,
     standard_dimension_assertion,
-    text_in_events,
+    text_in_log,
 )
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
@@ -39,9 +49,7 @@ from tests.integration.scenarios.scenario_runner import (
 from tests.integration.scenarios.setup_functions import (
     drop_backend_test_load_table,
     drop_backend_test_table,
-    gen_truncate_sales_based_fact_partition_ddls,
     no_query_import_transport_method,
-    partition_columns_if_supported,
 )
 from tests.integration.test_functions import (
     cached_current_options,
@@ -63,6 +71,16 @@ OFFLOAD_NULLS = "STORY_OTRANSP_NULLS"
 LPA_LARGE_NUMS = "STORY_LPA_LG_NUMS"
 RPA_LARGE_NUMS = "STORY_RPA_LG_NUMS"
 LOTS_NUMS = "12345678901234567890123456789012345678"
+POLL_VALIDATION_SLIVY = "STORY_OTRANSP_POLLVAL_SL"
+POLL_VALIDATION_SSUBMIT = "STORY_OTRANSP_POLLVAL_SS"
+POLL_VALIDATION_STHRIFT = "STORY_OTRANSP_POLLVAL_ST"
+SPARK_BATCHES_DIM = "STORY_OTRANSP_SPARK_BATCHES"
+SPARK_DATAPROC_DIM = "STORY_OTRANSP_SPARK_DATAPROC"
+SPARK_SUBMIT_DIM = "STORY_OTRANSP_SPARK_SUBMIT"
+SPARK_THRIFT_DIM = "STORY_OTRANSP_SPARK_THRIFT"
+SPARK_LIVY_DIM = "STORY_OTRANSP_SPARK_LIVY"
+SQOOP_DIM = "STORY_OTRANSP_SQOOP"
+SQOOP_BY_QUERY_DIM = "STORY_OTRANSP_SQOOP_BY_QUERY"
 
 OFFLOAD_TRANSPORT_YARN_QUEUE_NAME = "default"
 
@@ -84,13 +102,68 @@ def data_db(schema, config):
     return data_db
 
 
-def load_table_compression_tests(
-    config, schema, data_db, table_name, frontend_api, messages
+def log_test_marker(messages, test_id):
+    messages.log(test_id, detail=VVERBOSE)
+
+
+def simple_offload_test(
+    config, schema, data_db, table_name, transport_method, messages, test_id
 ):
-    load_db = load_db_name(schema, config)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=test_id)
     backend_api = get_backend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
+        config, messages, trace_action=f"repo_client({test_id})"
+    )
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, table_name),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, table_name
+            ),
+        ],
+    )
+
+    # Offload dimension with transport_method.
+    options = {
+        "owner_table": schema + "." + table_name,
+        "offload_transport_method": transport_method,
+        "reset_backend_table": True,
+        "create_backend_db": True,
+    }
+
+    if transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY:
+        # Setting timeout low to allow any subsequent test to reset config and not re-use session.
+        run_offload(
+            options,
+            config,
+            messages,
+            config_overrides={"offload_transport_livy_idle_session_timeout": 4},
+        )
+    else:
+        run_offload(options, config, messages)
+
+    assert standard_dimension_assertion(
+        config, backend_api, messages, repo_client, schema, data_db, table_name
+    )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def load_table_compression_tests(
+    config, schema, data_db, table_name, transport_method, messages, test_id
+):
+    load_db = load_db_name(schema, config)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=test_id)
+    backend_api = get_backend_testing_api(config, messages)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({test_id})"
     )
     dfs = get_dfs_from_options(config, messages=messages)
     backend_name = convert_backend_identifier_case(config, table_name)
@@ -115,7 +188,7 @@ def load_table_compression_tests(
     # Offload dimension with Query Import WITHOUT load table compression.
     options = {
         "owner_table": schema + "." + table_name,
-        "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+        "offload_transport_method": transport_method,
         "preserve_load_table": True,
         "compress_load_table": False,
         "reset_backend_table": True,
@@ -134,7 +207,7 @@ def load_table_compression_tests(
     # Offload dimension with Query Import WITH load table compression.
     options = {
         "owner_table": schema + "." + table_name,
-        "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+        "offload_transport_method": transport_method,
         "preserve_load_table": True,
         "compress_load_table": True,
         "reset_backend_table": True,
@@ -149,26 +222,237 @@ def load_table_compression_tests(
     )
     assert load_table_is_compressed(data_db, backend_name, config, dfs, messages)
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
-def test_offload_transport_load_table_qi(config, schema, data_db):
-    """Test load table controls when using Query Import."""
-    id = "test_offload_transport_load_table_qi"
-    messages = get_test_messages(config, id)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
-    load_table_compression_tests(
-        config, schema, data_db, LOAD_TABLE_COMP_DIM1, frontend_api, messages
+def offload_transport_polling_validation_tests(
+    config,
+    messages,
+    schema,
+    data_db,
+    table_name,
+    transport_method,
+    test_id,
+    expect_missing_validation_warning=False,
+):
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=test_id)
+    backend_api = get_backend_testing_api(config, messages)
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, table_name),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, table_name
+            ),
+        ],
+    )
+
+    # Offload with polling validation for transported rows.
+    options = {
+        "owner_table": schema + "." + table_name,
+        "offload_transport_method": transport_method,
+        "offload_transport_validation_polling_interval": 1,
+        "reset_backend_table": True,
+        "create_backend_db": True,
+    }
+    log_test_marker(messages, f"{test_id}:1")
+    run_offload(options, config, messages)
+    assert text_in_log(
+        POLLING_VALIDATION_TEXT % "OffloadTransportSqlStatsThread", f"{test_id}:1"
+    )
+
+    # Offload with disabled SQL stats validation.
+    options = {
+        "owner_table": schema + "." + table_name,
+        "offload_transport_method": transport_method,
+        "offload_transport_validation_polling_interval": OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
+        "reset_backend_table": True,
+    }
+    log_test_marker(messages, f"{test_id}:2")
+    run_offload(options, config, messages)
+    assert not text_in_log(OFFLOAD_TRANSPORT_SQL_STATISTICS_TITLE, f"{test_id}:2")
+    assert (
+        text_in_log(MISSING_ROWS_IMPORTED_WARNING, f"{test_id}:2")
+        == expect_missing_validation_warning
     )
 
     # Connections are being left open, explicitly close them.
     frontend_api.close()
 
 
+def test_offload_transport_spark_submit(config, schema, data_db):
+    """Test simple offload with spark-submit."""
+    # We don't need an equivalent for Query Import because most others tests use that method.
+    id = "test_offload_transport_spark_submit"
+    messages = get_test_messages(config, id)
+
+    if not is_spark_submit_available(config, None, messages=messages):
+        messages.log(f"Skipping {id} because spark-submit is not configured")
+        return
+
+    simple_offload_test(
+        config,
+        schema,
+        data_db,
+        SPARK_SUBMIT_DIM,
+        OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
+        messages,
+        id,
+    )
+
+
+def test_offload_transport_dataproc_cluster(config, schema, data_db):
+    """Test simple offload with Dataproc."""
+    # We don't need an equivalent for Query Import because most others tests use that method.
+    id = "test_offload_transport_dataproc_cluster"
+    messages = get_test_messages(config, id)
+
+    if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
+        messages.log(f"Skipping {id} because Dataproc is not configured")
+        return
+
+    simple_offload_test(
+        config,
+        schema,
+        data_db,
+        SPARK_DATAPROC_DIM,
+        OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
+        messages,
+        id,
+    )
+
+
+def test_offload_transport_dataproc_batches(config, schema, data_db):
+    """Test simple offload with Dataproc."""
+    # We don't need an equivalent for Query Import because most others tests use that method.
+    id = "test_offload_transport_dataproc_batches"
+    messages = get_test_messages(config, id)
+
+    if not is_spark_gcloud_batches_available(config, None, messages=messages):
+        messages.log(f"Skipping {id} because Dataproc Batches is not configured")
+        return
+
+    simple_offload_test(
+        config,
+        schema,
+        data_db,
+        SPARK_BATCHES_DIM,
+        OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+        messages,
+        id,
+    )
+
+
+def test_offload_transport_spark_thrift(config, schema, data_db):
+    """Test simple offload with Spark Thriftserver."""
+    # We don't need an equivalent for Query Import because most others tests use that method.
+    id = "test_offload_transport_spark_thrift"
+    messages = get_test_messages(config, id)
+
+    if not is_spark_submit_available(config, None, messages=messages):
+        messages.log(f"Skipping {id} because Spark Thriftserver is not configured")
+        return
+
+    simple_offload_test(
+        config,
+        schema,
+        data_db,
+        SPARK_THRIFT_DIM,
+        OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
+        messages,
+        id,
+    )
+
+
+def test_offload_transport_spark_livy(config, schema, data_db):
+    """Test simple offload with Spark Livy."""
+    # We don't need an equivalent for Query Import because most others tests use that method.
+    id = "test_offload_transport_spark_livy"
+    messages = get_test_messages(config, id)
+
+    if not is_livy_available(config, None, messages=messages):
+        messages.log(f"Skipping {id} because Spark Livy is not configured")
+        return
+
+    simple_offload_test(
+        config,
+        schema,
+        data_db,
+        SPARK_LIVY_DIM,
+        OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
+        messages,
+        id,
+    )
+
+
+def test_offload_transport_sqoop_table(config, schema, data_db):
+    """Test simple offload with table centric Sqoop."""
+    # We don't need an equivalent for Query Import because most others tests use that method.
+    id = "test_offload_transport_sqoop_table"
+    messages = get_test_messages(config, id)
+
+    if not is_sqoop_available(None, config, messages=messages):
+        messages.log(f"Skipping {id} because Sqoop is not configured")
+        return
+
+    simple_offload_test(
+        config,
+        schema,
+        data_db,
+        SQOOP_DIM,
+        OFFLOAD_TRANSPORT_METHOD_SQOOP,
+        messages,
+        id,
+    )
+
+
+def test_offload_transport_sqoop_by_query(config, schema, data_db):
+    """Test simple offload with Sqoop by query."""
+    # We don't need an equivalent for Query Import because most others tests use that method.
+    id = "test_offload_transport_sqoop_by_query"
+    messages = get_test_messages(config, id)
+
+    if not is_sqoop_by_query_available(config, messages=messages):
+        messages.log(f"Skipping {id} because Sqoop is not configured")
+        return
+
+    simple_offload_test(
+        config,
+        schema,
+        data_db,
+        SQOOP_BY_QUERY_DIM,
+        OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
+        messages,
+        id,
+    )
+
+
+def test_offload_transport_load_table_qi(config, schema, data_db):
+    """Test load table controls when using Query Import."""
+    id = "test_offload_transport_load_table_qi"
+    messages = get_test_messages(config, id)
+
+    load_table_compression_tests(
+        config,
+        schema,
+        data_db,
+        LOAD_TABLE_COMP_DIM1,
+        OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+        messages,
+        id,
+    )
+
+
 def test_offload_transport_load_table_no_qi(config, schema, data_db):
     """Test load table controls when using anying other than Query Import."""
     id = "test_offload_transport_load_table_no_qi"
     messages = get_test_messages(config, id)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
     if (
         no_query_import_transport_method(config)
@@ -180,8 +464,75 @@ def test_offload_transport_load_table_no_qi(config, schema, data_db):
         return
 
     load_table_compression_tests(
-        config, schema, data_db, LOAD_TABLE_COMP_DIM2, frontend_api, messages
+        config,
+        schema,
+        data_db,
+        LOAD_TABLE_COMP_DIM2,
+        no_query_import_transport_method(config),
+        messages,
+        id,
     )
 
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+
+def test_offload_transport_polling_validation_spark_submit(config, schema, data_db):
+    """Offload with Spark submit transport method and use polling validation for transported rows."""
+    id = "test_offload_transport_polling_validation_spark_submit"
+    messages = get_test_messages(config, id)
+
+    if not is_spark_submit_available(config, None):
+        messages.log(f"Skipping {id} because spark-submit is not configured")
+        return
+
+    offload_transport_polling_validation_tests(
+        config,
+        messages,
+        schema,
+        data_db,
+        POLL_VALIDATION_SSUBMIT,
+        OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
+        id,
+    )
+
+
+def test_offload_transport_polling_validation_spark_thrift(config, schema, data_db):
+    """Offload with Spark Thriftserver transport method and use polling validation for transported rows."""
+    id = "test_offload_transport_polling_validation_spark_thrift"
+    messages = get_test_messages(config, id)
+
+    if not is_spark_thrift_available(config, None):
+        messages.log(f"Skipping {id} because Spark Thriftserver is not configured")
+        return
+
+    offload_transport_polling_validation_tests(
+        config,
+        messages,
+        schema,
+        data_db,
+        POLL_VALIDATION_STHRIFT,
+        OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
+        id,
+        # Without SQL stats validation we cannot validate staged row count.
+        expect_missing_validation_warning=True,
+    )
+
+
+def test_offload_transport_polling_validation_spark_livy(config, schema, data_db):
+    """Offload with Spark Livy transport method and use polling validation for transported rows."""
+    id = "test_offload_transport_polling_validation_spark_livy"
+    messages = get_test_messages(config, id)
+
+    if not is_livy_available(config, None):
+        messages.log(f"Skipping {id} because Spark Livy is not configured")
+        return
+
+    offload_transport_polling_validation_tests(
+        config,
+        messages,
+        schema,
+        data_db,
+        POLL_VALIDATION_SLIVY,
+        OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
+        id,
+        # Without SQL stats validation we cannot validate staged row count.
+        expect_missing_validation_warning=True,
+    )

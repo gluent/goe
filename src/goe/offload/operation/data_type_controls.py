@@ -17,7 +17,6 @@ from goe.offload.column_metadata import (
     get_column_names,
     match_table_column,
 )
-from goe.offload.offload import OffloadException
 from goe.offload.offload_functions import expand_columns_csv
 from goe.offload.offload_constants import (
     INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
@@ -170,7 +169,7 @@ def offload_source_to_canonical_mappings(
             tab_col.data_type == ORACLE_TYPE_BINARY_FLOAT
             or new_col.data_type == GOE_TYPE_FLOAT
         ):
-            raise OffloadException(
+            raise OffloadDataTypeControlsException(
                 "4 byte binary floating point data cannot be offloaded to this backend system: %s"
                 % tab_col.name
             )

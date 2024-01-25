@@ -16,12 +16,11 @@ from typing import Union
 
 import orjson
 
-from goe.config import config_descriptions, orchestration_defaults
+from goe.config import orchestration_defaults
 from goe.config.config_validation_functions import normalise_size_option
 from goe.filesystem.goe_dfs import (
     get_scheme_from_location_uri,
     OFFLOAD_FS_SCHEME_INHERIT,
-    VALID_OFFLOAD_FS_SCHEMES,
 )
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 
@@ -92,7 +91,6 @@ from goe.offload.offload_validation import (
 from goe.offload.offload_transport import (
     choose_offload_transport_method,
     validate_offload_transport_method,
-    VALID_OFFLOAD_TRANSPORT_METHODS,
 )
 from goe.offload.operation.data_type_controls import (
     DECIMAL_COL_TYPE_SYNTAX_TEMPLATE,
@@ -180,7 +178,7 @@ RETAINING_PARTITITON_FUNCTIONS_MESSAGE_TEXT = (
     "Retaining partition functions from backend target"
 )
 
-# Config that you would expect to be different from one offload to the next
+# Config that you might expect to be different from one offload to the next
 EXPECTED_OFFLOAD_ARGS = [
     "allow_decimal_scale_rounding",
     "allow_floating_point_conversions",
@@ -2664,27 +2662,6 @@ def canonical_to_rdbms_mappings(
     return rdbms_columns
 
 
-def pre_op_checks(
-    check_version, config_options, frontend_api, exc_class=OffloadException
-):
-    if config_options.db_type == DBTYPE_ORACLE:
-        abort, v_goe, v_ora = version_abort(check_version, frontend_api)
-        if abort:
-            raise exc_class(
-                "Mismatch between Oracle component version ("
-                + v_ora
-                + ") and binary version ("
-                + v_goe
-                + ")"
-            )
-
-    if config_options.target != DBTYPE_BIGQUERY:
-        # As of GOE-2334 we only support BigQuery as a target.
-        exc_class(f"Unsupported Offload target: {config_options.target}")
-
-    return True
-
-
 def offload_operation_logic(
     offload_operation,
     offload_source_table,
@@ -2828,15 +2805,25 @@ def offload_table(
     offload_target_table,
     messages,
 ):
-    if not pre_op_checks(
-        offload_operation.ver_check,
-        offload_options,
-        offload_source_table.get_frontend_api(),
-    ):
-        return False
-
     global suppress_stdout_override
     global execution_id
+
+    if offload_options.db_type == DBTYPE_ORACLE:
+        abort, v_goe, v_ora = version_abort(
+            offload_operation.ver_check, offload_source_table.get_frontend_api()
+        )
+        if abort:
+            raise OffloadException(
+                "Mismatch between Oracle component version ("
+                + v_ora
+                + ") and binary version ("
+                + v_goe
+                + ")"
+            )
+
+    if offload_options.target != DBTYPE_BIGQUERY:
+        # As of GOE-2334 we only support BigQuery as a target.
+        OffloadException(f"Unsupported Offload target: {offload_options.target}")
 
     execution_id = messages.get_execution_id()
     suppress_stdout_override = True if messages.verbosity == 3 else False
@@ -3143,10 +3130,6 @@ def get_data_gov_client(
         )
         return data_gov_client
     return None
-
-
-def list_for_option_help(opt_list):
-    return "|".join(opt_list) if opt_list else None
 
 
 def check_posint(option, opt, value):
@@ -3614,248 +3597,3 @@ def get_options_from_list(option_list, usage=None):
     [parser.remove_option(_) for _ in to_remove]
 
     return parser
-
-
-def get_offload_options(opt):
-    """Options applicable to offload only"""
-
-    opt.add_option(
-        "--allow-decimal-scale-rounding",
-        dest="allow_decimal_scale_rounding",
-        default=orchestration_defaults.allow_decimal_scale_rounding_default(),
-        action="store_true",
-        help="Confirm it is acceptable for offload to round decimal places when loading data into a backend system",
-    )
-    opt.add_option(
-        "--allow-floating-point-conversions",
-        dest="allow_floating_point_conversions",
-        default=orchestration_defaults.allow_floating_point_conversions_default(),
-        action="store_true",
-        help="Confirm it is acceptable for offload to convert NaN/Inf values to NULL when loading data into a backend system",
-    )
-    opt.add_option(
-        "--allow-nanosecond-timestamp-columns",
-        dest="allow_nanosecond_timestamp_columns",
-        default=orchestration_defaults.allow_nanosecond_timestamp_columns_default(),
-        action="store_true",
-        help="Confirm it is safe to offload timestamp column with nanosecond capability",
-    )
-    opt.add_option(
-        "--compress-load-table",
-        dest="compress_load_table",
-        action="store_true",
-        default=orchestration_defaults.compress_load_table_default(),
-        help="Compress the contents of the load table during offload",
-    )
-    opt.add_option(
-        "--compute-load-table-stats",
-        dest="compute_load_table_stats",
-        action="store_true",
-        default=orchestration_defaults.compute_load_table_stats_default(),
-        help="Compute statistics on the load table during each offload chunk",
-    )
-    opt.add_option(
-        "--data-sample-percent",
-        dest="data_sample_pct",
-        default=orchestration_defaults.data_sample_pct_default(),
-        help="Sample RDBMS data for columns with no precision/scale properties. 0 = no sampling",
-    )
-    opt.add_option(
-        "--data-sample-parallelism",
-        type=int,
-        dest="data_sample_parallelism",
-        default=orchestration_defaults.data_sample_parallelism_default(),
-        help=config_descriptions.DATA_SAMPLE_PARALLELISM,
-    )
-    opt.add_option(
-        "--not-null-columns",
-        dest="not_null_columns_csv",
-        help="CSV list of columns to offload with a NOT NULL constraint",
-    )
-    opt.add_option(
-        "--offload-predicate-type",
-        dest="ipa_predicate_type",
-        help="Override the default INCREMENTAL_PREDICATE_TYPE for a partitioned table. Used to offload LIST partitioned tables using RANGE logic with --offload-predicate-type=%s or used for specialized cases of Incremental Partition Append and Predicate-Based Offload offloading"
-        % INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
-    )
-    opt.add_option(
-        "--offload-fs-scheme",
-        dest="offload_fs_scheme",
-        default=orchestration_defaults.offload_fs_scheme_default(),
-        help="%s. Filesystem type for Offloaded tables"
-        % list_for_option_help(VALID_OFFLOAD_FS_SCHEMES),
-    )
-    opt.add_option(
-        "--offload-fs-prefix",
-        dest="offload_fs_prefix",
-        help='The path with which to prefix offloaded table paths. Takes precedence over --hdfs-data when --offload-fs-scheme != "inherit"',
-    )
-    opt.add_option(
-        "--offload-fs-container",
-        dest="offload_fs_container",
-        help="A valid bucket name when offloading to cloud storage",
-    )
-    opt.add_option(
-        "--offload-type",
-        dest="offload_type",
-        help="Identifies a range partitioned offload as FULL or INCREMENTAL. FULL dictates that all data is offloaded. INCREMENTAL dictates that data up to an incremental threshold will be offloaded",
-    )
-
-    opt.add_option(
-        "--integer-1-columns",
-        dest="integer_1_columns_csv",
-        help="CSV list of columns to offload as a 1-byte integer (only effective for numeric columns)",
-    )
-    opt.add_option(
-        "--integer-2-columns",
-        dest="integer_2_columns_csv",
-        help="CSV list of columns to offload as a 2-byte integer (only effective for numeric columns)",
-    )
-    opt.add_option(
-        "--integer-4-columns",
-        dest="integer_4_columns_csv",
-        help="CSV list of columns to offload as a 4-byte integer (only effective for numeric columns)",
-    )
-    opt.add_option(
-        "--integer-8-columns",
-        dest="integer_8_columns_csv",
-        help="CSV list of columns to offload as a 8-byte integer (only effective for numeric columns)",
-    )
-    opt.add_option(
-        "--integer-38-columns",
-        dest="integer_38_columns_csv",
-        help="CSV list of columns to offload as a 38 digit integer (only effective for numeric columns)",
-    )
-
-    opt.add_option(
-        "--decimal-columns",
-        dest="decimal_columns_csv_list",
-        action="append",
-        help='CSV list of columns to offload as DECIMAL(p,s) where "p,s" is specified in a paired --decimal-columns-type option. --decimal-columns and --decimal-columns-type allow repeat inclusion for flexible data type specification, for example "--decimal-columns-type=18,2 --decimal-columns=price,cost --decimal-columns-type=6,4 --decimal-columns=location" (only effective for numeric columns)',
-    )
-    opt.add_option(
-        "--decimal-columns-type",
-        dest="decimal_columns_type_list",
-        action="append",
-        help="State the precision and scale of columns listed in a paired --decimal-columns option, "
-        + DECIMAL_COL_TYPE_SYNTAX_TEMPLATE.format(p="38", s="38")
-        + '. e.g. "--decimal-columns-type=18,2"',
-    )
-
-    opt.add_option(
-        "--date-columns",
-        dest="date_columns_csv",
-        help="CSV list of columns to offload as a date (no time element, only effective for date based columns)",
-    )
-
-    opt.add_option(
-        "--unicode-string-columns",
-        dest="unicode_string_columns_csv",
-        help="CSV list of columns to offload as Unicode string (only effective for string columns)",
-    )
-    opt.add_option(
-        "--double-columns",
-        dest="double_columns_csv",
-        help="CSV list of columns to offload as a double-precision floating point number (only effective for numeric columns)",
-    )
-    opt.add_option(
-        "--variable-string-columns",
-        dest="variable_string_columns_csv",
-        help="CSV list of columns to offload as a variable string type (only effective for date based columns)",
-    )
-    opt.add_option(
-        "--timestamp-tz-columns",
-        dest="timestamp_tz_columns_csv",
-        help="CSV list of columns to offload as a time zoned column (only effective for date based columns)",
-    )
-
-    opt.add_option(
-        "--offload-transport-consistent-read",
-        dest="offload_transport_consistent_read",
-        default=orchestration_defaults.offload_transport_consistent_read_default(),
-        help="Parallel data transport tasks should have a consistent point in time when reading RDBMS data",
-    )
-    opt.add_option(
-        "--offload-transport-dsn",
-        dest="offload_transport_dsn",
-        default=orchestration_defaults.offload_transport_dsn_default(),
-        help="DSN override for RDBMS connection during data transport.",
-    )
-    opt.add_option(
-        "--offload-transport-fetch-size",
-        dest="offload_transport_fetch_size",
-        default=orchestration_defaults.offload_transport_fetch_size_default(),
-        help="Number of records to fetch in a single batch from the RDBMS during Offload",
-    )
-    opt.add_option(
-        "--offload-transport-jvm-overrides",
-        dest="offload_transport_jvm_overrides",
-        help='JVM overrides (inserted right after "sqoop import" or "spark-submit")',
-    )
-    opt.add_option(
-        "--offload-transport-method",
-        dest="offload_transport_method",
-        choices=VALID_OFFLOAD_TRANSPORT_METHODS,
-        help=SUPPRESS_HELP,
-    )
-    opt.add_option(
-        "--offload-transport-parallelism",
-        dest="offload_transport_parallelism",
-        default=orchestration_defaults.offload_transport_parallelism_default(),
-        help="Number of slaves to use when transporting data during an Offload.",
-    )
-    opt.add_option(
-        "--offload-transport-queue-name",
-        dest="offload_transport_queue_name",
-        help="Yarn queue name to be used for Offload transport jobs.",
-    )
-    opt.add_option(
-        "--offload-transport-small-table-threshold",
-        dest="offload_transport_small_table_threshold",
-        default=orchestration_defaults.offload_transport_small_table_threshold_default(),
-        help="Threshold above which Query Import is no longer considered the correct offload choice for non-partitioned tables. [\\d.]+[MG] eg. 100M, 0.5G, 1G",
-    )
-    opt.add_option(
-        "--offload-transport-spark-properties",
-        dest="offload_transport_spark_properties",
-        default=orchestration_defaults.offload_transport_spark_properties_default(),
-        help="Override defaults for Spark configuration properties using key/value pairs in JSON format",
-    )
-    opt.add_option(
-        "--offload-transport-validation-polling-interval",
-        dest="offload_transport_validation_polling_interval",
-        default=orchestration_defaults.offload_transport_validation_polling_interval_default(),
-        help="Polling interval in seconds for validation of Spark transport row count. -1 disables retrieval of RDBMS SQL statistics. 0 disables polling resulting in a single capture of SQL statistics. A value greater than 0 polls transport SQL statistics using the specified interval",
-    )
-
-    opt.add_option(
-        "--sqoop-additional-options",
-        dest="sqoop_additional_options",
-        default=orchestration_defaults.sqoop_additional_options_default(),
-        help="Sqoop additional options (added to the end of the command line)",
-    )
-    opt.add_option(
-        "--sqoop-mapreduce-map-memory-mb",
-        dest="sqoop_mapreduce_map_memory_mb",
-        help="Sqoop specific setting for mapreduce.map.memory.mb",
-    )
-    opt.add_option(
-        "--sqoop-mapreduce-map-java-opts",
-        dest="sqoop_mapreduce_map_java_opts",
-        help="Sqoop specific setting for mapreduce.map.java.opts",
-    )
-
-    opt.add_option("--no-verify", dest="verify_row_count", action="store_false")
-    opt.add_option(
-        "--verify",
-        dest="verify_row_count",
-        choices=["minus", "aggregate"],
-        default=orchestration_defaults.verify_row_count_default(),
-    )
-    opt.add_option(
-        "--verify-parallelism",
-        dest="verify_parallelism",
-        type=int,
-        default=orchestration_defaults.verify_parallelism_default(),
-        help=config_descriptions.VERIFY_PARALLELISM,
-    )

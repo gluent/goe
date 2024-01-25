@@ -8,7 +8,6 @@ import re
 
 from goe.goe import (
     get_log_fh_name,
-    get_offload_options,
     get_options,
     init,
     log as offload_log,
@@ -18,10 +17,10 @@ from goe.goe import (
     vverbose,
 )
 from goe.offload.column_metadata import match_table_column
+from goe.offload.offload import get_offload_options
 from goe.offload.offload_constants import DBTYPE_ORACLE
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
-from goe.util.misc_functions import substitute_in_same_case
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )

@@ -243,6 +243,37 @@ FAKE_ORACLE_PARTITIONS = [
     ),
 ]
 
+FAKE_ORACLE_LIST_RANGE_PARTITIONS = [
+    RdbmsPartition.by_name(
+        partition_name="P3",
+        partition_count=1,
+        partition_position=2,
+        subpartition_count=4,
+        subpartition_name=None,
+        subpartition_names=["P3_201201", "P3_201202", "P3_201204", "P3_201205"],
+        subpartition_position=None,
+        high_values_csv=3,
+        high_values_python=(3,),
+        partition_size=1_000_000,
+        num_rows=2,
+        high_values_individual=("3",),
+    ),
+    RdbmsPartition.by_name(
+        partition_name="P4",
+        partition_count=1,
+        partition_position=2,
+        subpartition_count=4,
+        subpartition_name=None,
+        subpartition_names=["P4_201201", "P4_201202", "P4_201204", "P4_201205"],
+        subpartition_position=None,
+        high_values_csv=4,
+        high_values_python=(4,),
+        partition_size=1_000_000,
+        num_rows=2,
+        high_values_individual=("4",),
+    ),
+]
+
 
 def build_mock_options(mock_env: dict):
     assert mock_env
@@ -267,6 +298,7 @@ def build_mock_offload_operation():
 
 
 def build_fake_oracle_table(config, messages) -> OracleSourceTable:
+    """Return a fake OracleSourceTable partitioned by RANGE with 4 partitions."""
     test_table_object = OracleSourceTable(
         "no_user",
         "no_table",
@@ -279,5 +311,17 @@ def build_fake_oracle_table(config, messages) -> OracleSourceTable:
     test_table_object._columns_with_partition_info = FAKE_ORACLE_COLUMNS
     test_table_object._primary_key_columns = ["ID"]
     test_table_object._partitions = FAKE_ORACLE_PARTITIONS
+    test_table_object._subpartitions = None
+    test_table_object._partition_type = "RANGE"
+    test_table_object._subpartition_type = None
     test_table_object._iot_type = None
+    return test_table_object
+
+
+def build_fake_oracle_subpartitioned_table(config, messages) -> OracleSourceTable:
+    """Return a fake OracleSourceTable partitioned by RANGE with 2 partitions, each with 4 subpartitions."""
+    test_table_object = build_fake_oracle_table(config, messages)
+    test_table_object._partition_type = "LIST"
+    test_table_object._subpartition_type = "RANGE"
+    test_table_object._partitions = FAKE_ORACLE_LIST_RANGE_PARTITIONS
     return test_table_object

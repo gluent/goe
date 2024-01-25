@@ -15,15 +15,18 @@ from goe.offload.offload_source_table import OFFLOAD_PARTITION_TYPE_RANGE
 from goe.offload.offload_transport_rdbms_api import (
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION,
 )
 from tests.unit.test_functions import (
     build_mock_options,
     build_fake_oracle_table,
+    build_fake_oracle_subpartitioned_table,
     FAKE_MSSQL_ENV,
     FAKE_NETEZZA_ENV,
     FAKE_ORACLE_ENV,
     FAKE_TERADATA_ENV,
     FAKE_ORACLE_PARTITIONS,
+    FAKE_ORACLE_LIST_RANGE_PARTITIONS,
 )
 
 
@@ -40,6 +43,11 @@ def messages():
 @pytest.fixture
 def fake_oracle_table(oracle_config, messages):
     return build_fake_oracle_table(oracle_config, messages)
+
+
+@pytest.fixture
+def fake_oracle_subpartitioned_table(oracle_config, messages):
+    return build_fake_oracle_subpartitioned_table(oracle_config, messages)
 
 
 def non_connecting_tests(api):
@@ -117,7 +125,7 @@ def offload_partitions_from_rdbms_partitions(rdbms_partitions):
             _.partition_size,
             _.num_rows,
             None,  # common_partition_literal
-            [],  # subpartitions
+            _.subpartition_names,
         )
         for _ in rdbms_partitions
     ]
@@ -184,13 +192,11 @@ def test_get_transport_split_type_oracle_heap(
 
 
 @pytest.mark.parametrize(
-    "parallelism,partition_type,offload_by_subpartition,partition_chunk,expected_split_type,expected_parallelism",
+    "parallelism,partition_chunk,expected_split_type,expected_parallelism",
     [
         # Offload 2 partitions with parallelism of 2.
         (
             2,
-            OFFLOAD_PARTITION_TYPE_RANGE,
-            False,
             offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
             # 2 partitions with parallel 2 should split by partition.
             TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
@@ -199,8 +205,6 @@ def test_get_transport_split_type_oracle_heap(
         # Offload 2 partitions with parallelism of 1.
         (
             1,
-            OFFLOAD_PARTITION_TYPE_RANGE,
-            False,
             offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
             # 2 partitions with parallel 1 should split by partition.
             TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
@@ -209,8 +213,6 @@ def test_get_transport_split_type_oracle_heap(
         # Offload 2 partitions with parallelism of 3.
         (
             3,
-            OFFLOAD_PARTITION_TYPE_RANGE,
-            False,
             offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
             # 2 partitions with parallel 3 should split by ROWID range.
             TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
@@ -219,8 +221,6 @@ def test_get_transport_split_type_oracle_heap(
         # Offload 1 partition with parallelism of 2.
         (
             2,
-            OFFLOAD_PARTITION_TYPE_RANGE,
-            False,
             offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:1]),
             # 1 partitions should split by ROWID range.
             TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
@@ -233,8 +233,6 @@ def test_get_transport_split_type_oracle_partitioned(
     messages,
     fake_oracle_table,
     parallelism,
-    partition_type,
-    offload_by_subpartition,
     partition_chunk,
     expected_split_type,
     expected_parallelism,
@@ -248,12 +246,97 @@ def test_get_transport_split_type_oracle_partitioned(
     )
     rdbms_columns = fake_oracle_table.columns
     predicate_offload_clause = None
+    offload_by_subpartition = False
 
     split_return = api.get_transport_split_type(
         partition_chunk,
         fake_oracle_table,
         parallelism,
-        partition_type,
+        fake_oracle_table.partition_type,
+        rdbms_columns,
+        offload_by_subpartition,
+        predicate_offload_clause,
+    )
+
+    assert isinstance(split_return, tuple)
+    assert split_return[0] == expected_split_type
+    assert split_return[1] == expected_parallelism
+
+
+@pytest.mark.parametrize(
+    "parallelism,partition_chunk,offload_by_subpartition,expected_split_type,expected_parallelism",
+    [
+        # Offload 1 top level partition with parallelism of 2.
+        (
+            2,
+            offload_partitions_from_rdbms_partitions(
+                FAKE_ORACLE_LIST_RANGE_PARTITIONS[:1]
+            ),
+            False,
+            # 4 subpartitions with parallel 2 should split by subpartition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION,
+            2,
+        ),
+        # Offload 1 top level partition with parallelism of 5, greater than 4 subpartitions.
+        (
+            5,
+            offload_partitions_from_rdbms_partitions(
+                FAKE_ORACLE_LIST_RANGE_PARTITIONS[:1]
+            ),
+            False,
+            # 4 subpartitions with parallel 2 should split by subpartition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+            5,
+        ),
+        # Offload 2 top level partitions with parallelism of 2.
+        (
+            2,
+            offload_partitions_from_rdbms_partitions(
+                FAKE_ORACLE_LIST_RANGE_PARTITIONS[:2]
+            ),
+            False,
+            # 2 is enough for top-level partitions, no need to split by subpartition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
+            2,
+        ),
+        # Offload 2 top level partitions with parallelism of 2.
+        (
+            2,
+            offload_partitions_from_rdbms_partitions(
+                FAKE_ORACLE_LIST_RANGE_PARTITIONS[:2]
+            ),
+            True,
+            # 2 is enough for top-level partitions but we asked for subpartition therefore split by subpartition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION,
+            2,
+        ),
+    ],
+)
+def test_get_transport_split_type_oracle_subpartitioned(
+    oracle_config,
+    messages,
+    fake_oracle_subpartitioned_table,
+    parallelism,
+    partition_chunk,
+    offload_by_subpartition,
+    expected_split_type,
+    expected_parallelism,
+):
+    api = offload_transport_rdbms_api_factory(
+        fake_oracle_subpartitioned_table.owner,
+        fake_oracle_subpartitioned_table.table_name,
+        oracle_config,
+        messages,
+        dry_run=True,
+    )
+    rdbms_columns = fake_oracle_subpartitioned_table.columns
+    predicate_offload_clause = None
+
+    split_return = api.get_transport_split_type(
+        partition_chunk,
+        fake_oracle_subpartitioned_table,
+        parallelism,
+        fake_oracle_subpartitioned_table.partition_type,
         rdbms_columns,
         offload_by_subpartition,
         predicate_offload_clause,

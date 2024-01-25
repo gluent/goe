@@ -2132,9 +2132,12 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
         self, schema: str, table_name: str, top_level="LIST", rowdependencies=False
     ) -> list:
         """Create a LIST/RANGE partitioned table with:
-        - a dormant/old subpartition in an unused list 0
-        - several common HWMs across lists 2 & 3
-        - a single HWM that is not present in list 3
+          - a dormant/old subpartition in an unused list 0
+          - several common HWMs across lists 2 & 3
+          - a single HWM that is not present in list 3
+        or a RANGE/RANGE partitioned table:
+          - Top level NUMBER/subpartition DATE
+        or a HASH/RANGE partitioned table
         """
         rowdeps = "%sROWDEPENDENCIES" % ("" if rowdependencies else "NO")
         if top_level.upper() == "HASH":
@@ -2149,6 +2152,30 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                     ,SUBPARTITION P_201206 VALUES LESS THAN (TO_DATE('2012-07-01','YYYY-MM-DD'))
                 )
                 PARTITIONS 2"""
+        elif top_level.upper() == "RANGE":
+            partition_scheme = """PARTITION BY RANGE (channel_id)
+                SUBPARTITION BY RANGE (time_id)
+                (PARTITION %(table)s_C1 VALUES LESS THAN (2)
+                    (SUBPARTITION C0_200001 VALUES LESS THAN (TO_DATE('2000-01-01','YYYY-MM-DD'))
+                    )
+                ,PARTITION %(table)s_C2 VALUES LESS THAN (3)
+                    (SUBPARTITION C2_201201 VALUES LESS THAN (TO_DATE('2012-02-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201202 VALUES LESS THAN (TO_DATE('2012-03-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201203 VALUES LESS THAN (TO_DATE('2012-04-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201204 VALUES LESS THAN (TO_DATE('2012-05-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201205 VALUES LESS THAN (TO_DATE('2012-06-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C2_201206 VALUES LESS THAN (TO_DATE('2012-07-01','YYYY-MM-DD'))
+                    )
+                ,PARTITION %(table)s_C3 VALUES LESS THAN (4)
+                    (SUBPARTITION C3_201201 VALUES LESS THAN (TO_DATE('2012-02-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C3_201202 VALUES LESS THAN (TO_DATE('2012-03-01','YYYY-MM-DD'))
+                    --,SUBPARTITION C3_201203 VALUES LESS THAN (TO_DATE('2012-04-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C3_201204 VALUES LESS THAN (TO_DATE('2012-05-01','YYYY-MM-DD'))
+                    ,SUBPARTITION C3_201205 VALUES LESS THAN (TO_DATE('2012-06-01','YYYY-MM-DD'))
+                    )
+                )""" % {
+                "table": table_name
+            }
         else:
             partition_scheme = """PARTITION BY LIST (channel_id)
                 SUBPARTITION BY RANGE (time_id)

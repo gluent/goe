@@ -119,6 +119,7 @@ clean:
 	cd templates/conf && make clean
 	cd tools/spark-listener && make clean
 	cd target && make clean
+	rm -f goe_[0-9]*.[0-9]*.*.tar.gz
 
 
 .PHONY: python-goe-destroy

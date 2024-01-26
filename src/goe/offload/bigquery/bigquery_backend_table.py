@@ -266,41 +266,6 @@ class BackendBigQueryTable(BackendTableInterface):
     def _gen_synthetic_part_string_granularity_sql_expr(self, column_expr, granularity):
         return "SUBSTR(%s,1,%s)" % (column_expr, granularity)
 
-    def _incremental_update_dedupe_merge_sql_template(self):
-        """SQL template to merge staged Incremental Update delta records into the final BigQuery table."""
-        return dedent(
-            """\
-            MERGE {base_table} {base_alias}
-            USING (
-                    SELECT * EXCEPT(row_rank)
-                    FROM (
-                          SELECT {delta_projection}
-                          ,      {delta_meta_operation}
-                          ,      ROW_NUMBER() OVER (PARTITION BY {key_columns} ORDER BY {meta_hwm} DESC) AS row_rank
-                          FROM   {delta_table}
-                         )
-                    WHERE row_rank = 1
-                  ) {delta_alias}
-            ON  {key_column_match_clause}
-            WHEN NOT MATCHED
-            AND  {delta_alias}.{meta_operation} IN ('I', 'U')
-            THEN
-                INSERT
-                    ( {base_columns} )
-                VALUES
-                    ( {delta_columns_to_insert} )
-            WHEN MATCHED
-            AND  {delta_alias}.{meta_operation} = 'D'
-            THEN
-                DELETE
-            WHEN MATCHED
-            AND  {delta_alias}.{meta_operation} IN ('I', 'U')
-            THEN
-                UPDATE
-                SET    {non_key_column_update_clause}
-        """
-        )
-
     def _partition_key_out_of_range_message(self, column):
         """Return a BigQuery specific warning that data outside the partition range will use _UNPARTITIONED_ partition."""
         base_message = PARTITION_KEY_OUT_OF_RANGE.format(
@@ -530,9 +495,6 @@ class BackendBigQueryTable(BackendTableInterface):
     def get_staging_table_location(self):
         # Use cached location to avoid re-doing same thing multiple times
         return self._load_table_path
-
-    def is_incremental_update_enabled(self):
-        return self._is_cloud_incremental_update_enabled()
 
     def load_final_table(self, sync=None):
         """Copy data from the staged load table into the final BigQuery table"""

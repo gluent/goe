@@ -25,7 +25,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_GOE_OFFLOAD_STATUS_REPORT,
     CAPABILITY_GOE_SCHEMA_SYNC,
     CAPABILITY_HYBRID_SCHEMA,
-    CAPABILITY_INCREMENTAL_UPDATE,
     CAPABILITY_LOW_HIGH_VALUE_FROM_STATS,
     CAPABILITY_NAN,
     CAPABILITY_PARAMETERIZED_QUERIES,
@@ -862,9 +861,6 @@ class FrontendApiInterface(metaclass=ABCMeta):
     def hybrid_schema_supported(self) -> bool:
         """Does GOE create/maintain a hybrid schema for this frontend"""
         return self.is_capability_supported(CAPABILITY_HYBRID_SCHEMA)
-
-    def incremental_update_supported(self) -> bool:
-        return self.is_capability_supported(CAPABILITY_INCREMENTAL_UPDATE)
 
     def low_high_value_from_stats_supported(self) -> bool:
         return self.is_capability_supported(CAPABILITY_LOW_HIGH_VALUE_FROM_STATS)

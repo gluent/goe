@@ -149,7 +149,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._orchestration_config = orchestration_options
 
         self._sql_engine_name = "Backend"
-        # _base_table_name is needed for Incremental Update, we need to do table operations on the actual table
         self._base_table_name = self.table_name
         if existing_backend_api:
             self._db_api = existing_backend_api
@@ -197,7 +196,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         # Cache some attributes in state
         self._columns = None
         self._partition_columns = None
-        self._is_incremental_update_enabled = None
         self._log_profile_after_final_table_load = None
         self._log_profile_after_verification_queries = None
 
@@ -245,8 +243,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                 orchestration_operation, "storage_format", None
             )
         else:
-            # Incremental Update is detached from offload/present and cannot pass
-            # a well formed orchestration_operation object
+            # Some tests cannot (and do not need to) pass a well formed orchestration_operation object.
             self._conv_view_db = None
             self._conv_view_name = None
             self._decimal_padding_digits = None
@@ -264,9 +261,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             offload_operation=orchestration_operation,
             data_gov_client=self._data_gov_client,
         )
-
-        # Details relating to Incremental Update
-        self._is_incremental_update_enabled = None
 
     def __del__(self):
         self.close()
@@ -520,7 +514,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         # Drop state
         self._columns = None
         self._partition_columns = None
-        self._is_incremental_update_enabled = None
         self._db_api.drop_state()
 
     def _execute_query_fetch_all(
@@ -1020,9 +1013,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             )
         return partition_expr
 
-    def _get_cloud_incremental_update_checkpoint_persistence(self):
-        return None
-
     def _get_dfs_client(self):
         if self._dfs_client is None:
             self._dfs_client = get_dfs_from_options(
@@ -1030,19 +1020,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             )
             self._backend_dfs = self._dfs_client.backend_dfs
         return self._dfs_client
-
-    def _incremental_update_dedupe_merge_sql_template_delta_projection_indentation(
-        self,
-    ):
-        # BackendTable returns indentation level appropriate for a MERGE statement, some backends may override.
-        return 14
-
-    def _incremental_update_dedupe_merge_sql_template_delta_update_indentation(self):
-        # BackendTable returns indentation level appropriate for a MERGE statement, some backends may override.
-        return 4
-
-    def _is_cloud_incremental_update_enabled(self):
-        return False
 
     def _is_synthetic_bucket_column(self, column):
         return self._db_api.is_synthetic_bucket_column(column)
@@ -1906,22 +1883,9 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._db_api.drop_view(self._conv_view_db, self._conv_view_name)
 
     def drop_table(self, purge=False):
-        cmds_executed = []
-        if self.is_view():
-            # When incremental update is enabled we need to drop both the view and base table
-            cmds_executed.extend(self._db_api.drop_view(self.db_name, self.table_name))
-            if self.table_name != self._base_table_name:
-                cmds_executed.extend(
-                    self._db_api.drop_table(
-                        self.db_name, self._base_table_name, purge=purge
-                    )
-                )
-        else:
-            cmds_executed.extend(
-                self._db_api.drop_table(
-                    self.db_name, self._base_table_name, purge=purge
-                )
-            )
+        cmds_executed = [
+            self._db_api.drop_table(self.db_name, self._base_table_name, purge=purge),
+        ]
         return cmds_executed
 
     def drop_load_view(self, sync=None):
@@ -1975,9 +1939,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         [
             ['synth_col_name', 'data_type', expr_fn, 'original_pcol_name']
         ]
-
-        WARNING: Do not change the format of the returned structure lightly. This is captured and stored in
-                 Incremental Update metadata so we need to be mindful of backward compatibility.
         """
         pcs = []
 
@@ -2039,13 +2000,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         have wrappers for the sake of wrappers.
         """
         return self._db_api
-
-    def get_base_table_columns(self):
-        return self._db_api.get_columns(self.db_name, self._base_table_name)
-
-    def get_base_table_name(self):
-        """Used in Incremental Update code where the user facings table name may be different to the actual name"""
-        return self._base_table_name
 
     def get_canonical_columns(self):
         """Get canonical columns for the table"""
@@ -2230,14 +2184,6 @@ class BackendTableInterface(metaclass=ABCMeta):
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)
 
-    def _incremental_update_delta_column_cast(self, delta_table_column):
-        """Returns a CAST expression converting a merge source delta column into its final data type.
-        In most cases this is the same as get_final_table_cast() but some backends may override.
-        delta_table_column: A column object
-        """
-        assert isinstance(delta_table_column, ColumnMetadataInterface)
-        return self.get_final_table_cast(delta_table_column)
-
     def is_supported_data_type(self, data_type):
         return self._db_api.is_supported_data_type(data_type)
 
@@ -2372,9 +2318,6 @@ class BackendTableInterface(metaclass=ABCMeta):
     def supported_date_based_partition_granularities(self):
         return self._db_api.supported_date_based_partition_granularities()
 
-    def supported_incremental_update_extraction_methods(self):
-        return self._db_api.supported_incremental_update_extraction_methods()
-
     def table_exists(self):
         return self._db_api.table_exists(self.db_name, self.table_name)
 
@@ -2467,7 +2410,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         rdbms_columns,
         expected_rows,
         staging_columns,
-        incremental_update_extraction=False,
     ):
         """Validate the staged data before we insert it into the final backend table.
         There is scope for this to need a backend specific override but for the time being it is common
@@ -2503,10 +2445,6 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def get_staging_table_location(self):
-        pass
-
-    @abstractmethod
-    def is_incremental_update_enabled(self):
         pass
 
     @abstractmethod
@@ -2619,7 +2557,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         rdbms_columns,
         expected_rows,
         staging_columns,
-        incremental_update_extraction=False,
     ):
         self._offload_step(
             command_steps.STEP_VALIDATE_DATA,
@@ -2628,7 +2565,6 @@ class BackendTableInterface(metaclass=ABCMeta):
                 rdbms_columns,
                 expected_rows,
                 staging_columns,
-                incremental_update_extraction=incremental_update_extraction,
             ),
         )
 
@@ -2726,9 +2662,6 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def goe_udfs_supported(self):
         return self._db_api.goe_udfs_supported()
-
-    def incremental_update_supported(self):
-        return self._db_api.incremental_update_supported()
 
     def nan_supported(self):
         return self._db_api.nan_supported()

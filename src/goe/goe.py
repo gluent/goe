@@ -1783,8 +1783,8 @@ class BaseOperation(object):
     def defaults_for_existing_table(self, messages):
         """Default bucket hash column and datatype mappings from existing table
         This is required for setting up a pre-existing table and is used by
-        incremental partition append and incremental update
-        Pass messages as None to suppress any warnings/notices
+        incremental partition append.
+        Pass messages as None to suppress any warnings/notices.
         """
         existing_metadata = self.get_hybrid_metadata()
 

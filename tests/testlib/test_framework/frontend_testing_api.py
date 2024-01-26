@@ -518,9 +518,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def hybrid_schema_supported(self):
         return self._db_api.hybrid_schema_supported()
 
-    def incremental_update_supported(self) -> bool:
-        return self._db_api.incremental_update_supported()
-
     def lobs_support_minus_operator(self):
         """Oracle has an override for this."""
         return True

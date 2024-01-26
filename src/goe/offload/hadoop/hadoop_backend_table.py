@@ -160,9 +160,6 @@ class BackendHadoopTable(BackendTableInterface):
         else:
             self._avro_schema_hdfs_path = None
 
-        # Details relating to Incremental Update
-        self.is_incremental_update_enabled()
-
     ###########################################################################
     # PRIVATE METHODS
     ###########################################################################
@@ -470,11 +467,6 @@ FROM %s.%s""" % (
                 self._result_cache_db_name, self._orchestration_config
             )
         return self._result_cache_db_hdfs_dir
-
-    def _incremental_update_dedupe_merge_sql_template(self):
-        raise NotImplementedError(
-            self._not_implemented_message("Incremental update merge")
-        )
 
     def _recreate_load_table_dir(self, include_remove=True, include_create=True):
         """Doing this ensure that the staging table directory is owned by the "goe" account
@@ -831,9 +823,6 @@ FROM %s.%s""" % (
 
     def get_staging_table_location(self):
         return self._get_load_table_hdfs_dir()
-
-    def is_incremental_update_enabled(self):
-        return False
 
     def partition_function_requires_granularity(self):
         return False

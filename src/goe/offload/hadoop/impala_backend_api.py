@@ -35,7 +35,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_FS_SCHEME_ABFS,
     CAPABILITY_FS_SCHEME_ADL,
     CAPABILITY_FS_SCHEME_S3A,
-    CAPABILITY_INCREMENTAL_UPDATE,
     CAPABILITY_RANGER,
     CAPABILITY_REFRESH_FUNCTIONS,
     CAPABILITY_SENTRY,
@@ -973,21 +972,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         )
         row = self.execute_query_fetch_one(sql, log_level=VERBOSE)
         return row[0] if row else None
-
-    def incremental_update_supported(self):
-        """The orchestration operations of Incremental Update do work with Data Hub on CDP Public Cloud.
-        However, if Smart Connector is using Data Warehouse then querying the Incremental Update
-        views in the backend throws an exception, because the view contains the delta table which
-        currently has to reside in HDFS.
-        I don't believe we can allow the creation of any Incremental Update objects in case a customer
-        switches Smart Connector to point to Data Warehouse after offloading.
-        For now we will crudely stop all public versions of CDP using Incremental Update
-        by prevention based on the use of the HiveServer2 HTTP protocol for connections.
-        """
-        if self.is_capability_supported(CAPABILITY_INCREMENTAL_UPDATE):
-            return not self._connection_options.hiveserver2_http_transport
-        else:
-            return False
 
     def is_nan_sql_expression(self, column_expr):
         """is_nan for Impala"""

@@ -1920,9 +1920,6 @@ class BackendSnowflakeApi(BackendApiInterface):
         """No partitioning on Snowflake"""
         return None
 
-    def supported_incremental_update_extraction_methods(self):
-        return []
-
     def supported_partition_function_parameter_data_types(self):
         """No partitioning on Snowflake"""
         return None

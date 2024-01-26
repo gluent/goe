@@ -10,6 +10,7 @@ from goe.offload.factory.offload_transport_factory import (
 )
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport import (
+    is_query_import_available,
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
@@ -61,6 +62,7 @@ def oracle_table(config, messages):
     )
     test_table_object._columns = FRONTEND_COLUMNS
     test_table_object._columns_with_partition_info = FRONTEND_COLUMNS
+    test_table_object._size_in_bytes = 1024 * 1024
     return test_table_object
 
 
@@ -76,6 +78,23 @@ def test_query_import_construct(config, messages, oracle_table):
         config,
         messages,
         fake_dfs_client,
+    )
+
+
+@pytest.mark.parametrize(
+    "small_table_threshold,expected_status",
+    [(0, False), (1, False), (999_999_999_999, True)],
+)
+def test_is_query_import_available(
+    config, messages, oracle_table, small_table_threshold, expected_status
+):
+    fake_operation = build_mock_offload_operation()
+    fake_operation.offload_transport_small_table_threshold = small_table_threshold
+    assert (
+        is_query_import_available(
+            fake_operation, config, oracle_table, messages=messages
+        )
+        == expected_status
     )
 
 

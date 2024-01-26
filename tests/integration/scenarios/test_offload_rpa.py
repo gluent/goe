@@ -1,11 +1,6 @@
 import pytest
 
-from goe.offload.offload_constants import (
-    DBTYPE_HIVE,
-    DBTYPE_IMPALA,
-    DBTYPE_ORACLE,
-    DBTYPE_TERADATA,
-)
+from goe.offload import offload_constants
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
@@ -95,7 +90,10 @@ def offload_range_ipa_standard_tests(
     upper_value = None
     udf = different_udf = None
     synthetic_partition_column_expected = False
-    if config.target in [DBTYPE_IMPALA, DBTYPE_HIVE]:
+    if config.target in [
+        offload_constants.DBTYPE_IMPALA,
+        offload_constants.DBTYPE_HIVE,
+    ]:
         synthetic_partition_column_expected = True
     synthetic_partition_digits = different_partition_digits = None
 
@@ -111,7 +109,10 @@ def offload_range_ipa_standard_tests(
         different_granularity = "1000"
         lower_value = test_constants.SALES_BASED_FACT_PRE_HV_NUM
         upper_value = test_constants.SALES_BASED_FACT_HV_7_NUM
-        if config.target in [DBTYPE_IMPALA, DBTYPE_HIVE]:
+        if config.target in [
+            offload_constants.DBTYPE_IMPALA,
+            offload_constants.DBTYPE_HIVE,
+        ]:
             synthetic_partition_digits = 15
             different_partition_digits = 16
     elif part_key_type == canonical_string:
@@ -148,7 +149,7 @@ def offload_range_ipa_standard_tests(
 
     offload3_opt_name = "partition_names_csv"
     offload3_opt_value = "P3"
-    if config.db_type == DBTYPE_TERADATA:
+    if config.db_type == offload_constants.DBTYPE_TERADATA:
         offload3_opt_name = less_than_option
         offload3_opt_value = hv_3
 
@@ -183,7 +184,7 @@ def offload_range_ipa_standard_tests(
     )
 
     # Non-Execute RANGE offload of empty partition.
-    if config.db_type != DBTYPE_TERADATA:
+    if config.db_type != offload_constants.DBTYPE_TERADATA:
         # Empty partitions do not exist on Teradata.
         options = {
             "owner_table": schema + "." + table_name,
@@ -276,7 +277,7 @@ def offload_range_ipa_standard_tests(
     )
 
     # RANGE Offload With Multiple Partition Names - Expect Exception.
-    if config.db_type != DBTYPE_TERADATA:
+    if config.db_type != offload_constants.DBTYPE_TERADATA:
         # TODO Partition names are unpredicatble on Teradata, for MVP we'll not test this.
         options = {
             "owner_table": schema + "." + table_name,
@@ -322,7 +323,7 @@ def offload_range_ipa_standard_tests(
         options,
         config,
         messages,
-        expected_status=bool(config.db_type == DBTYPE_TERADATA),
+        expected_status=bool(config.db_type == offload_constants.DBTYPE_TERADATA),
     )
 
     assert sales_based_fact_assertion(
@@ -425,7 +426,7 @@ def test_offload_rpa_int8(config, schema, data_db):
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
-    if config.db_type == DBTYPE_TERADATA:
+    if config.db_type == offload_constants.DBTYPE_TERADATA:
         # TODO We need our numeric sales table to be partitioned on YYYYMM for assertions to make sense.
         #      Didn't have time to rectify this for Teradata MVP.
         messages.log(
@@ -501,7 +502,7 @@ def test_offload_rpa_string(config, schema, data_db):
     id = "test_offload_rpa_string"
     messages = get_test_messages(config, id)
 
-    if config.db_type == DBTYPE_TERADATA:
+    if config.db_type == offload_constants.DBTYPE_TERADATA:
         # TODO In Teradata MVP we don't support string based partitioning.
         messages.log(f"Skipping {id} for system/type: {config.db_type}")
         return
@@ -530,7 +531,7 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
     id = "test_offload_rpa_nvarchar2"
     messages = get_test_messages(config, id)
 
-    if config.db_type != DBTYPE_ORACLE:
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
         messages.log(
             f"Skipping {id} for system/type: {config.db_type}/{ORACLE_TYPE_NVARCHAR2}"
         )
@@ -569,7 +570,7 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
-    if config.db_type == DBTYPE_TERADATA:
+    if config.db_type == offload_constants.DBTYPE_TERADATA:
         # TODO We need our numeric sales table to be partitioned on YYYYMM for assertions to make sense.
         #      Didn't have time to rectify this for Teradata MVP.
         messages.log(
@@ -640,7 +641,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
     id = "test_offload_rpa_alpha"
     messages = get_test_messages(config, id)
 
-    if config.db_type != DBTYPE_ORACLE:
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
         messages.log(f"Skipping {id} for system/type: {config.db_type}/AlphaString")
         return
 
@@ -736,7 +737,7 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
     id = "test_offload_rpa_empty_partitions"
     messages = get_test_messages(config, id)
 
-    if config.db_type == DBTYPE_TERADATA:
+    if config.db_type == offload_constants.DBTYPE_TERADATA:
         messages.log(
             f"Skipping {id} for {config.db_type} because empty partitions are not a thing"
         )

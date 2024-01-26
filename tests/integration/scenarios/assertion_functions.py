@@ -1,5 +1,10 @@
+import os
+import re
 from typing import TYPE_CHECKING
 
+from pyarrow import parquet
+
+from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.column_metadata import SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE
 from goe.offload.offload_constants import (
     DBTYPE_ORACLE,
@@ -16,6 +21,7 @@ from goe.offload.offload_metadata_functions import (
 )
 from goe.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING
 from goe.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP
+from goe.util.misc_functions import get_temp_path
 
 from tests.integration.scenarios.scenario_constants import (
     OFFLOAD_PATTERN_100_0,
@@ -333,6 +339,69 @@ def check_metadata(
     return True
 
 
+def avro_file_is_compressed(dfs_client, staged_file):
+    """Return True or False as appropriate
+    Beware, this function:
+      1) pulls the entire file into memory so only use on small test tables
+      2) Should really decode Avro and find a way to parse metadata in the file -
+         I cheated and just look for the codec name as a string inside another string
+    """
+    staged_content = dfs_client.read(staged_file)
+    m = re.search(rb"avro.codec.*(snappy|deflate)", staged_content)
+    return bool(m)
+
+
+def parquet_file_is_compressed(dfs_client, staged_file):
+    """Return True or False as appropriate
+    Beware, this function:
+      1) Pulls the entire file across to local storage so only use on small test tables
+    """
+    tmp_file = get_temp_path(suffix=".parquet")
+    dfs_client.copy_to_local(staged_file, tmp_file)
+    try:
+        parquet_file = parquet.ParquetFile(tmp_file)
+        metadata = parquet_file.metadata.to_dict()
+        compression = [
+            _["compression"].upper() for _ in metadata["row_groups"].pop()["columns"]
+        ]
+        return bool("SNAPPY" in compression)
+    finally:
+        os.remove(tmp_file)
+
+
+def load_table_is_compressed(db_name, table_name, config, dfs_client, messages):
+    """Return True or False as appropriate
+    Beware, this function:
+      1) Picks the first file in the HDFS directory so don't mix and match codecs
+      2) Pulls the entire file into memory therefore only use on small test tables
+      3) Should really decode Avro and find a way to parse metadata in the file -
+         I cheated and just look for the codec name as a string inside another string.
+    """
+    messages.log(
+        "load_table_is_compressed(%s, %s)" % (db_name, table_name), detail=VERBOSE
+    )
+    backend_table = backend_table_factory(
+        db_name, table_name, config.target, config, messages
+    )
+    path = backend_table.get_staging_table_location()
+    files = [_ for _ in dfs_client.list_dir(path) if _ and _[0] != "."]
+    messages.log("files: %s" % str(files), detail=VERBOSE)
+
+    # Filter files for format extension
+    new_files = [_ for _ in files if _.endswith(config.offload_staging_format.lower())]
+    if not new_files:
+        # No files matching by extension so instead throw out known non-transport files. This is because Spark
+        # on CDH does not append a file extension, so we assume Avro because that's all we support
+        new_files = [_ for _ in files if not _.endswith("_SUCCESS")]
+    assert new_files
+
+    staged_file = new_files.pop()
+    if staged_file.endswith(".parquet") or staged_file.endswith(".parq"):
+        return parquet_file_is_compressed(dfs_client, staged_file)
+    else:
+        return avro_file_is_compressed(dfs_client, staged_file)
+
+
 def offload_rowsource_split_type_assertion(
     messages: "OffloadMessages", story_id: str, split_type: str
 ):
@@ -394,6 +463,7 @@ def standard_dimension_assertion(
     story_id="",
     split_type=None,
     partition_functions=None,
+    bucket_column=None,
 ) -> bool:
     data_db = backend_db or data_db
     backend_table = backend_table or table_name
@@ -409,6 +479,7 @@ def standard_dimension_assertion(
         hadoop_owner=data_db,
         hadoop_table=backend_table,
         offload_partition_functions=partition_functions,
+        offload_bucket_column=bucket_column,
     ):
         messages.log("check_metadata(%s.%s) == False" % (schema, table_name))
         return False

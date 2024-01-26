@@ -1,7 +1,5 @@
-import numpy
 import pytest
 
-from goe.offload.column_metadata import ColumnPartitionInfo
 from goe.offload.bigquery.bigquery_backend_table import BackendBigQueryTable
 from goe.offload.offload_constants import DBTYPE_BIGQUERY
 from goe.offload.offload_messages import OffloadMessages
@@ -10,35 +8,13 @@ from goe.offload.offload_source_data import (
     OFFLOAD_SOURCE_CLIENT_OFFLOAD,
     OffloadSourcePartitions,
 )
-from goe.offload.offload_source_table import RdbmsPartition
-from goe.offload.oracle.oracle_column import (
-    OracleColumn,
-    ORACLE_TYPE_DATE,
-    ORACLE_TYPE_NUMBER,
-)
-from goe.offload.oracle.oracle_offload_source_table import OracleSourceTable
 
 from tests.unit.test_functions import (
     build_mock_options,
     build_mock_offload_operation,
+    build_fake_oracle_table,
     FAKE_ORACLE_BQ_ENV,
 )
-
-FRONTEND_COLUMNS = [
-    OracleColumn(
-        "PROD_ID",
-        ORACLE_TYPE_NUMBER,
-        data_precision=4,
-        data_scale=0,
-    ),
-    OracleColumn(
-        "TIME_ID",
-        ORACLE_TYPE_DATE,
-        partition_info=ColumnPartitionInfo(
-            position=0, range_end=None, range_start=None, source_column_name=None
-        ),
-    ),
-]
 
 
 @pytest.fixture(scope="module")
@@ -53,83 +29,7 @@ def messages():
 
 @pytest.fixture
 def oracle_table(config, messages):
-    test_table_object = OracleSourceTable(
-        "no_user",
-        "no_table",
-        config,
-        messages,
-        dry_run=True,
-        do_not_connect=True,
-    )
-    test_table_object._columns = FRONTEND_COLUMNS
-    test_table_object._columns_with_partition_info = FRONTEND_COLUMNS
-    test_table_object._partitions = [
-        RdbmsPartition.by_name(
-            partition_name="P4",
-            partition_count=1,
-            partition_position=8,
-            subpartition_count=0,
-            subpartition_name=None,
-            subpartition_names=None,
-            subpartition_position=None,
-            high_values_csv="TO_DATE(' 2012-04-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
-            high_values_python=(numpy.datetime64("2012-04-01T00:00:00"),),
-            partition_size=1_000_000,
-            num_rows=2,
-            high_values_individual=(
-                "TO_DATE(' 2012-08-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
-            ),
-        ),
-        RdbmsPartition.by_name(
-            partition_name="P3",
-            partition_count=1,
-            partition_position=3,
-            subpartition_count=0,
-            subpartition_name=None,
-            subpartition_names=None,
-            subpartition_position=None,
-            high_values_csv="TO_DATE(' 2012-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
-            high_values_python=(numpy.datetime64("2012-03-01T00:00:00"),),
-            partition_size=1_000_000,
-            num_rows=2,
-            high_values_individual=(
-                "TO_DATE(' 2012-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
-            ),
-        ),
-        RdbmsPartition.by_name(
-            partition_name="P2",
-            partition_count=1,
-            partition_position=2,
-            subpartition_count=0,
-            subpartition_name=None,
-            subpartition_names=None,
-            subpartition_position=None,
-            high_values_csv="TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
-            high_values_python=(numpy.datetime64("2012-02-01T00:00:00"),),
-            partition_size=1_000_000,
-            num_rows=2,
-            high_values_individual=(
-                "TO_DATE(' 2012-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
-            ),
-        ),
-        RdbmsPartition.by_name(
-            partition_name="P1",
-            partition_count=1,
-            partition_position=1,
-            subpartition_count=0,
-            subpartition_name=None,
-            subpartition_names=None,
-            subpartition_position=None,
-            high_values_csv="TO_DATE(' 2012-01-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
-            high_values_python=(numpy.datetime64("2012-01-01T00:00:00"),),
-            partition_size=1_000_000,
-            num_rows=2,
-            high_values_individual=(
-                "TO_DATE(' 2012-01-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')",
-            ),
-        ),
-    ]
-    return test_table_object
+    return build_fake_oracle_table(config, messages)
 
 
 @pytest.fixture(scope="module")

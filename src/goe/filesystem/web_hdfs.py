@@ -77,7 +77,7 @@ class GOEWebHdfsClient(KerberosClient):
     :param url: URL to namenode.
     :param verify: True: Check the host's cert against known certs, False: Don't check the cert. 'Path': Check the cert against 'Path'.
     :param user: User for insecure connection
-    :param \*\*kwargs: Keyword arguments passed to the default `KerberosClient` constructor. Use this for mutual_auth & max_concurrency
+    :param \\*\\*kwargs: Keyword arguments passed to the default `KerberosClient` constructor. Use this for mutual_auth & max_concurrency
       max_concurrency defaults to 1 and that appears a suitable default. KerberosClient() queues/retries if required.
     """
 

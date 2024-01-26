@@ -463,6 +463,7 @@ def standard_dimension_assertion(
     story_id="",
     split_type=None,
     partition_functions=None,
+    bucket_column=None,
 ) -> bool:
     data_db = backend_db or data_db
     backend_table = backend_table or table_name
@@ -478,6 +479,7 @@ def standard_dimension_assertion(
         hadoop_owner=data_db,
         hadoop_table=backend_table,
         offload_partition_functions=partition_functions,
+        offload_bucket_column=bucket_column,
     ):
         messages.log("check_metadata(%s.%s) == False" % (schema, table_name))
         return False

@@ -49,7 +49,6 @@ class OffloadTransportStandardSqoop(OffloadTransport):
         offload_options,
         messages,
         dfs_client,
-        incremental_update_extractor,
         rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
@@ -62,7 +61,6 @@ class OffloadTransportStandardSqoop(OffloadTransport):
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
 
@@ -447,7 +445,6 @@ class OffloadTransportSqoopByQuery(OffloadTransportStandardSqoop):
         offload_options,
         messages,
         dfs_client,
-        incremental_update_extractor,
         rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
@@ -459,7 +456,6 @@ class OffloadTransportSqoopByQuery(OffloadTransportStandardSqoop):
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
 

@@ -46,7 +46,6 @@ class OffloadStagingFileInterface(metaclass=ABCMeta):
         canonical_columns,
         binary_data_as_base64,
         messages,
-        staging_incremental_update=False,
         dry_run=False,
     ):
         assert load_db_name and table_name

@@ -15,7 +15,6 @@ def offload_transport_rdbms_api_factory(
     rdbms_table_name,
     offload_options,
     messages,
-    incremental_update_extractor=None,
     dry_run=False,
 ):
     """Constructs and returns an appropriate data transport object based on source RDBMS"""
@@ -29,7 +28,6 @@ def offload_transport_rdbms_api_factory(
             rdbms_table_name,
             offload_options,
             messages,
-            incremental_update_extractor=incremental_update_extractor,
             dry_run=dry_run,
         )
     elif offload_options.db_type == DBTYPE_MSSQL:

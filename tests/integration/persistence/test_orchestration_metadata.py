@@ -1,6 +1,8 @@
 """ TestOrchestrationMetadata: Unit test library to test orchestration metadata API for configured frontend.
 """
 
+import copy
+
 from unittest import TestCase, main
 
 from goe.orchestration import orchestration_constants
@@ -22,7 +24,7 @@ from tests.testlib.test_framework.test_functions import (
 )
 
 
-UNITTEST_METADATA_NAME = "UNITTEST_METADATA_SALES"
+UNITTEST_METADATA_NAME = "INTTEST_METADATA_SALES"
 
 METADATA_DICT_TEST_DEFAULTS = {
     "OFFLOAD_TYPE": "FULL",
@@ -167,12 +169,12 @@ class TestOrchestrationMetadata(TestCase):
                 test_metadata[k] = METADATA_DICT_TEST_DEFAULTS[k]
         return test_metadata
 
-    def _gen_test_metadata(self):
+    def _gen_test_metadata(self, table_name_suffix=None):
         source_metadata = OrchestrationMetadata(EXAMPLE_SALES_METADATA_DICT)
         new_metadata_dict = self._convert_to_test_metadata(
             source_metadata.as_dict(),
             self.db,
-            UNITTEST_METADATA_NAME,
+            UNITTEST_METADATA_NAME + (table_name_suffix or ""),
         )
         return OrchestrationMetadata(
             new_metadata_dict, connection_options=self.config, messages=self.messages
@@ -204,7 +206,7 @@ class TestOrchestrationMetadata(TestCase):
         # Retrieve the metadata again and confirm all attributes are the same as those we saved.
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
-            UNITTEST_METADATA_NAME,
+            test_metadata.offloaded_table,
             client=client,
             connection_options=connection_options,
             messages=messages,
@@ -222,7 +224,7 @@ class TestOrchestrationMetadata(TestCase):
         test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
-            UNITTEST_METADATA_NAME,
+            test_metadata.offloaded_table,
             client=client,
             connection_options=connection_options,
             messages=messages,
@@ -242,7 +244,7 @@ class TestOrchestrationMetadata(TestCase):
         test_metadata.save()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
-            UNITTEST_METADATA_NAME,
+            test_metadata.offloaded_table,
             client=client,
             connection_options=connection_options,
             messages=messages,
@@ -258,7 +260,7 @@ class TestOrchestrationMetadata(TestCase):
         test_metadata.drop()
         saved_metadata = OrchestrationMetadata.from_name(
             self.db,
-            UNITTEST_METADATA_NAME,
+            test_metadata.offloaded_table,
             client=client,
             connection_options=connection_options,
             messages=messages,
@@ -276,21 +278,23 @@ class TestOrchestrationMetadata(TestCase):
             self.messages,
             trace_action="repo_client(test_metadata_by_client)",
         )
-        self._test_metadata(self._gen_test_metadata(), client=client)
+        self._test_metadata(
+            self._gen_test_metadata(table_name_suffix="_CLI"), client=client
+        )
 
     def test_metadata_direct(self):
         """Tests we can interact with OrchestrationMetadata without creating a client.
         Ensures each call is able to create its own RDBMS connection.
         """
         self._test_metadata(
-            self._gen_test_metadata(),
+            self._gen_test_metadata(table_name_suffix="_DIR"),
             connection_options=self.config,
             messages=self.messages,
         )
 
     def test_generated_metadata(self):
         """Test that the metadata prepared with gen_offload_metadata goes through the standard test flow."""
-        source_metadata = self._gen_test_metadata()
+        source_metadata = self._gen_test_metadata(table_name_suffix="_GM")
         source_metadata_dict = source_metadata.as_dict()
         # Generate a new metadata object using constructor attributes
         attributes = {

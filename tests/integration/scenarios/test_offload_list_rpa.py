@@ -85,9 +85,9 @@ def offload_list_as_range_ipa_standard_story_tests(
     part_key_type,
     partition_function=None,
 ):
-    if partition_function and not backend_api.gluent_partition_functions_supported():
+    if partition_function and not backend_api.goe_partition_functions_supported():
         messages.log(
-            "Skipping offload_rpa partition function tests due to gluent_partition_functions_supported() == False"
+            f"Skipping {table_name} partition function tests due to goe_partition_functions_supported() == False"
         )
         return
 
@@ -481,7 +481,7 @@ def test_offload_list_rpa_varchar(config, schema, data_db):
     offload_list_as_range_ipa_standard_story_tests(
         schema,
         data_db,
-        LPA_FACT_TABLE_NUM,
+        LPA_FACT_TABLE_STR,
         config,
         backend_api,
         frontend_api,
@@ -512,7 +512,7 @@ def test_offload_list_rpa_num_udf(config, schema, data_db):
         frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
             schema,
             LPA_FACT_TABLE_NUM_UDF,
-            part_key_type=ORACLE_TYPE_VARCHAR2,
+            part_key_type=ORACLE_TYPE_NUMBER,
             default_partition=True,
             out_of_sequence=True,
         ),

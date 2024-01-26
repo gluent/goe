@@ -8,19 +8,15 @@ import re
 
 from goe.goe import (
     get_log_fh_name,
-    get_options,
-    init,
     log as offload_log,
     normal,
-    OFFLOAD_OP_NAME,
     verbose,
     vverbose,
 )
 from goe.offload.column_metadata import match_table_column
-from goe.offload.offload import get_offload_options
 from goe.offload.offload_constants import DBTYPE_ORACLE
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
-from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
+from goe.offload.offload_messages import OffloadMessages, VERBOSE
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )
@@ -37,16 +33,6 @@ def get_backend_db_table_name_from_metadata(hybrid_schema, hybrid_view, repo_cli
         hybrid_metadata
     ), f"Missing hybrid metadata for: {hybrid_schema}.{hybrid_view}"
     return hybrid_metadata.backend_owner, hybrid_metadata.backend_table
-
-
-def get_backend_columns_for_hybrid_view(
-    hybrid_schema, hybrid_view, backend_api, repo_client
-):
-    backend_db, backend_table = get_backend_db_table_name_from_metadata(
-        hybrid_schema, hybrid_view, repo_client
-    )
-    backend_columns = backend_api.get_columns(backend_db, backend_table)
-    return backend_columns
 
 
 def get_backend_testing_api(config, messages, no_caching=True):
@@ -103,31 +89,6 @@ def get_line_from_log(search_text, search_from_text="") -> str:
     return matches[0] if matches else None
 
 
-def get_orchestration_options_object(
-    operation_name=OFFLOAD_OP_NAME,
-    log_path=None,
-    verbose=None,
-    vverbose=None,
-    execute=True,
-    force=True,
-):
-    if operation_name == OFFLOAD_OP_NAME:
-        tmp_opt = get_options(operation_name=OFFLOAD_OP_NAME)
-        get_offload_options(tmp_opt)
-    else:
-        raise NotImplementedError("Unknown operation_name: %s" % operation_name)
-
-    # Use [] as we don't want to parse the args passed in to test
-    orchestration_options, _ = tmp_opt.parse_args([])
-    init(orchestration_options)
-    orchestration_options.log_path = log_path
-    orchestration_options.verbose = verbose
-    orchestration_options.vverbose = vverbose
-    orchestration_options.execute = execute
-    orchestration_options.force = force
-    return orchestration_options
-
-
 def get_test_set_sql_path(directory_name, db_type=None):
     db_type = db_type or DBTYPE_ORACLE
     return f"test_sets/{directory_name}/sql/{db_type}"
@@ -150,103 +111,6 @@ def goe_wide_max_columns(frontend_api, backend_api_or_count):
 def log(line: str, detail: int = normal, ansi_code=None):
     """Write log entry but without Redis interaction."""
     offload_log(line, detail=detail, ansi_code=ansi_code, redis_publish=False)
-
-
-def minus_column_spec_count(
-    owner_a,
-    table_name_a,
-    owner_b,
-    table_name_b,
-    desc,
-    cursor=None,
-    frontend_api=None,
-    log_diffs_if_non_zero=False,
-):
-    """Check that all columns are of the same spec when comparing table A and table B (likely a Hybrid View).
-    Requires either a cursor (legacy) or FrontendApi.
-    """
-
-    def exec_sql(sql, fetch_all=False):
-        if cursor:
-            return (
-                cursor.execute(sql).fetchall()
-                if fetch_all
-                else cursor.execute(sql).fetchone()
-            )
-        else:
-            return (
-                frontend_api.execute_query_fetch_all(sql)
-                if fetch_all
-                else frontend_api.execute_query_fetch_one(sql)
-            )
-
-    def column_spec_oracle_sql(owner, table_name):
-        tab_col_sql_template = """SELECT data_type, CASE WHEN data_type LIKE 'TIMESTAMP%%' THEN NULL else data_length
-                               END AS data_length, data_precision, data_scale FROM dba_tab_columns WHERE owner = '{}'
-                               AND table_name = '{}'"""
-        q = tab_col_sql_template.format(owner.upper(), table_name.upper())
-        return q
-
-    assert cursor or frontend_api
-    q1 = column_spec_oracle_sql(owner_a.upper(), table_name_a.upper())
-    q2 = column_spec_oracle_sql(owner_b.upper(), table_name_b.upper())
-    q = "SELECT COUNT(*) FROM (%s MINUS %s)" % (q1, q2)
-    row_count = exec_sql(q)[0]
-    if row_count != 0 and log_diffs_if_non_zero:
-        log("column_spec_a: {}".format(exec_sql(q1, fetch_all=True)), detail=verbose)
-        log("column_spec_b: {}".format(exec_sql(q2, fetch_all=True)), detail=verbose)
-
-    return row_count
-
-
-def normalise_test_pass_options(opt_object):
-    """Hardcode default passwords if not supplied"""
-    if not opt_object.test_pass:
-        opt_object.test_pass = opt_object.test_user
-
-
-def test_passes_filter(test_name, test_name_re, test_options, known_failure_blacklist):
-    """Returns whether to run this test based on the filter regexp and blacklist.
-    Slightly complex logic because we only want to log blacklisted skips if they would have otherwise run.
-    """
-    if test_options.run_blacklist_only:
-        return test_name in known_failure_blacklist and test_name_re.search(test_name)
-    elif test_name_re.search(test_name):
-        m = re.search(r"(.*)_pq\d$", test_name)
-        if m is not None:
-            test_name = m.group(1)
-        if test_name.lower() in [_.lower() for _ in known_failure_blacklist]:
-            log(test_name + ": skipping blacklisted test")
-            return False
-        return True
-    return False
-
-
-def table_minus_row_count(
-    frontend_api,
-    owner_a,
-    table_name_a,
-    owner_b,
-    table_name_b,
-    column=None,
-    parallel=0,
-    where_clause=None,
-    tz=None,
-):
-    """Duplicate of story_assertion_functions table_minus_row_count() but frontend_api based."""
-    if not column:
-        if frontend_api.lobs_support_minus_operator():
-            column = "*"
-        else:
-            column = frontend_api.lob_safe_table_projection(owner_a, table_name_a)
-    where_clause = where_clause or ""
-    q1 = "SELECT %s FROM %s.%s %s" % (column, owner_a, table_name_a, where_clause)
-    q2 = "SELECT %s FROM %s.%s %s" % (column, owner_b, table_name_b, where_clause)
-    q = "SELECT COUNT(*) FROM (%s MINUS %s)" % (q1, q2)
-    query_options = frontend_api.test_time_zone_query_option(tz) if tz else {}
-    return frontend_api.execute_query_fetch_one(
-        q, query_options=query_options, log_level=VVERBOSE
-    )[0]
 
 
 def test_data_host_compare_no_hybrid_schema(

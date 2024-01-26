@@ -6,7 +6,6 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 import logging
 import os
-import re
 import time
 from urllib.parse import urlparse
 
@@ -314,14 +313,6 @@ class GOEDfs(object, metaclass=ABCMeta):
     @abstractmethod
     def list_dir(self, dfs_path):
         """Return a list of file/directory names within dfs_path"""
-        pass
-
-    @abstractmethod
-    def list_snapshottable_dirs(self):
-        pass
-
-    @abstractmethod
-    def list_snapshots(self, snapshottable_dir):
         pass
 
     ###########################################################################

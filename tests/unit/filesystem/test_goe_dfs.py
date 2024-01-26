@@ -98,18 +98,6 @@ class TestGOEDfs(TestCase):
         if listing:
             self.assertIsInstance(listing, list)
 
-    def _test_list_snapshots(self):
-        try:
-            self.api.list_snapshots(self.some_dir)
-        except NotImplementedError:
-            pass
-
-    def _test_list_snapshottable_dirs(self):
-        try:
-            self.api.list_snapshottable_dirs()
-        except NotImplementedError:
-            pass
-
     def _test_mkdir(self):
         self.api.mkdir(self.some_dir)
 
@@ -254,8 +242,6 @@ class TestGOEDfs(TestCase):
         self._test_copy_to_local()
         self._test_delete()
         self._test_list_dir()
-        self._test_list_snapshottable_dirs()
-        self._test_list_snapshots()
         self._test_mkdir()
         self._test_read()
         self._test_rename()

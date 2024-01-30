@@ -515,9 +515,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def goe_schema_sync_supported(self) -> bool:
         return self._db_api.goe_schema_sync_supported()
 
-    def hybrid_schema_supported(self):
-        return self._db_api.hybrid_schema_supported()
-
     def lobs_support_minus_operator(self):
         """Oracle has an override for this."""
         return True

@@ -3034,9 +3034,6 @@ def offload_table(
     )
     offload_operation.reset_hybrid_metadata(offload_options.execute, new_metadata)
 
-    if offload_source_table.hybrid_schema_supported():
-        raise OffloadException("Hybrid Schema is no longer supported")
-
     if offload_operation.verify_row_count:
         if rows_offloaded != 0:
             # Only run verification if data has been transferred

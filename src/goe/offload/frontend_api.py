@@ -858,10 +858,6 @@ class FrontendApiInterface(metaclass=ABCMeta):
     def goe_schema_sync_supported(self) -> bool:
         return self.is_capability_supported(CAPABILITY_GOE_SCHEMA_SYNC)
 
-    def hybrid_schema_supported(self) -> bool:
-        """Does GOE create/maintain a hybrid schema for this frontend"""
-        return self.is_capability_supported(CAPABILITY_HYBRID_SCHEMA)
-
     def low_high_value_from_stats_supported(self) -> bool:
         return self.is_capability_supported(CAPABILITY_LOW_HIGH_VALUE_FROM_STATS)
 

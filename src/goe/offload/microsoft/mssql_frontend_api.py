@@ -28,7 +28,6 @@ from goe.offload.microsoft.mssql_column import MSSQL_TYPE_VARCHAR, MSSQLColumn
 from goe.offload.microsoft.synapse_literal import SynapseLiteral
 from goe.offload.offload_constants import MSSQL_FRONTEND_CAPABILITIES
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
-from goe.offload.offload_source_table import HYBRID_ALL_OBJECTS
 from goe.orchestration.execution_id import ExecutionId
 
 logger = logging.getLogger(__name__)

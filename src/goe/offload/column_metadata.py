@@ -710,30 +710,3 @@ class CanonicalColumn(ColumnMetadataInterface):
     def is_time_zone_based(self):
         """Does the column contain time zone data"""
         return bool(self.data_type == GOE_TYPE_TIMESTAMP_TZ)
-
-    def estimate_hybrid_schema_byte_size(self):
-        """Returns an estimate of the Hybrid Schema byte size of a canonical column based on the data type.
-        Used for sampling backend stats. This is used when sampling backend data to generate hybrid
-        schema stats. Originally it referenced backend data types with Oracle byte sizes. It was hard to
-        decide on the best place for this logic and the CanonicalColumn class felt like the best place.
-        If a data type based default makes no sense then None is returned and the calling code will have
-        to do something else, such as select MAX(LENGTH(col)) from the table.
-        Some of the byte sizes came from HiveTableStats._get_col_oracle_length()
-        """
-        if self.data_type in CANONICAL_TYPE_BYTE_LENGTHS:
-            byte_size = CANONICAL_TYPE_BYTE_LENGTHS[self.data_type]
-        elif self.data_type == GOE_TYPE_DECIMAL:
-            if self.data_precision:
-                byte_size = math.ceil(self.data_precision / 2)
-            else:
-                byte_size = 4
-            byte_size = 1
-        elif self.data_type == GOE_TYPE_DATE:
-            byte_size = 7
-        elif self.data_type == GOE_TYPE_TIMESTAMP:
-            byte_size = 11
-        elif self.data_type == GOE_TYPE_TIMESTAMP_TZ:
-            byte_size = 13
-        else:
-            byte_size = None
-        return byte_size

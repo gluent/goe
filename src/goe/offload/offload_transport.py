@@ -657,14 +657,12 @@ class OffloadTransport(object, metaclass=ABCMeta):
         offload_options,
         messages,
         dfs_client,
-        incremental_update_extractor,
         rdbms_columns_override=None,
     ):
         # not decided how to deal with offload_options, below is a temporary measure
         self._offload_options = offload_options
         self._messages = messages
         self._dfs_client = dfs_client
-        self._incremental_update_extractor = incremental_update_extractor
         self._backend_dfs = self._dfs_client.backend_dfs
         self._dry_run = bool(not offload_options.execute)
         # Details of the source of the offload
@@ -742,7 +740,6 @@ class OffloadTransport(object, metaclass=ABCMeta):
                 and self._target_table.transport_binary_data_in_base64()
             ),
             messages,
-            staging_incremental_update=self._staging_incremental_update(),
             dry_run=self._dry_run,
         )
 
@@ -751,7 +748,6 @@ class OffloadTransport(object, metaclass=ABCMeta):
             self._rdbms_table_name,
             self._offload_options,
             self._messages,
-            self._incremental_update_extractor,
             dry_run=self._dry_run,
         )
 
@@ -898,9 +894,6 @@ class OffloadTransport(object, metaclass=ABCMeta):
             silent=bool(self._offload_options.suppress_stdout),
             no_log_items=no_log_items,
         )
-
-    def _staging_incremental_update(self):
-        return bool(self._incremental_update_extractor)
 
     def _refresh_rdbms_action(self):
         self._rdbms_action = self._rdbms_api.generate_transport_action()
@@ -1358,7 +1351,6 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
         offload_options,
         messages,
         dfs_client,
-        incremental_update_extractor,
         rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
@@ -1369,7 +1361,6 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
         self._OffloadTransportSqlStatsThread = None
@@ -1820,7 +1811,6 @@ class OffloadTransportSparkThrift(OffloadTransportSpark):
         offload_options,
         messages,
         dfs_client,
-        incremental_update_extractor,
         rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
@@ -1832,7 +1822,6 @@ class OffloadTransportSparkThrift(OffloadTransportSpark):
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
         assert (
@@ -2220,7 +2209,6 @@ class OffloadTransportSparkSubmit(OffloadTransportSpark):
         offload_options,
         messages,
         dfs_client,
-        incremental_update_extractor,
         rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
@@ -2232,7 +2220,6 @@ class OffloadTransportSparkSubmit(OffloadTransportSpark):
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
         # For spark-submit we need to pass compression in as a config to the driver program
@@ -2584,7 +2571,6 @@ class OffloadTransportQueryImport(OffloadTransport):
         offload_options,
         messages,
         dfs_client,
-        incremental_update_extractor,
         rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
@@ -2596,7 +2582,6 @@ class OffloadTransportQueryImport(OffloadTransport):
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
         self._offload_transport_parallelism = 1
@@ -2650,37 +2635,26 @@ class OffloadTransportQueryImport(OffloadTransport):
             convert_expressions_on_rdbms_side=self._rdbms_api.convert_query_import_expressions_on_rdbms_side()
         )
 
-        if self._incremental_update_extractor:
-            # The source query needs to be an incremental update extraction query
-            (
-                source_query,
-                source_binds,
-            ) = self._incremental_update_extractor.extract_sql_and_binds(
-                including=False
+        sql_projection = self._sql_projection_from_offload_query_expression_list(
+            colexpressions, colnames
+        )
+        table_name = ('"%s"."%s"' % (self._rdbms_owner, self._rdbms_table_name)).upper()
+        if partition_chunk:
+            split_row_source_by = self._get_transport_split_type(partition_chunk)
+            row_source = self._get_transport_row_source_query(
+                split_row_source_by, partition_chunk
             )
+            source_query = "SELECT %s\nFROM (%s)" % (sql_projection, row_source)
         else:
-            sql_projection = self._sql_projection_from_offload_query_expression_list(
-                colexpressions, colnames
+            source_query = "SELECT %s\nFROM   %s" % (sql_projection, table_name)
+        if self._rdbms_offload_predicate:
+            source_query += (
+                "\nWHERE (%s)"
+                % self._rdbms_table.predicate_to_where_clause(
+                    self._rdbms_offload_predicate
+                )
             )
-            table_name = (
-                '"%s"."%s"' % (self._rdbms_owner, self._rdbms_table_name)
-            ).upper()
-            if partition_chunk:
-                split_row_source_by = self._get_transport_split_type(partition_chunk)
-                row_source = self._get_transport_row_source_query(
-                    split_row_source_by, partition_chunk
-                )
-                source_query = "SELECT %s\nFROM (%s)" % (sql_projection, row_source)
-            else:
-                source_query = "SELECT %s\nFROM   %s" % (sql_projection, table_name)
-            if self._rdbms_offload_predicate:
-                source_query += (
-                    "\nWHERE (%s)"
-                    % self._rdbms_table.predicate_to_where_clause(
-                        self._rdbms_offload_predicate
-                    )
-                )
-            source_binds = None
+        source_binds = None
 
         self._refresh_rdbms_action()
         rows_imported = None

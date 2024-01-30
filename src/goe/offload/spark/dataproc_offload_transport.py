@@ -37,7 +37,6 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         offload_options,
         messages,
         dfs_client,
-        incremental_update_extractor,
         rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
@@ -49,7 +48,6 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
         # For spark-submit we need to pass compression in as a config to the driver program

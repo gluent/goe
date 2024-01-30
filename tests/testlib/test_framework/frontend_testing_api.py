@@ -515,12 +515,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def goe_schema_sync_supported(self) -> bool:
         return self._db_api.goe_schema_sync_supported()
 
-    def hybrid_schema_supported(self):
-        return self._db_api.hybrid_schema_supported()
-
-    def incremental_update_supported(self) -> bool:
-        return self._db_api.incremental_update_supported()
-
     def lobs_support_minus_operator(self):
         """Oracle has an override for this."""
         return True
@@ -562,13 +556,13 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
             f"table_minus_row_count: {schema1}.{table_name1} vs {schema2}.{table_name2}",
             detail=VERBOSE,
         )
-        q1 = f"SELECT %s FROM %s.%s %s" % (
+        q1 = "SELECT %s FROM %s.%s %s" % (
             projection,
             schema1,
             table_name1,
             where_clause,
         )
-        q2 = f"SELECT %s FROM %s.%s %s" % (
+        q2 = "SELECT %s FROM %s.%s %s" % (
             projection,
             schema2,
             table_name2,

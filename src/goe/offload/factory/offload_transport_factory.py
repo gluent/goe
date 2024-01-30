@@ -23,7 +23,6 @@ def offload_transport_factory(
     offload_options,
     messages,
     dfs_client,
-    incremental_update_extractor=None,
     rdbms_columns_override=None,
 ):
     """Constructs and returns an appropriate data transport object based on user inputs and RDBMS table"""
@@ -40,7 +39,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SQOOP:
@@ -58,7 +56,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY:
@@ -76,7 +73,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT:
@@ -92,7 +88,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT:
@@ -108,7 +103,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD:
@@ -127,7 +121,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD:
@@ -145,7 +138,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY:
@@ -161,7 +153,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            incremental_update_extractor,
             rdbms_columns_override=rdbms_columns_override,
         )
     else:

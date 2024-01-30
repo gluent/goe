@@ -62,7 +62,6 @@ class OffloadTransportTeradataApi(OffloadTransportRdbmsApiInterface):
         rdbms_table_name,
         offload_options,
         messages,
-        incremental_update_extractor=None,
         dry_run=False,
     ):
         super().__init__(
@@ -70,7 +69,6 @@ class OffloadTransportTeradataApi(OffloadTransportRdbmsApiInterface):
             rdbms_table_name,
             offload_options,
             messages,
-            incremental_update_extractor=incremental_update_extractor,
             dry_run=dry_run,
         )
         self.debug(
@@ -397,9 +395,6 @@ class OffloadTransportTeradataApi(OffloadTransportRdbmsApiInterface):
             return partition_filter
 
         assert partition_by_prm in self._transport_row_source_query_split_methods
-        assert (
-            not self._incremental_update_extractor
-        ), "Incremental Update is not supported for Teradata Offload Transport"
 
         owner_table = '"%s"."%s"' % (self._rdbms_owner, self._rdbms_table_name)
         rdbms_pk_cols = rdbms_table.get_primary_key_columns()

@@ -50,7 +50,6 @@ class OffloadTransportRdbmsApiInterface(metaclass=ABCMeta):
         rdbms_table_name,
         offload_options,
         messages,
-        incremental_update_extractor=None,
         dry_run=False,
     ):
         self._rdbms_owner = rdbms_owner
@@ -58,7 +57,6 @@ class OffloadTransportRdbmsApiInterface(metaclass=ABCMeta):
         self._offload_options = offload_options
         self._messages = messages
         self._dry_run = dry_run
-        self._incremental_update_extractor = incremental_update_extractor
         self._offload_transport_dsn = offload_options.offload_transport_dsn
         self._rdbms_adm_dsn = offload_options.rdbms_dsn
         self._offload_transport_rdbms_session_parameters = (

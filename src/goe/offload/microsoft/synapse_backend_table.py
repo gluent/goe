@@ -8,7 +8,6 @@
 
 import logging
 import os
-from textwrap import dedent
 
 from goe.data_governance.hadoop_data_governance import (
     data_governance_register_new_table_step,
@@ -29,7 +28,6 @@ from goe.offload.microsoft.synapse_column import (
     SYNAPSE_TYPE_TIME,
     SYNAPSE_TYPE_VARBINARY,
 )
-from goe.offload.microsoft.synapse_backend_api import synapse_collation_clause
 from goe.offload.microsoft import synapse_predicate
 from goe.offload.column_metadata import ColumnMetadataInterface
 from goe.offload.backend_table import BackendTableInterface
@@ -48,7 +46,6 @@ from goe.offload.staging.parquet.parquet_column import (
 )
 from goe.offload.hadoop.hadoop_backend_table import COMPUTE_LOAD_TABLE_STATS_LOG_TEXT
 from goe.offload.offload_constants import OFFLOAD_STATS_METHOD_NONE
-from goe.util import exception_trigger
 
 ###############################################################################
 # CONSTANTS
@@ -177,7 +174,7 @@ class BackendSynapseTable(BackendTableInterface):
 
         return self._db_api.gen_insert_select_sql_text(
             self.db_name,
-            self._base_table_name,
+            self.table_name,
             self._load_db_name,
             self._load_table_name,
             select_expr_tuples=select_expr_tuples,
@@ -222,153 +219,6 @@ class BackendSynapseTable(BackendTableInterface):
         raise NotImplementedError(
             self._not_implemented_message("Synthetic partitioning")
         )
-
-    def _incremental_update_delta_column_cast(self, delta_table_column):
-        """Returns a CAST expression converting a merge source delta column into it's final data type.
-        Synapse specific override in order to add any COLLATE clause.
-        """
-        assert isinstance(delta_table_column, ColumnMetadataInterface)
-        return self.get_final_table_cast(delta_table_column) + synapse_collation_clause(
-            delta_table_column
-        )
-
-    def _incremental_update_dedupe_merge_sql_template(self):
-        """SQL templates to merge staged Incremental Update delta records into the final Synapse table using
-        a temporary table and INSERT, UPDATE and DELETE commands.
-        This was done because:
-            1) MERGE is only compatible with DISTRIBUTION=HASH tables and we also support ROUND_ROBIN.
-            2) When testing with 50 million delta records this technique was approx 50% faster than MERGE.
-        The temporary table is HEAP because many staging columns are expected to be VARCHAR(MAX).
-        Flow:
-            1) Create temporary table containing de-duped delta changes. We have our client set AUTOCOMMIT=ON.
-              DDL requires this.
-            2) Begin a transaction. We can do this even with AUTOCOMMIT=ON.
-               https://docs.microsoft.com/en-us/sql/t-sql/language-elements/transactions-sql-data-warehouse?view=aps-pdw-2016-au7#arguments
-               "Explicit transactions are allowed when AUTOCOMMIT is ON."
-            3) INSERT/UPDATE/DELETE constructed to mimic the MATCHED/NOT MATCHED blocks of MERGE.
-            4) Commit the transaction.
-            5) Drop the temporary delta table.
-        """
-        create_temp_table = dedent(
-            """\
-            CREATE TABLE #{delta_alias}
-            WITH (DISTRIBUTION = ROUND_ROBIN, HEAP)
-            AS
-            SELECT {delta_columns_to_insert},{meta_operation}
-            FROM (
-                  SELECT {delta_projection}
-                  ,      {meta_operation}
-                  ,      ROW_NUMBER() OVER (PARTITION BY {key_columns} ORDER BY {meta_hwm} DESC) AS row_rank
-                  FROM   {delta_table}
-                  ) {delta_alias}
-            WHERE row_rank = 1
-            """
-        )
-        txn_begin = "BEGIN TRANSACTION"
-        insert_template = (
-            dedent(
-                """\
-            INSERT INTO {base_table}
-            SELECT {delta_columns_to_insert}
-            FROM   #{delta_alias} {delta_alias}
-            WHERE  {meta_operation} IN ('I', 'U')
-            AND NOT EXISTS (SELECT 1 FROM {base_table} {base_alias} WHERE {key_column_match_clause})
-            """
-            ),
-            exception_trigger.INCREMENTAL_MERGE_POST_INSERT,
-        )
-        update_template = (
-            dedent(
-                """\
-            UPDATE {base_alias}
-            SET    {non_key_column_update_clause}
-            FROM   {base_table} {base_alias}
-            INNER JOIN #{delta_alias} {delta_alias} ON {key_column_match_clause}
-            WHERE  {delta_alias}.{meta_operation} IN ('I', 'U')
-            """
-            ),
-            exception_trigger.INCREMENTAL_MERGE_POST_UPDATE,
-        )
-        delete_template = (
-            dedent(
-                """\
-            DELETE {base_alias}
-            FROM   {base_table} {base_alias}
-            INNER JOIN #{delta_alias} {delta_alias} ON {key_column_match_clause}
-            WHERE  {delta_alias}.{meta_operation} = 'D'
-            """
-            ),
-            exception_trigger.INCREMENTAL_MERGE_POST_DELETE,
-        )
-        txn_end = "COMMIT"
-        drop_temp_table = dedent(
-            """\
-            DROP TABLE #{delta_alias}
-            """
-        )
-
-        return [
-            create_temp_table,
-            txn_begin,
-            insert_template,
-            update_template,
-            delete_template,
-            txn_end,
-            drop_temp_table,
-        ]
-
-        # Original MERGE code below for future reference
-        # """ SQL template to merge staged Incremental Update delta records into the final Synapse table.
-        #     Note (true as of 2021-11-10):
-        #         MERGE is currently in preview for Azure Synapse Analytics.
-        #     Also note:
-        #         https://docs.microsoft.com/en-us/sql/t-sql/statements/merge-transact-sql?view=sql-server-ver15#remarks
-        #         The MERGE statement requires a semicolon (;) as a statement terminator. Error 10713 is raised when
-        #         a MERGE statement is run without the terminator.
-        #     Therefore SQL statement below is terminated with ; to avoid:
-        #         [SQL Server]Parse error at line: 10, column: 1: Incorrect syntax near ')'. (103010) (SQLExecDirectW)
-        #     Also note:
-        #         MERGE only supports DISTRIBUTION = HASH tables, GOE also supports ROUND_ROBIN.
-        # """
-        # return dedent("""\
-        #     MERGE INTO {base_table} {base_alias}
-        #     USING (
-        #             SELECT {delta_columns_to_insert}
-        #             ,      {delta_alias}.{meta_operation}
-        #             FROM (
-        #                   SELECT {delta_projection}
-        #                   ,      {delta_meta_operation} AS {meta_operation}
-        #                   ,      ROW_NUMBER() OVER (PARTITION BY {key_columns} ORDER BY {meta_hwm} DESC) AS row_rank
-        #                   FROM   {delta_table}
-        #                  ) {delta_alias}
-        #             WHERE row_rank = 1
-        #           ) {delta_alias}
-        #     ON  {key_column_match_clause}
-        #     WHEN NOT MATCHED
-        #     AND  {delta_alias}.{meta_operation} IN ('I', 'U')
-        #     THEN
-        #         INSERT
-        #             ( {base_columns} )
-        #         VALUES
-        #             ( {delta_columns_to_insert} )
-        #     WHEN MATCHED
-        #     AND  {delta_alias}.{meta_operation} = 'D'
-        #     THEN
-        #         DELETE
-        #     WHEN MATCHED
-        #     AND  {delta_alias}.{meta_operation} IN ('I', 'U')
-        #     THEN
-        #         UPDATE
-        #         SET    {non_key_column_update_clause};
-        #     """)
-
-    def _incremental_update_dedupe_merge_sql_template_delta_projection_indentation(
-        self,
-    ):
-        return 6
-
-    def _incremental_update_dedupe_merge_sql_template_delta_update_indentation(self):
-        return 0
 
     def _staging_to_backend_cast(
         self, rdbms_column, backend_column, staging_column
@@ -634,16 +484,13 @@ class BackendSynapseTable(BackendTableInterface):
         # Use cached location to avoid re-doing same thing multiple times
         return self._load_table_path
 
-    def is_incremental_update_enabled(self):
-        return self._is_cloud_incremental_update_enabled()
-
     def load_final_table(self, sync=None):
         """Copy data from the staged load table into the final Synapse table"""
         self._debug(
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )
@@ -674,7 +521,7 @@ class BackendSynapseTable(BackendTableInterface):
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )

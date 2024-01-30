@@ -1588,9 +1588,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" % {
             PART_COL_GRANULARITY_DAY,
         ]
 
-    def supported_incremental_update_extraction_methods(self):
-        return []
-
     def supported_partition_function_parameter_data_types(self):
         return [HADOOP_TYPE_DECIMAL, HADOOP_TYPE_BIGINT, HADOOP_TYPE_STRING]
 

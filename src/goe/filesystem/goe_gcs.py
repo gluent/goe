@@ -240,14 +240,6 @@ class GOEGcs(GOEDfs):
             # Tag the scheme & bucket back on the front of listing results
             return [self.gen_uri(scheme, container, _) for _ in blob_names]
 
-    def list_snapshottable_dirs(self):
-        raise NotImplementedError(
-            "list_snapshottable_dirs() not implemented for GOEGcs"
-        )
-
-    def list_snapshots(self, snapshottable_dir):
-        raise NotImplementedError("list_snapshots() not implemented for GOEGcs")
-
     def mkdir(self, dfs_path):
         """No mkdir on GCS"""
         pass

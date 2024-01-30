@@ -27,7 +27,6 @@ from goe.offload.frontend_api import (
 )
 from goe.offload.offload_constants import TERADATA_FRONTEND_CAPABILITIES
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
-from goe.offload.offload_source_table import HYBRID_ALL_OBJECTS
 from goe.offload.teradata.teradata_column import (
     TERADATA_TYPE_VARCHAR,
     TeradataColumn,

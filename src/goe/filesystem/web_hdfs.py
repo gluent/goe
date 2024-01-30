@@ -77,7 +77,7 @@ class GOEWebHdfsClient(KerberosClient):
     :param url: URL to namenode.
     :param verify: True: Check the host's cert against known certs, False: Don't check the cert. 'Path': Check the cert against 'Path'.
     :param user: User for insecure connection
-    :param \*\*kwargs: Keyword arguments passed to the default `KerberosClient` constructor. Use this for mutual_auth & max_concurrency
+    :param \\*\\*kwargs: Keyword arguments passed to the default `KerberosClient` constructor. Use this for mutual_auth & max_concurrency
       max_concurrency defaults to 1 and that appears a suitable default. KerberosClient() queues/retries if required.
     """
 
@@ -491,18 +491,3 @@ class WebHdfs(GOEDfs):
             return [os.path.join(dfs_path, _) for _ in self._hdfs.list(dfs_path)]
         else:
             return None
-
-    def list_snapshottable_dirs(self):
-        """It is not possible to do this via WebHDFS, hence we throw an exception"""
-        logger.debug("list_snapshottable_dirs()")
-        raise NotImplementedError("list_snapshottable_dirs not implemented for WebHDFS")
-
-    def list_snapshots(self, snapshottable_dir):
-        """It is not possible to do this via WebHDFS, hence we throw an exception"""
-        logger.debug("list_snapshots()")
-        raise NotImplementedError("list_snapshots not implemented for WebHDFS")
-
-    def create_snapshot(self, snapshot_path, sudo_prefix=None):
-        """It is not possible to do this via WebHDFS, hence we throw an exception"""
-        logger.debug("create_snapshot()")
-        raise NotImplementedError("create_snapshot not implemented for WebHDFS")

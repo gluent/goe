@@ -6,7 +6,6 @@
 from datetime import datetime
 from getpass import getuser
 import logging
-import os
 from os.path import basename, exists as file_exists
 import re
 import subprocess
@@ -524,45 +523,3 @@ class CliHdfs(GOEDfs):
             rm_cmd = ["rm", "-f", local_temp_file]
             returncode, output = self._run_cmd(rm_cmd)
             self._check_returncode(returncode, output)
-
-    def list_snapshottable_dirs(self):
-        logger.info("list_snapshottable_dirs()")
-        cmd = self._ssh(self._ssh_user, self._hdfs_host) + [
-            "hdfs",
-            "lsSnapshottableDir",
-        ]
-        returncode, output = self._run_cmd(cmd, force_run=True)
-        self._check_returncode(returncode, output)
-        return [
-            _[_.find(b"/") :].strip().decode() for _ in output if self._valid_ls_line(_)
-        ]
-
-    def list_snapshots(self, snapshottable_dir):
-        """uses existing methods to list snapshots in a snapshottable directory"""
-        logger.info("list_snapshots(%s)" % snapshottable_dir)
-        snapshot_dir = os.path.join(snapshottable_dir, ".snapshot")
-        if not self.stat(snapshot_dir):
-            return []
-        return self.list_dir(snapshot_dir)
-
-    def create_snapshot(self, snapshot_path, sudo_prefix=None):
-        """run a simple hdfs command to create a HDFS snapshot
-        sudo_prefix can be used to prefix the command with a sudo wrapper
-        returns command output in case calling process wants to log it
-        """
-        logger.debug("create_snapshot()")
-        sudo_prefix = sudo_prefix or []
-        if isinstance(sudo_prefix, str):
-            # turn the string in to a list of args
-            if self.command_contains_injection_concerns(sudo_prefix):
-                raise GOEDfsException("Malformed command prefix: %s" % sudo_prefix)
-            sudo_prefix = sudo_prefix.split()
-        assert isinstance(sudo_prefix, (list, tuple))
-        cmd = (
-            self._ssh(self._ssh_user, self._hdfs_host)
-            + sudo_prefix
-            + ["hdfs", "dfs", "-createSnapshot", snapshot_path]
-        )
-        returncode, output = self._run_cmd(cmd, force_run=True)
-        self._check_returncode(returncode, output)
-        return output

@@ -137,7 +137,7 @@ class BackendSnowflakeTable(BackendTableInterface):
             from_object_override = None
             return self._db_api.gen_insert_select_sql_text(
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_view_db_name,
                 self._load_table_name,
                 select_expr_tuples=select_expr_tuples,
@@ -150,7 +150,7 @@ class BackendSnowflakeTable(BackendTableInterface):
             from_object_override = self._format_staging_object_name()
             return self._db_api.gen_copy_into_sql_text(
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 from_object_clause=from_object_override,
                 select_expr_tuples=select_expr_tuples,
                 filter_clauses=filter_clauses,
@@ -249,42 +249,6 @@ class BackendSnowflakeTable(BackendTableInterface):
     def _gen_synthetic_part_string_granularity_sql_expr(self, column_name, granularity):
         raise NotImplementedError(
             self._not_implemented_message("Synthetic partitioning")
-        )
-
-    def _incremental_update_dedupe_merge_sql_template(self):
-        """SQL template to merge staged Incremental Update delta records into the final Snowflake table."""
-        return dedent(
-            """\
-            MERGE INTO {base_table} {base_alias}
-            USING (
-                    SELECT {base_columns}
-                    ,      {meta_operation}
-                    FROM (
-                          SELECT {delta_projection}
-                          ,      {delta_meta_operation} AS {meta_operation}
-                          ,      ROW_NUMBER() OVER (PARTITION BY {key_columns} ORDER BY {meta_hwm} DESC) AS row_rank
-                          FROM   {delta_table}
-                         )
-                    WHERE row_rank = 1
-                  ) {delta_alias}
-            ON  {key_column_match_clause}
-            WHEN NOT MATCHED
-            AND  {delta_alias}.{meta_operation} IN ('I', 'U')
-            THEN
-                INSERT
-                    ( {base_columns} )
-                VALUES
-                    ( {delta_columns_to_insert} )
-            WHEN MATCHED
-            AND  {delta_alias}.{meta_operation} = 'D'
-            THEN
-                DELETE
-            WHEN MATCHED
-            AND  {delta_alias}.{meta_operation} IN ('I', 'U')
-            THEN
-                UPDATE
-                SET    {non_key_column_update_clause}
-        """
         )
 
     def _offload_fs_container_override(self):
@@ -582,16 +546,13 @@ class BackendSnowflakeTable(BackendTableInterface):
         # Use cached location to avoid re-doing same thing multiple times
         return self._load_table_path
 
-    def is_incremental_update_enabled(self):
-        return self._is_cloud_incremental_update_enabled()
-
     def load_final_table(self, sync=None):
         """Copy data from the staged load table into the final Snowflake table"""
         self._debug(
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )
@@ -622,7 +583,7 @@ class BackendSnowflakeTable(BackendTableInterface):
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_view_db_name,
                 self._load_table_name,
             )

@@ -32,7 +32,6 @@ class OffloadTransportMSSQLApi(OffloadTransportRdbmsApiInterface):
         rdbms_table_name,
         offload_options,
         messages,
-        incremental_update_extractor=None,
         dry_run=False,
     ):
         super().__init__(
@@ -40,7 +39,6 @@ class OffloadTransportMSSQLApi(OffloadTransportRdbmsApiInterface):
             rdbms_table_name,
             offload_options,
             messages,
-            incremental_update_extractor=incremental_update_extractor,
             dry_run=dry_run,
         )
         self.debug(

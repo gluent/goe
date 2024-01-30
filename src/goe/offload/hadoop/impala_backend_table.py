@@ -126,7 +126,7 @@ class BackendImpalaTable(BackendHadoopTable):
 
     def _compute_impala_table_statistics(self, incremental_stats):
         self._db_api.compute_stats(
-            self.db_name, self._base_table_name, incremental=incremental_stats
+            self.db_name, self.table_name, incremental=incremental_stats
         )
 
     def _disable_decimal_v2_query_option(self):
@@ -166,7 +166,7 @@ class BackendImpalaTable(BackendHadoopTable):
 
         return self._db_api.gen_insert_select_sql_text(
             self.db_name,
-            self._base_table_name,
+            self.table_name,
             self._load_db_name,
             self._load_table_name,
             select_expr_tuples=select_expr_tuples,

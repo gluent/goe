@@ -2865,9 +2865,6 @@ FROM   %(from_db_table)s%(where)s""" % {
             "gen_native_range_partition_key_cast not supported for Synapse"
         )
 
-    def supported_incremental_update_extraction_methods(self):
-        return []
-
     def supported_partition_function_parameter_data_types(self):
         """Table partitioning not implemented at this stage on Synapse"""
         return None

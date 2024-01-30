@@ -27,7 +27,6 @@ from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_messages import (
     OffloadMessages,
     NORMAL,
-    VERBOSE,
     VVERBOSE,
 )
 from goe.orchestration import command_steps, orchestration_constants

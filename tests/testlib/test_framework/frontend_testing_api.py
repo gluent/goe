@@ -556,13 +556,13 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
             f"table_minus_row_count: {schema1}.{table_name1} vs {schema2}.{table_name2}",
             detail=VERBOSE,
         )
-        q1 = f"SELECT %s FROM %s.%s %s" % (
+        q1 = "SELECT %s FROM %s.%s %s" % (
             projection,
             schema1,
             table_name1,
             where_clause,
         )
-        q2 = f"SELECT %s FROM %s.%s %s" % (
+        q2 = "SELECT %s FROM %s.%s %s" % (
             projection,
             schema2,
             table_name2,

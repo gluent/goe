@@ -52,6 +52,7 @@ from goe.offload.offload_functions import (
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
+from goe.orchestration import command_steps
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
 

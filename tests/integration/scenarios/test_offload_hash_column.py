@@ -1,49 +1,28 @@
 import pytest
 
-from goe.offload.backend_api import IMPALA_NOSHUFFLE_HINT
-from goe.offload.column_metadata import (
-    match_table_column,
-    str_list_of_columns,
-)
 from goe.offload import offload_constants
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
-    load_db_name,
 )
-from goe.offload.offload_metadata_functions import (
-    INCREMENTAL_PREDICATE_TYPE_LIST,
-    INCREMENTAL_PREDICATE_TYPE_RANGE,
-)
-from goe.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
 from tests.integration.scenarios.assertion_functions import (
-    backend_column_exists,
-    backend_table_count,
-    backend_table_exists,
-    date_goe_part_column_name,
-    sales_based_fact_assertion,
     standard_dimension_assertion,
-    text_in_events,
 )
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
     run_setup,
 )
 from tests.integration.scenarios.setup_functions import (
-    drop_backend_test_load_table,
     drop_backend_test_table,
-    gen_truncate_sales_based_fact_partition_ddls,
-    partition_columns_if_supported,
 )
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
 )
-from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
@@ -91,8 +70,8 @@ def test_offload_hash_column_synapse(config, schema, data_db):
     id = "test_offload_hash_column_synapse"
     messages = get_test_messages(config, id)
 
-    if options.target != offload_constants.DBTYPE_SYNAPSE:
-        messages.log(f"Skipping {id} for backend: {options.target}")
+    if config.target != offload_constants.DBTYPE_SYNAPSE:
+        messages.log(f"Skipping {id} for backend: {config.target}")
         return
 
     backend_api = get_backend_testing_api(config, messages)

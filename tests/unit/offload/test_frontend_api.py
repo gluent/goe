@@ -72,7 +72,6 @@ class TestFrontendApi(TestCase):
         self.assertIsInstance(self.api.goe_has_db_code_component(), bool)
         self.assertIsInstance(self.api.goe_join_pushdown_supported(), bool)
         self.assertIsInstance(self.api.goe_offload_status_report_supported(), bool)
-        self.assertIsInstance(self.api.hybrid_schema_supported(), bool)
         self.assertIsInstance(self.api.parameterized_queries_supported(), bool)
 
     def _test_create_table(self):
@@ -208,14 +207,6 @@ class TestFrontendApi(TestCase):
             self.assertIsInstance(rows, list)
             self.assertGreater(len(rows), 0)
 
-    def _test_get_hybrid_objects_for_offloaded_table(self):
-        if self.connect_to_frontend and self.api.hybrid_schema_supported():
-            objects = self.api.get_hybrid_objects_for_offloaded_table(
-                self.db, self.table
-            )
-            self.assertIsInstance(objects, list)
-            self.assertGreater(len(objects), 0)
-
     def _test_get_partition_columns(self):
         if self.connect_to_frontend:
             column_list = self.api.get_partition_columns(self.db, self.part_table)
@@ -323,7 +314,6 @@ class TestFrontendApi(TestCase):
         self._test_get_columns()
         self._test_get_db_unique_name()
         self._test_get_distinct_column_values()
-        self._test_get_hybrid_objects_for_offloaded_table()
         self._test_get_partition_columns()
         self._test_get_primary_key_column_names()
         self._test_get_session_option()

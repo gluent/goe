@@ -78,7 +78,6 @@ class OffloadStagingAvroFile(OffloadStagingFileInterface):
         canonical_columns,
         binary_data_as_base64,
         messages,
-        staging_incremental_update=False,
         dry_run=False,
     ):
         """CONSTRUCTOR"""
@@ -89,7 +88,6 @@ class OffloadStagingAvroFile(OffloadStagingFileInterface):
             canonical_columns,
             binary_data_as_base64,
             messages,
-            staging_incremental_update=staging_incremental_update,
             dry_run=dry_run,
         )
 
@@ -335,7 +333,6 @@ class OffloadStagingAvroImpalaFile(OffloadStagingAvroFile):
         canonical_columns,
         binary_data_as_base64,
         messages,
-        staging_incremental_update=False,
         dry_run=False,
     ):
         """CONSTRUCTOR"""
@@ -346,7 +343,6 @@ class OffloadStagingAvroImpalaFile(OffloadStagingAvroFile):
             canonical_columns,
             binary_data_as_base64,
             messages,
-            staging_incremental_update=staging_incremental_update,
             dry_run=dry_run,
         )
 

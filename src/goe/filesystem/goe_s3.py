@@ -271,12 +271,6 @@ class GOES3(GOEDfs):
         else:
             return None
 
-    def list_snapshottable_dirs(self):
-        raise NotImplementedError("list_snapshottable_dirs() not implemented for GOES3")
-
-    def list_snapshots(self, snapshottable_dir):
-        raise NotImplementedError("list_snapshots() not implemented for GOES3")
-
     def mkdir(self, dfs_path):
         """No mkdir on S3"""
         pass

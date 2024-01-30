@@ -426,9 +426,6 @@ class TestCurrentBackendTable(TestCase):
         except NotImplementedError:
             pass
 
-    def _test_is_incremental_update_enabled(self):
-        self.assertIn(self.api.is_incremental_update_enabled(), (True, False))
-
     def _test_result_cache_area_exists(self):
         try:
             self.assertIn(self.api.result_cache_area_exists(), (True, False))
@@ -619,7 +616,6 @@ class TestCurrentBackendTable(TestCase):
         self._test_get_default_location()
         self._test_get_partition_columns()
         self._test_get_staging_table_location()
-        self._test_is_incremental_update_enabled()
         self._test_result_cache_area_exists()
         self._test_setup_result_cache_area()
         self._test_setup_staging_area()

@@ -26,7 +26,6 @@ def staging_file_factory(
     orchestration_options,
     binary_data_as_base64,
     messages,
-    staging_incremental_update=False,
     dry_run=False,
 ):
     """Construct the correct Staging File class based on the format and offload transport orchestration query engine.
@@ -44,7 +43,6 @@ def staging_file_factory(
             canonical_columns,
             binary_data_as_base64,
             messages,
-            staging_incremental_update=staging_incremental_update,
             dry_run=dry_run,
         )
     elif (
@@ -59,7 +57,6 @@ def staging_file_factory(
             canonical_columns,
             binary_data_as_base64,
             messages,
-            staging_incremental_update=staging_incremental_update,
             dry_run=dry_run,
         )
     elif (
@@ -74,7 +71,6 @@ def staging_file_factory(
             canonical_columns,
             binary_data_as_base64,
             messages,
-            staging_incremental_update=staging_incremental_update,
             dry_run=dry_run,
         )
     else:

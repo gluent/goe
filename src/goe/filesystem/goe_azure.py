@@ -365,14 +365,6 @@ class GOEAzure(GOEDfs):
             # Tag the scheme & bucket back on the front of listing results
             return [self.gen_uri(scheme, container, _) for _ in blob_names]
 
-    def list_snapshottable_dirs(self):
-        raise NotImplementedError(
-            "list_snapshottable_dirs() not implemented for GOEAzure"
-        )
-
-    def list_snapshots(self, snapshottable_dir):
-        raise NotImplementedError("list_snapshots() not implemented for GOEAzure")
-
     def mkdir(self, dfs_path):
         """No mkdir on Azure block storage"""
         pass

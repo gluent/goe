@@ -85,7 +85,6 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
         rdbms_table_name,
         offload_options,
         messages,
-        incremental_update_extractor=None,
         dry_run=False,
     ):
         super().__init__(
@@ -93,7 +92,6 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
             rdbms_table_name,
             offload_options,
             messages,
-            incremental_update_extractor=incremental_update_extractor,
             dry_run=dry_run,
         )
         self.debug(
@@ -657,9 +655,6 @@ FROM  (
         else:
             scn_clause = ""
 
-        incremental_update_extract_predicate = None
-        incremental_update_meta_columns = ""
-
         owner_table = '"%s"."%s"' % (self._rdbms_owner, self._rdbms_table_name)
         partition_by = partition_by_prm
         if partition_by == TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE:
@@ -701,18 +696,13 @@ FROM  (
 
             # There are more partitions than parallel threads therefore it should be
             # efficient to split by partition, applies to both heap tables and IOTs
-            union_branch_template = 'SELECT g.*%(incremental_update_meta_columns)s, %(batch)s AS %(batch_col)s FROM %(owner_table)s %(part_clause)s ("%(part_name)s")%(scn_clause)s g'
-            if incremental_update_extract_predicate:
-                union_branch_template += (
-                    " WHERE (%s)" % incremental_update_extract_predicate
-                )
+            union_branch_template = 'SELECT g.*, %(batch)s AS %(batch_col)s FROM %(owner_table)s %(part_clause)s ("%(part_name)s")%(scn_clause)s g'
             row_source = union_all.join(
                 [
                     union_branch_template
                     % {
                         "batch": (i % parallelism),
                         "batch_col": TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
-                        "incremental_update_meta_columns": incremental_update_meta_columns,
                         "owner_table": owner_table,
                         "part_clause": partition_clause,
                         "scn_clause": scn_clause,
@@ -731,24 +721,19 @@ FROM  (
                     subpartition_param = partition_param
                     partition_param = "NULL"
             union_branch_template = (
-                "SELECT /*+ NO_INDEX(g) USE_NL(g) LEADING(r) */ g.*%(incremental_update_meta_columns)s, %(batch)s AS %(batch_col)s "
+                "SELECT /*+ NO_INDEX(g) USE_NL(g) LEADING(r) */ g.*, %(batch)s AS %(batch_col)s "
                 + "FROM %(owner_table)s%(scn_clause)s g, "
                 + "TABLE(offload.offload_rowid_ranges('%(owner)s', '%(table)s', %(partition_param)s, %(subpartition_param)s, %(degree)s, %(batch)s)) r "
                 + "WHERE g.rowid BETWEEN CHARTOROWID(r.min_rowid_vc) and CHARTOROWID(r.max_rowid_vc)"
             )
             if predicate_offload_clause:
                 union_branch_template += " AND (%s)" % predicate_offload_clause
-            elif incremental_update_extract_predicate:
-                union_branch_template += (
-                    " AND (%s)" % incremental_update_extract_predicate
-                )
             row_source = union_all.join(
                 [
                     union_branch_template
                     % {
                         "batch": i,
                         "batch_col": TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
-                        "incremental_update_meta_columns": incremental_update_meta_columns,
                         "degree": parallelism,
                         "owner_table": owner_table,
                         "scn_clause": scn_clause,
@@ -770,18 +755,13 @@ FROM  (
                 "batch_source_col": mod_column,
                 "degree": parallelism,
             }
-            union_branch_template = "SELECT g.*%(incremental_update_meta_columns)s, %(batch)s AS %(batch_col)s FROM %(owner_table)s%(part_clause)s%(scn_clause)s g%(extra_where_clause)s"
+            union_branch_template = "SELECT g.*, %(batch)s AS %(batch_col)s FROM %(owner_table)s%(part_clause)s%(scn_clause)s g%(extra_where_clause)s"
             extra_where_clause = ""
             if predicate_offload_clause:
                 extra_where_clause = " WHERE (%s)" % predicate_offload_clause
-            elif incremental_update_extract_predicate:
-                extra_where_clause = (
-                    " WHERE (%s)" % incremental_update_extract_predicate
-                )
             row_source = union_branch_template % {
                 "batch": batch_expr,
                 "batch_col": TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
-                "incremental_update_meta_columns": incremental_update_meta_columns,
                 "owner_table": owner_table,
                 "part_clause": self._get_iot_single_partition_clause(partition_chunk),
                 "scn_clause": scn_clause,
@@ -791,20 +771,15 @@ FROM  (
             batch_source_col = rdbms_pk_cols[0]
             # Create a range of min/max tuples spanning the entire id range
             id_ranges = split_ranges_for_id_range(col_min, col_max, parallelism)
-            union_branch_template = "SELECT g.*%(incremental_update_meta_columns)s, %(batch)s AS %(batch_col)s FROM %(owner_table)s%(part_clause)s%(scn_clause)s g WHERE %(batch_source_col)s >= %(low_val)s AND %(batch_source_col)s < %(high_val)s"
+            union_branch_template = "SELECT g.*, %(batch)s AS %(batch_col)s FROM %(owner_table)s%(part_clause)s%(scn_clause)s g WHERE %(batch_source_col)s >= %(low_val)s AND %(batch_source_col)s < %(high_val)s"
             if predicate_offload_clause:
                 union_branch_template += " AND (%s)" % predicate_offload_clause
-            elif incremental_update_extract_predicate:
-                union_branch_template += (
-                    " AND (%s)" % incremental_update_extract_predicate
-                )
             row_source = union_all.join(
                 [
                     union_branch_template
                     % {
                         "batch": (i % parallelism),
                         "batch_col": TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
-                        "incremental_update_meta_columns": incremental_update_meta_columns,
                         "owner_table": owner_table,
                         "part_clause": self._get_iot_single_partition_clause(
                             partition_chunk

@@ -658,12 +658,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)
 
-    def incremental_update_compaction_supported(self):
-        return self._db_api.incremental_update_compaction_supported()
-
-    def incremental_update_supported(self):
-        return self._db_api.incremental_update_supported()
-
     def insert_literal_values(
         self,
         db_name,
@@ -819,9 +813,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
 
     def supported_date_based_partition_granularities(self):
         return self._db_api.supported_date_based_partition_granularities()
-
-    def supported_incremental_update_extraction_methods(self):
-        return self._db_api.supported_incremental_update_extraction_methods()
 
     def synthetic_bucketing_supported(self):
         return self._db_api.synthetic_bucketing_supported()

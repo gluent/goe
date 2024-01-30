@@ -16,7 +16,6 @@ from goe.data_governance.hadoop_data_governance import (
     get_data_governance_register,
 )
 from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
     DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE,
 )
 from goe.filesystem.goe_dfs import gen_load_uri_from_options
@@ -160,9 +159,6 @@ class BackendHadoopTable(BackendTableInterface):
         else:
             self._avro_schema_hdfs_path = None
 
-        # Details relating to Incremental Update
-        self.is_incremental_update_enabled()
-
     ###########################################################################
     # PRIVATE METHODS
     ###########################################################################
@@ -189,7 +185,7 @@ class BackendHadoopTable(BackendTableInterface):
         def gather_partition_stats(columns, partition):
             return self._db_api.compute_stats(
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 for_columns=columns,
                 partition_tuples=partition,
             )
@@ -214,7 +210,7 @@ class BackendHadoopTable(BackendTableInterface):
 FROM %s.%s""" % (
                 part_exprs,
                 self.enclose_identifier(self._load_db_name),
-                self.enclose_identifier(self._base_table_name),
+                self.enclose_identifier(self.table_name),
             )
             partitions = self._execute_query_fetch_all(
                 sql, log_level=VERBOSE, not_when_dry_running=True
@@ -273,7 +269,7 @@ FROM %s.%s""" % (
                         col_stats,
                     ) = self._db_api.get_missing_hive_table_stats(
                         self.db_name,
-                        self._base_table_name,
+                        self.table_name,
                         colstats=self._hive_column_stats_enabled,
                         as_dict=True,
                     )
@@ -470,11 +466,6 @@ FROM %s.%s""" % (
                 self._result_cache_db_name, self._orchestration_config
             )
         return self._result_cache_db_hdfs_dir
-
-    def _incremental_update_dedupe_merge_sql_template(self):
-        raise NotImplementedError(
-            self._not_implemented_message("Incremental update merge")
-        )
 
     def _recreate_load_table_dir(self, include_remove=True, include_create=True):
         """Doing this ensure that the staging table directory is owned by the "goe" account
@@ -678,7 +669,7 @@ FROM %s.%s""" % (
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )
@@ -744,7 +735,7 @@ FROM %s.%s""" % (
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )
@@ -825,15 +816,12 @@ FROM %s.%s""" % (
     def get_default_location(self):
         if self._default_location is None:
             self._default_location = self._db_api.get_table_location(
-                self.db_name, self._base_table_name
+                self.db_name, self.table_name
             )
         return self._default_location
 
     def get_staging_table_location(self):
         return self._get_load_table_hdfs_dir()
-
-    def is_incremental_update_enabled(self):
-        return False
 
     def partition_function_requires_granularity(self):
         return False

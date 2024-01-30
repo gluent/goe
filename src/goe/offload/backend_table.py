@@ -20,15 +20,12 @@ from goe.data_governance.hadoop_data_governance import (
     get_data_governance_register,
 )
 from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_JOIN_VIEW,
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_CONV_VIEW,
     DATA_GOVERNANCE_GOE_OBJECT_TYPE_OFFLOAD_DB,
 )
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import VALID_REMOTE_DB_TYPES
 from goe.offload.column_metadata import (
     ColumnMetadataInterface,
-    ColumnBucketInfo,
     ColumnPartitionInfo,
     get_column_names,
     get_partition_columns,
@@ -55,7 +52,7 @@ from goe.offload.offload_functions import (
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
-from goe.orchestration import command_steps, orchestration_constants
+from goe.orchestration import command_steps
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
 
@@ -149,8 +146,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._orchestration_config = orchestration_options
 
         self._sql_engine_name = "Backend"
-        # _base_table_name is needed for Incremental Update, we need to do table operations on the actual table
-        self._base_table_name = self.table_name
+        self.table_name = self.table_name
         if existing_backend_api:
             self._db_api = existing_backend_api
         else:
@@ -197,7 +193,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         # Cache some attributes in state
         self._columns = None
         self._partition_columns = None
-        self._is_incremental_update_enabled = None
         self._log_profile_after_final_table_load = None
         self._log_profile_after_verification_queries = None
 
@@ -245,8 +240,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                 orchestration_operation, "storage_format", None
             )
         else:
-            # Incremental Update is detached from offload/present and cannot pass
-            # a well formed orchestration_operation object
+            # Some tests cannot (and do not need to) pass a well formed orchestration_operation object.
             self._conv_view_db = None
             self._conv_view_name = None
             self._decimal_padding_digits = None
@@ -265,9 +259,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             data_gov_client=self._data_gov_client,
         )
 
-        # Details relating to Incremental Update
-        self._is_incremental_update_enabled = None
-
     def __del__(self):
         self.close()
 
@@ -277,7 +268,7 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def _alter_table_sort_columns(self):
         return self._db_api.alter_sort_columns(
-            self.db_name, self._base_table_name, self._sort_columns or []
+            self.db_name, self.table_name, self._sort_columns or []
         )
 
     def _cast_validation_columns(self, staging_columns: list):
@@ -427,14 +418,14 @@ class BackendTableInterface(metaclass=ABCMeta):
         )
         self._debug(
             "Deriving partition info for %s.%s.%s"
-            % (self.db_name, self._base_table_name, column_name)
+            % (self.db_name, self.table_name, column_name)
         )
         partition_info = None
         if not partition_columns:
             # Need to call BackendApi for partition columns because this code is called while
             # populating BackendTable columns/partition columns.
             partition_columns = self._db_api.get_partition_columns(
-                self.db_name, self._base_table_name
+                self.db_name, self.table_name
             )
         part_col_names = [
             _
@@ -463,7 +454,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                         raise
                 # First see if the backend has its own metadata we can interrogate
                 partition_info = self._db_api.derive_native_partition_info(
-                    self.db_name, self._base_table_name, column_name, position
+                    self.db_name, self.table_name, column_name, position
                 )
                 if partition_info:
                     # Use our in-column "metadata" to get the source column
@@ -475,7 +466,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                         backend_column = column
                     else:
                         backend_column = self._db_api.get_column(
-                            self.db_name, self._base_table_name, column_name
+                            self.db_name, self.table_name, column_name
                         )
                     # Fall back on our own in-column "metadata" for as much as we can retrieve
                     granularity, source_column_name, digits = decode_synthetic_part_col(
@@ -501,7 +492,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             else:
                 # Backends have their own metadata therefore call overloaded derive_native_partition_info()
                 partition_info = self._db_api.derive_native_partition_info(
-                    self.db_name, self._base_table_name, column_name, position
+                    self.db_name, self.table_name, column_name, position
                 )
                 self._log(
                     "Derived native partition info for %s: %s"
@@ -520,7 +511,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         # Drop state
         self._columns = None
         self._partition_columns = None
-        self._is_incremental_update_enabled = None
         self._db_api.drop_state()
 
     def _execute_query_fetch_all(
@@ -1020,9 +1010,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             )
         return partition_expr
 
-    def _get_cloud_incremental_update_checkpoint_persistence(self):
-        return None
-
     def _get_dfs_client(self):
         if self._dfs_client is None:
             self._dfs_client = get_dfs_from_options(
@@ -1030,19 +1017,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             )
             self._backend_dfs = self._dfs_client.backend_dfs
         return self._dfs_client
-
-    def _incremental_update_dedupe_merge_sql_template_delta_projection_indentation(
-        self,
-    ):
-        # BackendTable returns indentation level appropriate for a MERGE statement, some backends may override.
-        return 14
-
-    def _incremental_update_dedupe_merge_sql_template_delta_update_indentation(self):
-        # BackendTable returns indentation level appropriate for a MERGE statement, some backends may override.
-        return 4
-
-    def _is_cloud_incremental_update_enabled(self):
-        return False
 
     def _is_synthetic_bucket_column(self, column):
         return self._db_api.is_synthetic_bucket_column(column)
@@ -1906,22 +1880,9 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._db_api.drop_view(self._conv_view_db, self._conv_view_name)
 
     def drop_table(self, purge=False):
-        cmds_executed = []
-        if self.is_view():
-            # When incremental update is enabled we need to drop both the view and base table
-            cmds_executed.extend(self._db_api.drop_view(self.db_name, self.table_name))
-            if self.table_name != self._base_table_name:
-                cmds_executed.extend(
-                    self._db_api.drop_table(
-                        self.db_name, self._base_table_name, purge=purge
-                    )
-                )
-        else:
-            cmds_executed.extend(
-                self._db_api.drop_table(
-                    self.db_name, self._base_table_name, purge=purge
-                )
-            )
+        cmds_executed = [
+            self._db_api.drop_table(self.db_name, self.table_name, purge=purge),
+        ]
         return cmds_executed
 
     def drop_load_view(self, sync=None):
@@ -1975,9 +1936,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         [
             ['synth_col_name', 'data_type', expr_fn, 'original_pcol_name']
         ]
-
-        WARNING: Do not change the format of the returned structure lightly. This is captured and stored in
-                 Incremental Update metadata so we need to be mindful of backward compatibility.
         """
         pcs = []
 
@@ -2040,13 +1998,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         """
         return self._db_api
 
-    def get_base_table_columns(self):
-        return self._db_api.get_columns(self.db_name, self._base_table_name)
-
-    def get_base_table_name(self):
-        """Used in Incremental Update code where the user facings table name may be different to the actual name"""
-        return self._base_table_name
-
     def get_canonical_columns(self):
         """Get canonical columns for the table"""
         return [self.to_canonical_column(_) for _ in self.get_columns()]
@@ -2059,13 +2010,13 @@ class BackendTableInterface(metaclass=ABCMeta):
         table does not yet exist.
         """
         if self._columns is None:
-            columns = self._db_api.get_columns(self.db_name, self._base_table_name)
-            if self.is_view(object_name_override=self._base_table_name):
+            columns = self._db_api.get_columns(self.db_name, self.table_name)
+            if self.is_view(object_name_override=self.table_name):
                 # There aren't any real partition columns but, for join pushdown, we may have synthetic columns in
                 # the view projection. Therefore we need to fake a partition column list, just in case.
                 self._log(
                     "Faking partition columns for view: %s.%s"
-                    % (self.db_name, self._base_table_name),
+                    % (self.db_name, self.table_name),
                     detail=VVERBOSE,
                 )
                 part_cols = [
@@ -2074,7 +2025,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                 self._log('View "partition" columns: %s' % part_cols, detail=VVERBOSE)
             else:
                 part_cols = self._db_api.get_partition_columns(
-                    self.db_name, self._base_table_name
+                    self.db_name, self.table_name
                 )
             # Run through columns adding partition_info and bucket_info as we go.
             new_columns = []
@@ -2181,37 +2132,31 @@ class BackendTableInterface(metaclass=ABCMeta):
         ]
 
     def get_table_partitions(self):
-        return self._db_api.get_table_partitions(self.db_name, self._base_table_name)
+        return self._db_api.get_table_partitions(self.db_name, self.table_name)
 
     def get_table_partition_count(self):
-        return self._db_api.get_table_partition_count(
-            self.db_name, self._base_table_name
-        )
+        return self._db_api.get_table_partition_count(self.db_name, self.table_name)
 
     def get_table_row_count_from_metadata(self):
         return self._db_api.get_table_row_count_from_metadata(
-            self.db_name, self._base_table_name
+            self.db_name, self.table_name
         )
 
     def get_table_size(self, no_cache=False):
         return self._db_api.get_table_size(
-            self.db_name, self._base_table_name, no_cache=no_cache
+            self.db_name, self.table_name, no_cache=no_cache
         )
 
     def get_table_size_and_row_count(self):
-        return self._db_api.get_table_size_and_row_count(
-            self.db_name, self._base_table_name
-        )
+        return self._db_api.get_table_size_and_row_count(self.db_name, self.table_name)
 
     def get_table_stats(self, as_dict=False):
         return self._db_api.get_table_stats(
-            self.db_name, self._base_table_name, as_dict=as_dict
+            self.db_name, self.table_name, as_dict=as_dict
         )
 
     def get_table_stats_partitions(self):
-        return self._db_api.get_table_stats_partitions(
-            self.db_name, self._base_table_name
-        )
+        return self._db_api.get_table_stats_partitions(self.db_name, self.table_name)
 
     def get_verification_cast(self, column):
         """Get the cast used to translate staging data into the final table for cast verification query.
@@ -2229,14 +2174,6 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)
-
-    def _incremental_update_delta_column_cast(self, delta_table_column):
-        """Returns a CAST expression converting a merge source delta column into its final data type.
-        In most cases this is the same as get_final_table_cast() but some backends may override.
-        delta_table_column: A column object
-        """
-        assert isinstance(delta_table_column, ColumnMetadataInterface)
-        return self.get_final_table_cast(delta_table_column)
 
     def is_supported_data_type(self, data_type):
         return self._db_api.is_supported_data_type(data_type)
@@ -2288,7 +2225,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     def min_datetime_value(self):
         return self._db_api.min_datetime_value()
 
-    ### Methods related to predicate rendering and transformation follow ###
+    # Methods related to predicate rendering and transformation follow ###
     @abstractmethod
     def predicate_has_rows(self, predicate):
         """Return boolean indicating if table has >0 rows satisfying predicate"""
@@ -2326,7 +2263,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     def set_column_stats(self, new_column_stats, ndv_cap, num_null_factor):
         self._db_api.set_column_stats(
             self.db_name,
-            self._base_table_name,
+            self.table_name,
             new_column_stats,
             ndv_cap,
             num_null_factor,
@@ -2358,12 +2295,12 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def set_partition_stats(self, new_partition_stats, additive_stats):
         return self._db_api.set_partition_stats(
-            self.db_name, self._base_table_name, new_partition_stats, additive_stats
+            self.db_name, self.table_name, new_partition_stats, additive_stats
         )
 
     def set_table_stats(self, new_table_stats, additive_stats):
         return self._db_api.set_table_stats(
-            self.db_name, self._base_table_name, new_table_stats, additive_stats
+            self.db_name, self.table_name, new_table_stats, additive_stats
         )
 
     def supported_backend_data_types(self):
@@ -2371,9 +2308,6 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def supported_date_based_partition_granularities(self):
         return self._db_api.supported_date_based_partition_granularities()
-
-    def supported_incremental_update_extraction_methods(self):
-        return self._db_api.supported_incremental_update_extraction_methods()
 
     def table_exists(self):
         return self._db_api.table_exists(self.db_name, self.table_name)
@@ -2467,7 +2401,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         rdbms_columns,
         expected_rows,
         staging_columns,
-        incremental_update_extraction=False,
     ):
         """Validate the staged data before we insert it into the final backend table.
         There is scope for this to need a backend specific override but for the time being it is common
@@ -2503,10 +2436,6 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def get_staging_table_location(self):
-        pass
-
-    @abstractmethod
-    def is_incremental_update_enabled(self):
         pass
 
     @abstractmethod
@@ -2619,7 +2548,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         rdbms_columns,
         expected_rows,
         staging_columns,
-        incremental_update_extraction=False,
     ):
         self._offload_step(
             command_steps.STEP_VALIDATE_DATA,
@@ -2628,7 +2556,6 @@ class BackendTableInterface(metaclass=ABCMeta):
                 rdbms_columns,
                 expected_rows,
                 staging_columns,
-                incremental_update_extraction=incremental_update_extraction,
             ),
         )
 
@@ -2726,9 +2653,6 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def goe_udfs_supported(self):
         return self._db_api.goe_udfs_supported()
-
-    def incremental_update_supported(self):
-        return self._db_api.incremental_update_supported()
 
     def nan_supported(self):
         return self._db_api.nan_supported()

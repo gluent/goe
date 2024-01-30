@@ -70,8 +70,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_GOE_PARTITION_FUNCTIONS,
     CAPABILITY_GOE_SEQ_TABLE,
     CAPABILITY_GOE_UDFS,
-    CAPABILITY_INCREMENTAL_UPDATE,
-    CAPABILITY_INCREMENTAL_UPDATE_COMPACTION,
     CAPABILITY_LOAD_DB_TRANSPORT,
     CAPABILITY_NAN,
     CAPABILITY_NANOSECONDS,
@@ -1826,10 +1824,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def supported_incremental_update_extraction_methods(self):
-        pass
-
-    @abstractmethod
     def supported_partition_function_parameter_data_types(self):
         """Return a list of backend data types supported as partition function parameters"""
         pass
@@ -2033,10 +2027,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
 
     def goe_udfs_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_UDFS)
-
-    def incremental_update_supported(self):
-        """Note that there is an Impala version specific override for this"""
-        return self.is_capability_supported(CAPABILITY_INCREMENTAL_UPDATE)
 
     def load_db_transport_supported(self):
         return self.is_capability_supported(CAPABILITY_LOAD_DB_TRANSPORT)

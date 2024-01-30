@@ -76,7 +76,6 @@ class OffloadStagingParquetFile(OffloadStagingFileInterface):
         canonical_columns,
         binary_data_as_base64,
         messages,
-        staging_incremental_update=False,
         dry_run=False,
     ):
         """CONSTRUCTOR"""
@@ -87,7 +86,6 @@ class OffloadStagingParquetFile(OffloadStagingFileInterface):
             canonical_columns,
             binary_data_as_base64,
             messages,
-            staging_incremental_update=staging_incremental_update,
             dry_run=dry_run,
         )
 

@@ -2159,9 +2159,6 @@ FROM   %(from_db_table)s%(where)s""" % {
             PART_COL_GRANULARITY_YEAR,
         ]
 
-    def supported_incremental_update_extraction_methods(self):
-        return []
-
     def supported_partition_function_parameter_data_types(self):
         return [
             BIGQUERY_TYPE_BIGNUMERIC,

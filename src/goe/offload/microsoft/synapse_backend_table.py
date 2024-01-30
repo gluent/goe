@@ -8,7 +8,6 @@
 
 import logging
 import os
-from textwrap import dedent
 
 from goe.data_governance.hadoop_data_governance import (
     data_governance_register_new_table_step,
@@ -29,7 +28,6 @@ from goe.offload.microsoft.synapse_column import (
     SYNAPSE_TYPE_TIME,
     SYNAPSE_TYPE_VARBINARY,
 )
-from goe.offload.microsoft.synapse_backend_api import synapse_collation_clause
 from goe.offload.microsoft import synapse_predicate
 from goe.offload.column_metadata import ColumnMetadataInterface
 from goe.offload.backend_table import BackendTableInterface
@@ -48,7 +46,6 @@ from goe.offload.staging.parquet.parquet_column import (
 )
 from goe.offload.hadoop.hadoop_backend_table import COMPUTE_LOAD_TABLE_STATS_LOG_TEXT
 from goe.offload.offload_constants import OFFLOAD_STATS_METHOD_NONE
-from goe.util import exception_trigger
 
 ###############################################################################
 # CONSTANTS
@@ -177,7 +174,7 @@ class BackendSynapseTable(BackendTableInterface):
 
         return self._db_api.gen_insert_select_sql_text(
             self.db_name,
-            self._base_table_name,
+            self.table_name,
             self._load_db_name,
             self._load_table_name,
             select_expr_tuples=select_expr_tuples,
@@ -493,7 +490,7 @@ class BackendSynapseTable(BackendTableInterface):
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )
@@ -524,7 +521,7 @@ class BackendSynapseTable(BackendTableInterface):
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )

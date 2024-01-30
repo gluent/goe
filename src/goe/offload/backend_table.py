@@ -20,15 +20,12 @@ from goe.data_governance.hadoop_data_governance import (
     get_data_governance_register,
 )
 from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_JOIN_VIEW,
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_CONV_VIEW,
     DATA_GOVERNANCE_GOE_OBJECT_TYPE_OFFLOAD_DB,
 )
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import VALID_REMOTE_DB_TYPES
 from goe.offload.column_metadata import (
     ColumnMetadataInterface,
-    ColumnBucketInfo,
     ColumnPartitionInfo,
     get_column_names,
     get_partition_columns,
@@ -55,7 +52,6 @@ from goe.offload.offload_functions import (
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
-from goe.orchestration import command_steps, orchestration_constants
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
 
@@ -149,7 +145,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._orchestration_config = orchestration_options
 
         self._sql_engine_name = "Backend"
-        self._base_table_name = self.table_name
+        self.table_name = self.table_name
         if existing_backend_api:
             self._db_api = existing_backend_api
         else:
@@ -271,7 +267,7 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def _alter_table_sort_columns(self):
         return self._db_api.alter_sort_columns(
-            self.db_name, self._base_table_name, self._sort_columns or []
+            self.db_name, self.table_name, self._sort_columns or []
         )
 
     def _cast_validation_columns(self, staging_columns: list):
@@ -421,14 +417,14 @@ class BackendTableInterface(metaclass=ABCMeta):
         )
         self._debug(
             "Deriving partition info for %s.%s.%s"
-            % (self.db_name, self._base_table_name, column_name)
+            % (self.db_name, self.table_name, column_name)
         )
         partition_info = None
         if not partition_columns:
             # Need to call BackendApi for partition columns because this code is called while
             # populating BackendTable columns/partition columns.
             partition_columns = self._db_api.get_partition_columns(
-                self.db_name, self._base_table_name
+                self.db_name, self.table_name
             )
         part_col_names = [
             _
@@ -457,7 +453,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                         raise
                 # First see if the backend has its own metadata we can interrogate
                 partition_info = self._db_api.derive_native_partition_info(
-                    self.db_name, self._base_table_name, column_name, position
+                    self.db_name, self.table_name, column_name, position
                 )
                 if partition_info:
                     # Use our in-column "metadata" to get the source column
@@ -469,7 +465,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                         backend_column = column
                     else:
                         backend_column = self._db_api.get_column(
-                            self.db_name, self._base_table_name, column_name
+                            self.db_name, self.table_name, column_name
                         )
                     # Fall back on our own in-column "metadata" for as much as we can retrieve
                     granularity, source_column_name, digits = decode_synthetic_part_col(
@@ -495,7 +491,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             else:
                 # Backends have their own metadata therefore call overloaded derive_native_partition_info()
                 partition_info = self._db_api.derive_native_partition_info(
-                    self.db_name, self._base_table_name, column_name, position
+                    self.db_name, self.table_name, column_name, position
                 )
                 self._log(
                     "Derived native partition info for %s: %s"
@@ -1884,7 +1880,7 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def drop_table(self, purge=False):
         cmds_executed = [
-            self._db_api.drop_table(self.db_name, self._base_table_name, purge=purge),
+            self._db_api.drop_table(self.db_name, self.table_name, purge=purge),
         ]
         return cmds_executed
 
@@ -2013,13 +2009,13 @@ class BackendTableInterface(metaclass=ABCMeta):
         table does not yet exist.
         """
         if self._columns is None:
-            columns = self._db_api.get_columns(self.db_name, self._base_table_name)
-            if self.is_view(object_name_override=self._base_table_name):
+            columns = self._db_api.get_columns(self.db_name, self.table_name)
+            if self.is_view(object_name_override=self.table_name):
                 # There aren't any real partition columns but, for join pushdown, we may have synthetic columns in
                 # the view projection. Therefore we need to fake a partition column list, just in case.
                 self._log(
                     "Faking partition columns for view: %s.%s"
-                    % (self.db_name, self._base_table_name),
+                    % (self.db_name, self.table_name),
                     detail=VVERBOSE,
                 )
                 part_cols = [
@@ -2028,7 +2024,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                 self._log('View "partition" columns: %s' % part_cols, detail=VVERBOSE)
             else:
                 part_cols = self._db_api.get_partition_columns(
-                    self.db_name, self._base_table_name
+                    self.db_name, self.table_name
                 )
             # Run through columns adding partition_info and bucket_info as we go.
             new_columns = []
@@ -2135,37 +2131,31 @@ class BackendTableInterface(metaclass=ABCMeta):
         ]
 
     def get_table_partitions(self):
-        return self._db_api.get_table_partitions(self.db_name, self._base_table_name)
+        return self._db_api.get_table_partitions(self.db_name, self.table_name)
 
     def get_table_partition_count(self):
-        return self._db_api.get_table_partition_count(
-            self.db_name, self._base_table_name
-        )
+        return self._db_api.get_table_partition_count(self.db_name, self.table_name)
 
     def get_table_row_count_from_metadata(self):
         return self._db_api.get_table_row_count_from_metadata(
-            self.db_name, self._base_table_name
+            self.db_name, self.table_name
         )
 
     def get_table_size(self, no_cache=False):
         return self._db_api.get_table_size(
-            self.db_name, self._base_table_name, no_cache=no_cache
+            self.db_name, self.table_name, no_cache=no_cache
         )
 
     def get_table_size_and_row_count(self):
-        return self._db_api.get_table_size_and_row_count(
-            self.db_name, self._base_table_name
-        )
+        return self._db_api.get_table_size_and_row_count(self.db_name, self.table_name)
 
     def get_table_stats(self, as_dict=False):
         return self._db_api.get_table_stats(
-            self.db_name, self._base_table_name, as_dict=as_dict
+            self.db_name, self.table_name, as_dict=as_dict
         )
 
     def get_table_stats_partitions(self):
-        return self._db_api.get_table_stats_partitions(
-            self.db_name, self._base_table_name
-        )
+        return self._db_api.get_table_stats_partitions(self.db_name, self.table_name)
 
     def get_verification_cast(self, column):
         """Get the cast used to translate staging data into the final table for cast verification query.
@@ -2234,7 +2224,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     def min_datetime_value(self):
         return self._db_api.min_datetime_value()
 
-    ### Methods related to predicate rendering and transformation follow ###
+    # Methods related to predicate rendering and transformation follow ###
     @abstractmethod
     def predicate_has_rows(self, predicate):
         """Return boolean indicating if table has >0 rows satisfying predicate"""
@@ -2272,7 +2262,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     def set_column_stats(self, new_column_stats, ndv_cap, num_null_factor):
         self._db_api.set_column_stats(
             self.db_name,
-            self._base_table_name,
+            self.table_name,
             new_column_stats,
             ndv_cap,
             num_null_factor,
@@ -2304,12 +2294,12 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def set_partition_stats(self, new_partition_stats, additive_stats):
         return self._db_api.set_partition_stats(
-            self.db_name, self._base_table_name, new_partition_stats, additive_stats
+            self.db_name, self.table_name, new_partition_stats, additive_stats
         )
 
     def set_table_stats(self, new_table_stats, additive_stats):
         return self._db_api.set_table_stats(
-            self.db_name, self._base_table_name, new_table_stats, additive_stats
+            self.db_name, self.table_name, new_table_stats, additive_stats
         )
 
     def supported_backend_data_types(self):

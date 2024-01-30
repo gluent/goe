@@ -7,7 +7,6 @@
 """
 
 import logging
-from textwrap import dedent
 
 from google.cloud import bigquery
 
@@ -160,7 +159,7 @@ class BackendBigQueryTable(BackendTableInterface):
 
         return self._db_api.gen_insert_select_sql_text(
             self.db_name,
-            self._base_table_name,
+            self.table_name,
             self._load_db_name,
             self._load_table_name,
             select_expr_tuples=select_expr_tuples,
@@ -502,7 +501,7 @@ class BackendBigQueryTable(BackendTableInterface):
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )
@@ -533,7 +532,7 @@ class BackendBigQueryTable(BackendTableInterface):
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )

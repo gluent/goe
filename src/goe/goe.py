@@ -793,7 +793,7 @@ def normalise_column_transformations(
     if not column_transformation_list:
         return column_transformations
 
-    if type(column_transformation_list) == dict:
+    if isinstance(column_transformation_list, dict):
         # when called on metadata we will be working from a dict
         column_transformation_list = [
             "%s:%s" % (col, column_transformation_list[col])
@@ -3340,7 +3340,10 @@ def get_options(usage=None, operation_name=None):
         dest="create_backend_db",
         action="store_true",
         default=orchestration_defaults.create_backend_db_default(),
-        help="Automatically create backend databases. Either use this option, or ensure databases matching 1) the Oracle schema and 2) the Oracle schema with suffix _load already exist.",
+        help=(
+            "Automatically create backend databases. Either use this option, or ensure databases matching "
+            "1) the Oracle schema and 2) the Oracle schema with suffix _load already exist."
+        ),
     )
     opt.add_option(
         "--reset-backend-table",
@@ -3377,7 +3380,10 @@ def get_options(usage=None, operation_name=None):
     opt.add_option(
         "--older-than-days",
         dest="older_than_days",
-        help="Offload partitions older than this number of days (exclusive, ie. the boundary partition is not offloaded). Suitable for keeping data up to a certain age in the source table. Alternative to --older-than-date option.",
+        help=(
+            "Offload partitions older than this number of days (exclusive, ie. the boundary partition is not offloaded). "
+            "Suitable for keeping data up to a certain age in the source table. Alternative to --older-than-date option."
+        ),
     )
     opt.add_option(
         "--older-than-date",
@@ -3387,7 +3393,11 @@ def get_options(usage=None, operation_name=None):
     opt.add_option(
         "--partition-names",
         dest="partition_names_csv",
-        help="CSV of RDBMS partition names to be used to derive values for --less-than-value, --older-than-date or --equal-to-values as appropriate. Specifying multiple partitions is only valid for list partitioned tables.",
+        help=(
+            "CSV of RDBMS partition names to be used to derive values for --less-than-value, "
+            "--older-than-date or --equal-to-values as appropriate. "
+            "Specifying multiple partitions is only valid for list partitioned tables."
+        ),
     )
 
     opt.add_option(
@@ -3443,7 +3453,11 @@ def get_options(usage=None, operation_name=None):
     opt.add_option(
         "--partition-granularity",
         dest="offload_partition_granularity",
-        help='Y|M|D|\\d+ partition level/granularity. Use integral size for numeric partitions. Use sub-string length for string partitions. eg. "M" partitions by Year-Month, "D" partitions by Year-Month-Day, "5000" partitions in blocks of 5000 values, "2" on a string partition key partitions using the first two characters.',
+        help=(
+            "Y|M|D|\\d+ partition level/granularity. Use integral size for numeric partitions. Use sub-string length for string partitions. "
+            'e.g. "M" partitions by Year-Month, "D" partitions by Year-Month-Day, "5000" partitions in blocks of 5000 values, '
+            '"2" on a string partition key partitions using the first two characters.'
+        ),
     )
     opt.add_option(
         "--partition-lower-value",
@@ -3481,7 +3495,12 @@ def get_options(usage=None, operation_name=None):
         default=orchestration_defaults.offload_stats_method_default(
             operation_name=operation_name
         ),
-        help="NATIVE|HISTORY|COPY|NONE. Method used to manage backend table stats during an Offload. NATIVE is the default. HISTORY will gather stats on all partitions without stats (applicable to Hive only and will automatically be replaced with NATIVE on Impala). COPY will copy table statistics from the RDBMS to an offloaded table (applicable to Impala only)",
+        help=(
+            "NATIVE|HISTORY|COPY|NONE. Method used to manage backend table stats during an Offload. NATIVE is the default. "
+            "HISTORY will gather stats on all partitions without stats "
+            "(applicable to Hive only and will automatically be replaced with NATIVE on Impala). "
+            "COPY will copy table statistics from the RDBMS to an offloaded table (applicable to Impala only)"
+        ),
     )
 
     opt.add_option(
@@ -3508,7 +3527,7 @@ def get_options(usage=None, operation_name=None):
     opt.add_option(
         "--offload-chunk-impala-insert-hint",
         dest="impala_insert_hint",
-        help="SHUFFLE|NOSHUFFLE. Used to inject a hint into the insert/select moving data from load table to final destination. The absence of a value injects no hint. Impala only",
+        help="SHUFFLE|NOSHUFFLE. Used to inject a hint into the insert/select moving data from load table to final destination. Impala only",
     )
 
     opt.add_option(
@@ -3543,7 +3562,10 @@ def get_options(usage=None, operation_name=None):
         dest="offload_predicate_modify_hybrid_view",
         action="store_false",
         default=orchestration_defaults.offload_predicate_modify_hybrid_view_default(),
-        help="Prevent an offload predicate from being added to the boundary conditions in a hybrid view. Can only be used in conjunction with --offload-predicate for --offload-predicate-type values of %s|%s|%s|%s"
+        help=(
+            "Prevent an offload predicate from being added to the boundary conditions in a hybrid view. "
+            "Can only be used in conjunction with --offload-predicate for --offload-predicate-type values of %s|%s|%s|%s"
+        )
         % (
             INCREMENTAL_PREDICATE_TYPE_RANGE,
             INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
@@ -3568,7 +3590,6 @@ def get_options(usage=None, operation_name=None):
         action="append",
         help=SUPPRESS_HELP,
     )
-    # , help='Transform a column, format "column:transformation[(params)]". The transformation can be one of the following keywords: suppress, null, translate(from, to), regexp_replace(pattern, replacement)')
 
     get_data_governance_options(opt)
 

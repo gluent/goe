@@ -137,7 +137,7 @@ class BackendSnowflakeTable(BackendTableInterface):
             from_object_override = None
             return self._db_api.gen_insert_select_sql_text(
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_view_db_name,
                 self._load_table_name,
                 select_expr_tuples=select_expr_tuples,
@@ -150,7 +150,7 @@ class BackendSnowflakeTable(BackendTableInterface):
             from_object_override = self._format_staging_object_name()
             return self._db_api.gen_copy_into_sql_text(
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 from_object_clause=from_object_override,
                 select_expr_tuples=select_expr_tuples,
                 filter_clauses=filter_clauses,
@@ -552,7 +552,7 @@ class BackendSnowflakeTable(BackendTableInterface):
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_db_name,
                 self._load_table_name,
             )
@@ -583,7 +583,7 @@ class BackendSnowflakeTable(BackendTableInterface):
             "Loading %s.%s from %s.%s"
             % (
                 self.db_name,
-                self._base_table_name,
+                self.table_name,
                 self._load_view_db_name,
                 self._load_table_name,
             )

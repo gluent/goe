@@ -7,7 +7,6 @@
 from abc import ABCMeta, abstractmethod
 from copy import copy
 import logging
-import math
 import re
 from typing import Optional
 

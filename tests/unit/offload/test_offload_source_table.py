@@ -26,6 +26,9 @@ from goe.offload.oracle.oracle_column import (
 )
 from tests.unit.test_functions import (
     build_mock_options,
+    optional_netezza_dependency_exception,
+    optional_sql_server_dependency_exception,
+    optional_teradata_dependency_exception,
     FAKE_MSSQL_ENV,
     FAKE_NETEZZA_ENV,
     FAKE_ORACLE_ENV,
@@ -170,6 +173,8 @@ class TestOffloadSourceTable(TestCase):
                 pass
 
     def _run_all_tests(self):
+        if not self.api:
+            return
         self._test_enclose_identifier()
         self._test_gen_default_numeric_column()
         self._test_gen_default_date_column()
@@ -199,7 +204,11 @@ class TestOracleOffloadSourceTable(TestOffloadSourceTable):
 class TestMSSQLOffloadSourceTable(TestOffloadSourceTable):
     def setUp(self):
         self.config = self._get_mock_config(FAKE_MSSQL_ENV)
-        super(TestMSSQLOffloadSourceTable, self).setUp()
+        try:
+            super(TestMSSQLOffloadSourceTable, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_sql_server_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_mssql_tests(self):
         self._run_all_tests()
@@ -208,7 +217,11 @@ class TestMSSQLOffloadSourceTable(TestOffloadSourceTable):
 class TestNetezzaOffloadSourceTable(TestOffloadSourceTable):
     def setUp(self):
         self.config = self._get_mock_config(FAKE_NETEZZA_ENV)
-        super(TestNetezzaOffloadSourceTable, self).setUp()
+        try:
+            super(TestNetezzaOffloadSourceTable, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_netezza_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_netezza_tests(self):
         self._run_all_tests()
@@ -217,7 +230,11 @@ class TestNetezzaOffloadSourceTable(TestOffloadSourceTable):
 class TestTeradataOffloadSourceTable(TestOffloadSourceTable):
     def setUp(self):
         self.config = self._get_mock_config(FAKE_TERADATA_ENV)
-        super(TestTeradataOffloadSourceTable, self).setUp()
+        try:
+            super(TestTeradataOffloadSourceTable, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_teradata_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_teradata_tests(self):
         self._run_all_tests()

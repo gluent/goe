@@ -5,11 +5,20 @@
 import logging
 from unittest import TestCase, main
 
+from tests.unit.test_functions import optional_hadoop_dependency_exception
 from goe.filesystem.cli_hdfs import CliHdfs
 from goe.filesystem.goe_azure import GOEAzure
 from goe.filesystem.goe_gcs import GOEGcs
 from goe.filesystem.goe_s3 import GOES3
-from goe.filesystem.web_hdfs import WebHdfs
+
+try:
+    from goe.filesystem.web_hdfs import WebHdfs
+except ModuleNotFoundError as e:
+    if optional_hadoop_dependency_exception(e):
+        WebHdfs = None
+    else:
+        raise
+
 from goe.filesystem.goe_dfs import (
     GOEDfsException,
     gen_fs_uri,
@@ -275,17 +284,19 @@ class TestWebHdfs(TestGOEDfs):
 
     def setUp(self):
         messages = OffloadMessages()
-        self.api = WebHdfs(
-            "a-host",
-            12345,
-            "a-user",
-            dry_run=True,
-            messages=messages,
-            do_not_connect=True,
-        )
+        if WebHdfs:
+            self.api = WebHdfs(
+                "a-host",
+                12345,
+                "a-user",
+                dry_run=True,
+                messages=messages,
+                do_not_connect=True,
+            )
 
     def test_all(self):
-        self._run_all_tests()
+        if self.api:
+            self._run_all_tests()
 
 
 ###############################################################################

@@ -209,6 +209,11 @@ from goe.offload.hadoop.hadoop_column import (
 )
 from tests.unit.test_functions import (
     build_mock_options,
+    optional_hadoop_dependency_exception,
+    optional_netezza_dependency_exception,
+    optional_snowflake_dependency_exception,
+    optional_sql_server_dependency_exception,
+    optional_synapse_dependency_exception,
     FAKE_MSSQL_ENV,
     FAKE_NETEZZA_ENV,
     FAKE_ORACLE_BQ_ENV,
@@ -683,12 +688,18 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     #
     # Hive
     def test_hive_to_oracle(self):
-        backend_api = backend_api_factory(
-            DBTYPE_HIVE,
-            self.options,
-            OffloadMessages(),
-            do_not_connect=True,
-        )
+        try:
+            backend_api = backend_api_factory(
+                DBTYPE_HIVE,
+                self.options,
+                OffloadMessages(),
+                do_not_connect=True,
+            )
+        except ModuleNotFoundError as e:
+            if optional_hadoop_dependency_exception(e):
+                return
+            else:
+                raise
         backend_columns = [
             HadoopColumn(
                 name="COL_CHAR_255", data_type=HADOOP_TYPE_CHAR, data_length=255
@@ -746,12 +757,18 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     #
     # Impala
     def test_impala_to_oracle(self):
-        backend_api = backend_api_factory(
-            DBTYPE_IMPALA,
-            self.options,
-            OffloadMessages(),
-            do_not_connect=True,
-        )
+        try:
+            backend_api = backend_api_factory(
+                DBTYPE_IMPALA,
+                self.options,
+                OffloadMessages(),
+                do_not_connect=True,
+            )
+        except ModuleNotFoundError as e:
+            if optional_hadoop_dependency_exception(e):
+                return
+            else:
+                raise
         backend_columns = [
             HadoopColumn(
                 name="COL_CHAR_255", data_type=HADOOP_TYPE_CHAR, data_length=255
@@ -807,12 +824,18 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     #
     # Snowflake
     def test_snowflake_to_oracle(self):
-        backend_api = backend_api_factory(
-            DBTYPE_SNOWFLAKE,
-            self.options,
-            OffloadMessages(),
-            do_not_connect=True,
-        )
+        try:
+            backend_api = backend_api_factory(
+                DBTYPE_SNOWFLAKE,
+                self.options,
+                OffloadMessages(),
+                do_not_connect=True,
+            )
+        except ModuleNotFoundError as e:
+            if optional_snowflake_dependency_exception(e):
+                return
+            else:
+                raise
         backend_columns = [
             SnowflakeColumn(
                 name="COL_TEXT_4000",
@@ -882,12 +905,18 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
     #
     # Synapse
     def test_synapse_to_oracle(self):
-        backend_api = backend_api_factory(
-            DBTYPE_SYNAPSE,
-            self.options,
-            OffloadMessages(),
-            do_not_connect=True,
-        )
+        try:
+            backend_api = backend_api_factory(
+                DBTYPE_SYNAPSE,
+                self.options,
+                OffloadMessages(),
+                do_not_connect=True,
+            )
+        except ModuleNotFoundError as e:
+            if optional_synapse_dependency_exception(e):
+                return
+            else:
+                raise
         backend_columns = [
             SynapseColumn(
                 name="COL_CHAR_2000",
@@ -1080,9 +1109,15 @@ class TestMSSQLDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
         self.options = build_mock_options(FAKE_MSSQL_ENV)
         messages = OffloadMessages()
-        self.test_table_object = MSSQLSourceTable(
-            "no_user", "no_table", self.options, messages, do_not_connect=True
-        )
+        try:
+            self.test_table_object = MSSQLSourceTable(
+                "no_user", "no_table", self.options, messages, do_not_connect=True
+            )
+        except ModuleNotFoundError as e:
+            if optional_sql_server_dependency_exception(e):
+                self.test_table_object = None
+            else:
+                raise
 
     def _get_rdbms_source_columns(self):
         return [
@@ -1253,6 +1288,9 @@ class TestMSSQLDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_mssql_to_canonical(self):
+        if not self.test_table_object:
+            return
+
         source_columns = self._get_rdbms_source_columns()
         # Expected outcomes of source_columns when converted to canonical
         expected_columns = [
@@ -1335,9 +1373,15 @@ class TestNetezzaDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
         self.options = build_mock_options(FAKE_NETEZZA_ENV)
         messages = OffloadMessages()
-        self.test_table_object = NetezzaSourceTable(
-            "no_user", "no_table", self.options, messages, do_not_connect=True
-        )
+        try:
+            self.test_table_object = NetezzaSourceTable(
+                "no_user", "no_table", self.options, messages, do_not_connect=True
+            )
+        except ModuleNotFoundError as e:
+            if optional_netezza_dependency_exception(e):
+                self.test_table_object = None
+            else:
+                raise
 
     def _get_rdbms_source_columns(self):
         return [
@@ -1450,6 +1494,9 @@ class TestNetezzaDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_netezza_to_canonical(self):
+        if not self.test_table_object:
+            return
+
         source_columns = self._get_rdbms_source_columns()
         # Expected outcomes of source_columns when converted to canonical
         expected_columns = [
@@ -1518,11 +1565,20 @@ class TestBackendHiveDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
         self.options = build_mock_options(FAKE_ORACLE_HIVE_ENV)
         messages = OffloadMessages()
-        self.test_api = backend_api_factory(
-            self.options.target, self.options, messages, do_not_connect=True
-        )
+        try:
+            self.test_api = backend_api_factory(
+                self.options.target, self.options, messages, do_not_connect=True
+            )
+        except ModuleNotFoundError as e:
+            if optional_hadoop_dependency_exception(e):
+                self.test_api = None
+            else:
+                raise
 
-    def _get_hive_source_columns(self):
+    def _get_hive_source_columns(self) -> list:
+        if not self.test_api:
+            return []
+
         return [
             HadoopColumn("COL_FIXED_STR", HADOOP_TYPE_CHAR, data_length=10),
             HadoopColumn("COL_VARIABLE_STR", HADOOP_TYPE_STRING),
@@ -1579,6 +1635,9 @@ class TestBackendHiveDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_hive_to_canonical(self):
+        if not self.test_api:
+            return
+
         source_columns = self._get_hive_source_columns()
         expected_columns = [
             CanonicalColumn("COL_FIXED_STR", GOE_TYPE_FIXED_STRING, data_length=10),
@@ -1622,6 +1681,9 @@ class TestBackendHiveDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_canonical_to_hive(self):
+        if not self.test_api:
+            return
+
         # Expected outcomes of source_columns when converted to Hive
         expected_columns = [
             HadoopColumn("COL_FIXED_STR", HADOOP_TYPE_STRING),
@@ -1682,9 +1744,15 @@ class TestBackendImpalaDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
         self.options = build_mock_options(FAKE_ORACLE_IMPALA_ENV)
         messages = OffloadMessages()
-        self.test_api = backend_api_factory(
-            self.options.target, self.options, messages, do_not_connect=True
-        )
+        try:
+            self.test_api = backend_api_factory(
+                self.options.target, self.options, messages, do_not_connect=True
+            )
+        except ModuleNotFoundError as e:
+            if optional_hadoop_dependency_exception(e):
+                self.test_api = None
+            else:
+                raise
 
     def _get_impala_source_columns(self):
         return [
@@ -1739,6 +1807,9 @@ class TestBackendImpalaDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_impala_to_canonical(self):
+        if not self.test_api:
+            return
+
         source_columns = self._get_impala_source_columns()
         expected_columns = [
             CanonicalColumn("COL_FIXED_STR", GOE_TYPE_FIXED_STRING, data_length=10),
@@ -1778,6 +1849,9 @@ class TestBackendImpalaDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_canonical_to_impala(self):
+        if not self.test_api:
+            return
+
         # Expected outcomes of source_columns when converted to Hive
         expected_columns = [
             HadoopColumn("COL_FIXED_STR", HADOOP_TYPE_STRING),
@@ -2263,9 +2337,15 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
         self.options = build_mock_options(FAKE_ORACLE_SNOWFLAKE_ENV)
         messages = OffloadMessages()
-        self.test_api = backend_api_factory(
-            self.options.target, self.options, messages, do_not_connect=True
-        )
+        try:
+            self.test_api = backend_api_factory(
+                self.options.target, self.options, messages, do_not_connect=True
+            )
+        except ModuleNotFoundError as e:
+            if optional_snowflake_dependency_exception(e):
+                self.test_api = None
+            else:
+                raise
 
     def _get_snowflake_source_columns(self):
         return [
@@ -2317,6 +2397,9 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_snowflake_to_canonical(self):
+        if not self.test_api:
+            return
+
         source_columns = self._get_snowflake_source_columns()
         expected_columns = [
             CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY),
@@ -2356,6 +2439,9 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_canonical_to_snowflake(self):
+        if not self.test_api:
+            return
+
         # Expected outcomes of source_columns when converted to Snowflake
         expected_columns = [
             SnowflakeColumn("COL_FIXED_STR", SNOWFLAKE_TYPE_TEXT),
@@ -2436,9 +2522,15 @@ class TestBackendSynapseDataTypeMappings(TestDataTypeMappings):
     def setUp(self):
         self.options = build_mock_options(FAKE_ORACLE_SYNAPSE_ENV)
         messages = OffloadMessages()
-        self.test_api = backend_api_factory(
-            self.options.target, self.options, messages, do_not_connect=True
-        )
+        try:
+            self.test_api = backend_api_factory(
+                self.options.target, self.options, messages, do_not_connect=True
+            )
+        except ModuleNotFoundError as e:
+            if optional_synapse_dependency_exception(e):
+                self.test_api = None
+            else:
+                raise
 
     def _get_synapse_source_columns(self):
         return [
@@ -2531,6 +2623,9 @@ class TestBackendSynapseDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_synapse_to_canonical(self):
+        if not self.test_api:
+            return
+
         source_columns = self._get_synapse_source_columns()
         expected_columns = [
             CanonicalColumn("COL_BIGINT", GOE_TYPE_INTEGER_8),
@@ -2650,6 +2745,9 @@ class TestBackendSynapseDataTypeMappings(TestDataTypeMappings):
     ###########################################################
 
     def test_canonical_to_synapse(self):
+        if not self.test_api:
+            return
+
         # Expected outcomes of source_columns when converted to Synapse
         expected_columns = [
             SynapseColumn("COL_FIXED_STR", SYNAPSE_TYPE_CHAR),

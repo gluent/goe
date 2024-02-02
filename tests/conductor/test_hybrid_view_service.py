@@ -1,22 +1,43 @@
+# Copyright 2016 The GOE Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from unittest import TestCase, main
 
 import json
 
-from goe.conductor.hybrid_view_service import HybridViewService,\
-    JSON_KEY_BACKEND_NUM_ROWS, JSON_KEY_BACKEND_SIZE, JSON_KEY_BACKEND_PARTITIONS,\
-    JSON_KEY_VALIDATE_STATUS, JSON_KEY_VALIDATE_MESSAGE
+from goe.conductor.hybrid_view_service import (
+    HybridViewService,
+    JSON_KEY_BACKEND_NUM_ROWS,
+    JSON_KEY_BACKEND_SIZE,
+    JSON_KEY_BACKEND_PARTITIONS,
+    JSON_KEY_VALIDATE_STATUS,
+    JSON_KEY_VALIDATE_MESSAGE,
+)
 from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_TERADATA
-from tests.offload.unittest_functions import build_current_options, get_default_test_user
+from tests.offload.unittest_functions import (
+    build_current_options,
+    get_default_test_user,
+)
 
 
 class TestHybridViewService(TestCase):
-
     def setUp(self):
         self.hybrid_schema = get_default_test_user(hybrid=True)
         self.orchestration_options = build_current_options()
-        self.hybrid_view = 'SALES'
-        self.partition_name = 'SALES_201102'
-        self.hybrid_view_dim = 'CHANNELS'
+        self.hybrid_view = "SALES"
+        self.partition_name = "SALES_201102"
+        self.hybrid_view_dim = "CHANNELS"
 
     def _get_db_type_hvs(self):
         if self.orchestration_options.db_type == DBTYPE_ORACLE:
@@ -26,9 +47,11 @@ class TestHybridViewService(TestCase):
             hv1 = "DATE '2011-03-01'"
             hv2 = "DATE '2011-04-01'"
         else:
-            raise NotImplementedError('Frontend system not implemented for TestHybridViewService: {}'.format(
-                self.orchestration_options.db_type
-            ))
+            raise NotImplementedError(
+                "Frontend system not implemented for TestHybridViewService: {}".format(
+                    self.orchestration_options.db_type
+                )
+            )
         return hv1, hv2
 
     def test_backend_attributes(self):
@@ -98,5 +121,5 @@ class TestHybridViewService(TestCase):
         self.assertIsInstance(dict_payload[JSON_KEY_VALIDATE_MESSAGE], (str, str))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

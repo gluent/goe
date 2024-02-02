@@ -275,6 +275,30 @@ FAKE_ORACLE_LIST_RANGE_PARTITIONS = [
 ]
 
 
+def optional_hadoop_dependency_exception(e: Exception) -> bool:
+    return "hdfs" in str(e) or "impala" in str(e)
+
+
+def optional_netezza_dependency_exception(e: Exception) -> bool:
+    return "pyodbc" in str(e)
+
+
+def optional_sql_server_dependency_exception(e: Exception) -> bool:
+    return "pymssql" in str(e)
+
+
+def optional_snowflake_dependency_exception(e: Exception) -> bool:
+    return "snowflake" in str(e)
+
+
+def optional_synapse_dependency_exception(e: Exception) -> bool:
+    return "pyodbc" in str(e)
+
+
+def optional_teradata_dependency_exception(e: Exception) -> bool:
+    return "pyodbc" in str(e)
+
+
 def build_mock_options(mock_env: dict):
     assert mock_env
     k = mock.patch.dict(os.environ, mock_env)

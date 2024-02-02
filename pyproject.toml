@@ -41,24 +41,9 @@ dependencies = [
     # For Oracle frontend
     "cx-Oracle",
 
-    # For SQL Server frontend
-    # If we do this for real we should switch to pyodbc
-    "pymssql",
-
     # For BigQuery backend
     "google-cloud-bigquery",
     "google-cloud-kms",
-
-    # For Synapse backend/Teradata frontend
-    "pyodbc",
-
-    # For Hadoop backend
-    "hdfs",
-    "impyla",
-    "thrift-sasl",
-
-    # For Snowflake backend
-    "snowflake-connector-python",
 
     # GOE Listener packages
     "fastapi==0.77.0",
@@ -77,6 +62,25 @@ Homepage = "https://github.com/gluent/goe"
 Issues = "https://github.com/gluent/goe/issues"
 
 [project.optional-dependencies]
+hadoop = [
+    "hdfs",
+    "impyla",
+    "thrift-sasl",
+]
+snowflake = [
+    "snowflake-connector-python",
+]
+sql_server = [
+    # For SQL Server frontend
+    # If we do this for real we should switch to pyodbc
+    "pymssql",
+]
+synapse = [
+    "pyodbc",
+]
+teradata = [
+    "pyodbc",
+]
 dev = [
     "black",
     "nox",

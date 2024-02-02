@@ -2,12 +2,22 @@
     BetterImpyla class is tested via BackendApi therefore this is about standalone routines.
 """
 from unittest import TestCase, main
+from tests.unit.test_functions import optional_hadoop_dependency_exception
 
-from goe.util.better_impyla import BetterImpylaException, from_impala_size
+try:
+    from goe.util.better_impyla import BetterImpylaException, from_impala_size
+except ModuleNotFoundError as e:
+    if optional_hadoop_dependency_exception(e):
+        from_impala_size = None
+    else:
+        raise
 
 
 class TestBetterImpyla(TestCase):
     def test_from_impala_size(self):
+        if not from_impala_size:
+            return
+
         test_tuples = [
             ("0B", 0),
             ("0.3B", 0),

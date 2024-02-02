@@ -3,10 +3,19 @@
 from argparse import Namespace
 import os
 from unittest import TestCase, main, mock
+from tests.unit.test_functions import (
+    FAKE_ORACLE_HIVE_ENV,
+    optional_hadoop_dependency_exception,
+)
 
-from goe.util.hs2_connection import hs2_connect_using_options, hs2_cursor_user
-
-from tests.unit.test_functions import FAKE_ORACLE_HIVE_ENV
+try:
+    from goe.util.hs2_connection import hs2_connect_using_options, hs2_cursor_user
+except ModuleNotFoundError as e:
+    if optional_hadoop_dependency_exception(e):
+        hs2_connect_using_options = None
+        hs2_cursor_user = None
+    else:
+        raise
 
 
 class TestHs2Connection(TestCase):
@@ -43,6 +52,9 @@ class TestHs2Connection(TestCase):
         return new
 
     def test_hs2_connect_using_options(self):
+        if not hs2_connect_using_options:
+            return
+
         empty_dict = self._hs2_empty_dict()
         ldap_dict = self._merge_dicts(empty_dict, self._hs2_ldap_dict())
         plain_dict = self._merge_dicts(empty_dict, self._hs2_plain_dict())
@@ -88,6 +100,9 @@ class TestHs2Connection(TestCase):
         self.assertIs(hs2_connect_using_options(krb_opts, unsecured=True), False)
 
     def test_hs2_cursor_user(self):
+        if not hs2_cursor_user:
+            return
+
         empty_dict = self._hs2_empty_dict()
         ldap_dict = self._merge_dicts(empty_dict, self._hs2_ldap_dict())
         plain_dict = self._merge_dicts(empty_dict, self._hs2_plain_dict())

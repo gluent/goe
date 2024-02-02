@@ -23,6 +23,8 @@ from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
 )
 from tests.unit.test_functions import (
     build_mock_options,
+    optional_sql_server_dependency_exception,
+    optional_teradata_dependency_exception,
     FAKE_MSSQL_ENV,
     FAKE_ORACLE_ENV,
     FAKE_TERADATA_ENV,
@@ -299,6 +301,9 @@ class TestFrontendApi(TestCase):
             self.assertFalse(self.api.view_exists(self.db, self.table))
 
     def _run_all_tests(self):
+        if not self.api:
+            return
+
         self._test_capabilities()
         self._test_create_table()
         self._test_enclose_identifier()
@@ -332,7 +337,11 @@ class TestMSSQLFrontendApi(TestFrontendApi):
         self.connect_to_frontend = False
         self.db_type = DBTYPE_MSSQL
         self.config = self._get_mock_config(FAKE_MSSQL_ENV)
-        super().setUp()
+        try:
+            super().setUp()
+        except ModuleNotFoundError as e:
+            if not optional_sql_server_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_mssql_tests(self):
         self._run_all_tests()
@@ -366,7 +375,11 @@ class TestTeradataFrontendApi(TestFrontendApi):
         self.connect_to_frontend = False
         self.db_type = DBTYPE_TERADATA
         self.config = self._get_mock_config(FAKE_TERADATA_ENV)
-        super().setUp()
+        try:
+            super().setUp()
+        except ModuleNotFoundError as e:
+            if not optional_teradata_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_teradata_tests(self):
         self._run_all_tests()

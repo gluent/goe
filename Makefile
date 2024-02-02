@@ -39,6 +39,11 @@ install-dev:
 	$(MAKE) python-goe
 
 
+.PHONY: install-dev-extras
+install-dev-extras:
+	. $(VENV_PREFIX)/bin/activate && python3 -m pip install .[hadoop,snowflake,sql_server,teradata]
+
+
 .PHONY: target
 target: python-goe spark-listener license-txt offload-env
 	@echo -e "=> \e[92m Building target: $(TARGET_DIR)...\e[0m"

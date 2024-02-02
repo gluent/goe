@@ -14,6 +14,8 @@ from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_MSSQL, DBTYPE_TE
 from goe.offload.offload_messages import OffloadMessages
 from tests.unit.test_functions import (
     build_mock_options,
+    optional_sql_server_dependency_exception,
+    optional_teradata_dependency_exception,
     FAKE_MSSQL_ENV,
     FAKE_ORACLE_ENV,
     FAKE_TERADATA_ENV,
@@ -100,6 +102,8 @@ class TestFrontendTestingApi(TestCase):
         self.assertIsInstance(self.test_api.test_type_canonical_timestamp(), str)
 
     def _run_all_tests(self):
+        if not self.test_api:
+            return
         self._test_drop_table()
         self._test_expected_sales_offload_predicates()
         self._test_goe_type_mapping_generated_table_col_specs()
@@ -114,7 +118,11 @@ class TestMSSQLFrontendTestingApi(TestFrontendTestingApi):
     def setUp(self):
         self.db_type = DBTYPE_MSSQL
         self.config = build_mock_options(FAKE_MSSQL_ENV)
-        super().setUp()
+        try:
+            super().setUp()
+        except ModuleNotFoundError as e:
+            if not optional_sql_server_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_mssql_tests(self):
         self._run_all_tests()
@@ -134,7 +142,11 @@ class TestTeradataFrontendTestingApi(TestFrontendTestingApi):
     def setUp(self):
         self.db_type = DBTYPE_TERADATA
         self.config = build_mock_options(FAKE_TERADATA_ENV)
-        super().setUp()
+        try:
+            super().setUp()
+        except ModuleNotFoundError as e:
+            if not optional_teradata_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_teradata_tests(self):
         self._run_all_tests()

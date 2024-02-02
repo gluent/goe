@@ -16,7 +16,8 @@ from goe.connect.connect_functions import (
     test_header,
 )
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
-from goe.offload.offload_constants import DBTYPE_MSSQL, DBTYPE_ORACLE
+from goe.offload import offload_constants
+from goe.util.goe_version import GOEVersion
 
 from goe.goe import (
     comp_ver_check,
@@ -30,12 +31,15 @@ from goe.goe import (
 )
 
 
+GOE_MINIMUM_ORACLE_VERSION = "10.2.0.1"
+
+
 def static_frontend_name(orchestration_config):
     """We would normally rely on FrontendApi to tell us its name but this test is checking we can
     create a FrontendApi object (which connects to the frontend). So, unfortunately, we need a display
     name independent of the Api.
     """
-    if orchestration_config.db_type == DBTYPE_MSSQL:
+    if orchestration_config.db_type == offload_constants.DBTYPE_MSSQL:
         return orchestration_config.db_type.upper()
     else:
         return orchestration_config.db_type.capitalize()
@@ -112,11 +116,15 @@ def test_oracle_connectivity(orchestration_config):
     return cx
 
 
+def _oracle_version_supported(oracle_version: str) -> bool:
+    return GOEVersion(oracle_version) >= GOEVersion(GOE_MINIMUM_ORACLE_VERSION)
+
+
 def test_oracle(orchestration_config, messages):
     test_name = "Oracle NLS_LANG"
     test_header(test_name)
     if not nls_lang_exists():
-        orchestration_config.db_type = "oracle"
+        orchestration_config.db_type = offload_constants.DBTYPE_ORACLE
         set_nls_lang_default(orchestration_config)
         detail(
             'NLS_LANG not specified in environment, this will be set at offload time to "%s"'
@@ -149,8 +157,7 @@ def test_oracle(orchestration_config, messages):
     test_header(test_name)
     ov = frontend_api.frontend_version()
     detail(ov)
-    ovc = ov.split(".")
-    if int(ovc[0]) > 11 or (int(ovc[0]) == 11 and int(ovc[1]) > 1 and int(ovc[3]) > 3):
+    if _oracle_version_supported(ov):
         success(test_name)
     else:
         failure(test_name)
@@ -183,7 +190,9 @@ def test_oracle(orchestration_config, messages):
 
     test_name = "Oracle charactersets (IANA)"
     test_header(test_name)
-    sql = "SELECT PARAMETER, UTL_I18N.MAP_CHARSET(VALUE) IANA FROM NLS_DATABASE_PARAMETERS WHERE PARAMETER IN ('NLS_NCHAR_CHARACTERSET','NLS_CHARACTERSET') ORDER BY 1"
+    sql = """SELECT PARAMETER, UTL_I18N.MAP_CHARSET(VALUE) IANA
+        FROM NLS_DATABASE_PARAMETERS
+        WHERE PARAMETER IN ('NLS_NCHAR_CHARACTERSET','NLS_CHARACTERSET') ORDER BY 1"""
     r = frontend_api.execute_query_fetch_all(sql)
     for row in r:
         detail("%s: %s" % (row[0], row[1]))
@@ -236,7 +245,7 @@ def test_oracle(orchestration_config, messages):
 
 
 def run_frontend_tests(orchestration_config, messages):
-    if orchestration_config.db_type == DBTYPE_ORACLE:
+    if orchestration_config.db_type == offload_constants.DBTYPE_ORACLE:
         test_oracle(orchestration_config, messages)
     else:
         frontend_api = test_frontend_db_connectivity(orchestration_config, messages)

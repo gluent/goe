@@ -254,6 +254,9 @@ def test_dir(dir_name, expected_perms):
 
 def test_listener(orchestration_config):
     test_name = orchestration_constants.PRODUCT_NAME_GEL
+    # For the time being this has been disabled, pending:
+    # https://github.com/gluent/goe/issues/109
+    return
     test_header(test_name)
     if (
         not orchestration_config.listener_host

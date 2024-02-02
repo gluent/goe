@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 import traceback
+from typing import Optional
 
 from getpass import getuser
 from goe.goe import (
@@ -51,12 +52,23 @@ from goe.connect.connect_transport import (
     test_credential_api_alias,
 )
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
-from goe.offload.offload_constants import DBTYPE_IMPALA, LOG_LEVEL_DEBUG
+from goe.offload.offload_constants import DBTYPE_IMPALA
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import ssh_cmd_prefix
 from goe.orchestration import orchestration_constants
 from goe.util.goe_log import log_exception
+from goe.util.misc_functions import unsurround
 from goe.util.redis_tools import RedisClient
+
+
+OS_RELEASE_FILE_REDHAT = "/etc/redhat-release"
+OS_RELEASE_FILE_SUSE = "/etc/SuSE-release"
+OS_RELEASE_FILE_DEBIAN = "/etc/os-release"
+OS_RELEASE_FILES = [
+    OS_RELEASE_FILE_REDHAT,
+    OS_RELEASE_FILE_SUSE,
+    OS_RELEASE_FILE_DEBIAN,
+]
 
 
 class ConnectException(Exception):
@@ -112,25 +124,44 @@ def test_ssh(orchestration_config):
         raise
 
 
+def _os_release_file_exists() -> Optional[str]:
+    existing_files = [_ for _ in OS_RELEASE_FILES if os.path.isfile(_)]
+    return existing_files[0] if existing_files else None
+
+
+def _os_version_from_file_content(os_release_file: str, file_content: str) -> str:
+    if os_release_file == OS_RELEASE_FILE_SUSE:
+        os_ver = file_content.splitlines()
+        os_ver = "%s (%s)" % (os_ver[:1][0], ", ".join([o for o in os_ver[1:]]))
+        return os_ver
+    elif os_release_file == OS_RELEASE_FILE_DEBIAN:
+        os_ver = file_content.splitlines()
+        tokens = os_ver[0].split("=")
+        os_ver = tokens[0] if len(tokens) == 1 else " ".join(tokens[1:])
+        os_ver = unsurround(os_ver, '"')
+        return os_ver
+    else:
+        return file_content
+
+
+def _os_version_from_file(os_release_file: str) -> str:
+    with open(os_release_file) as f:
+        file_content = f.read().strip()
+        return _os_version_from_file_content(os_release_file, file_content)
+
+
 def test_os_version():
     test_name = "Operating system version"
     try:
         test_header(test_name)
 
-        if not os.path.isfile("/etc/redhat-release") and not os.path.isfile(
-            "/etc/SuSE-release"
-        ):
+        os_release_file = _os_release_file_exists()
+        if not os_release_file:
             detail("Unsupported operating system")
             failure(test_name)
             return
-        os_ver = ""
-        if os.path.isfile("/etc/redhat-release"):
-            cmd = ["cat", "/etc/redhat-release"]
-            os_ver = subprocess.check_output(cmd).decode()
-        elif os.path.isfile("/etc/SuSE-release"):
-            cmd = ["cat", "/etc/SuSE-release"]
-            out = subprocess.check_output(cmd).decode().splitlines()
-            os_ver = "%s (%s)" % (out[:1][0], ", ".join([o for o in out[1:]]))
+
+        os_ver = _os_version_from_file(os_release_file)
         cmd = ["uname", "-r"]
         kern_ver = subprocess.check_output(cmd).decode()
         detail("%s - %s" % (os_ver.rstrip(), kern_ver.rstrip()))
@@ -223,6 +254,9 @@ def test_dir(dir_name, expected_perms):
 
 def test_listener(orchestration_config):
     test_name = orchestration_constants.PRODUCT_NAME_GEL
+    # For the time being this has been disabled, pending:
+    # https://github.com/gluent/goe/issues/109
+    return
     test_header(test_name)
     if (
         not orchestration_config.listener_host

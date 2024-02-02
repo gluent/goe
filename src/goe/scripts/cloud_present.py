@@ -58,7 +58,6 @@ class CloudPresentException(Exception):
 # -----------------------------------------------------------------------
 
 PROG_BANNER = "cloud_present: 'Remap' impala table between HDFS and S3 locations"
-COPYRIGHT_MSG = "GOE Inc (c) 2015-2016"
 
 # "Source" and "target" are sections in offload configuration file:
 # $OFFLOAD_CONF/offload.conf
@@ -305,7 +304,7 @@ def set_logging(cfg, args):
 def print_title():
     """Print utility title"""
 
-    print("%s\n%s" % (PROG_BANNER, COPYRIGHT_MSG))
+    print("%s\n" % (PROG_BANNER))
 
 
 def parse_args(cfg):

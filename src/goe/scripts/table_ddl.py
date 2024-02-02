@@ -38,7 +38,6 @@ from goe.goe import (
     get_options_from_list,
     normalise_owner_table_options,
     init,
-    license,
     version,
 )
 
@@ -57,7 +56,6 @@ GOE_OPTIONS = (
 )
 
 PROG_BANNER = "Table DDL (table_ddl) v%s" % version()
-COPYRIGHT_MSG = "%s" % license()
 
 
 # -----------------------------------------------------------------------
@@ -79,7 +77,7 @@ def set_logging(log_level):
 def print_title():
     """Print utility title"""
 
-    print("%s\n%s\n" % (PROG_BANNER, COPYRIGHT_MSG))
+    print("%s\n" % (PROG_BANNER))
 
 
 def parse_args():

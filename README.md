@@ -1,13 +1,14 @@
-# goe
-GOE
+# GOE
+A simple and flexible way to copy data from an Oracle Database to Google BigQuery.
 
-# Prepare the host/cloned repo
-Simple steps to get a working Python
+# Prepare the host/cloned repository
+Prerequisites for Python:
 ```
 sudo apt-get install rustc
 sudo apt-get install unixodbc-dev
 ```
-Install SBT in order to build Spark Listener:
+
+Install SBT in order to build the Spark Listener:
 ```
 curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup && rm ./cs
 . ~/.bash_profile
@@ -19,6 +20,11 @@ To create a Python virtualenv and install all required packages:
 make clean && make install-dev
 source ./.venv/bin/activate
 PYTHONPATH=${PWD}/src
+```
+
+Note only the Python dependencies for Oracle and BigQuery are installed by default. To install all optional dependencies you can run this command:
+```
+make install-dev-extras
 ```
 
 # Install

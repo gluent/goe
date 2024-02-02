@@ -45,6 +45,9 @@ from tests.testlib.test_framework.factory.backend_testing_api_factory import (
 )
 from tests.unit.test_functions import (
     build_mock_options,
+    optional_hadoop_dependency_exception,
+    optional_snowflake_dependency_exception,
+    optional_synapse_dependency_exception,
     FAKE_ORACLE_BQ_ENV,
     FAKE_ORACLE_HIVE_ENV,
     FAKE_ORACLE_IMPALA_ENV,
@@ -1257,6 +1260,8 @@ class TestBackendApi(TestCase):
             self.assertFalse(self.api.view_exists("not_a_db", "not_a_view"))
 
     def _run_all_tests(self):
+        if not self.api:
+            return
         self._test_add_columns()
         self._test_backend_version()
         self._test_compute_stats()
@@ -1383,7 +1388,11 @@ class TestHiveBackendApi(TestBackendApi):
         self.connect_to_backend = False
         self.target = DBTYPE_HIVE
         self.config = self._get_mock_config(FAKE_ORACLE_HIVE_ENV)
-        super(TestHiveBackendApi, self).setUp()
+        try:
+            super(TestHiveBackendApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_hadoop_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_hive_tests(self):
         self._run_all_tests()
@@ -1394,7 +1403,11 @@ class TestImpalaBackendApi(TestBackendApi):
         self.connect_to_backend = False
         self.target = DBTYPE_IMPALA
         self.config = self._get_mock_config(FAKE_ORACLE_IMPALA_ENV)
-        super(TestImpalaBackendApi, self).setUp()
+        try:
+            super(TestImpalaBackendApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_hadoop_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_impala_tests(self):
         self._run_all_tests()
@@ -1416,7 +1429,11 @@ class TestSparkThriftBackendApi(TestBackendApi):
         self.connect_to_backend = False
         self.target = DBTYPE_SPARK
         self.config = self._get_mock_config(FAKE_ORACLE_HIVE_ENV)
-        super(TestSparkThriftBackendApi, self).setUp()
+        try:
+            super(TestSparkThriftBackendApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_hadoop_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_spark_thrift_tests(self):
         self._run_all_tests()
@@ -1429,7 +1446,11 @@ class TestSnowflakeBackendApi(TestBackendApi):
         self.config = self._get_mock_config(FAKE_ORACLE_SNOWFLAKE_ENV)
         if self.config.snowflake_database is None:
             self.config.snowflake_database = "any-db"
-        super(TestSnowflakeBackendApi, self).setUp()
+        try:
+            super(TestSnowflakeBackendApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_snowflake_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_snowflake_tests(self):
         self._run_all_tests()
@@ -1442,7 +1463,11 @@ class TestSynapseBackendApi(TestBackendApi):
         self.config = self._get_mock_config(FAKE_ORACLE_SYNAPSE_ENV)
         if self.config.synapse_database is None:
             self.config.synapse_database = "any-db"
-        super(TestSynapseBackendApi, self).setUp()
+        try:
+            super(TestSynapseBackendApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_synapse_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_synapse_tests(self):
         self._run_all_tests()

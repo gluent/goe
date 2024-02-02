@@ -9,7 +9,6 @@
 
 from unittest import TestCase, main
 
-from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_constants import (
     DBTYPE_BIGQUERY,
     DBTYPE_HIVE,
@@ -23,6 +22,9 @@ from tests.testlib.test_framework.factory.backend_testing_api_factory import (
 )
 from tests.unit.test_functions import (
     build_mock_options,
+    optional_hadoop_dependency_exception,
+    optional_snowflake_dependency_exception,
+    optional_synapse_dependency_exception,
     FAKE_ORACLE_BQ_ENV,
     FAKE_ORACLE_HIVE_ENV,
     FAKE_ORACLE_IMPALA_ENV,
@@ -148,6 +150,8 @@ class TestBackendTestingApi(TestCase):
         self.assertIsInstance(self.test_api.unit_test_query_options(), dict)
 
     def _run_all_tests(self):
+        if not self.test_api:
+            return
         self._test_create_table_as_select()
         self._test_goe_type_mapping_generated_table_col_specs()
         self._test_host_compare_sql_projection()
@@ -159,7 +163,11 @@ class TestHiveBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_HIVE
         self.config = self._get_mock_config(FAKE_ORACLE_HIVE_ENV)
-        super(TestHiveBackendTestingApi, self).setUp()
+        try:
+            super(TestHiveBackendTestingApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_hadoop_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_hive_tests(self):
         self._run_all_tests()
@@ -169,7 +177,11 @@ class TestImpalaBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_IMPALA
         self.config = self._get_mock_config(FAKE_ORACLE_IMPALA_ENV)
-        super(TestImpalaBackendTestingApi, self).setUp()
+        try:
+            super(TestImpalaBackendTestingApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_hadoop_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_impala_tests(self):
         self._run_all_tests()
@@ -189,7 +201,11 @@ class TestSnowflakeBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_SNOWFLAKE
         self.config = self._get_mock_config(FAKE_ORACLE_SNOWFLAKE_ENV)
-        super(TestSnowflakeBackendTestingApi, self).setUp()
+        try:
+            super(TestSnowflakeBackendTestingApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_snowflake_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_snowflake_tests(self):
         self._run_all_tests()
@@ -199,7 +215,11 @@ class TestSynapseBackendTestingApi(TestBackendTestingApi):
     def setUp(self):
         self.target = DBTYPE_SYNAPSE
         self.config = self._get_mock_config(FAKE_ORACLE_SYNAPSE_ENV)
-        super(TestSynapseBackendTestingApi, self).setUp()
+        try:
+            super(TestSynapseBackendTestingApi, self).setUp()
+        except ModuleNotFoundError as e:
+            if not optional_synapse_dependency_exception(e):
+                raise
 
     def test_all_non_connecting_synapse_tests(self):
         self._run_all_tests()

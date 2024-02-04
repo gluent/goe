@@ -1072,7 +1072,7 @@ def test_offload_lpa_full(config, schema, data_db):
     assert offload_lpa_fact_assertion(
         schema,
         data_db,
-        LPA_FACT_TABLE,
+        LPA_FULL_TABLE,
         config,
         backend_api,
         messages,
@@ -1102,7 +1102,7 @@ def test_offload_lpa_full(config, schema, data_db):
     assert offload_lpa_fact_assertion(
         schema,
         data_db,
-        LPA_FACT_TABLE,
+        LPA_FULL_TABLE,
         config,
         backend_api,
         messages,

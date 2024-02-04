@@ -14,7 +14,7 @@
 # limitations under the License.
 */
 
-set termout off feedback off serveroutput on
+set termout off feedback off serveroutput on lines 200
 spool sql/upgrade_offload_repo_deltas.tmp replace
 declare
 

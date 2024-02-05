@@ -1,9 +1,23 @@
 #! /usr/bin/env python3
+
+# Copyright 2016 The GOE Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ##########################################################################
 # agg_validate: Check data consistency between Oracle and backend
 #     by comparing "column aggregate_functions" (min, max, count, ...) between the two
 #
-# LICENSE_TEXT
 ##########################################################################
 
 import logging
@@ -39,7 +53,6 @@ from goe.goe import (
     log,
     get_log_fh_name,
     version,
-    license,
     get_log_fh,
     log_timestamp,
 )
@@ -57,7 +70,6 @@ class AggValidateException(Exception):
 # -----------------------------------------------------------------------
 
 PROG_BANNER = "Validate (agg_validate) v%s" % version()
-COPYRIGHT_MSG = "%s" % license()
 
 REGEX_FILTER = re.compile("(\S+)\s+(%s)\s+(\S+)" % "|".join(SUPPORTED_OPERATIONS), re.I)
 
@@ -144,7 +156,7 @@ def set_logging(log_level):
 def print_title():
     """Print utility title"""
 
-    print("%s\n%s\n" % (PROG_BANNER, COPYRIGHT_MSG))
+    print("%s\n" % (PROG_BANNER))
 
 
 def post_process_args(args):

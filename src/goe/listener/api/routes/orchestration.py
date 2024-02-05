@@ -1,5 +1,19 @@
 # -*- coding: utf-8 -*-
 
+# Copyright 2016 The GOE Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Standard Library
 import logging
 
@@ -125,7 +139,6 @@ async def get_command_execution_log(execution_id: UUID4):
     command_log_path = command_execution.get("command_log_path", "")
     exists = await Path(command_log_path).exists()
     if exists:
-
         file_name = command_log_path.split("/")[-1].replace(".log", "")
         async with await open_file(Path(command_log_path)) as log_file:
             contents = await log_file.read()
@@ -164,7 +177,7 @@ def execute_offload_command(parameters: schemas.OffloadOptions):
     utils.orchestrate.check_for_running_command(parameters.owner_table)
     execution_identifier = ExecutionId()
 
-    logger.info(f'Submitting offload: {str(execution_identifier)}')
+    logger.info(f"Submitting offload: {str(execution_identifier)}")
     run_and_detach(services.orchestration_runner.offload)(
         params=parameters.dict(exclude_unset=True), execution_id=execution_identifier
     )

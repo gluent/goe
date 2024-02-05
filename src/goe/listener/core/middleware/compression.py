@@ -1,3 +1,17 @@
+# Copyright 2016 The GOE Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Standard Library
 import gzip
 import io
@@ -88,7 +102,9 @@ class GZipResponder:  # noqa: WPS230
         self.initial_message: Message = {}
         self.started = False
         self.gzip_buffer = io.BytesIO()
-        self.gzip_file = gzip.GzipFile(mode="wb", fileobj=self.gzip_buffer, compresslevel=compresslevel)
+        self.gzip_file = gzip.GzipFile(
+            mode="wb", fileobj=self.gzip_buffer, compresslevel=compresslevel
+        )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         self.send = send
@@ -182,7 +198,9 @@ class BrotliResponder:  # noqa: WPS230
         self.send = unattached_send
         self.initial_message = {}
         self.started = False
-        self.br_file = Compressor(quality=self.quality, mode=self.mode, lgwin=self.lgwin, lgblock=self.lgblock)
+        self.br_file = Compressor(
+            quality=self.quality, mode=self.mode, lgwin=self.lgwin, lgblock=self.lgblock
+        )
         self.br_buffer = io.BytesIO()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:

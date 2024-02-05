@@ -1,3 +1,17 @@
+# Copyright 2016 The GOE Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Standard Library
 from functools import lru_cache
 from pathlib import Path
@@ -20,7 +34,9 @@ FRONTEND_DIR: Path = Path(APP_DIR / "web")
 class ListenerSettings(BaseSettings):
     """Listener Configuration Object"""
 
-    global_config: OrchestrationConfig = OrchestrationConfig.as_defaults(do_not_connect=True)
+    global_config: OrchestrationConfig = OrchestrationConfig.as_defaults(
+        do_not_connect=True
+    )
 
     host: str = global_config.listener_host or "0.0.0.0"
     port: int = global_config.listener_port or 8085

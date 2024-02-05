@@ -1,3 +1,17 @@
+# Copyright 2016 The GOE Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """ Test functionality around requesting and validating partition functions.
     The testing is done on a simple dimension table.
     Partition functions are also tested in the assorted partition append stories:
@@ -254,6 +268,9 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         config_overrides={"execute": False},
         expected_exception_string=PARTITION_FUNCTION_DOES_NOT_EXIST_EXCEPTION_TEXT,
     )
+
+    # Ensure UDF exists before attempting test.
+    backend_api.create_test_partition_functions(data_db, udf=INT8_UDF)
 
     # Offload with STRING input to INT8 partition function.
     options["offload_partition_columns"] = "TXN_DESC"

@@ -1,3 +1,19 @@
+{#
+# Copyright 2016 The GOE Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#}
+
 <div class="section">
     <div class="container-fluid">
         <div class="row">
@@ -5,7 +21,8 @@
                 <h1>Table Summary</h1><br>
             </div>
             <div class="col-md-1 margin-top-20">
-                <button class="btn bucket-schema-button pull-right" data-toggle="modal" data-target="#table_details_help">
+                <button class="btn bucket-schema-button pull-right" data-toggle="modal"
+                    data-target="#table_details_help">
                     <span class="fa-stack fa-lg">
                         <i class="fa fa-circle-thin fa-stack-2x"></i>
                         <i class="fa fa-question fa-stack-1x"></i>
@@ -18,39 +35,70 @@
                 <div class="modal-dialog modal-custom" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                    aria-hidden="true">&times;</span></button>
                             <h4 class="modal-title text-goe">Table Summary</h4>
                         </div>
                         <div class="modal-body-help">
                             <div class="panel help-panel">
                                 <div class="modal-body-panel-body-help">
-                                    <p>This section of the Offload Status Report displays statistics and database information for all offloaded tables <sup>1</sup>, grouped by schema.</p>
+                                    <p>This section of the Offload Status Report displays statistics and database
+                                        information for all offloaded tables <sup>1</sup>, grouped by schema.</p>
                                     <h3>Summary-Level Information</h3>
-                                    <p>By default, summarised <strong>Retained</strong>, <strong>Reclaimable</strong> and <strong>Offloaded</strong> <sup>2</sup> schema sizes are presented, together with the number of offloaded tables in the schema.</p>
-                                    <p>Each schema can be expanded by clicking on the <span class="help-icon"><i class="fa fa-caret-right"></i></span> icon to display summarised totals of <strong>Retained</strong>, <strong>Reclaimable</strong> and <strong>Offloaded</strong> size and segments <sup>2</sup> for each offloaded table.</p>
+                                    <p>By default, summarised <strong>Retained</strong>, <strong>Reclaimable</strong>
+                                        and <strong>Offloaded</strong> <sup>2</sup> schema sizes are presented, together
+                                        with the number of offloaded tables in the schema.</p>
+                                    <p>Each schema can be expanded by clicking on the <span class="help-icon"><i
+                                                class="fa fa-caret-right"></i></span> icon to display summarised totals
+                                        of <strong>Retained</strong>, <strong>Reclaimable</strong> and
+                                        <strong>Offloaded</strong> size and segments <sup>2</sup> for each offloaded
+                                        table.</p>
 
                                     <h3>Detail-Level Information</h3>
-                                    <p>If the Offload Status Report is run at <strong>detail</strong> level, additional information is provided for each table.</p>
-                                    <p>First, the <strong>Offload Type</strong> for the table will be dispayed along with the summary statistics.</p>
-                                    <p>Second, more detailed additional information can be accessed by clicking on the <span class="help-icon"><i class="fa fa-info-circle fa-lg"></i></span> icon. A popup window will be displayed with the following tabs:
-                                        <ul>
-                                            <li><strong>Summary</strong>: retained, reclaimable and offloaded totals by size, segments and rows <sup>2</sup>.</li>
-                                            <li><strong>Details</strong>: overview of the main source, hybrid and offloaded tables and views.</li>
-                                            <li><strong>Parameters</strong>: overview of the main offload parameters and partitioning characteristics for the source and offloaded tables.</li>
-                                            <li><strong>Dependent Objects (if applicable)</strong>: overview of other dependent objects created when the source application table was offloaded.</li>
-                                            <li><strong>Incremental Update Objects (if applicable)</strong>: overview of additional database objects created to support Incremental Update.</li>
-                                            <li><strong>Advanced Aggregation Pushdown Objects (if applicable)</strong>: overview of additional database objects created to support Advanced Aggregation Pushdown.</li>
-                                            <li><strong>Join Pushdown Objects (if applicable)</strong>: overview of additional database objects created to support Join Pushdown.</li>
-                                        </ul>
+                                    <p>If the Offload Status Report is run at <strong>detail</strong> level, additional
+                                        information is provided for each table.</p>
+                                    <p>First, the <strong>Offload Type</strong> for the table will be dispayed along
+                                        with the summary statistics.</p>
+                                    <p>Second, more detailed additional information can be accessed by clicking on the
+                                        <span class="help-icon"><i class="fa fa-info-circle fa-lg"></i></span> icon. A
+                                        popup window will be displayed with the following tabs:
+                                    <ul>
+                                        <li><strong>Summary</strong>: retained, reclaimable and offloaded totals by
+                                            size, segments and rows <sup>2</sup>.</li>
+                                        <li><strong>Details</strong>: overview of the main source, hybrid and offloaded
+                                            tables and views.</li>
+                                        <li><strong>Parameters</strong>: overview of the main offload parameters and
+                                            partitioning characteristics for the source and offloaded tables.</li>
+                                        <li><strong>Dependent Objects (if applicable)</strong>: overview of other
+                                            dependent objects created when the source application table was offloaded.
+                                        </li>
+                                        <li><strong>Incremental Update Objects (if applicable)</strong>: overview of
+                                            additional database objects created to support Incremental Update.</li>
+                                        <li><strong>Advanced Aggregation Pushdown Objects (if applicable)</strong>:
+                                            overview of additional database objects created to support Advanced
+                                            Aggregation Pushdown.</li>
+                                        <li><strong>Join Pushdown Objects (if applicable)</strong>: overview of
+                                            additional database objects created to support Join Pushdown.</li>
+                                    </ul>
                                     </p>
 
                                     <h3>Search and Sort</h3>
                                     <p>Each expanded schema has <em>Search</em> and <em>Sort</em> capabilities.</p>
-                                    <p>To <em>Search</em>, begin typing in the search field and dynamic filtering will be applied as you type.</p>
-                                    <p>To <em>Sort</em>, click on the <span class="help-icon"><i class="fa fa-fw fa-sort"></i></span> icon in the column header you wish to sort by. Click again to reverse the sort direction. The results are initially sorted by table name in ascending order.</p>
+                                    <p>To <em>Search</em>, begin typing in the search field and dynamic filtering will
+                                        be applied as you type.</p>
+                                    <p>To <em>Sort</em>, click on the <span class="help-icon"><i
+                                                class="fa fa-fw fa-sort"></i></span> icon in the column header you wish
+                                        to sort by. Click again to reverse the sort direction. The results are initially
+                                        sorted by table name in ascending order.</p>
 
-                                    <p><br /><sup>1</sup> In-scope schemas and tables are determined by the <code>--schema</code> and <code>--table</code> report options. If no options are provided, the report will include all tables offloaded from the source RDBMS, else only offloaded tables matching either the requested schema, table or both will be displayed.</p>
-                                    <p><sup>2</sup> See <strong>Database Summary</strong> help for a detailed description of the Retained, Reclaimable and Offloaded statistics and Size, Segments and Rows dimensions.</p>
+                                    <p><br /><sup>1</sup> In-scope schemas and tables are determined by the
+                                        <code>--schema</code> and <code>--table</code> report options. If no options are
+                                        provided, the report will include all tables offloaded from the source RDBMS,
+                                        else only offloaded tables matching either the requested schema, table or both
+                                        will be displayed.</p>
+                                    <p><sup>2</sup> See <strong>Database Summary</strong> help for a detailed
+                                        description of the Retained, Reclaimable and Offloaded statistics and Size,
+                                        Segments and Rows dimensions.</p>
                                 </div>
                             </div>
                         </div>

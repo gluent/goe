@@ -150,22 +150,22 @@ def gen_list_multi_part_value_create_ddl(
     return [
         """DROP TABLE %(schema)s.%(table)s""" % params,
         """CREATE TABLE %(schema)s.%(table)s (id NUMBER(8),data NVARCHAR2(30),cat %(part_key_type)s)
-               STORAGE (INITIAL 64K NEXT 64K)
-               PARTITION BY LIST (cat)
-               ( PARTITION p_1 VALUES (%(literal_fn)s%(qt)s%(ch1)s%(qt)s%(fn_mask)s,%(literal_fn)s%(qt)s%(ch2)s%(qt)s%(fn_mask)s) STORAGE (INITIAL 16k)
-               , PARTITION p_2 VALUES (%(literal_fn)s%(qt)s%(ch3)s%(qt)s%(fn_mask)s) STORAGE (INITIAL 16k)
-               , PARTITION p_def VALUES (DEFAULT) STORAGE (INITIAL 16k))"""
+           STORAGE (INITIAL 64K NEXT 64K)
+           PARTITION BY LIST (cat)
+           ( PARTITION p_1 VALUES (%(literal_fn)s%(qt)s%(ch1)s%(qt)s%(fn_mask)s,%(literal_fn)s%(qt)s%(ch2)s%(qt)s%(fn_mask)s) STORAGE (INITIAL 16k)
+           , PARTITION p_2 VALUES (%(literal_fn)s%(qt)s%(ch3)s%(qt)s%(fn_mask)s) STORAGE (INITIAL 16k)
+           , PARTITION p_def VALUES (DEFAULT) STORAGE (INITIAL 16k))"""
         % params,
         """INSERT INTO %(schema)s.%(table)s (id, data, cat)
-               SELECT ROWNUM,DBMS_RANDOM.STRING('u', 15)
-               ,      CASE MOD(ROWNUM,3)
-                      WHEN 0 THEN %(literal_fn)s%(qt)s%(ch1)s%(qt)s%(fn_mask)s
-                      WHEN 1 THEN %(literal_fn)s%(qt)s%(ch2)s%(qt)s%(fn_mask)s
-                      WHEN 2 THEN %(literal_fn)s%(qt)s%(ch3)s%(qt)s%(fn_mask)s
-                      ELSE %(literal_fn)s%(qt)s%(def_ch)s%(qt)s%(fn_mask)s
-                      END AS cat
-               FROM   dual
-               CONNECT BY ROWNUM <= 1000"""
+           SELECT ROWNUM,DBMS_RANDOM.STRING('u', 15)
+           ,      CASE MOD(ROWNUM,3)
+                  WHEN 0 THEN %(literal_fn)s%(qt)s%(ch1)s%(qt)s%(fn_mask)s
+                  WHEN 1 THEN %(literal_fn)s%(qt)s%(ch2)s%(qt)s%(fn_mask)s
+                  WHEN 2 THEN %(literal_fn)s%(qt)s%(ch3)s%(qt)s%(fn_mask)s
+                  ELSE %(literal_fn)s%(qt)s%(def_ch)s%(qt)s%(fn_mask)s
+                  END AS cat
+           FROM   dual
+           CONNECT BY ROWNUM <= 1000"""
         % params,
     ]
 
@@ -987,6 +987,10 @@ def test_offload_lpa_part_fn(config, schema, data_db):
                 config, backend_api, messages, data_db, LPA_NUM_PART_FUNC_TABLE
             ),
         ],
+    )
+
+    backend_api.create_test_partition_functions(
+        data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
     )
 
     # IPA 90/10 list partition with partition function.

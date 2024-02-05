@@ -269,6 +269,9 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         expected_exception_string=PARTITION_FUNCTION_DOES_NOT_EXIST_EXCEPTION_TEXT,
     )
 
+    # Ensure UDF exists before attempting test.
+    backend_api.create_test_partition_functions(data_db, udf=INT8_UDF)
+
     # Offload with STRING input to INT8 partition function.
     options["offload_partition_columns"] = "TXN_DESC"
     options["offload_partition_functions"] = INT8_UDF

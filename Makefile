@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TARGET_DIR=target/offload
+SHELL := /bin/bash
 
+TARGET_DIR=target/offload
 
 OFFLOAD_VERSION=$(shell cat version)
 
@@ -59,7 +60,7 @@ install-dev-extras:
 target: python-goe spark-listener offload-env
 	@echo -e "=> \e[92m Building target: $(TARGET_DIR)...\e[0m"
 	mkdir -p $(TARGET_DIR)/bin
-	cp bin/{offload,connect,logmgr,display_goe_env,clean_goe_env,listener,agg_validate} $(TARGET_DIR)/bin
+	cp bin/{offload,connect,logmgr,display_goe_env,clean_goe_env,agg_validate} $(TARGET_DIR)/bin
 	mkdir -p $(TARGET_DIR)/tools
 	cp tools/goe-shell-functions.sh $(TARGET_DIR)/tools
 	mkdir -p $(TARGET_DIR)/tools/listener

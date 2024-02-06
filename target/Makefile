@@ -21,10 +21,12 @@ SPARK_PACKAGE=goe_transport_$(OFFLOAD_VERSION).tar.gz
 package:
 	rm -f ../$(GOE_PACKAGE)
 	tar --exclude=".*" -zcf ../$(GOE_PACKAGE) offload
+	ls ../$(GOE_PACKAGE)
 
 package-spark:
 	rm -f ../$(SPARK_PACKAGE)
 	tar --exclude="spark-*.tgz" -zcf ../$(SPARK_PACKAGE) transport
+	ls ../$(SPARK_PACKAGE)
 
 clean:
 	rm -rf offload

@@ -69,7 +69,7 @@ vi ${OFFLOAD_HOME}/conf/offload.env
 ```
 
 ```
-sed -i "s/^export OFFLOAD_TRANSPORT_SPARK_PROPERTIES=.*/export OFFLOAD_TRANSPORT_SPARK_PROPERTIES='{\"spark.extraListeners\": \"GOETaskListener\", \"spark.jars.packages\": \"com.oracle.database.jdbc:ojdbc6:11.2.0.4,org.apache.spark:spark-avro_2.12:3.3.0\"}'/" ${OFFLOAD_HOME}/conf/offload.env
+export OFFLOAD_TRANSPORT_SPARK_PROPERTIES='{\"spark.extraListeners\": \"GOETaskListener\", \"spark.jars.packages\": \"com.oracle.database.jdbc:ojdbc11:23.2.0.0,org.apache.spark:spark-avro_2.12:3.3.0\"}'/" ${OFFLOAD_HOME}/conf/offload.env
 ```
 
 Variables you will want to pay attention to are:

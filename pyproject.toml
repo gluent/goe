@@ -42,7 +42,6 @@ dependencies = [
     "python-dateutil",
     "PyYAML",
     "requests",
-    "requests-kerberos",
     "termcolor",
     "urllib3",
 
@@ -78,6 +77,7 @@ Issues = "https://github.com/gluent/goe/issues"
 hadoop = [
     "hdfs",
     "impyla",
+    "requests-kerberos",
     "thrift-sasl",
 ]
 snowflake = [

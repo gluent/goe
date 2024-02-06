@@ -75,6 +75,8 @@ export OFFLOAD_TRANSPORT_SPARK_PROPERTIES='{\"spark.extraListeners\": \"GOETaskL
 Variables you will want to pay attention to are:
 
 - ORA_CONN
+- ORA_ADM_PASS
+- ORA_APP_PASS
 - BIGQUERY_DATASET_LOCATION
 - OFFLOAD_FS_CONTAINER
 - OFFLOAD_FS_PREFIX
@@ -85,17 +87,22 @@ If using Dataproc to provide Spark:
 - GOOGLE_DATAPROC_REGION
 
 # Install database objects
+To install supporting database objects you need access to an admin account that can create users, grant them system privileges and create objects in the schemas created. SYSTEM has been used in the exaqmple below but this is *not* a necessity:
 ```
 . ${OFFLOAD_HOME}/conf/offload.env
 cd ${OFFLOAD_HOME}/setup
-sqlplus sys@${ORA_CONN} as sysdba
+sqlplus system@${ORA_CONN}
 @install_offload
+```
+
+In a SQL*Plus session change the passwords for the GOE_ADM and GOE_APP users to match the values in the offload.env configuration file:
+```
 alter user goe_adm identified by ...;
 alter user goe_app identified by ...;
 ```
 
 # Install for development
-To create a Python virtual environment and install all required packages:
+To create a Python virtual environment and install all required packages into the repository directory:
 ```
 make clean && make install-dev
 source ./.venv/bin/activate
@@ -107,26 +114,21 @@ Note only the Python dependencies for Oracle and BigQuery are installed by defau
 make install-dev-extras
 ```
 
-# Developing
-Getting setup:
+# Running commands:
+Source the correct environment:
 ```
 . ${OFFLOAD_HOME}/conf/offload.env
 source ./.venv/bin/activate
-PYTHONPATH=${PWD}:${PWD}/src
+```
+
+Checking connectivity:
+```
+cd bin
+./connect
 ```
 
 Running an Offload:
 ```
 cd bin
 ./offload -t my.table
-```
-
-Running unit tests:
-```
-pytest tests/unit
-```
-
-Running integration tests:
-```
-pytest tests/integration/scenarios
 ```

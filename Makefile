@@ -67,10 +67,6 @@ target: python-goe spark-listener offload-env
 	cp bin/{offload,connect,logmgr,display_goe_env,clean_goe_env,agg_validate} $(TARGET_DIR)/bin
 	mkdir -p $(TARGET_DIR)/tools
 	cp tools/goe-shell-functions.sh $(TARGET_DIR)/tools
-	mkdir -p $(TARGET_DIR)/tools/listener
-	cp tools/goe-listener{.sh,.service} $(TARGET_DIR)/tools/listener
-	chmod 0755 $(TARGET_DIR)/tools/listener/goe-listener.sh
-	chmod 0755 $(TARGET_DIR)/bin/listener
 	rm -rf $(TARGET_DIR)/setup/sql $(TARGET_DIR)/setup/python
 	mkdir -p $(TARGET_DIR)/cache
 	mkdir -p $(TARGET_DIR)/setup/sql && cp -a sql/oracle/source/* $(TARGET_DIR)/setup

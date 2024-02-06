@@ -290,7 +290,7 @@ FAKE_ORACLE_LIST_RANGE_PARTITIONS = [
 
 
 def optional_hadoop_dependency_exception(e: Exception) -> bool:
-    return "hdfs" in str(e) or "impala" in str(e)
+    return any(_ in str(e) for _ in ["hdfs", "impala", "requests_kerberos"])
 
 
 def optional_netezza_dependency_exception(e: Exception) -> bool:

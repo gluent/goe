@@ -18,11 +18,20 @@
 """
 
 import requests
-from requests_kerberos import HTTPKerberosAuth, REQUIRED
+
+try:
+    from requests_kerberos import HTTPKerberosAuth, REQUIRED
+except ModuleNotFoundError as e:
+    if "requests_kerberos" in str(e):
+        # We expect the hadoop dependencies when using Kerberos
+        HTTPKerberosAuth = None
+        REQUIRED = None
+    else:
+        raise
 from urllib3.exceptions import InsecureRequestWarning
 from urllib3 import disable_warnings
 
-from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_messages import VVERBOSE
 
 
 class OffloadTransportLivyRequestsException(Exception):

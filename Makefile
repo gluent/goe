@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+SHELL := /bin/bash
+
 TARGET_DIR=target/offload
 
-
 OFFLOAD_VERSION=$(shell cat version)
+GOE_WHEEL="goe-$(shell echo $(OFFLOAD_VERSION) | tr 'A-Z-' 'a-z.')0-py3-none-any.whl"
 
 BUILD=$(strip $(shell git rev-parse --short HEAD))
 
@@ -34,8 +36,11 @@ install: offload-home-check package
 	@echo -e "=> \e[92m Installing to directory: $(OFFLOAD_HOME)...\e[0m"
 	test -f goe_$(OFFLOAD_VERSION).tar.gz
 	# Remove everything but the conf directory
-	rm -fr $(OFFLOAD_HOME)/[blrstvL]* $(OFFLOAD_HOME)/cache
+	rm -fr $(OFFLOAD_HOME)/[blrstvL]* $(OFFLOAD_HOME)/cache $(OFFLOAD_HOME)/.venv
 	tar --directory=${OFFLOAD_HOME}/../ -xf goe_$(OFFLOAD_VERSION).tar.gz
+	python3 -m venv $(OFFLOAD_HOME)/$(VENV_PREFIX)
+	# TODO Eventually this will come from PyPi:
+	cd $(OFFLOAD_HOME) && . $(VENV_PREFIX)/bin/activate && python3 -m pip install lib/$(GOE_WHEEL)
 
 
 .PHONY: install-dev
@@ -59,13 +64,9 @@ install-dev-extras:
 target: python-goe spark-listener offload-env
 	@echo -e "=> \e[92m Building target: $(TARGET_DIR)...\e[0m"
 	mkdir -p $(TARGET_DIR)/bin
-	cp bin/{offload,connect,logmgr,display_goe_env,clean_goe_env,listener,agg_validate} $(TARGET_DIR)/bin
+	cp bin/{offload,connect,logmgr,display_goe_env,clean_goe_env,agg_validate} $(TARGET_DIR)/bin
 	mkdir -p $(TARGET_DIR)/tools
 	cp tools/goe-shell-functions.sh $(TARGET_DIR)/tools
-	mkdir -p $(TARGET_DIR)/tools/listener
-	cp tools/goe-listener{.sh,.service} $(TARGET_DIR)/tools/listener
-	chmod 0755 $(TARGET_DIR)/tools/listener/goe-listener.sh
-	chmod 0755 $(TARGET_DIR)/bin/listener
 	rm -rf $(TARGET_DIR)/setup/sql $(TARGET_DIR)/setup/python
 	mkdir -p $(TARGET_DIR)/cache
 	mkdir -p $(TARGET_DIR)/setup/sql && cp -a sql/oracle/source/* $(TARGET_DIR)/setup

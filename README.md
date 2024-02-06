@@ -38,7 +38,7 @@ make install
 ```
 
 ## Installing the GOE package elsewhere
-Often you will build the GOE package on one host but deploy elsewhere, do to this we must manually follow similar steps to those in the `make install` target:
+Often you will build the GOE package on one host but deploy elsewhere, to do this we must manually follow similar steps to those in the `make install` target:
 1) Copy the package to the target host
 2) Create the Offload Home directory:
 ```
@@ -66,10 +66,6 @@ Create an `offload.env` in the Offload Home, this file contains the necessary co
 ```
 cp ${OFFLOAD_HOME}/conf/oracle-bigquery-offload.env.template ${OFFLOAD_HOME}/conf/offload.env
 vi ${OFFLOAD_HOME}/conf/offload.env
-```
-
-```
-export OFFLOAD_TRANSPORT_SPARK_PROPERTIES='{\"spark.extraListeners\": \"GOETaskListener\", \"spark.jars.packages\": \"com.oracle.database.jdbc:ojdbc11:23.2.0.0,org.apache.spark:spark-avro_2.12:3.3.0\"}'/" ${OFFLOAD_HOME}/conf/offload.env
 ```
 
 Variables you will want to pay attention to are:
@@ -114,7 +110,7 @@ Note only the Python dependencies for Oracle and BigQuery are installed by defau
 make install-dev-extras
 ```
 
-# Running commands:
+# Running commands
 Source the correct environment:
 ```
 . ${OFFLOAD_HOME}/conf/offload.env
@@ -130,5 +126,5 @@ cd bin
 Running an Offload:
 ```
 cd bin
-./offload -t my.table
+./offload -t my.table -x
 ```

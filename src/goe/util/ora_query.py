@@ -92,14 +92,6 @@ def get_oracle_connection(
     return ora_conn
 
 
-def get_oracle_user(cursor):
-    q = """SELECT sys_context('USERENV','SESSION_USER')
-           FROM
-           DUAL"""
-    row = cursor.execute(q).fetchone()
-    return row[0] if row else None
-
-
 class OracleQuery(OffloadMessagesMixin, object):
     """Execute ORACLE sql and return results"""
 
@@ -423,32 +415,3 @@ class OracleQuery(OffloadMessagesMixin, object):
         elif isinstance(py_var, datetime64):
             py_var = "timestamp '%s'" % str(py_var).replace("T", " ")
         return py_var
-
-
-if __name__ == "__main__":
-    import os
-    import sys
-
-    from goe.util.ora_query import OracleQuery
-    from goe.util.password_tools import PasswordTools
-
-    def usage(cmd):
-        print("usage: %s <sql>" % cmd)
-        sys.exit(1)
-
-    if len(sys.argv) < 2:
-        usage(sys.argv[0])
-    sql = " ".join(sys.argv[1:])
-
-    db_user = os.environ["ORA_ADM_USER"]
-    db_passwd = os.environ["ORA_ADM_PASS"]
-    db_dsn = os.environ["ORA_CONN"]
-
-    if os.environ.get("PASSWORD_KEY_FILE"):
-        pass_tool = PasswordTools()
-        db_passwd = pass_tool.b64decrypt(db_passwd)
-
-    oracle = OracleQuery(db_user, db_passwd, db_dsn)
-    for line in oracle.execute(sql, cursor_fn=lambda c: c.fetchall(), as_dict=True):
-        print(line)
-    oracle.disconnect()

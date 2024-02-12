@@ -25,9 +25,7 @@ import impala.dbapi as hs2
 
 from argparse import Namespace
 
-from goe.offload.offload_constants import DBTYPE_HIVE, DBTYPE_IMPALA, DBTYPE_SPARK
-from goe.util.config_file import GOERemoteConfig
-from goe.util.misc_functions import dict_to_namespace
+from goe.offload.offload_constants import DBTYPE_HIVE, DBTYPE_IMPALA
 from goe.util.password_tools import PasswordTools
 
 
@@ -279,29 +277,6 @@ def hs2_connection_from_env(override=None):
     return hs2_connection(hs2_env_options(override))
 
 
-def hs2_section_options(section, override=None, cfg=None):
-    """Populate HiveServer2 options from remote-offload.conf 'section'
-    with optional override
-    """
-    assert section and (not cfg or isinstance(cfg, GOERemoteConfig))
-
-    if not cfg:
-        cfg = GOERemoteConfig()
-
-    section_options = hs2_env_options(dict_to_namespace(dict(cfg.items(section))))
-    if override:
-        section_options.__dict__.update(override.__dict__)  # Merge overrides
-
-    return section_options
-
-
-def hs2_connection_from_section(section, override=None, cfg=None):
-    """Connect to HiveServer2 extracting options
-    from section in remote-offload.conf
-    """
-    return hs2_connection(hs2_section_options(section, override, cfg))
-
-
 def hs2_db_type(options=None):
     """Determine and return hiveserver2 'db type'"""
 
@@ -333,37 +308,3 @@ def hs2_cursor_user(options=None):
     opts = options or hs2_env_options()
     hive_user = os.environ.get("HIVE_SERVER_USER")
     return hive_user if hs2_connect_using_options(opts, unsecured=True) else None
-
-
-if __name__ == "__main__":
-    import sys
-
-    from goe.util.misc_functions import set_goelib_logging, options_list_to_namespace
-
-    def usage(prog_name):
-        print("%s: [<option1>=value1 option2=value2] [debug level]" % prog_name)
-        sys.exit(1)
-
-    def main():
-        log_level = sys.argv[-1:][0].upper()
-        if log_level not in ("DEBUG", "INFO", "WARNING", "CRITICAL", "ERROR"):
-            log_level = "CRITICAL"
-
-        set_goelib_logging(log_level)
-
-        args = [_ for _ in sys.argv[1:] if _.upper() != log_level]
-        options = hs2_env_options(options_list_to_namespace(args))
-        options.hive_timeout_s = 2
-
-        print("Connecting with options: %s" % options)
-        try:
-            print("Detected db type: %s" % hs2_db_type(options))
-            hs2 = hs2_connection(options)
-            curs = hs2.cursor(user=hs2_cursor_user(options))
-            curs.execute("show databases")
-            print(curs.fetchall())
-            print("Success!")
-        except Exception as e:
-            print("Caught Exception: %s" % e)
-
-    main()

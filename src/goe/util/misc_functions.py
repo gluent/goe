@@ -454,21 +454,6 @@ def check_offload_env():
         sys.exit(1)
 
 
-def check_remote_offload_env():
-    """Check remote offload environment
-    i.e. REMOTE_OFFLOAD_CONF is set correctly
-    """
-    if not os.environ.get("REMOTE_OFFLOAD_CONF"):
-        print("REMOTE_OFFLOAD_CONF environment variable missing")
-        print(
-            "You should source environment variables first, eg: . ../conf/offload.env"
-        )
-        sys.exit(1)
-    elif not os.path.isfile(os.environ.get("REMOTE_OFFLOAD_CONF")):
-        print("REMOTE_OFFLOAD_CONF environment variable does not point to a valid file")
-        sys.exit(1)
-
-
 def str_floatlike(maybe_float):
     """Remove unnecessary 0s from the float or 'float like string'
     Warning: Relies on str() conversion for floats, which truncates floats
@@ -692,12 +677,15 @@ def obscure_list_items(list_of_items, to_obscure):
     for itm in to_obscure:
         # Obscure the item if it matches the value 'item' and, optionally, the prior item in the list match 'prior'
         safe_list = [
-            itm.get("sub", "?")
-            if safe_list[i] == itm["item"]
-            and (
-                not itm.get("prior") or (i > 0 and itm.get("prior") == safe_list[i - 1])
+            (
+                itm.get("sub", "?")
+                if safe_list[i] == itm["item"]
+                and (
+                    not itm.get("prior")
+                    or (i > 0 and itm.get("prior") == safe_list[i - 1])
+                )
+                else safe_list[i]
             )
-            else safe_list[i]
             for i in range(len(safe_list))
         ]
 

@@ -394,38 +394,3 @@ class DDLTransform(object):
             if self.is_view(ddl)
             else self.transform_table(ddl, options)
         )
-
-
-if __name__ == "__main__":
-    import os
-    import sys
-
-    from goe.util.better_impyla import HiveConnection, HiveTable
-    from goe.util.misc_functions import set_goelib_logging, csvkv_to_dict
-
-    def usage(prog_name):
-        print(
-            "%s: db.table <transform, i.e. schema=myschema,external=True [debug level]"
-            % prog_name
-        )
-        sys.exit(1)
-
-    def main():
-        if len(sys.argv) < 3:
-            usage(sys.argv[0])
-
-        db_table, options = sys.argv[1], csvkv_to_dict(sys.argv[2])
-        db_name, table_name = db_table.split(".")
-
-        log_level = sys.argv[3].upper() if len(sys.argv) > 3 else "CRITICAL"
-        set_goelib_logging(log_level)
-
-        db_host, db_port = "localhost", int(os.environ["HIVE_SERVER_PORT"])
-        hive_conn = HiveConnection(db_host, db_port)
-        hive_table = HiveTable(db_name, table_name, hive_conn)
-
-        object_ddl = hive_table.table_ddl()
-        ddl_transform = DDLTransform()
-        print(ddl_transform.transform(object_ddl, options))
-
-    main()

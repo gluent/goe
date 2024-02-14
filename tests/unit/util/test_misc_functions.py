@@ -25,7 +25,6 @@ from goe.util.misc_functions import (
     substitute_in_same_case,
     backtick_sandwich,
     bytes_to_human_size,
-    dict_to_namespace,
     format_list_for_logging,
     get_integral_part_magnitude,
     get_temp_path,
@@ -88,16 +87,6 @@ class TestMiscFunctions(TestCase):
         self.assertEqual(case_insensitive_in("Hello", "HELLO"), "HELLO")
         self.assertEqual(case_insensitive_in("Hello", "Hello"), "Hello")
         self.assertIsNone(case_insensitive_in("Hello", "ello"))
-
-    def test_dict_to_namespace(self):
-        test_dict = {"a": 123, "b": "blah", "c": [1, 2, 3]}
-        ns = dict_to_namespace(test_dict)
-        self.assertIsInstance(ns.a, int)
-        self.assertIsInstance(ns.b, str)
-        self.assertIsInstance(ns.c, list)
-        self.assertEqual(ns.a, 123)
-        self.assertEqual(ns.b, "blah")
-        self.assertListEqual(ns.c, [1, 2, 3])
 
     def test_get_integral_part_magnitude(self):
         self.assertEqual(get_integral_part_magnitude(1234567890), 10)

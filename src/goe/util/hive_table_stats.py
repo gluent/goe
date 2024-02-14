@@ -30,7 +30,7 @@ from goe.offload.offload_constants import (
     EMPTY_BACKEND_COLUMN_STATS_DICT,
     EMPTY_BACKEND_TABLE_STATS_DICT,
 )
-from goe.offload.offload_messages import VERBOSE
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.hadoop.hadoop_column import (
     HADOOP_TYPE_BIGINT,
     HADOOP_TYPE_INT,
@@ -297,9 +297,11 @@ class HiveTableStats(object):
                 "'%s', %s, count(*)-count(`%s`), %s, cast(min(`%s`) as string), cast(max(`%s`) as string), %s\n"
                 % (
                     col_name,
-                    "ndv(`%s`)" % col_name
-                    if DBTYPE_IMPALA == hive_table.db_type
-                    else FAKE_HIVE_NULL,
+                    (
+                        "ndv(`%s`)" % col_name
+                        if DBTYPE_IMPALA == hive_table.db_type
+                        else FAKE_HIVE_NULL
+                    ),
                     col_name,
                     self._get_col_oracle_length(col_name, col_type),
                     col_name,
@@ -1047,10 +1049,14 @@ class HiveTableStats(object):
                 if col["col_name"] == col_name.lower()
             ]
             if not data_type:
-                messages.log(
-                    'Column "%s" not found in target when copying stats' % col_name,
-                    VVERBOSE,
-                ) if messages else None
+                (
+                    messages.log(
+                        'Column "%s" not found in target when copying stats' % col_name,
+                        VVERBOSE,
+                    )
+                    if messages
+                    else None
+                )
                 continue
             data_type = data_type[0]
             if not is_variable_size_data_type(data_type):
@@ -1582,48 +1588,3 @@ class HiveTableStats(object):
             }
             for part_str in partitions
         }
-
-
-if __name__ == "__main__":
-    import os
-    import sys
-
-    from goe.util.misc_functions import set_goelib_logging
-
-    def usage(prog_name):
-        print("%s: db.table operation [options] [debug level]" % prog_name)
-        sys.exit(1)
-
-    def main():
-        if len(sys.argv) < 3:
-            usage(sys.argv[0])
-
-        db_table, operation = sys.argv[1:3]
-        db_name, table_name = db_table.split(".")
-
-        parameters = sys.argv[3:]
-        log_level = sys.argv[-1:][0].upper()
-        if log_level not in ("DEBUG", "INFO", "WARNING", "CRITICAL", "ERROR"):
-            log_level = "CRITICAL"
-
-        set_goelib_logging(log_level)
-
-        hive_stats = HiveTableStats.construct(db_name, table_name)
-
-        args = [
-            float(_) if is_number(_) else _
-            for _ in parameters
-            if _.upper() != log_level
-        ]
-        obj = getattr(hive_stats, operation)(*args)
-        print()
-        if isinstance(obj, dict):
-            for k, v in list(obj.items()):
-                print("%s: %s" % (k, v))
-        elif isinstance(obj, list):
-            for _ in obj:
-                print(_)
-        else:
-            print(str(obj))
-
-    main()

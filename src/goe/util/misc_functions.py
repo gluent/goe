@@ -17,7 +17,6 @@
 """ Miscellaneous useful functions that do not fit anywhere else
 """
 
-import argparse
 import decimal
 import datetime
 import getpass
@@ -31,11 +30,8 @@ import string
 import sys
 from typing import Optional, Union
 import uuid
-from pydantic import UUID4
-import yaml
 
 from base64 import b64encode
-from collections import OrderedDict
 from copy import copy
 from dateutil import parser
 from hashlib import md5
@@ -192,39 +188,6 @@ def split_not_in_quotes(to_split: str, sep=" ", exclude_empty_tokens=False) -> l
         return re.split(pattern, to_split)
 
 
-def options_list_to_namespace(option_list, pythonize=True):
-    """Transform list of key=value pairs into (argparse) Namespace() object"""
-    opts = argparse.Namespace()
-    if option_list:
-        for opt in option_list:
-            key, value = [_.strip() for _ in opt.split("=")]
-            setattr(opts, key, parse_python_from_string(value) if pythonize else value)
-
-    return opts
-
-
-def options_list_to_dict(option_list, pythonize=True):
-    """Transform list of key=value pairs into dictionary"""
-    opts = {}
-    if option_list:
-        for opt in option_list:
-            key, value = [_.strip() for _ in opt.split("=")]
-            opts[key] = parse_python_from_string(value) if pythonize else value
-
-    return opts
-
-
-def dict_to_namespace(d):
-    """Convert Python dictionary to (argparse) Namespace"""
-    names = argparse.Namespace()
-
-    if d:
-        for x in list(d.items()):
-            setattr(names, x[0], x[1])
-
-    return names
-
-
 def timedelta_to_str(td):
     """Convert timedelta to d H:M:S string
     (why is this not a part of standard timedelta ?)
@@ -238,19 +201,6 @@ def timedelta_to_str(td):
         minutes,
         seconds,
     )
-
-
-def disable_terminal_colors():
-    """Disable terminal colors (through termcolor module)"""
-
-    os.environ["ANSI_COLORS_DISABLED"] = "Y"
-
-
-def enable_terminal_colors():
-    """Disable terminal colors (through termcolor module)"""
-
-    if "ANSI_COLORS_DISABLED" in os.environ:
-        del os.environ["ANSI_COLORS_DISABLED"]
 
 
 def is_number(s):
@@ -329,11 +279,6 @@ def nvl(val, repl):
     return val or repl
 
 
-def znvl(val):
-    """nvl() with 0 as a replacement"""
-    return nvl(val, 0)
-
-
 def backtick_sandwich(s, ch="`"):
     """Return a copy of the given string, sandwiched with a single pair of backticks
     For example:
@@ -356,33 +301,6 @@ def double_quote_sandwich(s):
 def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
     """Are two numbers (i.e. floats) 'close enough' to be considered 'the same' ?"""
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-
-class IterAccumulator(object):
-    """Supplements 'iterator' with 'accumulator' of 'already seen' values
-
-    i.e.
-    a = IterAccumulator(_ for _ in xrange(20))
-    for i in a:
-        print i
-        print i.acc
-    """
-
-    def __init__(self, seq):
-        self._iterator = iter(seq)
-        self._acc = []
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        next_val = next(self._iterator)
-        self._acc.append(next_val)
-        return next_val
-
-    @property
-    def acc(self):
-        return self._acc
 
 
 def typed_property(name, expected_type):
@@ -414,32 +332,6 @@ def get_option(options, name, repl=None):
     Similar behavior to: dict.get()
     """
     return getattr(options, name) if (options and hasattr(options, name)) else repl
-
-
-def load_yaml_in_order(yaml_file):
-    """Load YAML entries in the order they appear in the file
-
-    (as default yaml.load() return (unsorted) 'dict')
-    """
-
-    def ordered_yaml_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
-        class OrderedLoader(Loader):
-            pass
-
-        def construct_mapping(loader, node):
-            loader.flatten_mapping(node)
-            return object_pairs_hook(loader.construct_pairs(node))
-
-        OrderedLoader.add_constructor(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
-        )
-
-        return yaml.load(stream, OrderedLoader)
-
-    data = None
-
-    with open(yaml_file) as f:
-        return ordered_yaml_load(f)
 
 
 def check_offload_env():

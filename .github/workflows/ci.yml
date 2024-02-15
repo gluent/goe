@@ -1,0 +1,20 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        name: Configure Python
+        with:
+          python-version: "3.8"
+
+      - name: Building Collection scripts
+        run: pip install -e .

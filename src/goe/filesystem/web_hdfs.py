@@ -143,7 +143,9 @@ class WebHdfs(GOEDfs):
             % (hdfs_namenode, webhdfs_port, hdfs_user, use_kerberos, verify_ssl_cert)
         )
 
-        super(WebHdfs, self).__init__(messages, dry_run=dry_run)
+        super(WebHdfs, self).__init__(
+            messages, dry_run=dry_run, do_not_connect=do_not_connect
+        )
 
         self._db_path_suffix = db_path_suffix
         self._hdfs_data = hdfs_data

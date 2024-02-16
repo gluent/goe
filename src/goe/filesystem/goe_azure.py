@@ -118,7 +118,9 @@ class GOEAzure(GOEDfs):
 
         logger.info("Client setup: GOEAzure")
 
-        super(GOEAzure, self).__init__(messages, dry_run=dry_run)
+        super(GOEAzure, self).__init__(
+            messages, dry_run=dry_run, do_not_connect=do_not_connect
+        )
 
         if azure_account_domain and not azure_account_domain.startswith("."):
             azure_account_domain = "." + azure_account_domain

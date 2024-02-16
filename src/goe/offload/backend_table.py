@@ -155,6 +155,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._hybrid_metadata = hybrid_metadata
         self._data_gov_client = data_gov_client
         self._dry_run = dry_run
+        self._do_not_connect = do_not_connect
         # One day we may split connectivity options from other config
         self._connection_options = orchestration_options
         self._orchestration_config = orchestration_options
@@ -1027,7 +1028,9 @@ class BackendTableInterface(metaclass=ABCMeta):
     def _get_dfs_client(self):
         if self._dfs_client is None:
             self._dfs_client = get_dfs_from_options(
-                self._orchestration_config, messages=self._messages
+                self._orchestration_config,
+                messages=self._messages,
+                do_not_connect=self._do_not_connect,
             )
             self._backend_dfs = self._dfs_client.backend_dfs
         return self._dfs_client

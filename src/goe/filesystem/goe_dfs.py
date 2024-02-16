@@ -236,9 +236,10 @@ logger.addHandler(logging.NullHandler())
 
 
 class GOEDfs(object, metaclass=ABCMeta):
-    def __init__(self, messages, dry_run=False):
+    def __init__(self, messages, dry_run=False, do_not_connect=False):
         self._messages = messages
         self._dry_run = dry_run
+        self._do_not_connect = do_not_connect
         if dry_run:
             logger.info("* Dry run *")
 

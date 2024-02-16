@@ -93,7 +93,6 @@ class CliHdfs(GOEDfs):
         self._ssh_user = ssh_user
         self._tmp_dir = tmp_dir
         self._dry_run = dry_run
-        self._do_not_connect = do_not_connect
         self.dfs_mechanism = GOE_DFS_SSH
         self.backend_dfs = "HDFS"
 

@@ -83,7 +83,6 @@ logger.addHandler(logging.NullHandler())  # Disabling logging by default
 
 
 class GOEWebHdfsClient(KerberosClient):
-
     """A new client subclass for handling HTTPS connections as well as Kerberos & insecure.
     We have removed "cert" parameter. See link below for "cert" usage.
     See http://hdfscli.readthedocs.org/en/latest/advanced.html#custom-client-support for idea
@@ -148,7 +147,6 @@ class WebHdfs(GOEDfs):
 
         self._db_path_suffix = db_path_suffix
         self._hdfs_data = hdfs_data
-        self._do_not_connect = do_not_connect
         self._hdfs = self._hdfs_client(
             hdfs_namenode,
             webhdfs_port,

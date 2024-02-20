@@ -109,9 +109,9 @@ class TestBackendApi(TestCase):
         return self.api.gen_column_object(
             name,
             data_type=string_type,
-            data_length=10
-            if self.test_api.data_type_accepts_length(string_type)
-            else None,
+            data_length=(
+                10 if self.test_api.data_type_accepts_length(string_type) else None
+            ),
         )
 
     def _get_udf_db(self):
@@ -826,7 +826,7 @@ class TestBackendApi(TestCase):
                 pass
 
     def _test_google_kms_key_ring_unit(self):
-        if self.connect_to_backend:
+        if not self.connect_to_backend:
             return
 
         # Unit test config defines a key.

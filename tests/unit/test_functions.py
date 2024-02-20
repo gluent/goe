@@ -30,7 +30,7 @@ from goe.offload.oracle.oracle_offload_source_table import OracleSourceTable
 
 FAKE_COMMON_ENV = {
     "DB_NAME_PREFIX": "x",
-    "OFFLOAD_HOME": "/opt/goe/offload",
+    "OFFLOAD_HOME": "/tmp/offload",
     "OFFLOAD_LOG": "/tmp",
     "OFFLOAD_FS_CONTAINER": "b",
     "OFFLOAD_TRANSPORT_USER": "a",

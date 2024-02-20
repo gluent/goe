@@ -72,7 +72,9 @@ class GOES3(GOEDfs):
 
         logger.info("Client setup: GOES3")
 
-        super(GOES3, self).__init__(messages, dry_run=dry_run)
+        super(GOES3, self).__init__(
+            messages, dry_run=dry_run, do_not_connect=do_not_connect
+        )
 
         if do_not_connect:
             self._client = None

@@ -23,7 +23,9 @@ from goe.filesystem.goe_dfs import (
 from goe.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
 
 
-def get_dfs_from_options(offload_options, messages=None, force_ssh=False, dry_run=None):
+def get_dfs_from_options(
+    offload_options, messages=None, force_ssh=False, dry_run=None, do_not_connect=False
+):
     """Helper function to get an appropriate GOEDfs object based on offload options."""
     if dry_run is None:
         dry_run = bool(not offload_options.execute)
@@ -44,6 +46,7 @@ def get_dfs_from_options(offload_options, messages=None, force_ssh=False, dry_ru
                 offload_options.webhdfs_verify_ssl,
                 dry_run=dry_run,
                 messages=messages,
+                do_not_connect=do_not_connect,
                 db_path_suffix=offload_options.hdfs_db_path_suffix,
                 hdfs_data=offload_options.hdfs_data,
             )
@@ -55,6 +58,7 @@ def get_dfs_from_options(offload_options, messages=None, force_ssh=False, dry_ru
                 offload_options.hadoop_ssh_user,
                 dry_run=dry_run,
                 messages=messages,
+                do_not_connect=do_not_connect,
                 db_path_suffix=offload_options.hdfs_db_path_suffix,
                 hdfs_data=offload_options.hdfs_data,
             )
@@ -64,6 +68,7 @@ def get_dfs_from_options(offload_options, messages=None, force_ssh=False, dry_ru
         return GOEGcs(
             messages,
             dry_run=dry_run,
+            do_not_connect=do_not_connect,
             db_path_suffix=offload_options.hdfs_db_path_suffix,
         )
     elif offload_options.offload_fs_scheme in (
@@ -75,6 +80,7 @@ def get_dfs_from_options(offload_options, messages=None, force_ssh=False, dry_ru
         return GOES3(
             messages,
             dry_run=dry_run,
+            do_not_connect=do_not_connect,
             db_path_suffix=offload_options.hdfs_db_path_suffix,
         )
     elif offload_options.offload_fs_scheme in AZURE_OFFLOAD_FS_SCHEMES:
@@ -86,6 +92,7 @@ def get_dfs_from_options(offload_options, messages=None, force_ssh=False, dry_ru
             offload_options.offload_fs_azure_account_domain,
             messages,
             dry_run=dry_run,
+            do_not_connect=do_not_connect,
             db_path_suffix=offload_options.hdfs_db_path_suffix,
         )
     else:

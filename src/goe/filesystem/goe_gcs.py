@@ -72,7 +72,9 @@ class GOEGcs(GOEDfs):
 
         logger.info("Client setup: GOEGcs")
 
-        super(GOEGcs, self).__init__(messages, dry_run=dry_run)
+        super(GOEGcs, self).__init__(
+            messages, dry_run=dry_run, do_not_connect=do_not_connect
+        )
 
         if do_not_connect:
             self._client = None

@@ -189,6 +189,7 @@ class BackendBigQueryApi(BackendApiInterface):
             self._google_kms_key_ring_location
             and self._google_kms_key_ring_name
             and self._google_kms_key_name
+            and not do_not_connect
         ):
             self._kms_client = self._get_kms_client()
             self._kms_key_name = self.kms_key_name()

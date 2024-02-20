@@ -85,15 +85,15 @@ class CliHdfs(GOEDfs):
     ):
         logger.info("Client setup: (%s, %s, %s)" % (hdfs_host, ssh_user, tmp_dir))
 
-        super(CliHdfs, self).__init__(messages, dry_run=dry_run)
+        super(CliHdfs, self).__init__(
+            messages, dry_run=dry_run, do_not_connect=do_not_connect
+        )
 
         self._db_path_suffix = db_path_suffix
         self._hdfs_data = hdfs_data
         self._hdfs_host = hdfs_host
         self._ssh_user = ssh_user
         self._tmp_dir = tmp_dir
-        self._dry_run = dry_run
-        self._do_not_connect = do_not_connect
         self.dfs_mechanism = GOE_DFS_SSH
         self.backend_dfs = "HDFS"
 

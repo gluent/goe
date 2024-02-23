@@ -442,15 +442,11 @@ class BackendTableInterface(metaclass=ABCMeta):
             partition_columns = self._db_api.get_partition_columns(
                 self.db_name, self.table_name
             )
-        part_col_names = [
-            _
-            for _ in get_column_names(partition_columns, conv_fn=str.upper)
-            if not self._is_synthetic_bucket_column(_)
-        ]
+        part_col_names = get_column_names(partition_columns, conv_fn=str.upper)
 
         if column_name.upper() in (
             part_col_names or []
-        ) and not self._is_synthetic_bucket_column(column_name):
+        ):
             position = part_col_names.index(column_name.upper())
             if self.is_synthetic_partition_column(column_name):
                 self._debug(f"Deriving synthetic partition info for {column_name}")
@@ -736,15 +732,6 @@ class BackendTableInterface(metaclass=ABCMeta):
                 source_backend_col = self.get_column(
                     backend_col.partition_info.source_column_name
                 )
-            elif backend_col.bucket_info:
-                self._log(
-                    "Picking up source column for bucket column %s: %s"
-                    % (backend_col.bucket_info.source_column_name, backend_col.name),
-                    detail=VVERBOSE,
-                )
-                source_backend_col = self.get_column(
-                    backend_col.bucket_info.source_column_name
-                )
 
             rdbms_col = match_table_column(source_backend_col.name, rdbms_columns)
             staging_col = match_table_column(source_backend_col.name, staging_columns)
@@ -761,26 +748,6 @@ class BackendTableInterface(metaclass=ABCMeta):
                     "cast": partition_expr,
                     "cast_type": backend_col.data_type,
                     "verify_cast": partition_vexpr,
-                }
-            elif backend_col.bucket_info:
-                _, bucket_expr = self.synthetic_bucket_filter_capable_column(
-                    source_backend_col
-                )
-                udf_db_prefix = (self._udf_db + ".") if self._udf_db else ""
-                bucket_expr = bucket_expr % {
-                    "dividend": cast_expr,
-                    "divisor": backend_col.bucket_info.num_buckets,
-                    "udf_db": udf_db_prefix,
-                }
-                bucket_vexpr = bucket_expr % {
-                    "dividend": vcast_expr,
-                    "divisor": backend_col.bucket_info.num_buckets,
-                    "udf_db": udf_db_prefix,
-                }
-                final_table_casts[backend_col.name.upper()] = {
-                    "cast": bucket_expr,
-                    "cast_type": backend_col.data_type,
-                    "verify_cast": bucket_vexpr,
                 }
             else:
                 final_table_casts[backend_col.name.upper()] = {
@@ -1034,9 +1001,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             )
             self._backend_dfs = self._dfs_client.backend_dfs
         return self._dfs_client
-
-    def _is_synthetic_bucket_column(self, column):
-        return self._db_api.is_synthetic_bucket_column(column)
 
     def _is_synthetic_partition_column(self, column):
         return self._db_api.is_synthetic_partition_column(column)
@@ -1416,9 +1380,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                                 ),
                             )
                         )
-                elif not self._is_synthetic_bucket_column(
-                    partition_col.name
-                ) and not self._is_synthetic_partition_column(partition_col.name):
+                elif not self._is_synthetic_partition_column(partition_col.name):
                     # Native partition column, check range start/end
                     if (
                         partition_col.partition_info.range_start is not None
@@ -1564,10 +1526,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         for_materialized_join=False,
     ):
         pass
-
-    @abstractmethod
-    def _gen_synthetic_bucket_column_object(self, bucket_info=None):
-        """Return a backend column object suitable for a synthetic bucket column"""
 
     @abstractmethod
     def _gen_synthetic_partition_column_object(self, synthetic_name, canonical_column):
@@ -1769,13 +1727,6 @@ class BackendTableInterface(metaclass=ABCMeta):
                             canonical_column, backend_column
                         )
                     backend_column.partition_info = canonical_column.partition_info
-            if canonical_column.bucket_info:
-                new_synthetic_columns.append(
-                    self._gen_synthetic_bucket_column_object(
-                        bucket_info=canonical_column.bucket_info
-                    )
-                )
-                backend_column.bucket_info = None
             new_backend_columns.append(backend_column)
 
         self._log("Converted backend columns:", detail=VVERBOSE)
@@ -1926,10 +1877,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         return self._db_api.gen_default_numeric_column(
             column_name, data_scale=data_scale
         )
-
-    def gen_synthetic_bucket_column_object(self, bucket_info=None):
-        """Expose the private backend variants of this function."""
-        return self._gen_synthetic_bucket_column_object(bucket_info=bucket_info)
 
     def gen_synthetic_partition_col_expressions(
         self, expr_from_columns=None, as_python_fns=False
@@ -2128,7 +2075,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             _
             for _ in self._columns
             if not self.is_synthetic_partition_column(_)
-            and not self._is_synthetic_bucket_column(_)
         ]
 
     def get_partition_columns(self):
@@ -2145,7 +2091,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             _
             for _ in self.get_partition_columns()
             if self.is_synthetic_partition_column(_)
-            or self._is_synthetic_bucket_column(_)
         ]
 
     def get_table_partitions(self):

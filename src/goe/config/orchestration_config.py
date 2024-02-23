@@ -44,7 +44,6 @@ from goe.offload.offload_constants import (
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
-    NUM_BUCKETS_FALLBACK,
 )
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import hs2_connection_log_message
@@ -135,7 +134,6 @@ EXPECTED_CONFIG_ARGS = [
     "netezza_app_user",
     "netezza_app_pass",
     "not_null_propagation",
-    "num_buckets_max",
     "num_buckets_threshold",
     "offload_fs_container",
     "offload_fs_prefix",
@@ -291,7 +289,6 @@ class OrchestrationConfig:
     log_level: Optional[str]
     log_path: str
     not_null_propagation: Optional[str]
-    num_buckets_max: Optional[str]
     num_buckets_threshold: Optional[str]
     offload_fs_azure_account_key: Optional[str]
     offload_fs_azure_account_name: Optional[str]
@@ -334,7 +331,6 @@ class OrchestrationConfig:
         self.not_null_propagation = (
             self.not_null_propagation.upper() if self.not_null_propagation else None
         )
-        self.num_buckets_max = int(self.num_buckets_max or NUM_BUCKETS_FALLBACK)
         self.num_buckets_threshold = normalise_size_option(
             self.num_buckets_threshold,
             binary_sizes=True,
@@ -600,9 +596,6 @@ class OrchestrationConfig:
             not_null_propagation=config_dict.get(
                 "not_null_propagation",
                 orchestration_defaults.not_null_propagation_default(),
-            ),
-            num_buckets_max=config_dict.get(
-                "num_buckets_max", orchestration_defaults.num_buckets_max_default()
             ),
             num_buckets_threshold=config_dict.get(
                 "num_buckets_threshold",

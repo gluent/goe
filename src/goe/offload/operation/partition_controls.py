@@ -23,7 +23,7 @@ from goe.offload.column_metadata import (
     is_synthetic_partition_column,
     match_table_column,
 )
-from goe.offload.offload_constants import OFFLOAD_BUCKET_NAME, PART_COL_GRANULARITY_DAY
+from goe.offload.offload_constants import PART_COL_GRANULARITY_DAY
 from goe.offload.offload_functions import expand_columns_csv
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.offload_source_table import (
@@ -266,7 +266,7 @@ def validate_offload_partition_columns(
     if offload_chunk_column:
         if not [
             pcol
-            for pcol in (new_partition_columns or []) + [OFFLOAD_BUCKET_NAME.upper()]
+            for pcol in (new_partition_columns or [])
             if pcol.upper() == offload_chunk_column
         ]:
             raise OptionValueError(

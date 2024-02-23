@@ -57,7 +57,6 @@ from goe.filesystem.goe_dfs import (
 from goe.offload.column_metadata import (
     ColumnMetadataInterface,
     get_column_names,
-    is_synthetic_bucket_column,
     is_synthetic_partition_column,
     match_table_column,
 )
@@ -991,7 +990,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
             _
             for _ in self.get_columns(db_name, table_name)
             if not self.is_synthetic_partition_column(_)
-            and not self.is_synthetic_bucket_column(_)
         ]
 
     def identifier_contains_invalid_characters(self, identifier):
@@ -1010,12 +1008,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         column can be a column object or a name.
         """
         return is_synthetic_partition_column(column)
-
-    def is_synthetic_bucket_column(self, column):
-        """Is a column a synthetic bucket column - based on its name.
-        column can be a column object or a name.
-        """
-        return is_synthetic_bucket_column(column)
 
     def is_supported_data_type(self, data_type):
         assert data_type

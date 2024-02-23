@@ -24,7 +24,6 @@ import logging
 import re
 from typing import Optional
 
-from goe.offload.offload_constants import OFFLOAD_BUCKET_NAME
 from goe.util.misc_functions import str_summary_of_self
 
 
@@ -288,11 +287,6 @@ def invalid_column_list_message(column_list):
         return "Type %s is not instance of column" % type(column_list[0])
 
 
-def is_synthetic_bucket_column(column):
-    column_name = column.name if isinstance(column, ColumnMetadataInterface) else column
-    return bool(column_name.lower() == OFFLOAD_BUCKET_NAME.lower())
-
-
 def is_synthetic_partition_column(column):
     assert column
     column_name = column.name if isinstance(column, ColumnMetadataInterface) else column
@@ -413,16 +407,13 @@ class ColumnBucketInfo:
     of this class when the column is used for bucketing.
     """
 
-    def __init__(self, source_column_name, num_buckets, bucket_hash_method):
+    def __init__(self, source_column_name, bucket_hash_method):
         """Construct ColumnBucketInfo.
         source_column_name: If another column is source for this one then this is how we know.
-        num_buckets: The number of buckets.
         bucket_hash_method: Method used to distribute rows amongst buckets.
         """
         assert source_column_name
-        assert num_buckets is not None
         self.source_column_name = source_column_name
-        self.num_buckets = num_buckets
         self.bucket_hash_method = bucket_hash_method
 
     def __str__(self):

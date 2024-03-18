@@ -128,3 +128,7 @@ Running an Offload:
 cd bin
 ./offload -t my.table -x
 ```
+
+# Tests
+
+See [Tests](https://github.com/gluent/goe/tests/README.md)

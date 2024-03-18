@@ -17,7 +17,8 @@ DEFAULT TABLESPACE USERS QUOTA UNLIMITED ON USERS;
 GRANT CONNECT, RESOURCE TO goe_test;
 ```
 
+Running tests with concurrency of 4:
 ```
 export GOE_TEST_USER_PASS=my_secret_123
-pytest tests/integration
+pytest tests/integration -n 4
 ```

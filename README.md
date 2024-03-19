@@ -131,4 +131,4 @@ cd bin
 
 # Tests
 
-See [Tests](https://github.com/gluent/goe/tests/README.md)
+See [Tests](tests/README.md)

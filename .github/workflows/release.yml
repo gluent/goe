@@ -27,7 +27,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: artifacts
-          path: *.tar.bz2
+          path: dist/*.tar.bz2
           if-no-files-found: error
   publish:
     name: Publish release
@@ -38,7 +38,6 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: artifacts
-          path: .
 
       - name: Add package to current release
         uses: softprops/action-gh-release@v2

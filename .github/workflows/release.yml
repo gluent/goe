@@ -24,22 +24,27 @@ jobs:
       - name: Building GOE package
         run: make package
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: artifacts
-          path: dist/*.tar.gz
-          if-no-files-found: error
-  publish:
-    name: Publish release
-    needs:
-      - package-goe
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: artifacts
-
       - name: Add package to current release
         uses: softprops/action-gh-release@v2
         with:
           files: goe*.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: goe*.tar.gz
+          if-no-files-found: error
+#  publish:
+#    name: Publish release
+#    needs:
+#      - package-goe
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: artifacts
+#
+#      - name: Add package to current release
+#        uses: softprops/action-gh-release@v2
+#        with:
+#          files: goe*.tar.gz

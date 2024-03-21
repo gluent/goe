@@ -828,9 +828,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def supported_date_based_partition_granularities(self):
         return self._db_api.supported_date_based_partition_granularities()
 
-    def synthetic_bucketing_supported(self):
-        return self._db_api.synthetic_bucketing_supported()
-
     def synthetic_partitioning_supported(self):
         return self._db_api.synthetic_partitioning_supported()
 

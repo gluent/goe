@@ -17,7 +17,6 @@ from unittest import TestCase, main
 
 from goe.offload.column_metadata import (
     CanonicalColumn,
-    ColumnBucketInfo,
     ColumnPartitionInfo,
     get_column_names,
     get_partition_columns,

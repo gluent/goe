@@ -97,7 +97,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_SORTED_TABLE,
     CAPABILITY_SORTED_TABLE_MODIFY,
     CAPABILITY_SQL_MICROSECOND_PREDICATE,
-    CAPABILITY_SYNTHETIC_BUCKETING,
     CAPABILITY_SYNTHETIC_PARTITIONING,
     CAPABILITY_TABLE_STATS_COMPUTE,
     CAPABILITY_TABLE_STATS_GET,
@@ -2082,9 +2081,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
     def sql_microsecond_predicate_supported(self):
         """Can the orchestration SQL engine cope with literal predicates with microsecond precision"""
         return self.is_capability_supported(CAPABILITY_SQL_MICROSECOND_PREDICATE)
-
-    def synthetic_bucketing_supported(self):
-        return self.is_capability_supported(CAPABILITY_SYNTHETIC_BUCKETING)
 
     def synthetic_partitioning_supported(self):
         return self.is_capability_supported(CAPABILITY_SYNTHETIC_PARTITIONING)

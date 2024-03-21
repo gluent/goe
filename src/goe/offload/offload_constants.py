@@ -148,8 +148,7 @@ TOTAL_ROWS_OFFLOADED_LOG_TEXT = "Total rows offloaded"
 # to research for future backends
 
 """ CAPABILITY_BUCKET_HASH_COLUMN
-    Does the backend make use of a hash column independently of synthetic bucketing
-    (CAPABILITY_SYNTHETIC_BUCKETING)
+    Can the backend make use of a hash column.
 """
 CAPABILITY_BUCKET_HASH_COLUMN = "bucket_hash_column"
 """ CAPABILITY_CANONICAL_X
@@ -318,13 +317,6 @@ CAPABILITY_SORTED_TABLE_MODIFY = "pre_sorted_tables_mod"
         See GOE-1182 for example of why this is needed
 """
 CAPABILITY_SQL_MICROSECOND_PREDICATE = "sql_pred_microseconds"
-""" CAPABILITY_SYNTHETIC_BUCKETING
-        Does the backend require GOE's standard partitioning scheme for sharding offloaded data
-        (known as offload buckets), applicable only to Hadoop-based systems and used to enable
-        parallel query access to offloaded data. If the backend provides native parallel-read
-        capabilities this is not required.
-"""
-CAPABILITY_SYNTHETIC_BUCKETING = "synthetic_bucketing"
 """ CAPABILITY_SYNTHETIC_PARTITIONING
         Does the backend support GOE's synthetic partition keys (e.g. GOE_PART_M_TIME_ID or
         GOE_PART_U0_SOURCE_CODE) which are used internally by Smart Connector to generate
@@ -387,7 +379,6 @@ HIVE_BACKEND_CAPABILITIES = {
     CAPABILITY_SORTED_TABLE: True,
     CAPABILITY_SORTED_TABLE_MODIFY: True,
     CAPABILITY_SQL_MICROSECOND_PREDICATE: False,
-    CAPABILITY_SYNTHETIC_BUCKETING: False,
     CAPABILITY_SYNTHETIC_PARTITIONING: True,
     CAPABILITY_TABLE_STATS_COMPUTE: True,
     CAPABILITY_TABLE_STATS_GET: True,
@@ -454,7 +445,6 @@ BIGQUERY_BACKEND_CAPABILITIES = {
     CAPABILITY_SORTED_TABLE: True,
     CAPABILITY_SORTED_TABLE_MODIFY: True,
     CAPABILITY_SQL_MICROSECOND_PREDICATE: True,
-    CAPABILITY_SYNTHETIC_BUCKETING: False,
     CAPABILITY_SYNTHETIC_PARTITIONING: True,
     CAPABILITY_TABLE_STATS_COMPUTE: False,
     CAPABILITY_TABLE_STATS_GET: True,
@@ -498,7 +488,6 @@ SNOWFLAKE_BACKEND_CAPABILITIES = {
     CAPABILITY_SORTED_TABLE: True,
     CAPABILITY_SORTED_TABLE_MODIFY: True,
     CAPABILITY_SQL_MICROSECOND_PREDICATE: True,
-    CAPABILITY_SYNTHETIC_BUCKETING: False,
     CAPABILITY_SYNTHETIC_PARTITIONING: False,
     CAPABILITY_TABLE_STATS_COMPUTE: False,
     CAPABILITY_TABLE_STATS_GET: True,
@@ -542,7 +531,6 @@ SYNAPSE_BACKEND_CAPABILITIES = {
     CAPABILITY_SORTED_TABLE: True,
     CAPABILITY_SORTED_TABLE_MODIFY: False,
     CAPABILITY_SQL_MICROSECOND_PREDICATE: True,
-    CAPABILITY_SYNTHETIC_BUCKETING: False,
     CAPABILITY_SYNTHETIC_PARTITIONING: False,
     CAPABILITY_TABLE_STATS_COMPUTE: True,
     CAPABILITY_TABLE_STATS_GET: True,

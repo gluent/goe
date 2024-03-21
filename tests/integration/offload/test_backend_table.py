@@ -455,17 +455,6 @@ class TestCurrentBackendTable(TestCase):
     def _test_staging_area_exists(self):
         self.assertIn(self.api.staging_area_exists(), (True, False))
 
-    def _test_synthetic_bucket_data_type(self):
-        if self.api.synthetic_bucketing_supported():
-            self.api.synthetic_bucket_data_type()
-
-    def _test_synthetic_bucket_filter_capable_column(self):
-        if self.api.synthetic_bucketing_supported():
-            column = self.api.get_columns()[0]
-            result = self.api.synthetic_bucket_filter_capable_column(column)
-            self.assertIsNotNone(result)
-            self.assertIsInstance(result, tuple)
-
     def _test_synthetic_part_number_int_expressions(self):
         """Ensure that difficult synthetic column inputs are converted equally by SQL and Orchestration code."""
         if not self.api.synthetic_partitioning_supported():
@@ -634,8 +623,6 @@ class TestCurrentBackendTable(TestCase):
         self._test_setup_result_cache_area()
         self._test_setup_staging_area()
         self._test_staging_area_exists()
-        self._test_synthetic_bucket_data_type()
-        self._test_synthetic_bucket_filter_capable_column()
 
     def test_full_api_on_current_backend(self):
         self._create_test_table()

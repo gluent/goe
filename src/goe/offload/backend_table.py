@@ -444,9 +444,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             )
         part_col_names = get_column_names(partition_columns, conv_fn=str.upper)
 
-        if column_name.upper() in (
-            part_col_names or []
-        ):
+        if column_name.upper() in (part_col_names or []):
             position = part_col_names.index(column_name.upper())
             if self.is_synthetic_partition_column(column_name):
                 self._debug(f"Deriving synthetic partition info for {column_name}")
@@ -1891,8 +1889,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         it multiple times with different values for expr_from_columns/as_python_fns. This class may cache it for
         convenience but this getter always regenerates the lists.
 
-        The expression list includes an expression for any synthetic bucketing column
-
         expr_from_columns: Can be used when the expressions have already been materialized in an underlying
                            object (e.g join view). It is a list of columns in the usual format.
         as_python_fns: Can be used to get the expressions back as Python functions rather than strings of SQL
@@ -1904,32 +1900,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         pcs = []
 
         for partition_col in self.get_partition_columns():
-            # Bucket column
-            if partition_col.bucket_info and self.synthetic_bucketing_supported():
-                if expr_from_columns and match_table_column(
-                    partition_col.name, expr_from_columns
-                ):
-                    bucket_expr = [
-                        partition_col.name,
-                        partition_col.format_data_type(),
-                        self.enclose_identifier(partition_col.name),
-                        partition_col.name,
-                    ]
-                    self._log(
-                        "Bucket expression from supporting columns: %s" % bucket_expr,
-                        detail=VVERBOSE,
-                    )
-                else:
-                    bucket_expr = [
-                        partition_col.name,
-                        partition_col.format_data_type(),
-                        self.get_final_table_cast(partition_col),
-                        partition_col.bucket_info.source_column_name,
-                    ]
-                    self._log("Bucket expression: %s" % bucket_expr, detail=VVERBOSE)
-                pcs.append(bucket_expr)
-
-            # Partition columns
             if partition_col.partition_info and self.synthetic_partitioning_supported():
                 partition_expr = None
                 if (
@@ -2071,11 +2041,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         """
         if not self._columns and self.exists():
             self.get_columns()
-        return [
-            _
-            for _ in self._columns
-            if not self.is_synthetic_partition_column(_)
-        ]
+        return [_ for _ in self._columns if not self.is_synthetic_partition_column(_)]
 
     def get_partition_columns(self):
         """Get partition columns for the base table.
@@ -2639,9 +2605,6 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def sorted_table_modify_supported(self):
         return self._db_api.sorted_table_modify_supported()
-
-    def synthetic_bucketing_supported(self):
-        return self._db_api.synthetic_bucketing_supported()
 
     def synthetic_partitioning_supported(self):
         return self._db_api.synthetic_partitioning_supported()

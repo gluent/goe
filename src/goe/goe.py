@@ -1245,12 +1245,6 @@ def get_default_location_fs_scheme(offload_target_table):
         return None
 
 
-def num_location_files_enabled(offload_target):
-    """--num-location-files is ineffective for Impala offloads where the value is tied to the number of buckets"""
-    return False
-    # return bool(offload_target != DBTYPE_IMPALA)
-
-
 def normalise_storage_options(options, backend_api):
     options.storage_format = (
         options.storage_format or backend_api.default_storage_format()
@@ -1572,10 +1566,9 @@ class BaseOperation(object):
         rdbms_table,
         opts,
         messages,
-        synthetic_bucketing_supported,
         bucket_hash_column_supported,
     ):
-        if not synthetic_bucketing_supported and not bucket_hash_column_supported:
+        if not bucket_hash_column_supported:
             self.bucket_hash_col = None
             self.bucket_hash_method = None
             return
@@ -1593,7 +1586,7 @@ class BaseOperation(object):
                     if rdbms_table.is_partitioned()
                     else rdbms_table.size_in_bytes
                 )
-                if synthetic_bucketing_supported or (
+                if (
                     bucket_hash_column_supported
                     and (size or 0) >= self._num_buckets_threshold
                 ):
@@ -1674,7 +1667,6 @@ class BaseOperation(object):
             offload_source_table,
             offload_options,
             messages,
-            offload_target_table.synthetic_bucketing_supported(),
             offload_target_table.bucket_hash_column_supported(),
         )
 
@@ -1778,27 +1770,6 @@ class BaseOperation(object):
                     % (self.ipa_predicate_type, rpa_opts_set),
                     detail=VVERBOSE,
                 )
-
-    def set_bucket_hash_method_for_backend(
-        self, backend_table, new_backend_columns, messages
-    ):
-        if not backend_table.synthetic_bucketing_supported():
-            self.bucket_hash_method = None
-            return
-        backend_column = match_table_column(self.bucket_hash_col, new_backend_columns)
-        method, _ = backend_table.synthetic_bucket_filter_capable_column(backend_column)
-        if method:
-            messages.log(
-                "Using optimized bucket expression for to enable bucket partition pruning: %s"
-                % method,
-                detail=VVERBOSE,
-            )
-            self.bucket_hash_method = method
-        else:
-            messages.warning(
-                "Not using optimized bucket expression for %s, consider using a different column via --bucket-hash-column"
-                % self.bucket_hash_col
-            )
 
     def validate_partition_columns(
         self,
@@ -2622,9 +2593,6 @@ def offload_operation_logic(
             canonical_columns
         )
 
-        offload_operation.set_bucket_hash_method_for_backend(
-            offload_target_table, backend_columns, messages
-        )
         offload_target_table.set_columns(backend_columns)
     else:
         # The backend table already exists therefore some options should be ignored/defaulted

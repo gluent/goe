@@ -1,0 +1,45 @@
+name: release
+on:
+  release:
+    types:
+      - created
+jobs:
+  package-goe:
+    name: Package GOE artefacts required for installation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch all tags
+          fetch-depth: 0
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install base libraries
+        run: pip install --quiet --upgrade pip build setuptools wheel
+
+      - name: Building GOE package
+        run: make package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: goe*.tar.bz2
+          if-no-files-found: error
+  publish:
+    name: Publish release
+    needs:
+      - package-goe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+
+      - name: Add package to current release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: goe*.tar.bz2

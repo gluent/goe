@@ -28,9 +28,9 @@ GCS_JAR=gcs-connector-$(GCS_HADOOP_VER).2.11-shaded.jar
 spark-target: spark-source spark-config spark-jars
 
 spark-config: spark-source
-	cp ../templates/spark/spark-standalone-defaults.conf $(SPARK_TARGET_DIR)/spark/conf/spark-defaults.conf
-	cp ../templates/spark/spark-standalone-hive-site.xml $(SPARK_TARGET_DIR)/spark/conf/hive-site.xml
-	cp ../templates/spark/spark-standalone-spark-env.sh $(SPARK_TARGET_DIR)/spark/conf/spark-env.sh
+	cp ../../templates/spark/spark-standalone-defaults.conf $(SPARK_TARGET_DIR)/spark/conf/spark-defaults.conf
+	cp ../../templates/spark/spark-standalone-hive-site.xml $(SPARK_TARGET_DIR)/spark/conf/hive-site.xml
+	cp ../../templates/spark/spark-standalone-spark-env.sh $(SPARK_TARGET_DIR)/spark/conf/spark-env.sh
 	mkdir -p $(SPARK_TARGET_DIR)/spark-events $(SPARK_TARGET_DIR)/derby $(SPARK_TARGET_DIR)/warehouse $(SPARK_TARGET_DIR)/spark/run
 	echo "export SPARK_PID_DIR=\$$SPARK_HOME/run" >> $(SPARK_TARGET_DIR)/spark/conf/spark-env.sh
 	chmod 600 $(SPARK_TARGET_DIR)/spark/conf/spark-defaults.conf

@@ -4,7 +4,7 @@ on:
     types:
       - created
 jobs:
-  package-goe:
+  release-goe:
     name: Package GOE artefacts required for installation
     runs-on: ubuntu-latest
     steps:
@@ -34,17 +34,3 @@ jobs:
           name: artifacts
           path: goe*.tar.gz
           if-no-files-found: error
-#  publish:
-#    name: Publish release
-#    needs:
-#      - package-goe
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/download-artifact@v4
-#        with:
-#          name: artifacts
-#
-#      - name: Add package to current release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          files: goe*.tar.gz

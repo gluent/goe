@@ -3,8 +3,13 @@ on:
   release:
     types:
       - created
+
+env:
+  PYTHONUNBUFFERED: "1"
+  FORCE_COLOR: "1"
+
 jobs:
-  release-goe:
+  package-goe:
     name: Package GOE artefacts required for installation
     runs-on: ubuntu-latest
     steps:
@@ -12,8 +17,14 @@ jobs:
         with:
           # Fetch all tags
           fetch-depth: 0
-
-      - name: Set up python
+      
+      - name: Set up JDK & SBT
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+      
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
@@ -24,13 +35,26 @@ jobs:
       - name: Building GOE package
         run: make package
 
-      - name: Add package to current release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: goe*.tar.gz
+      - name: Move package to `dist/`
+        run: mv target/goe_*.tar.gz dist/goe.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
           name: artifacts
-          path: goe*.tar.gz
+          path: dist/goe.tar.gz
           if-no-files-found: error
+  publish:
+    name: Publish release
+    needs:
+      - package-goe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: dist/goe.tar.gz
+
+      - name: Add package to current release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/goe.tar.gz

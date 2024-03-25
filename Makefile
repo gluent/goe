@@ -103,7 +103,7 @@ package-spark-standalone: spark-listener
 .PHONY: python-goe
 python-goe: python-goe-clean
 	sed -i "s/^version = .*/\Lversion = \"$(OFFLOAD_VERSION)\"/" pyproject.toml
-	. $(VENV_PREFIX)/bin/activate && python3 -m build
+	python3 -m build
 
 
 .PHONY: offload-env

@@ -308,7 +308,7 @@ def test_offload_transport_spark_submit(config, schema, data_db):
 
     if not is_spark_submit_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because spark-submit is not configured")
-        return
+        pytest.skip(f"Skipping {id} because spark-submit is not configured")
 
     simple_offload_test(
         config,
@@ -329,7 +329,7 @@ def test_offload_transport_dataproc_cluster(config, schema, data_db):
 
     if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Dataproc is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Dataproc is not configured")
 
     simple_offload_test(
         config,
@@ -350,7 +350,7 @@ def test_offload_transport_dataproc_batches(config, schema, data_db):
 
     if not is_spark_gcloud_batches_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Dataproc Batches is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Dataproc Batches is not configured")
 
     simple_offload_test(
         config,
@@ -371,7 +371,7 @@ def test_offload_transport_spark_thrift(config, schema, data_db):
 
     if not is_spark_submit_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Spark Thriftserver is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
 
     simple_offload_test(
         config,
@@ -392,7 +392,7 @@ def test_offload_transport_spark_livy(config, schema, data_db):
 
     if not is_livy_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Spark Livy is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Spark Livy is not configured")
 
     simple_offload_test(
         config,
@@ -413,7 +413,7 @@ def test_offload_transport_sqoop_table(config, schema, data_db):
 
     if not is_sqoop_available(None, config, messages=messages):
         messages.log(f"Skipping {id} because Sqoop is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
     simple_offload_test(
         config,
@@ -434,7 +434,7 @@ def test_offload_transport_sqoop_by_query(config, schema, data_db):
 
     if not is_sqoop_by_query_available(config, messages=messages):
         messages.log(f"Skipping {id} because Sqoop is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
     simple_offload_test(
         config,
@@ -475,7 +475,7 @@ def test_offload_transport_load_table_no_qi(config, schema, data_db):
         messages.log(
             f"Skipping {id} tests because we only have Query Import at our disposal"
         )
-        return
+        pytest.skip(f"Skipping {id} because we only have Query Import at our disposal")
 
     load_table_compression_tests(
         config,
@@ -495,7 +495,7 @@ def test_offload_transport_polling_validation_spark_submit(config, schema, data_
 
     if not is_spark_submit_available(config, None):
         messages.log(f"Skipping {id} because spark-submit is not configured")
-        return
+        pytest.skip(f"Skipping {id} because spark-submit is not configured")
 
     offload_transport_polling_validation_tests(
         config,
@@ -515,7 +515,7 @@ def test_offload_transport_polling_validation_spark_thrift(config, schema, data_
 
     if not is_spark_thrift_available(config, None):
         messages.log(f"Skipping {id} because Spark Thriftserver is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
 
     offload_transport_polling_validation_tests(
         config,
@@ -537,7 +537,7 @@ def test_offload_transport_polling_validation_spark_livy(config, schema, data_db
 
     if not is_livy_available(config, None):
         messages.log(f"Skipping {id} because Spark Livy is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Spark Livy is not configured")
 
     offload_transport_polling_validation_tests(
         config,

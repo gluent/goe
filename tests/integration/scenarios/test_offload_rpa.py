@@ -446,7 +446,9 @@ def test_offload_rpa_int8(config, schema, data_db):
         messages.log(
             f"Skipping {id} for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
+        )
 
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"

@@ -292,7 +292,6 @@ class TestBackendApi(TestCase):
         if self.connect_to_backend:
             part_cols = get_partition_columns(
                 self.api.get_partition_columns(self.db, self.part_table),
-                exclude_bucket_column=True,
             )
             part_cols = [
                 _ for _ in part_cols if not self.api.is_synthetic_partition_column(_)

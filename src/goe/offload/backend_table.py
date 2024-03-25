@@ -510,12 +510,6 @@ class BackendTableInterface(metaclass=ABCMeta):
                 )
         return partition_info
 
-    def _derive_bucket_info(self, backend_column):
-        """Derive GOE bucket attributes from an existing partition column"""
-        assert isinstance(backend_column, ColumnMetadataInterface)
-        bucket_info = None
-        return bucket_info
-
     def _drop_state(self):
         # Drop state
         self._columns = None
@@ -1961,13 +1955,11 @@ class BackendTableInterface(metaclass=ABCMeta):
                 part_cols = self._db_api.get_partition_columns(
                     self.db_name, self.table_name
                 )
-            # Run through columns adding partition_info and bucket_info as we go.
+            # Run through columns adding partition_info as we go.
             new_columns = []
             for column in columns:
                 # Add partition_info attribute to any partition columns
                 column.partition_info = self._derive_partition_info(column, part_cols)
-                # Add bucket_info attribute to any bucket columns
-                column.bucket_info = self._derive_bucket_info(column)
                 new_columns.append(column)
             self._columns = new_columns
         return self._columns
@@ -2045,7 +2037,7 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def get_partition_columns(self):
         """Get partition columns for the base table.
-        This is done via get_columns() which ensures partition_info/bucket_info are set correctly.
+        This is done via get_columns() which ensures partition_info is set correctly.
         """
         if self._partition_columns is None:
             self._partition_columns = get_partition_columns(self.get_columns())

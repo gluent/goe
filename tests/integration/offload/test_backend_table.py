@@ -258,9 +258,7 @@ class TestCurrentBackendTable(TestCase):
         self.assertIsInstance(self.api.derive_unicode_string_columns(as_csv=True), str)
 
     def _test__derive_partition_info(self):
-        part_cols = get_partition_columns(
-            self.api.get_partition_columns(), exclude_bucket_column=True
-        )
+        part_cols = get_partition_columns(self.api.get_partition_columns())
         if part_cols:
             self.api._derive_partition_info(part_cols[0], partition_columns=part_cols)
             self.api._derive_partition_info(
@@ -270,9 +268,7 @@ class TestCurrentBackendTable(TestCase):
     def _test__gen_synthetic_literal_function(self):
         """Double underscore because we are unit testing a private method"""
         if self.api.synthetic_partitioning_supported():
-            part_cols = get_partition_columns(
-                self.api.get_partition_columns(), exclude_bucket_column=True
-            )
+            part_cols = get_partition_columns(self.api.get_partition_columns())
             if part_cols:
                 part_col = part_cols[0]
                 literal_fn = self.api._gen_synthetic_literal_function(part_col)

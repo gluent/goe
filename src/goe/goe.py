@@ -804,7 +804,7 @@ def normalise_column_transformations(
         ]
 
     for ct in column_transformation_list:
-        if not ":" in ct:
+        if ":" not in ct:
             raise OffloadOptionError("Missing transformation for column: %s" % ct)
 
         m = re.search(r"^([\w$#]+):([\w$#]+)(\(%s\))?$" % param_match, ct)
@@ -1288,7 +1288,6 @@ class BaseOperation(object):
         self._messages = messages
         self.hwm_in_hybrid_view = None
         self.inflight_offload_predicate = None
-        self.bucket_hash_method = None
         # This is a hidden partition filter we can feed into "find partition" logic. Not exposed to the user
         self.less_or_equal_value = None
         self.goe_version = strict_version_ready(version())
@@ -1570,7 +1569,6 @@ class BaseOperation(object):
     ):
         if not bucket_hash_column_supported:
             self.bucket_hash_col = None
-            self.bucket_hash_method = None
             return
 
         if self.bucket_hash_col and self.bucket_hash_col.upper() not in column_names:
@@ -1591,7 +1589,7 @@ class BaseOperation(object):
                     and (size or 0) >= self._num_buckets_threshold
                 ):
                     self.bucket_hash_col = self.default_bucket_hash_col(
-                        rdbms_table, opts, messages
+                        rdbms_table, messages
                     )
                     if not self.bucket_hash_col:
                         raise OffloadException(
@@ -1634,7 +1632,6 @@ class BaseOperation(object):
             )
         else:
             self.bucket_hash_col = None
-            self.bucket_hash_method = None
 
     def set_offload_partition_functions_from_metadata(self, existing_metadata):
         if existing_metadata and existing_metadata.offload_partition_functions:
@@ -2121,7 +2118,7 @@ class OffloadOperation(BaseOperation):
         """Return a dictionary of official attributes, none of the convenience attributes/methods we also store"""
         return self._vars(EXPECTED_OFFLOAD_ARGS)
 
-    def default_bucket_hash_col(self, source_table, opts, messages):
+    def default_bucket_hash_col(self, source_table, messages):
         """Choose a default hashing column in order of preference below:
         1) If single column PK use that
         2) Choose most selective column based on optimiser stats

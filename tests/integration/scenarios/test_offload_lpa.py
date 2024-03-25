@@ -639,7 +639,7 @@ def test_offload_lpa_unicode(config, schema, data_db):
 
     if not os.environ.get("NLS_LANG"):
         messages.log(f"Skipping {id} because NLS_LANG is not set")
-        return
+        pytest.skip(f"Skipping {id} because NLS_LANG is not set")
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -960,7 +960,9 @@ def test_offload_lpa_part_fn(config, schema, data_db):
         messages.log(
             f"Skipping {id} due to goe_partition_functions_supported() == False"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} due to goe_partition_functions_supported() == False"
+        )
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(

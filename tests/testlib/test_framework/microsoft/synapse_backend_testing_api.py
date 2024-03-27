@@ -1745,63 +1745,6 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
         )
         return self.execute_ddl(sqls, sync=sync)
 
-    def drop_database(self, db_name, cascade=False):
-        """Drop a Synapse schema
-        IF EXISTS syntax is not supported in Synapse, results in:
-            Parse error at line: 1, column: 13: Incorrect syntax near 'IF'.
-        Therefore we check for existence explicitly before issuing drop.
-        Incredibly there is no CASCADE in Synapse!
-            https://docs.microsoft.com/en-us/sql/t-sql/statements/drop-schema-transact-sql?view=sql-server-ver15
-        Implemented via a loop on child objects. We may not cover all eventualities here but
-        cover everything we might create in a test environment.
-        """
-
-        def list_tables(db_name):
-            """Local list_tables() rather than _db_api version because we want to include is_external in order to
-            avoid extra round trip per table.
-            """
-            sql = dedent(
-                """\
-                        SELECT t.name, t.is_external
-                        FROM   sys.schemas s, sys.tables t
-                        WHERE  s.schema_id = t.schema_id
-                        AND    s.name = ?"""
-            )
-            return self.execute_query_fetch_all(
-                sql, log_level=VVERBOSE, query_params=[db_name]
-            )
-
-        assert db_name
-        cmds = []
-        if self.database_exists(db_name):
-            if cascade:
-                # Drop tables, we don't create foreign keys so not concerned about constraints.
-                for table_name, is_external in list_tables(db_name):
-                    # purge=True to catch encryiption zone issues on Hadoop
-                    # if_exists=False to avoid extra round trips on backends without IF EXISTS equivalent
-                    # sync=False to avoid any sync delays, we just want to race through
-                    if is_external:
-                        cmds += self._db_api.execute_ddl(
-                            "DROP EXTERNAL TABLE %s"
-                            % self._db_api.enclose_object_reference(db_name, table_name)
-                        )
-                    else:
-                        cmds += self._db_api.drop_table(
-                            db_name, table_name, purge=True, if_exists=False, sync=False
-                        )
-
-                for view_name in self._db_api.list_views(db_name):
-                    # if_exists=False to avoid extra round trips on backends without IF EXISTS equivalent
-                    # sync=False to avoid any sync delays, we just want to race through
-                    cmds += self._db_api.drop_view(
-                        db_name, view_name, if_exists=False, sync=False
-                    )
-
-            schema_drop_sql = "DROP SCHEMA %s" % (self.enclose_identifier(db_name))
-            cmds += self.execute_ddl(schema_drop_sql)
-
-        return cmds
-
     def expected_backend_column(
         self, canonical_column, override_used=None, decimal_padding_digits=None
     ):
@@ -2002,40 +1945,6 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
 
     def goe_wide_max_test_column_count(self):
         return 400
-
-    def host_compare_sql_projection(self, column_list: list) -> str:
-        assert isinstance(column_list, list)
-        projection = []
-        for column in column_list:
-            if column.data_type == SYNAPSE_TYPE_DATETIMEOFFSET:
-                projection.append(
-                    "REPLACE(CONVERT({}, {}, 127),'Z', ' ')".format(
-                        SYNAPSE_TYPE_VARCHAR,
-                        self._db_api.enclose_identifier(column.name),
-                    )
-                )
-            elif column.is_date_based():
-                # CONVERT() style 21:
-                #   yyyy-mm-dd hh:mi:ss.mmm (24h)
-                projection.append(
-                    "CONVERT({}, {}, 21)".format(
-                        SYNAPSE_TYPE_VARCHAR,
-                        self._db_api.enclose_identifier(column.name),
-                    )
-                )
-            elif column.is_number_based():
-                # CONVERT() style 3:
-                #   Always 17 digits. Use for lossless conversion.  With this style, every distinct float
-                #   or real value is guaranteed to convert to a distinct character string.
-                projection.append(
-                    "CONVERT({},{},3)".format(
-                        SYNAPSE_TYPE_VARCHAR,
-                        self._db_api.enclose_identifier(column.name),
-                    )
-                )
-            else:
-                projection.append(self._db_api.enclose_identifier(column.name))
-        return ",".join(projection)
 
     def partition_has_stats(
         self, db_name, table_name, partition_tuples, colstats=False

@@ -723,22 +723,6 @@ FROM %(db_table)s""" % {
         }
         return self.execute_ddl(new_ddl)
 
-    def drop_database(self, db_name, cascade=False):
-        """Use the BigQuery API to drop a dataset."""
-        if not self._db_api.database_exists(db_name):
-            self._log(
-                "Dataset does not exist, not attempting to drop: %s" % db_name,
-                detail=VVERBOSE,
-            )
-            return []
-        log_cmd = "drop_dataset(%s)" % self._db_api.bq_dataset_id(db_name)
-        self._log("BigQuery call: %s" % log_cmd, detail=VERBOSE)
-        if not self._dry_run:
-            self._db_api.bq_client().delete_dataset(
-                self._db_api.bq_dataset_id(db_name), delete_contents=cascade
-            )
-        return [log_cmd]
-
     def expected_backend_column(
         self, canonical_column, override_used=None, decimal_padding_digits=None
     ):
@@ -944,36 +928,6 @@ FROM %(db_table)s""" % {
             else:
                 goe_type_mapping_cols.append({"column": backend_column})
         return goe_type_mapping_cols, goe_type_mapping_names
-
-    def host_compare_sql_projection(self, column_list: list) -> str:
-        """Return a SQL projection (CSV of column expressions) used to validate offloaded data.
-        Because of systems variations all date based values must be normalised to UTC in format:
-            'YYYY-MM-DD HH24:MI:SS.FFF +00:00'
-        """
-        assert isinstance(column_list, list)
-        projection = []
-        for column in column_list:
-            if column.data_type == BIGQUERY_TYPE_TIMESTAMP:
-                projection.append(
-                    "CONCAT(FORMAT_TIMESTAMP('%E4Y-%m-%d %H:%M:%E3S', {}),' +00:00')".format(
-                        self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            elif column.is_date_based():
-                projection.append(
-                    "CONCAT(FORMAT_DATETIME('%E4Y-%m-%d %H:%M:%E3S', {}),' +00:00')".format(
-                        self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            elif column.is_number_based():
-                projection.append(
-                    "CAST({} AS STRING)".format(
-                        self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            else:
-                projection.append(self._db_api.enclose_identifier(column.name))
-        return ",".join(projection)
 
     def load_table_fs_scheme_is_correct(self, load_db, table_name):
         """BigQuery load tables should always be in GCS"""

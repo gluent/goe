@@ -1613,16 +1613,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def get_view_ddl(
-        self, db_name, view_name, as_list=False, terminate_sql=False, for_replace=False
-    ):
-        """Return CREATE VIEW DDL as a string (or a list of strings split on CR if as_list=True)
-        terminate_sql: Adds any executing character to the end of the SQL (e.g. a semi-colon)
-        for_replace: If the backend supports it this includes the equivalent of:
-            CREATE OR REPLACE VIEW
-        """
-
-    @abstractmethod
     def insert_literal_values(
         self,
         db_name,

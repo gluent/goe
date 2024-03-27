@@ -575,9 +575,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def get_table_sort_columns(self, db_name, table_name):
         return self._db_api.get_table_sort_columns(db_name, table_name)
 
-    def get_view_ddl(self, db_name, view_name):
-        return self._db_api.get_view_ddl(db_name, view_name)
-
     def goe_identifiers_generated_table_col_specs(self):
         """Return a list of column specs matching how test.generated_tables expects and a list of column names.
         This is not how we want to pass column specs around but it matches existing code in test.
@@ -1030,10 +1027,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def drop_database(self, db_name, cascade=False):
-        pass
-
-    @abstractmethod
     def expected_backend_column(
         self, canonical_column, override_used=None, decimal_padding_digits=None
     ):
@@ -1070,21 +1063,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         """Return a list of column specs matching how test.generated_tables expects and a list of column names.
         This is not how we want to pass column specs around but it matches existing code in test.
         Returned lists are sorted by column name.
-        """
-
-    @abstractmethod
-    def host_compare_sql_projection(self, column_list: list) -> str:
-        """Return a SQL projection (CSV of column expressions) used to validate offloaded data.
-        Timestamps:
-            Because some systems do not have canonical dates or have differing scales for time elements all
-            date based values must be normalised to UTC in format:
-                'YYYY-MM-DD HH24:MI:SS.FFF +00:00'
-        Intervals:
-            Some clients do not support interval data types so convert them to string in the validation SQL.
-        Numbers:
-            All numbers need to be strings because:
-                >>> -8461.633 == Decimal('-8461.633')
-                False
         """
 
     @abstractmethod

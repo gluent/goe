@@ -108,17 +108,6 @@ class TestBackendTestingApi(TestCase):
             self.test_api.goe_type_mapping_generated_table_col_specs()[1], list
         )
 
-    def _test_host_compare_sql_projection(self):
-        cols = [
-            self.test_api.gen_column_object(
-                "col1", data_type=self.test_api.backend_test_type_canonical_date()
-            ),
-            self.test_api.gen_column_object(
-                "col2", data_type=self.test_api.backend_test_type_canonical_int_8()
-            ),
-        ]
-        self.assertIsInstance(self.test_api.host_compare_sql_projection(cols), str)
-
     def _test_transient_error_rerunner(self):
         global transient_error_global_counter
         if self.test_api.transient_query_error_identification_strings():
@@ -168,7 +157,6 @@ class TestBackendTestingApi(TestCase):
             return
         self._test_create_table_as_select()
         self._test_goe_type_mapping_generated_table_col_specs()
-        self._test_host_compare_sql_projection()
         self._test_transient_error_rerunner()
         self._test_unit_test_query_options()
 

@@ -76,7 +76,6 @@ class SynapseColumn(ColumnMetadataInterface):
         data_default=None,
         safe_mapping=True,
         partition_info=None,
-        bucket_info=None,
         char_length=None,
         char_semantics=None,
         collation=None,
@@ -91,7 +90,6 @@ class SynapseColumn(ColumnMetadataInterface):
             data_default=data_default,
             safe_mapping=safe_mapping,
             partition_info=partition_info,
-            bucket_info=bucket_info,
             char_length=char_length,
             char_semantics=char_semantics,
         )

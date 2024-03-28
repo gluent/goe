@@ -22,9 +22,6 @@ from goe.offload.offload import (
     get_current_offload_hv,
     get_prior_offloaded_hv,
 )
-from goe.offload.offload_constants import (
-    OFFLOAD_BUCKET_NAME,
-)
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.offload.offload_metadata_functions import (
     flatten_lpa_high_values,
@@ -277,9 +274,11 @@ def copy_rdbms_stats_to_backend(
                 "Copying stats to %s partitions%s"
                 % (
                     len(backend_partitions),
-                    " (0 expected in non-execute mode)"
-                    if dry_run and not backend_partitions
-                    else "",
+                    (
+                        " (0 expected in non-execute mode)"
+                        if dry_run and not backend_partitions
+                        else ""
+                    ),
                 ),
                 detail=VERBOSE,
             )
@@ -288,14 +287,16 @@ def copy_rdbms_stats_to_backend(
                 part_stats.append(
                     {
                         "partition_spec": partition_spec,
-                        "num_rows": max(pro_rate_num_rows // target_partition_count, 1)
-                        if pro_rate_num_rows is not None
-                        else -1,
-                        "num_bytes": max(
-                            pro_rate_size_bytes // target_partition_count, 1
-                        )
-                        if pro_rate_size_bytes is not None
-                        else -1,
+                        "num_rows": (
+                            max(pro_rate_num_rows // target_partition_count, 1)
+                            if pro_rate_num_rows is not None
+                            else -1
+                        ),
+                        "num_bytes": (
+                            max(pro_rate_size_bytes // target_partition_count, 1)
+                            if pro_rate_size_bytes is not None
+                            else -1
+                        ),
                         "avg_row_len": rdbms_tab_stats["avg_row_len"],
                     }
                 )
@@ -314,8 +315,7 @@ def copy_rdbms_stats_to_backend(
         rdbms_only_expr = [
             exprs
             for exprs in synth_part_expressions
-            if exprs[0] != OFFLOAD_BUCKET_NAME
-            and case_insensitive_in(exprs[3], rdbms_part_col_names)
+            if case_insensitive_in(exprs[3], rdbms_part_col_names)
         ]
         rdbms_only_expr_by_rdbms_col = {
             exprs[3].upper(): exprs for exprs in rdbms_only_expr

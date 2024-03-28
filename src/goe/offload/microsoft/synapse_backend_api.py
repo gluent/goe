@@ -2549,7 +2549,6 @@ FROM   %(from_db_table)s%(where)s""" % {
                 safe_mapping=safe_mapping,
                 char_length=char_length,
                 partition_info=None,
-                bucket_info=None,
                 char_semantics=char_semantics,
             )
 

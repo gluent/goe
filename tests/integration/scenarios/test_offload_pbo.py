@@ -958,7 +958,7 @@ def test_offload_pbo_list(config, schema, data_db):
 
     if not frontend_api.goe_lpa_supported():
         messages.log(f"Skipping {id} for system/type: {config.db_type}/LIST")
-        return
+        pytest.skip(f"Skipping {id} for system/type: {config.db_type}/LIST")
 
     # Setup
     run_setup(

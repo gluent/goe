@@ -128,3 +128,7 @@ Running an Offload:
 cd bin
 ./offload -t my.table -x
 ```
+
+# Tests
+
+See [Tests](tests/README.md)

@@ -24,7 +24,6 @@ import logging
 import re
 from typing import Optional
 
-from goe.offload.offload_constants import OFFLOAD_BUCKET_NAME
 from goe.util.misc_functions import str_summary_of_self
 
 
@@ -164,44 +163,32 @@ def get_column_names(column_list, conv_fn=None):
         return [_.name for _ in column_list or []]
 
 
-def get_partition_columns(column_list, exclude_bucket_column=False):
-    """Simple helper function to get sorted list of columns where partition_info/bucket_info is set.
+def get_partition_columns(column_list):
+    """Simple helper function to get sorted list of columns where partition_info is set.
     Return bucket columns before partition columns to maintain historical outcome.
     """
     if not column_list:
         return []
     part_cols = [_ for _ in column_list if _.partition_info]
-    bucket_list = (
-        [] if exclude_bucket_column else [_ for _ in column_list if _.bucket_info]
-    )
     # Sort part_cols by partition_info.position
-    return bucket_list + sorted(part_cols, key=lambda x: x.partition_info.position)
+    return sorted(part_cols, key=lambda x: x.partition_info.position)
 
 
-def get_partition_source_column_names(
-    column_list, conv_fn=None, exclude_bucket_column=False
-):
+def get_partition_source_column_names(column_list, conv_fn=None):
     """Simple helper function to get source column names from partition columns.
     conv_fn can be used to upper/lower the names, e.g.:
         get_partition_source_column_names(table.get_columns(), conv_fn=str.upper)
     """
 
-    def partition_or_bucket_info(col):
+    def partition_info(col):
         if col.partition_info:
             return col.partition_info
-        if col.bucket_info:
-            return col.bucket_info
 
-    columns = get_partition_columns(
-        column_list, exclude_bucket_column=exclude_bucket_column
-    )
+    columns = get_partition_columns(column_list)
     if conv_fn:
-        return [
-            conv_fn(partition_or_bucket_info(_).source_column_name)
-            for _ in columns or []
-        ]
+        return [conv_fn(partition_info(_).source_column_name) for _ in columns or []]
     else:
-        return [partition_or_bucket_info(_).source_column_name for _ in columns or []]
+        return [partition_info(_).source_column_name for _ in columns or []]
 
 
 def is_safe_mapping(prior_safe_mapping, new_safe_mapping):
@@ -286,11 +273,6 @@ def invalid_column_list_message(column_list):
         return None
     else:
         return "Type %s is not instance of column" % type(column_list[0])
-
-
-def is_synthetic_bucket_column(column):
-    column_name = column.name if isinstance(column, ColumnMetadataInterface) else column
-    return bool(column_name.lower() == OFFLOAD_BUCKET_NAME.lower())
 
 
 def is_synthetic_partition_column(column):
@@ -403,36 +385,6 @@ class ColumnPartitionInfo:
 
 
 ###########################################################################
-# ColumnPartitionInfo
-###########################################################################
-
-
-class ColumnBucketInfo:
-    """Holds synthetic bucket information for a single table column.
-    The bucket_info attribute of ColumnMetadataInterface will hold an object
-    of this class when the column is used for bucketing.
-    """
-
-    def __init__(self, source_column_name, num_buckets, bucket_hash_method):
-        """Construct ColumnBucketInfo.
-        source_column_name: If another column is source for this one then this is how we know.
-        num_buckets: The number of buckets.
-        bucket_hash_method: Method used to distribute rows amongst buckets.
-        """
-        assert source_column_name
-        assert num_buckets is not None
-        self.source_column_name = source_column_name
-        self.num_buckets = num_buckets
-        self.bucket_hash_method = bucket_hash_method
-
-    def __str__(self):
-        return str_summary_of_self(self)
-
-    def __repr__(self):
-        return str_summary_of_self(self)
-
-
-###########################################################################
 # ColumnMetadataInterface
 ###########################################################################
 
@@ -454,7 +406,6 @@ class ColumnMetadataInterface(metaclass=ABCMeta):
         data_default=None,
         safe_mapping=True,
         partition_info=None,
-        bucket_info=None,
         char_length=None,
         char_semantics=None,
     ):
@@ -477,7 +428,6 @@ class ColumnMetadataInterface(metaclass=ABCMeta):
         self.data_default = data_default
         self.safe_mapping = self._optional_boolean(safe_mapping)
         self.partition_info = self._optional_object(partition_info, ColumnPartitionInfo)
-        self.bucket_info = self._optional_object(bucket_info, ColumnBucketInfo)
         # Only used for staging file columns.
         self.staging_file_column_name = None
 
@@ -612,7 +562,6 @@ class ColumnMetadataInterface(metaclass=ABCMeta):
         data_length=None,
         nullable=None,
         partition_info=None,
-        bucket_info=None,
         char_length=None,
         char_semantics=None,
     ):
@@ -632,8 +581,6 @@ class ColumnMetadataInterface(metaclass=ABCMeta):
             clone_col.char_semantics = char_semantics
         if partition_info is not None:
             clone_col.partition_info = partition_info
-        if bucket_info is not None:
-            clone_col.bucket_info = bucket_info
         return clone_col
 
     def set_simplified_staging_column_name(self, column_position: int) -> str:
@@ -660,7 +607,6 @@ class CanonicalColumn(ColumnMetadataInterface):
         data_default=None,
         safe_mapping=True,
         partition_info=None,
-        bucket_info=None,
         from_override=False,
         char_length=None,
         char_semantics=None,
@@ -676,7 +622,6 @@ class CanonicalColumn(ColumnMetadataInterface):
             data_default=data_default,
             safe_mapping=safe_mapping,
             partition_info=partition_info,
-            bucket_info=bucket_info,
             char_length=char_length,
             char_semantics=char_semantics,
         )

@@ -46,7 +46,6 @@ from goe.offload.hadoop.hadoop_column import (
 )
 from goe.offload.offload_constants import (
     FILE_STORAGE_FORMAT_AVRO,
-    OFFLOAD_BUCKET_NAME,
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_STATS_METHOD_HISTORY,
 )
@@ -391,13 +390,6 @@ FROM %s.%s""" % (
     ):
         raise NotImplementedError(
             "_final_insert_format_sql() is not implemented for common Hadoop class"
-        )
-
-    def _gen_synthetic_bucket_column_object(self, bucket_info=None):
-        return self._db_api.gen_column_object(
-            OFFLOAD_BUCKET_NAME,
-            data_type=self.synthetic_bucket_data_type(),
-            bucket_info=bucket_info,
         )
 
     def _gen_synthetic_part_number_granularity_sql_expr(

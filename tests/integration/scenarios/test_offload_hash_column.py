@@ -86,7 +86,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
 
     if config.target != offload_constants.DBTYPE_SYNAPSE:
         messages.log(f"Skipping {id} for backend: {config.target}")
-        return
+        pytest.skip(f"Skipping {id} for backend: {config.target}")
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)

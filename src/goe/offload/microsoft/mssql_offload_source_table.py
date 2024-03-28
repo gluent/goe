@@ -571,7 +571,6 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
                 data_default=col.data_default,
                 safe_mapping=safe_mapping,
                 partition_info=None,
-                bucket_info=None,
             )
 
         assert column

@@ -408,14 +408,18 @@ def test_offload_data_nan_inf_not_supported(config, schema, data_db):
         messages.log(
             f"Skipping {id} because NaN values are not supported for this frontend system"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} because NaN values are not supported for this frontend system"
+        )
 
     backend_api = get_backend_testing_api(config, messages)
     if backend_api.nan_supported():
         messages.log(
             f"Skipping {id} because NaN values are supported for this backend system"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} because NaN values are supported for this backend system"
+        )
 
     # Setup
     run_setup(
@@ -469,7 +473,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
 
     if config.db_type == offload_constants.DBTYPE_TERADATA:
         messages.log(f"Skipping {id} on Teradata")
-        return
+        pytest.skip(f"Skipping {id} on Teradata")
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -521,9 +525,11 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
     options = {
         "owner_table": schema + "." + US_FACT,
         "less_than_value": "2030-01-03",
-        "verify_row_count": "aggregate"
-        if backend_api.sql_microsecond_predicate_supported()
-        else orchestration_defaults.verify_row_count_default(),
+        "verify_row_count": (
+            "aggregate"
+            if backend_api.sql_microsecond_predicate_supported()
+            else orchestration_defaults.verify_row_count_default()
+        ),
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -560,7 +566,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
 
     if not frontend_api.nanoseconds_supported():
         messages.log(f"Skipping {id} on frontend system")
-        return
+        pytest.skip(f"Skipping {id} on rontend system")
 
     backend_api = get_backend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(
@@ -631,9 +637,11 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
         options = {
             "owner_table": schema + "." + NS_FACT,
             "less_than_value": "2030-01-03",
-            "verify_row_count": "aggregate"
-            if backend_api.sql_microsecond_predicate_supported()
-            else orchestration_defaults.verify_row_count_default(),
+            "verify_row_count": (
+                "aggregate"
+                if backend_api.sql_microsecond_predicate_supported()
+                else orchestration_defaults.verify_row_count_default()
+            ),
         }
         run_offload(options, config, messages)
         assert sales_based_fact_assertion(
@@ -661,7 +669,7 @@ def test_offload_data_oracle_xmltype(config, schema, data_db):
 
     if config.db_type != offload_constants.DBTYPE_ORACLE:
         messages.log(f"Skipping {id} on frontend system: {config.db_type}")
-        return
+        pytest.skip(f"Skipping {id} on frontend system: {config.db_type}")
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     backend_api = get_backend_testing_api(config, messages)
@@ -769,7 +777,7 @@ def test_offload_data_nulls_no_qi(config, schema, data_db):
         == OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
     ):
         messages.log(f"Skipping {id} because only Query Import is configured")
-        return
+        pytest.skip(f"Skipping {id} because only Query Import is configured")
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     backend_api = get_backend_testing_api(config, messages)
@@ -817,7 +825,7 @@ def test_offload_data_large_decimals_lpa(config, schema, data_db):
 
     if not frontend_api.goe_lpa_supported():
         messages.log(f"Skipping {id} because frontend_api.goe_lpa_supported() == false")
-        return
+        pytest.skip(f"Skipping {id} because frontend_api.goe_lpa_supported() == false")
 
     partition_keys_larger_than_bigint_valid = bool(
         config.db_type != offload_constants.DBTYPE_TERADATA
@@ -827,7 +835,9 @@ def test_offload_data_large_decimals_lpa(config, schema, data_db):
         messages.log(
             f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
+        )
 
     backend_api = get_backend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(
@@ -876,9 +886,11 @@ def test_offload_data_large_decimals_lpa(config, schema, data_db):
         messages,
         repo_client,
         [
-            "1"
-            if goe1938_vulnerable_test(config)
-            else "-" + gen_large_num_list_part_literal(backend_api)
+            (
+                "1"
+                if goe1938_vulnerable_test(config)
+                else "-" + gen_large_num_list_part_literal(backend_api)
+            )
         ],
         incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
     )
@@ -900,9 +912,11 @@ def test_offload_data_large_decimals_lpa(config, schema, data_db):
         messages,
         repo_client,
         [
-            "1"
-            if goe1938_vulnerable_test(config)
-            else "-" + gen_large_num_list_part_literal(backend_api),
+            (
+                "1"
+                if goe1938_vulnerable_test(config)
+                else "-" + gen_large_num_list_part_literal(backend_api)
+            ),
             gen_large_num_list_part_literal(backend_api),
         ],
         incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
@@ -924,9 +938,11 @@ def test_offload_data_large_decimals_lpa(config, schema, data_db):
         messages,
         repo_client,
         [
-            "1"
-            if goe1938_vulnerable_test(config)
-            else "-" + gen_large_num_list_part_literal(backend_api),
+            (
+                "1"
+                if goe1938_vulnerable_test(config)
+                else "-" + gen_large_num_list_part_literal(backend_api)
+            ),
             gen_large_num_list_part_literal(backend_api),
             gen_large_num_list_part_literal(backend_api, all_nines=True),
         ],
@@ -949,7 +965,9 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
         messages.log(
             f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
+        )
 
     backend_api = get_backend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(
@@ -998,9 +1016,11 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
         schema,
         data_db,
         RPA_LARGE_NUMS,
-        "1"
-        if goe1938_vulnerable_test(config)
-        else ("-" + gen_large_num_list_part_literal(backend_api)),
+        (
+            "1"
+            if goe1938_vulnerable_test(config)
+            else ("-" + gen_large_num_list_part_literal(backend_api))
+        ),
         offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
         incremental_key="part_col",
     )

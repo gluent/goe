@@ -219,7 +219,9 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         messages.log(
             f"Skipping most of {id} due to goe_partition_functions_supported() == False"
         )
-        return
+        pytest.skip(
+            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+        )
 
     # Create a series of UDFs, some incompatible with GOE, for use throughout these tests.
     run_setup(
@@ -329,7 +331,9 @@ def test_offload_part_fn_num(config, schema, data_db):
         messages.log(
             f"Skipping most of {id} due to goe_partition_functions_supported() == False"
         )
-        return
+        pytest.skip(
+            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+        )
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(
@@ -420,7 +424,9 @@ def test_offload_part_fn_dec(config, schema, data_db):
         messages.log(
             f"Skipping most of {id} due to goe_partition_functions_supported() == False"
         )
-        return
+        pytest.skip(
+            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+        )
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(
@@ -510,7 +516,9 @@ def test_offload_part_fn_str(config, schema, data_db):
         messages.log(
             f"Skipping most of {id} due to goe_partition_functions_supported() == False"
         )
-        return
+        pytest.skip(
+            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+        )
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(

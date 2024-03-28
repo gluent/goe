@@ -57,7 +57,6 @@ from goe.filesystem.goe_dfs import (
 from goe.offload.column_metadata import (
     ColumnMetadataInterface,
     get_column_names,
-    is_synthetic_bucket_column,
     is_synthetic_partition_column,
     match_table_column,
 )
@@ -98,7 +97,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_SORTED_TABLE,
     CAPABILITY_SORTED_TABLE_MODIFY,
     CAPABILITY_SQL_MICROSECOND_PREDICATE,
-    CAPABILITY_SYNTHETIC_BUCKETING,
     CAPABILITY_SYNTHETIC_PARTITIONING,
     CAPABILITY_TABLE_STATS_COMPUTE,
     CAPABILITY_TABLE_STATS_GET,
@@ -991,7 +989,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
             _
             for _ in self.get_columns(db_name, table_name)
             if not self.is_synthetic_partition_column(_)
-            and not self.is_synthetic_bucket_column(_)
         ]
 
     def identifier_contains_invalid_characters(self, identifier):
@@ -1010,12 +1007,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         column can be a column object or a name.
         """
         return is_synthetic_partition_column(column)
-
-    def is_synthetic_bucket_column(self, column):
-        """Is a column a synthetic bucket column - based on its name.
-        column can be a column object or a name.
-        """
-        return is_synthetic_bucket_column(column)
 
     def is_supported_data_type(self, data_type):
         assert data_type
@@ -2090,9 +2081,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
     def sql_microsecond_predicate_supported(self):
         """Can the orchestration SQL engine cope with literal predicates with microsecond precision"""
         return self.is_capability_supported(CAPABILITY_SQL_MICROSECOND_PREDICATE)
-
-    def synthetic_bucketing_supported(self):
-        return self.is_capability_supported(CAPABILITY_SYNTHETIC_BUCKETING)
 
     def synthetic_partitioning_supported(self):
         return self.is_capability_supported(CAPABILITY_SYNTHETIC_PARTITIONING)

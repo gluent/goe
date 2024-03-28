@@ -226,9 +226,6 @@ class BackendSnowflakeTable(BackendTableInterface):
             )
         )
 
-    def _gen_synthetic_bucket_column_object(self, bucket_info=None):
-        raise NotImplementedError(self._not_implemented_message("Synthetic bucketing"))
-
     def _gen_synthetic_partition_column_object(self, synthetic_name, partition_info):
         raise NotImplementedError(
             self._not_implemented_message("Synthetic partitioning")

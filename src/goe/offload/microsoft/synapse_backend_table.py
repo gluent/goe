@@ -195,9 +195,6 @@ class BackendSynapseTable(BackendTableInterface):
             filter_clauses=filter_clauses,
         )
 
-    def _gen_synthetic_bucket_column_object(self, bucket_info=None):
-        raise NotImplementedError(self._not_implemented_message("Synthetic bucketing"))
-
     def _gen_synthetic_partition_column_object(self, synthetic_name, canonical_column):
         raise NotImplementedError(
             self._not_implemented_message("Synthetic partitioning")
@@ -446,9 +443,9 @@ class BackendSynapseTable(BackendTableInterface):
         no_partition_columns = None
         table_properties = {}
         if self._bucket_hash_col:
-            table_properties[
-                "DISTRIBUTION"
-            ] = "HASH(%s)" % self._db_api.enclose_identifier(self._bucket_hash_col)
+            table_properties["DISTRIBUTION"] = (
+                "HASH(%s)" % self._db_api.enclose_identifier(self._bucket_hash_col)
+            )
 
         cmds = self._db_api.create_table(
             self.db_name,

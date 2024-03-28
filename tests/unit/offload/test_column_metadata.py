@@ -17,7 +17,6 @@ from unittest import TestCase, main
 
 from goe.offload.column_metadata import (
     CanonicalColumn,
-    ColumnBucketInfo,
     ColumnPartitionInfo,
     get_column_names,
     get_partition_columns,
@@ -37,7 +36,6 @@ from goe.offload.column_metadata import (
     GOE_TYPE_VARIABLE_STRING,
     SYNTHETIC_PARTITION_COLUMN_NAME_TEMPLATE,
 )
-from goe.offload.offload_constants import OFFLOAD_BUCKET_NAME
 
 
 class TestColumnMetadata(TestCase):
@@ -72,13 +70,6 @@ class TestColumnMetadata(TestCase):
                 "NATIVE_PART_COL",
                 GOE_TYPE_INTEGER_2,
                 partition_info=ColumnPartitionInfo(2),
-            ),
-            CanonicalColumn(
-                OFFLOAD_BUCKET_NAME,
-                GOE_TYPE_INTEGER_2,
-                bucket_info=ColumnBucketInfo(
-                    source_column_name="ID", num_buckets=16, bucket_hash_method=None
-                ),
             ),
         ]
 

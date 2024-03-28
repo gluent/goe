@@ -190,9 +190,6 @@ class BackendBigQueryTable(BackendTableInterface):
         else:
             return None
 
-    def _gen_synthetic_bucket_column_object(self, bucket_info=None):
-        raise NotImplementedError("Synthetic bucketing is not supported on BigQuery")
-
     def _gen_synthetic_partition_column_object(self, synthetic_name, canonical_column):
         """Return BigQuery column object for synthetic partition column"""
         if canonical_column.is_date_based():

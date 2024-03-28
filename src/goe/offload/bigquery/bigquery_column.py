@@ -65,7 +65,6 @@ class BigQueryColumn(ColumnMetadataInterface):
         data_default=None,
         safe_mapping=True,
         partition_info=None,
-        bucket_info=None,
         char_length=None,
     ):
         if data_length and char_length is None:
@@ -88,7 +87,6 @@ class BigQueryColumn(ColumnMetadataInterface):
             data_default=data_default,
             safe_mapping=safe_mapping,
             partition_info=partition_info,
-            bucket_info=bucket_info,
             char_length=char_length,
             char_semantics=CANONICAL_CHAR_SEMANTICS_CHAR,
         )

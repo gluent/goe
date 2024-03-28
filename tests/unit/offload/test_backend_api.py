@@ -22,6 +22,7 @@
 from datetime import datetime
 from unittest import TestCase, main
 import re
+import pytest
 
 from numpy import datetime64
 
@@ -291,7 +292,6 @@ class TestBackendApi(TestCase):
         if self.connect_to_backend:
             part_cols = get_partition_columns(
                 self.api.get_partition_columns(self.db, self.part_table),
-                exclude_bucket_column=True,
             )
             part_cols = [
                 _ for _ in part_cols if not self.api.is_synthetic_partition_column(_)
@@ -827,6 +827,13 @@ class TestBackendApi(TestCase):
 
     def _test_google_kms_key_ring_unit(self):
         if not self.connect_to_backend:
+            return
+
+        if (
+            not self.config.google_kms_key_ring_location
+            or not self.config.google_kms_key_ring_name
+            or not self.config.kms_key_name
+        ):
             return
 
         # Unit test config defines a key.
@@ -1405,7 +1412,9 @@ class TestHiveBackendApi(TestBackendApi):
         try:
             super(TestHiveBackendApi, self).setUp()
         except ModuleNotFoundError as e:
-            if not optional_hadoop_dependency_exception(e):
+            if optional_hadoop_dependency_exception(e):
+                pytest.skip("Skipping TestHiveBackendApi due to missing dependencies")
+            else:
                 raise
 
     def test_all_non_connecting_hive_tests(self):
@@ -1420,7 +1429,9 @@ class TestImpalaBackendApi(TestBackendApi):
         try:
             super(TestImpalaBackendApi, self).setUp()
         except ModuleNotFoundError as e:
-            if not optional_hadoop_dependency_exception(e):
+            if optional_hadoop_dependency_exception(e):
+                pytest.skip("Skipping TestImpalaBackendApi due to missing dependencies")
+            else:
                 raise
 
     def test_all_non_connecting_impala_tests(self):
@@ -1446,7 +1457,11 @@ class TestSparkThriftBackendApi(TestBackendApi):
         try:
             super(TestSparkThriftBackendApi, self).setUp()
         except ModuleNotFoundError as e:
-            if not optional_hadoop_dependency_exception(e):
+            if optional_hadoop_dependency_exception(e):
+                pytest.skip(
+                    "Skipping TestSparkThriftBackendApi due to missing dependencies"
+                )
+            else:
                 raise
 
     def test_all_non_connecting_spark_thrift_tests(self):
@@ -1463,7 +1478,11 @@ class TestSnowflakeBackendApi(TestBackendApi):
         try:
             super(TestSnowflakeBackendApi, self).setUp()
         except ModuleNotFoundError as e:
-            if not optional_snowflake_dependency_exception(e):
+            if optional_snowflake_dependency_exception(e):
+                pytest.skip(
+                    "Skipping TestSnowflakeBackendApi due to missing dependencies"
+                )
+            else:
                 raise
 
     def test_all_non_connecting_snowflake_tests(self):
@@ -1482,6 +1501,10 @@ class TestSynapseBackendApi(TestBackendApi):
         except ModuleNotFoundError as e:
             if not optional_synapse_dependency_exception(e):
                 raise
+            else:
+                pytest.skip(
+                    "Skipping TestSynapseBackendApi due to missing configuration"
+                )
 
     def test_all_non_connecting_synapse_tests(self):
         self._run_all_tests()

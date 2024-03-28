@@ -360,10 +360,10 @@ FROM  (
             and convert_expressions_on_rdbms_side
         ):
             cast_expression = f"TO_CHAR({column_expression},'TM')"
-        elif (
-            rdbms_column.data_type in (ORACLE_TYPE_INTERVAL_DS, ORACLE_TYPE_INTERVAL_YM)
-            and for_spark
-        ) or (rdbms_column.data_type == ORACLE_TYPE_INTERVAL_YM and for_qi):
+        elif rdbms_column.data_type in (
+            ORACLE_TYPE_INTERVAL_DS,
+            ORACLE_TYPE_INTERVAL_YM,
+        ) and (for_spark or for_qi):
             cast_expression = f"TO_CHAR({column_expression})"
         elif (
             rdbms_column.data_type == ORACLE_TYPE_NUMBER

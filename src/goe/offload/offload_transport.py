@@ -233,11 +233,15 @@ def is_spark_thrift_available(offload_options, offload_source_table, messages=No
 def is_livy_available(offload_options, offload_source_table, messages=None):
     """If messages is passed in then we'll log any reason for a False return"""
     if not offload_options.offload_transport_livy_api_url:
-        messages.log(
-            "OFFLOAD_TRANSPORT_LIVY_API_URL required for transport method: %s"
-            % OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
-            detail=VVERBOSE,
-        ) if messages else None
+        (
+            messages.log(
+                "OFFLOAD_TRANSPORT_LIVY_API_URL required for transport method: %s"
+                % OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
+                detail=VVERBOSE,
+            )
+            if messages
+            else None
+        )
         return False
     else:
         return True
@@ -250,18 +254,26 @@ def is_spark_submit_available(
     If messages is not passed in then we can't yet run OS cmds, hence no spark_submit_executable_exists()
     """
     if not offload_options.offload_transport_cmd_host:
-        messages.log(
-            "OFFLOAD_TRANSPORT_CMD_HOST required for transport method: %s"
-            % OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
-            detail=VVERBOSE,
-        ) if messages else None
+        (
+            messages.log(
+                "OFFLOAD_TRANSPORT_CMD_HOST required for transport method: %s"
+                % OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
+                detail=VVERBOSE,
+            )
+            if messages
+            else None
+        )
         return False
     elif not offload_options.offload_transport_spark_submit_executable:
-        messages.log(
-            "OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE required for transport method: %s"
-            % OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
-            detail=VVERBOSE,
-        ) if messages else None
+        (
+            messages.log(
+                "OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE required for transport method: %s"
+                % OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
+                detail=VVERBOSE,
+            )
+            if messages
+            else None
+        )
         return False
     elif messages and not spark_submit_executable_exists(
         offload_options, messages, executable_override=executable_override
@@ -281,18 +293,26 @@ def is_spark_gcloud_available(offload_options, offload_source_table, messages=No
     If messages is not passed in then we can't yet run OS cmds, hence no spark_submit_executable_exists()
     """
     if not offload_options.offload_transport_cmd_host:
-        messages.log(
-            "OFFLOAD_TRANSPORT_CMD_HOST required for transport method: %s"
-            % OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
-            detail=VVERBOSE,
-        ) if messages else None
+        (
+            messages.log(
+                "OFFLOAD_TRANSPORT_CMD_HOST required for transport method: %s"
+                % OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+                detail=VVERBOSE,
+            )
+            if messages
+            else None
+        )
         return False
     if offload_options.backend_distribution != BACKEND_DISTRO_GCP:
-        messages.log(
-            "BACKEND_DISTRIBUTION not valid for transport method: %s"
-            % OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
-            detail=VVERBOSE,
-        ) if messages else None
+        (
+            messages.log(
+                "BACKEND_DISTRIBUTION not valid for transport method: %s"
+                % OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+                detail=VVERBOSE,
+            )
+            if messages
+            else None
+        )
         return False
     elif messages and not spark_submit_executable_exists(
         offload_options,
@@ -357,7 +377,10 @@ def is_query_import_available(
         return False
 
     if offload_source_table:
-        if ORACLE_TYPE_INTERVAL_YM in offload_source_table.data_types_in_use():
+        if (
+            ORACLE_TYPE_INTERVAL_YM in offload_source_table.data_types_in_use()
+            and 1 == 2
+        ):
             log(
                 "INTERVAL YEAR data type is not valid for transport method: %s"
                 % OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
@@ -471,21 +494,29 @@ def is_sqoop_by_query_available(offload_options, messages=None):
         and offload_options.backend_distribution
         not in HADOOP_BASED_BACKEND_DISTRIBUTIONS
     ):
-        messages.log(
-            "Transport method only valid on Hadoop systems: %s/%s"
-            % (
-                OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
-                offload_options.backend_distribution,
-            ),
-            detail=VVERBOSE,
-        ) if messages else None
+        (
+            messages.log(
+                "Transport method only valid on Hadoop systems: %s/%s"
+                % (
+                    OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
+                    offload_options.backend_distribution,
+                ),
+                detail=VVERBOSE,
+            )
+            if messages
+            else None
+        )
         return False
     elif not offload_options.offload_transport_cmd_host:
-        messages.log(
-            "OFFLOAD_TRANSPORT_CMD_HOST required for transport method: %s"
-            % OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
-            detail=VVERBOSE,
-        ) if messages else None
+        (
+            messages.log(
+                "OFFLOAD_TRANSPORT_CMD_HOST required for transport method: %s"
+                % OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
+                detail=VVERBOSE,
+            )
+            if messages
+            else None
+        )
         return False
     else:
         return True
@@ -1148,7 +1179,7 @@ FROM (%(row_source_subquery)s) %(table_alias)s) v2""" % {
         return split_row_source_by
 
     def _build_offload_query_lists(
-        self, convert_expressions_on_rdbms_side=None, for_spark=False
+        self, convert_expressions_on_rdbms_side=None, for_spark=False, for_qi=False
     ):
         """Returns a tuple containing:
         A list of column expressions to build an RDBMS projection.
@@ -1185,6 +1216,7 @@ FROM (%(row_source_subquery)s) %(table_alias)s) v2""" % {
                 self._get_max_ts_scale(),
                 convert_expressions_on_rdbms_side=convert_expressions_on_rdbms_side,
                 for_spark=for_spark,
+                for_qi=for_qi,
                 nan_values_as_null=self._convert_nans_to_nulls,
             )
             colexpressions.append(cast_column)
@@ -1535,9 +1567,9 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                 (",\n    " + custom_schema_clause) if custom_schema_clause else ""
             ),
             "write_format": self._staging_format,
-            "uri": ""
-            if canary_query
-            else self._target_table.get_staging_table_location(),
+            "uri": (
+                "" if canary_query else self._target_table.get_staging_table_location()
+            ),
             "fetch_size": self._offload_transport_fetch_size,
             "session_init_statement_opt": session_init_statement_opt,
             "debug_conf_snippet": debug_conf_snippet,
@@ -1580,9 +1612,9 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                 )
                 % {
                     "app_name": transport_app_name,
-                    "hive_support": ""
-                    if self._standalone_spark()
-                    else ".enableHiveSupport()",
+                    "hive_support": (
+                        "" if self._standalone_spark() else ".enableHiveSupport()"
+                    ),
                 }
             )
 
@@ -2646,7 +2678,8 @@ class OffloadTransportQueryImport(OffloadTransport):
             )
 
         colexpressions, colnames = self._build_offload_query_lists(
-            convert_expressions_on_rdbms_side=self._rdbms_api.convert_query_import_expressions_on_rdbms_side()
+            convert_expressions_on_rdbms_side=self._rdbms_api.convert_query_import_expressions_on_rdbms_side(),
+            for_qi=True,
         )
 
         sql_projection = self._sql_projection_from_offload_query_expression_list(

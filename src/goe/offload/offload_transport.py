@@ -378,16 +378,6 @@ def is_query_import_available(
 
     if offload_source_table:
         if (
-            ORACLE_TYPE_INTERVAL_YM in offload_source_table.data_types_in_use()
-            and 1 == 2
-        ):
-            log(
-                "INTERVAL YEAR data type is not valid for transport method: %s"
-                % OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
-                messages,
-            )
-            return False
-        if (
             offload_operation
             and (offload_source_table.size_in_bytes or 0)
             > offload_operation.offload_transport_small_table_threshold

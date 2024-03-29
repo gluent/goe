@@ -20,7 +20,7 @@ from typing import Any, Dict, Optional, Union
 from cx_Oracle import DatabaseError as OracleDatabaseError
 from fastapi import Request, status
 from fastapi.exceptions import HTTPException, RequestValidationError
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from redis.exceptions import ConnectionError, RedisError, TimeoutError
 
@@ -121,7 +121,7 @@ async def http_error_handler(_: Request, exception: HTTPException):
             kwargs from custom HTTPException.
 
     """
-    return ORJSONResponse(
+    return JSONResponse(
         status_code=exception.status_code,
         content=exception.detail,
         headers=getattr(exception, "headers", None),
@@ -154,7 +154,7 @@ async def http422_error_handler(
 
     details = {error.get("loc")[-1]: error.get("msg") for error in exception.errors()}
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-    return ORJSONResponse(
+    return JSONResponse(
         status_code=status_code,
         content=schemas.ErrorMessage(
             code=status_code, message="Validation Error", details=details
@@ -169,7 +169,7 @@ async def system_error_exception_handler(request: Request, exception: ValueError
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     msg = f"{exception.__class__.__name__} - {exception}"
     details = {}
-    return ORJSONResponse(
+    return JSONResponse(
         status_code=status_code,
         content=schemas.ErrorMessage(
             code=status_code, message=msg, details=details
@@ -200,7 +200,7 @@ async def app_error_handler(_: Request, exception: BaseApplicationError):
             kwargs from custom HTTPException.
 
     """
-    return ORJSONResponse(
+    return JSONResponse(
         status_code=exception.status_code,
         content=exception.content,
         headers=getattr(exception, "headers", None),
@@ -232,7 +232,7 @@ async def cache_connectivity_error(
     """
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     message = "Failed to connect to the cache backend.  Please check your cache configuration."
-    return ORJSONResponse(
+    return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content=schemas.ErrorMessage(code=status_code, message=message).dict(
             exclude_none=True,
@@ -270,7 +270,7 @@ async def database_connectivity_error(
     else:
         message = "Failed to connect to the backend database.  Please check your database configuration."
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    return ORJSONResponse(
+    return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content=schemas.ErrorMessage(code=status_code, message=message).dict(
             exclude_none=True,

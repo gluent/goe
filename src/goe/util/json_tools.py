@@ -17,29 +17,25 @@ import datetime
 from typing import Any, Union
 
 # Third Party Libraries
-import orjson
+import msgspec
 
 
-# orjson.dumps returns bytearray, so you'll can't pass it directly as json_serializer
 def serialize_object(obj) -> str:
     """
-    Encodes json with the optimized ORJSON package
+    Encodes json with the optimized msgspec package
 
-    orjson.dumps returns bytearray, so you can't pass it directly as json_serializer
+    Msgspec encode returns bytearray, so you can't pass it directly as json_serializer
     """
-    return orjson.dumps(
-        obj,
-        option=orjson.OPT_NAIVE_UTC | orjson.OPT_SERIALIZE_NUMPY,
-    ).decode()
+    return msgspec.json.encode(obj).decode()
 
 
 def deserialize_object(obj: Union[bytes, bytearray, memoryview, str]) -> Any:
     """
-    Decodes to an object with the optimized ORJSON package
+    Decodes to an object with the optimized msgspec package
 
-    orjson.dumps returns bytearray, so you can't pass it directly as json_serializer
+    msgspec decode returns bytearray, so you can't pass it directly as json_serializer
     """
-    return orjson.loads(obj)
+    return msgspec.json.decode(obj)
 
 
 def encode_datetime_object(dt: datetime.datetime) -> str:

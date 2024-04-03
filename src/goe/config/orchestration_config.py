@@ -190,8 +190,6 @@ EXPECTED_CONFIG_ARGS = [
     "sqoop_password_file",
     "sqoop_queue_name",
     "sqoop_overrides",
-    "spark_thrift_host",
-    "spark_thrift_port",
     "suppress_stdout",
     "synapse_auth_mechanism",
     "synapse_collation",
@@ -902,12 +900,6 @@ class OrchestrationConfig:
             ldap_password_file=config_dict.get(
                 "ldap_password_file",
                 orchestration_defaults.ldap_password_file_default(),
-            ),
-            spark_thrift_host=config_dict.get(
-                "spark_thrift_host", orchestration_defaults.spark_thrift_host_default()
-            ),
-            spark_thrift_port=config_dict.get(
-                "spark_thrift_port", orchestration_defaults.spark_thrift_port_default()
             ),
         )
 

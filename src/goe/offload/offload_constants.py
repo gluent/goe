@@ -319,9 +319,7 @@ CAPABILITY_SORTED_TABLE_MODIFY = "pre_sorted_tables_mod"
 CAPABILITY_SQL_MICROSECOND_PREDICATE = "sql_pred_microseconds"
 """ CAPABILITY_SYNTHETIC_PARTITIONING
         Does the backend support GOE's synthetic partition keys (e.g. GOE_PART_M_TIME_ID or
-        GOE_PART_U0_SOURCE_CODE) which are used internally by Smart Connector to generate
-        partition-pruning predicates in hybrid queries and by Offload to ensure that the backend
-        partition columns remain consistent across multiple (Sub)Partition-Based Offload operations.
+        GOE_PART_U0_SOURCE_CODE).
 
         This will be required when the backend natively supports partitioning but either does not
         support native range partitioning, or when the natural partition column datatype means

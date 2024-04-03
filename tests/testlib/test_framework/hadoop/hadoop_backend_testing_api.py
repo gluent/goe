@@ -1155,9 +1155,6 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
             val = datetime.strptime(val, "%Y-%m-%d").date()
         return val
 
-    def smart_connector_test_command(self, db_name=None, table_name=None):
-        return "show databases"
-
     def story_test_offload_nums_expected_backend_types(self, sampling_enabled=True):
         non_sampled_type = self.gen_default_numeric_column("x").format_data_type()
         return {
@@ -1256,7 +1253,3 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 "sql_expression": "CURRENT_DATE()"
             }
         return extra_cols
-
-    def transient_query_error_identification_strings(self) -> list:
-        """No additional known transient errors on Hadoop"""
-        return self._transient_query_error_identification_global_strings()

@@ -956,19 +956,6 @@ def data_governance_custom_properties_default():
 
 
 ###########################################################################
-# QUERY ENGINE DEFAULTS
-###########################################################################
-
-
-def spark_thrift_host_default() -> Optional[str]:
-    return os.environ.get("SPARK_THRIFT_HOST")
-
-
-def spark_thrift_port_default() -> Optional[str]:
-    return os.environ.get("SPARK_THRIFT_PORT")
-
-
-###########################################################################
 # GOE LISTENER DEFAULTS
 ###########################################################################
 

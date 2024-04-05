@@ -5,7 +5,7 @@ A simple and flexible way to copy data from an Oracle Database to Google BigQuer
 At present GOE is a command line tool. Alongside installing the Python package we also require some extra artefacts, everything you need to run the software is provided in a versioned package which can be downloaded from [here](https://github.com/gluent/goe/releases) or alternatively built locally.
 
 # Offload Home
-In addition to the GOE software we need a supporting directory tree called the Offload Home. This is identified using the `OFFLOAD_HOME` environment variable. In this directory we keep configuration files, logs and the GOE software if you choose not to run scripts directly out of the cloned repo. Offload Home will also typically contain a Python virtual environment into which the GOE package and dependencies will be installed, you can run these out of the repository directory but, for separation of duties purposes may choose to keep the source code away from users of the tool.
+In addition to the GOE software we need a supporting directory tree called the Offload Home. This is identified using the `OFFLOAD_HOME` environment variable. In this directory we keep configuration files, logs and the GOE software if you choose not to run scripts directly out of the cloned repo. Offload Home will also typically contain a Python virtual environment into which the GOE package and dependencies will be installed, you can run these out of the repository directory but, for separation of duties purposes, may choose to keep the source code away from users of the tool.
 
 # Installation from a package
 
@@ -33,7 +33,7 @@ python3 -m pip install lib/${GOE_WHEEL}
 ```
 
 ## Configuration file
-Create an `offload.env` in the Offload Home, this file contains the necessary configuration specific to your environment:
+Create `offload.env` in the Offload Home, this file contains the necessary configuration specific to your environment:
 ```
 cp ${OFFLOAD_HOME}/conf/oracle-bigquery-offload.env.template ${OFFLOAD_HOME}/conf/offload.env
 vi ${OFFLOAD_HOME}/conf/offload.env
@@ -53,8 +53,14 @@ If using Dataproc to provide Spark:
 - GOOGLE_DATAPROC_SERVICE_ACCOUNT
 - GOOGLE_DATAPROC_REGION
 
+If using Dataproc Batches to provide Spark:
+- GOOGLE_DATAPROC_BATCHES_VERSION
+- GOOGLE_DATAPROC_SERVICE_ACCOUNT
+- GOOGLE_DATAPROC_REGION
+- GOOGLE_DATAPROC_BATCHES_SUBNET
+
 ## Install database objects
-To install supporting database objects you need access to an admin account that can create users, grant them system privileges and create objects in the schemas created. SYSTEM has been used in the example below but this is *not* a necessity:
+To install supporting database objects you need access to a database admin account that can create users, grant them system privileges and create objects in the schemas created. SYSTEM has been used in the example below but this is *not* a necessity:
 ```
 . ${OFFLOAD_HOME}/conf/offload.env
 cd ${OFFLOAD_HOME}/setup

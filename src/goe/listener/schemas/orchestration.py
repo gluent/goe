@@ -248,6 +248,15 @@ class OffloadOptions(BaseSchema):
         description="CSV list of columns to treat as date columns",
         cli=("--date-columns"),
     )
+    ddl_file: Optional[str] = Field(
+        default=None,
+        title="Path to output generated target table DDL",
+        description=(
+            "Output generated target table DDL to a file, should include full path or literal AUTO. "
+            "Supports local paths or cloud storage URIs"
+        ),
+        cli=("--ddl-file"),
+    )
     decimal_columns_csv_list: Optional[List[str]] = Field(
         default=None,
         title="Decimal columns",

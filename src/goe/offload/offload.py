@@ -18,8 +18,7 @@ Ideally these would migrate to better locations in time.
 """
 
 from datetime import datetime, timedelta
-from optparse import OptionValueError, SUPPRESS_HELP
-import re
+from optparse import SUPPRESS_HELP
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -40,14 +39,16 @@ from goe.offload.offload_metadata_functions import (
 )
 from goe.offload.offload_source_data import offload_source_data_factory
 from goe.offload.offload_source_table import (
-    DATA_SAMPLE_SIZE_AUTO,
     OFFLOAD_PARTITION_TYPE_RANGE,
     OFFLOAD_PARTITION_TYPE_LIST,
 )
 from goe.offload.offload_transport import VALID_OFFLOAD_TRANSPORT_METHODS
 from goe.offload.operation.sort_columns import check_and_alter_backend_sort_columns
 from goe.offload.operation.data_type_controls import DECIMAL_COL_TYPE_SYNTAX_TEMPLATE
-from goe.offload.predicate_offload import GenericPredicate
+from goe.offload.option_validation import (
+    active_data_append_options,
+    check_opt_is_posint,
+)
 from goe.orchestration import command_steps
 from goe.persistence.orchestration_metadata import (
     hwm_column_names_from_predicates,
@@ -57,7 +58,7 @@ from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_RANGE,
     INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV,
 )
-from goe.util.misc_functions import format_list_for_logging, is_pos_int
+from goe.util.misc_functions import format_list_for_logging
 
 if TYPE_CHECKING:
     from goe.offload.backend_table import BackendTableInterface
@@ -71,14 +72,6 @@ OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT = "Column mismatch detected between the sour
 
 class OffloadException(Exception):
     pass
-
-
-class OffloadOptionError(Exception):
-    def __init__(self, detail):
-        self.detail = detail
-
-    def __str__(self):
-        return repr(self.detail)
 
 
 def check_ipa_predicate_type_option_conflicts(
@@ -136,17 +129,6 @@ def check_ipa_predicate_type_option_conflicts(
             raise exc_cls(
                 offload_constants.IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT
             )
-
-
-def check_opt_is_posint(
-    opt_name, opt_val, exception_class=OptionValueError, allow_zero=False
-):
-    if is_pos_int(opt_val, allow_zero=allow_zero):
-        return int(opt_val)
-    else:
-        raise exception_class(
-            "option %s: invalid positive integer value: %s" % (opt_name, opt_val)
-        )
 
 
 def check_table_structure(frontend_table, backend_table, messages: OffloadMessages):
@@ -509,82 +491,9 @@ def offload_type_force_effects(
                 hybrid_operation.force = True
 
 
-def active_data_append_options(
-    opts,
-    partition_type=None,
-    from_options=False,
-    ignore_partition_names_opt=False,
-    ignore_pbo=False,
-):
-    rpa_opts = {
-        "--less-than-value": opts.less_than_value,
-        "--partition-names": opts.partition_names_csv,
-    }
-    lpa_opts = {
-        "--equal-to-values": opts.equal_to_values,
-        "--partition-names": opts.partition_names_csv,
-    }
-    ida_opts = {"--offload-predicate": opts.offload_predicate}
-
-    if from_options:
-        # options has a couple of synonyms for less_than_value
-        rpa_opts.update(
-            {
-                "--older-than-days": opts.older_than_days,
-                "--older-than-date": opts.older_than_date,
-            }
-        )
-
-    if ignore_partition_names_opt:
-        del rpa_opts["--partition-names"]
-        del lpa_opts["--partition-names"]
-
-    if partition_type == OFFLOAD_PARTITION_TYPE_RANGE:
-        chk_opts = rpa_opts
-    elif partition_type == OFFLOAD_PARTITION_TYPE_LIST:
-        chk_opts = lpa_opts
-    elif not partition_type:
-        chk_opts = {} if ignore_pbo else ida_opts.copy()
-        chk_opts.update(lpa_opts)
-        chk_opts.update(rpa_opts)
-
-    active_pa_opts = [_ for _ in chk_opts if chk_opts[_]]
-    return active_pa_opts
-
-
-def normalise_verify_options(options):
-    if getattr(options, "verify_parallelism", None):
-        options.verify_parallelism = check_opt_is_posint(
-            "--verify-parallelism", options.verify_parallelism, allow_zero=True
-        )
-
-
-def normalise_data_sampling_options(options):
-    if hasattr(options, "data_sample_pct"):
-        if type(options.data_sample_pct) == str and re.search(
-            r"^[\d\.]+$", options.data_sample_pct
-        ):
-            options.data_sample_pct = float(options.data_sample_pct)
-        elif options.data_sample_pct == "AUTO":
-            options.data_sample_pct = DATA_SAMPLE_SIZE_AUTO
-        elif type(options.data_sample_pct) not in (int, float):
-            raise OffloadOptionError(
-                'Invalid value "%s" for --data-sample-percent' % options.data_sample_pct
-            )
-    else:
-        options.data_sample_pct = 0
-
-    if hasattr(options, "data_sample_parallelism"):
-        options.data_sample_parallelism = check_opt_is_posint(
-            "--data-sample-parallelism",
-            options.data_sample_parallelism,
-            allow_zero=True,
-        )
-
-
 def normalise_less_than_options(options, exc_cls=OffloadException):
     if not hasattr(options, "older_than_date"):
-        # We mustn't be in offload or present so should just drop out
+        # We mustn't be in offload so should just drop out
         return
 
     active_pa_opts = active_data_append_options(options, from_options=True)
@@ -616,45 +525,6 @@ def normalise_less_than_options(options, exc_cls=OffloadException):
         options.older_than_days = None
 
     check_ipa_predicate_type_option_conflicts(options, exc_cls=exc_cls)
-
-
-def normalise_offload_predicate_options(options):
-    if options.offload_predicate:
-        if isinstance(options.offload_predicate, str):
-            options.offload_predicate = GenericPredicate(options.offload_predicate)
-
-        if (
-            options.less_than_value
-            or options.older_than_date
-            or options.older_than_days
-        ):
-            raise OffloadOptionError(
-                "Predicate offload cannot be used with incremental partition offload options: (--less-than-value/--older-than-date/--older-than-days)"
-            )
-
-    no_modify_hybrid_view_option_used = not options.offload_predicate_modify_hybrid_view
-    if no_modify_hybrid_view_option_used and not options.offload_predicate:
-        raise OffloadOptionError(
-            "--no-modify-hybrid-view can only be used with --offload-predicate"
-        )
-
-
-def normalise_stats_options(options, target_backend):
-    if options.offload_stats_method not in [
-        offload_constants.OFFLOAD_STATS_METHOD_NATIVE,
-        offload_constants.OFFLOAD_STATS_METHOD_HISTORY,
-        offload_constants.OFFLOAD_STATS_METHOD_COPY,
-        offload_constants.OFFLOAD_STATS_METHOD_NONE,
-    ]:
-        raise OffloadOptionError(
-            "Unsupported value for --offload-stats: %s" % options.offload_stats_method
-        )
-
-    if (
-        options.offload_stats_method == offload_constants.OFFLOAD_STATS_METHOD_HISTORY
-        and target_backend == offload_constants.DBTYPE_IMPALA
-    ):
-        options.offload_stats_method = offload_constants.OFFLOAD_STATS_METHOD_NATIVE
 
 
 def parse_yyyy_mm_dd(ds):
@@ -717,6 +587,14 @@ def get_offload_options(opt):
         help=config_descriptions.DATA_SAMPLE_PARALLELISM,
     )
     opt.add_option(
+        "--ddl-file",
+        dest="ddl_file",
+        help=(
+            "Output generated target table DDL to a file, should include full path or literal AUTO. "
+            "Supports local paths or cloud storage URIs"
+        ),
+    )
+    opt.add_option(
         "--not-null-columns",
         dest="not_null_columns_csv",
         help="CSV list of columns to offload with a NOT NULL constraint",
@@ -724,8 +602,11 @@ def get_offload_options(opt):
     opt.add_option(
         "--offload-predicate-type",
         dest="ipa_predicate_type",
-        help="Override the default INCREMENTAL_PREDICATE_TYPE for a partitioned table. Used to offload LIST partitioned tables using RANGE logic with --offload-predicate-type=%s or used for specialized cases of Incremental Partition Append and Predicate-Based Offload offloading"
-        % INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+        help=(
+            "Override the default INCREMENTAL_PREDICATE_TYPE for a partitioned table. "
+            f"Used to offload LIST partitioned tables using RANGE logic with --offload-predicate-type={INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE} or "
+            "used for specialized cases of Incremental Partition Append and Predicate-Based Offload offloading"
+        ),
     )
     opt.add_option(
         "--offload-fs-scheme",
@@ -747,7 +628,10 @@ def get_offload_options(opt):
     opt.add_option(
         "--offload-type",
         dest="offload_type",
-        help="Identifies a range partitioned offload as FULL or INCREMENTAL. FULL dictates that all data is offloaded. INCREMENTAL dictates that data up to an incremental threshold will be offloaded",
+        help=(
+            "Identifies a range partitioned offload as FULL or INCREMENTAL. FULL dictates that all data is offloaded. "
+            "INCREMENTAL dictates that data up to an incremental threshold will be offloaded"
+        ),
     )
 
     opt.add_option(
@@ -780,7 +664,12 @@ def get_offload_options(opt):
         "--decimal-columns",
         dest="decimal_columns_csv_list",
         action="append",
-        help='CSV list of columns to offload as DECIMAL(p,s) where "p,s" is specified in a paired --decimal-columns-type option. --decimal-columns and --decimal-columns-type allow repeat inclusion for flexible data type specification, for example "--decimal-columns-type=18,2 --decimal-columns=price,cost --decimal-columns-type=6,4 --decimal-columns=location" (only effective for numeric columns)',
+        help=(
+            'CSV list of columns to offload as DECIMAL(p,s) where "p,s" is specified in a paired --decimal-columns-type option. '
+            "--decimal-columns and --decimal-columns-type allow repeat inclusion for flexible data type specification, "
+            'for example "--decimal-columns-type=18,2 --decimal-columns=price,cost --decimal-columns-type=6,4 --decimal-columns=location" '
+            "(only effective for numeric columns)"
+        ),
     )
     opt.add_option(
         "--decimal-columns-type",
@@ -862,7 +751,10 @@ def get_offload_options(opt):
         "--offload-transport-small-table-threshold",
         dest="offload_transport_small_table_threshold",
         default=orchestration_defaults.offload_transport_small_table_threshold_default(),
-        help="Threshold above which Query Import is no longer considered the correct offload choice for non-partitioned tables. [\\d.]+[MG] eg. 100M, 0.5G, 1G",
+        help=(
+            "Threshold above which Query Import is no longer considered the correct offload choice "
+            "for non-partitioned tables. [\\d.]+[MG] eg. 100M, 0.5G, 1G"
+        ),
     )
     opt.add_option(
         "--offload-transport-spark-properties",
@@ -874,7 +766,12 @@ def get_offload_options(opt):
         "--offload-transport-validation-polling-interval",
         dest="offload_transport_validation_polling_interval",
         default=orchestration_defaults.offload_transport_validation_polling_interval_default(),
-        help="Polling interval in seconds for validation of Spark transport row count. -1 disables retrieval of RDBMS SQL statistics. 0 disables polling resulting in a single capture of SQL statistics. A value greater than 0 polls transport SQL statistics using the specified interval",
+        help=(
+            "Polling interval in seconds for validation of Spark transport row count. "
+            "-1 disables retrieval of RDBMS SQL statistics. "
+            "0 disables polling resulting in a single capture of SQL statistics. "
+            "A value greater than 0 polls transport SQL statistics using the specified interval"
+        ),
     )
 
     opt.add_option(

@@ -84,6 +84,7 @@ from goe.offload.offload_constants import (
     TOTAL_ROWS_OFFLOADED_LOG_TEXT,
 )
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
+from goe.offload.option_validation import normalise_ddl_file
 from goe.offload.offload_source_data import (
     get_offload_type_for_config,
     OFFLOAD_SOURCE_CLIENT_OFFLOAD,
@@ -114,9 +115,7 @@ from goe.offload.operation.transport import (
 )
 from goe.offload.offload import (
     OffloadException,
-    OffloadOptionError,
     active_data_append_options,
-    check_opt_is_posint,
     check_ipa_predicate_type_option_conflicts,
     check_table_structure,
     create_final_backend_table_step,
@@ -126,11 +125,7 @@ from goe.offload.offload import (
     get_prior_offloaded_hv,
     offload_backend_db_message,
     offload_type_force_effects,
-    normalise_data_sampling_options,
     normalise_less_than_options,
-    normalise_offload_predicate_options,
-    normalise_stats_options,
-    normalise_verify_options,
 )
 from goe.offload.operation.partition_controls import (
     derive_partition_digits,
@@ -138,6 +133,14 @@ from goe.offload.operation.partition_controls import (
     validate_offload_partition_columns,
     validate_offload_partition_functions,
     validate_offload_partition_granularity,
+)
+from goe.offload.option_validation import (
+    OffloadOptionError,
+    check_opt_is_posint,
+    normalise_data_sampling_options,
+    normalise_offload_predicate_options,
+    normalise_stats_options,
+    normalise_verify_options,
 )
 from goe.offload.operation.sort_columns import sort_columns_csv_to_sort_columns
 from goe.orchestration import command_steps
@@ -205,6 +208,7 @@ EXPECTED_OFFLOAD_ARGS = [
     "data_sample_parallelism",
     "data_sample_pct",
     "date_columns_csv",
+    "ddl_file",
     "decimal_columns_csv_list",
     "decimal_columns_type_list",
     "decimal_padding_digits",
@@ -397,7 +401,7 @@ FROM  (
     elif opts.db_type == DBTYPE_MSSQL:
         try:
             return opts.rdbms_dsn.split("=")[1]
-        except:
+        except Exception:
             return ""
 
 
@@ -813,7 +817,7 @@ def normalise_column_transformations(
         ]
 
     for ct in column_transformation_list:
-        if not ":" in ct:
+        if ":" not in ct:
             raise OffloadOptionError("Missing transformation for column: %s" % ct)
 
         m = re.search(r"^([\w$#]+):([\w$#]+)(\(%s\))?$" % param_match, ct)
@@ -2252,6 +2256,7 @@ class OffloadOperation(BaseOperation):
         normalise_offload_predicate_options(self)
         normalise_verify_options(self)
         normalise_data_sampling_options(self)
+        normalise_ddl_file(self.ddl_file, self.owner, self.table_name, config)
 
         self._setup_offload_step(messages)
 
@@ -2350,6 +2355,7 @@ class OffloadOperation(BaseOperation):
             data_sample_parallelism=options.data_sample_parallelism,
             data_sample_pct=options.data_sample_pct,
             date_columns_csv=options.date_columns_csv,
+            ddl_file=options.ddl_file,
             decimal_columns_csv_list=options.decimal_columns_csv_list,
             decimal_columns_type_list=options.decimal_columns_type_list,
             decimal_padding_digits=options.decimal_padding_digits,
@@ -2482,6 +2488,7 @@ class OffloadOperation(BaseOperation):
                 "data_sample_pct", orchestration_defaults.data_sample_pct_default()
             ),
             date_columns_csv=operation_dict.get("date_columns_csv"),
+            ddl_file=operation_dict.get("ddl_file"),
             decimal_columns_csv_list=operation_dict.get("decimal_columns_csv_list"),
             decimal_columns_type_list=operation_dict.get("decimal_columns_type_list"),
             decimal_padding_digits=operation_dict.get(

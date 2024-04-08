@@ -120,6 +120,9 @@ OFFLOAD_TRANSPORT_GOE = "GOE"
 OFFLOAD_TRANSPORT_GCP = "GCP"
 OFFLOAD_TRANSPORT_SQOOP = "SQOOP"
 
+# DDL file
+DDL_FILE_AUTO = "AUTO"
+
 # Exception markers
 ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT = "Using adjusted backend table name"
 CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT = "Conflicting data identification options"

@@ -227,6 +227,8 @@ def is_pos_int(val, allow_zero=False):
         n = int(val)
         if n < lower_bound:
             return False
+        if decimal.Decimal(val) != n:
+            return False
         return True
     except (TypeError, ValueError):
         return False

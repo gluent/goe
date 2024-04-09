@@ -47,7 +47,6 @@ def offload_by_cli(options, messages_override=None):
     normalise_options(options)
 
     config_overrides = {
-        "execute": options.execute,
         "verbose": options.verbose,
         "vverbose": options.vverbose,
         "offload_transport_dsn": options.offload_transport_dsn,

@@ -312,6 +312,7 @@ def test_offload_lpa_num(config, schema, data_db):
         "offload_partition_upper_value": 1000,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -331,6 +332,7 @@ def test_offload_lpa_num(config, schema, data_db):
         "owner_table": schema + "." + LPA_NUM_PART_KEY_TABLE,
         "equal_to_values": [LPA_PART2_KEY1],
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -383,6 +385,7 @@ def test_offload_lpa_vc2(config, schema, data_db):
         "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -402,6 +405,7 @@ def test_offload_lpa_vc2(config, schema, data_db):
         "owner_table": schema + "." + LPA_VC2_PART_KEY_TABLE,
         "equal_to_values": [LPA_PART2_KEY1],
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -454,6 +458,7 @@ def test_offload_lpa_char(config, schema, data_db):
         "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -473,6 +478,7 @@ def test_offload_lpa_char(config, schema, data_db):
         "owner_table": schema + "." + LPA_CHR_PART_KEY_TABLE,
         "equal_to_values": [LPA_PART2_KEY1],
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -525,6 +531,7 @@ def test_offload_lpa_date(config, schema, data_db):
         "equal_to_values": ["%s,%s" % (LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2)],
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -544,6 +551,7 @@ def test_offload_lpa_date(config, schema, data_db):
         "owner_table": schema + "." + LPA_DT_PART_KEY_TABLE,
         "equal_to_values": [LPA_DT_PART2_KEY1],
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -596,6 +604,7 @@ def test_offload_lpa_ts(config, schema, data_db):
         "equal_to_values": ["%s,%s" % (LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2)],
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -615,6 +624,7 @@ def test_offload_lpa_ts(config, schema, data_db):
         "owner_table": schema + "." + LPA_TS_PART_KEY_TABLE,
         "equal_to_values": [LPA_DT_PART2_KEY1],
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -678,6 +688,7 @@ def test_offload_lpa_unicode(config, schema, data_db):
         "offload_partition_upper_value": 10000,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -697,6 +708,7 @@ def test_offload_lpa_unicode(config, schema, data_db):
         "owner_table": schema + "." + LPA_UNICODE_FACT_TABLE,
         "equal_to_values": [(LPA_UNICODE_PART2_KEY1,)],
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -748,6 +760,7 @@ def test_offload_lpa_fact(config, schema, data_db):
         "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -770,6 +783,7 @@ def test_offload_lpa_fact(config, schema, data_db):
         "offload_partition_lower_value": test_constants.LOWER_YRMON_NUM,
         "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -788,6 +802,7 @@ def test_offload_lpa_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + LPA_FACT_TABLE,
         "equal_to_values": [test_constants.SALES_BASED_LIST_HV_2],
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -808,6 +823,7 @@ def test_offload_lpa_fact(config, schema, data_db):
         "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3
         + ","
         + test_constants.SALES_BASED_LIST_PNAME_4,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -831,6 +847,7 @@ def test_offload_lpa_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + LPA_FACT_TABLE,
         "equal_to_values": ["DEfauLT"],
+        "execute": True,
     }
     run_offload(
         options,
@@ -843,6 +860,7 @@ def test_offload_lpa_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + LPA_FACT_TABLE,
         "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3,
+        "execute": True,
     }
     run_offload(options, config, messages, expected_status=False)
 
@@ -850,6 +868,7 @@ def test_offload_lpa_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + LPA_FACT_TABLE,
         "reset_hybrid_view": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -863,6 +882,7 @@ def test_offload_lpa_fact(config, schema, data_db):
         "owner_table": schema + "." + LPA_FACT_TABLE,
         "reset_hybrid_view": True,
         "partition_names_csv": "NOT_A_PARTITION",
+        "execute": True,
     }
     run_offload(
         options,
@@ -877,6 +897,7 @@ def test_offload_lpa_fact(config, schema, data_db):
     #    "owner_table": schema + "." + LPA_FACT_TABLE,
     #    "reset_hybrid_view": True,
     #    "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3,
+    #    "execute": True,
     # }
     # run_offload(options, config, messages)
     # assert offload_lpa_fact_assertion(
@@ -923,6 +944,7 @@ def test_offload_lpa_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + LPA_FACT_TABLE,
         "offload_type": OFFLOAD_TYPE_FULL,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -942,6 +964,7 @@ def test_offload_lpa_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + LPA_FACT_TABLE,
         "offload_type": OFFLOAD_TYPE_INCREMENTAL,
+        "execute": True,
     }
     run_offload(
         options,
@@ -1004,6 +1027,7 @@ def test_offload_lpa_part_fn(config, schema, data_db):
         "offload_partition_upper_value": 1000,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -1025,6 +1049,7 @@ def test_offload_lpa_part_fn(config, schema, data_db):
         "owner_table": schema + "." + LPA_NUM_PART_FUNC_TABLE,
         "equal_to_values": [LPA_PART2_KEY1],
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -1073,6 +1098,7 @@ def test_offload_lpa_full(config, schema, data_db):
         "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -1103,6 +1129,7 @@ def test_offload_lpa_full(config, schema, data_db):
     # Offload new partition to 100/0 list fact.
     options = {
         "owner_table": schema + "." + LPA_FULL_TABLE,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(

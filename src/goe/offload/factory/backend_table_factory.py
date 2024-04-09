@@ -44,8 +44,12 @@ def backend_table_factory(
     an orchestration_operation or a means of getting hybrid_metadata.
     """
     if dry_run is None:
-        if hasattr(orchestration_options, "execute"):
+        if orchestration_operation:
+            dry_run = bool(not orchestration_operation.execute)
+        elif hasattr(orchestration_options, "execute"):
             dry_run = bool(not orchestration_options.execute)
+        elif do_not_connect:
+            dry_run = True
         else:
             dry_run = False
 

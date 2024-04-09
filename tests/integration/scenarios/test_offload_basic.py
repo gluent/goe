@@ -300,8 +300,9 @@ def test_offload_basic_dim(config, schema, data_db):
     options = {
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
+        "execute": False,
     }
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     assert not backend_table_exists(
         config, backend_api, messages, data_db, OFFLOAD_DIM
@@ -310,14 +311,17 @@ def test_offload_basic_dim(config, schema, data_db):
     # Basic offload of a simple dimension.
     options = {
         "owner_table": schema + "." + OFFLOAD_DIM,
-        "offload_stats_method": offload_constants.OFFLOAD_STATS_METHOD_COPY
-        if copy_stats_available
-        else offload_constants.OFFLOAD_STATS_METHOD_NATIVE,
+        "offload_stats_method": (
+            offload_constants.OFFLOAD_STATS_METHOD_COPY
+            if copy_stats_available
+            else offload_constants.OFFLOAD_STATS_METHOD_NATIVE
+        ),
         "compute_load_table_stats": True,
         "preserve_load_table": True,
         "impala_insert_hint": IMPALA_NOSHUFFLE_HINT,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -331,6 +335,7 @@ def test_offload_basic_dim(config, schema, data_db):
     # Attempt to re-offload, expect to fail.
     options = {
         "owner_table": schema + "." + OFFLOAD_DIM,
+        "execute": True,
     }
     run_offload(options, config, messages, expected_status=False)
 
@@ -340,6 +345,7 @@ def test_offload_basic_dim(config, schema, data_db):
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 1000,
         "reset_backend_table": True,
+        "execute": True,
     }
     if backend_api.partition_by_column_supported():
         if backend_api.max_partition_columns() == 1:
@@ -408,8 +414,9 @@ def test_offload_basic_fact(config, schema, data_db):
         "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
         "reset_backend_table": True,
+        "execute": False,
     }
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     assert not backend_table_exists(
         config, backend_api, messages, data_db, OFFLOAD_FACT
@@ -421,12 +428,12 @@ def test_offload_basic_fact(config, schema, data_db):
         "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_LIST,
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
     )
 
@@ -441,6 +448,7 @@ def test_offload_basic_fact(config, schema, data_db):
             "older_than_date": test_constants.SALES_BASED_FACT_PRE_HV,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -469,6 +477,7 @@ def test_offload_basic_fact(config, schema, data_db):
         "offload_stats_method": offload_stats_method,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": False,
     }
     if backend_api.partition_by_column_supported():
         if config.target == offload_constants.DBTYPE_BIGQUERY:
@@ -485,11 +494,12 @@ def test_offload_basic_fact(config, schema, data_db):
                     + ",1",
                 }
             )
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     # Offload some partitions from a fact table.
     # The fact is partitioned by multiple columns (if possible) with appropriate granularity.
     # We use COPY stats on this initial offload, also specify some specific data types.
+    options["execute"] = True
     run_offload(options, config, messages)
 
     assert sales_based_fact_assertion(
@@ -512,8 +522,9 @@ def test_offload_basic_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+        "execute": False,
     }
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     assert offload_basic_fact_1st_incr_assertion(
         config, backend_api, messages, data_db, backend_name
@@ -523,6 +534,7 @@ def test_offload_basic_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -563,6 +575,7 @@ def test_offload_basic_fact(config, schema, data_db):
             backend_api, "promo_id"
         ),
         "synthetic_partition_digits": 5,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -595,6 +608,7 @@ def test_offload_basic_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
+        "execute": True,
     }
     run_offload(options, config, messages)
 

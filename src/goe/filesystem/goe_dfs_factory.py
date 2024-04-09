@@ -24,12 +24,9 @@ from goe.offload.offload_constants import HADOOP_BASED_BACKEND_DISTRIBUTIONS
 
 
 def get_dfs_from_options(
-    offload_options, messages=None, force_ssh=False, dry_run=None, do_not_connect=False
+    offload_options, messages=None, force_ssh=False, dry_run=True, do_not_connect=False
 ):
     """Helper function to get an appropriate GOEDfs object based on offload options."""
-    if dry_run is None:
-        dry_run = bool(not offload_options.execute)
-
     if offload_options.backend_distribution in HADOOP_BASED_BACKEND_DISTRIBUTIONS:
         if (
             offload_options.webhdfs_host

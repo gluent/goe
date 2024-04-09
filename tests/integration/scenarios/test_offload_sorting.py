@@ -180,6 +180,7 @@ def test_offload_sorting_dim(config, schema, data_db):
         "sort_columns_csv": offload_constants.SORT_COLUMNS_NO_CHANGE,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sort_story_assertion(
@@ -203,6 +204,7 @@ def test_offload_sorting_dim(config, schema, data_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "sort_columns_csv": "txn_day,Txn_Rate",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sort_story_assertion(
@@ -223,6 +225,7 @@ def test_offload_sorting_dim(config, schema, data_db):
             "owner_table": schema + "." + OFFLOAD_DIM,
             "sort_columns_csv": "txn_day,Txn_Rate,prod_id,txn_desc,TXN_CODE",
             "reset_backend_table": True,
+            "execute": True,
         }
         run_offload(
             options,
@@ -236,6 +239,7 @@ def test_offload_sorting_dim(config, schema, data_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "sort_columns_csv": "not_a_column,txn_day",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -249,6 +253,7 @@ def test_offload_sorting_dim(config, schema, data_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "sort_columns_csv": "*rate",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sort_story_assertion(
@@ -308,6 +313,7 @@ def test_offload_sorting_fact(config, schema, data_db):
         ),
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sort_story_assertion(
@@ -326,6 +332,7 @@ def test_offload_sorting_fact(config, schema, data_db):
         "owner_table": schema + "." + OFFLOAD_FACT,
         "sort_columns_csv": "channel_id,promo_id,prod_id",
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+        "execute": True,
     }
     if backend_api.sorted_table_modify_supported():
         # Fail to modify existing sorting.
@@ -361,6 +368,7 @@ def test_offload_sorting_fact(config, schema, data_db):
     options = {
         "owner_table": schema + "." + OFFLOAD_FACT,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_3,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sort_story_assertion(
@@ -379,6 +387,7 @@ def test_offload_sorting_fact(config, schema, data_db):
         "owner_table": schema + "." + OFFLOAD_FACT,
         "sort_columns_csv": "",
         "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sort_story_assertion(
@@ -399,6 +408,7 @@ def test_offload_sorting_fact(config, schema, data_db):
         "sort_columns_csv": "channel_id,promo_id",
         "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
         "force": True,
+        "execute": True,
     }
     # run_offload(options, config, messages)
     # assert sort_story_assertion(

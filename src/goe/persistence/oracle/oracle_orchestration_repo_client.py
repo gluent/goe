@@ -204,16 +204,18 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             OFFLOADED_OWNER: metadata_obj.FRONTEND_OBJECT_OWNER,
             OFFLOADED_TABLE: metadata_obj.FRONTEND_OBJECT_NAME,
             INCREMENTAL_KEY: metadata_obj.OFFLOAD_KEY or None,
-            INCREMENTAL_HIGH_VALUE: metadata_obj.OFFLOAD_HIGH_VALUE.read()
-            if metadata_obj.OFFLOAD_HIGH_VALUE
-            else None,
+            INCREMENTAL_HIGH_VALUE: (
+                metadata_obj.OFFLOAD_HIGH_VALUE.read()
+                if metadata_obj.OFFLOAD_HIGH_VALUE
+                else None
+            ),
             INCREMENTAL_RANGE: metadata_obj.OFFLOAD_RANGE_TYPE or None,
             INCREMENTAL_PREDICATE_TYPE: metadata_obj.OFFLOAD_PREDICATE_TYPE or None,
-            INCREMENTAL_PREDICATE_VALUE: json.loads(
-                metadata_obj.OFFLOAD_PREDICATE_VALUE.read()
-            )
-            if metadata_obj.OFFLOAD_PREDICATE_VALUE
-            else None,
+            INCREMENTAL_PREDICATE_VALUE: (
+                json.loads(metadata_obj.OFFLOAD_PREDICATE_VALUE.read())
+                if metadata_obj.OFFLOAD_PREDICATE_VALUE
+                else None
+            ),
             OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_HASH_COLUMN or None,
             OFFLOAD_SORT_COLUMNS: metadata_obj.OFFLOAD_SORT_COLUMNS or None,
             OFFLOAD_SNAPSHOT: metadata_obj.OFFLOAD_SNAPSHOT or None,

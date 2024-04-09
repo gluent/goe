@@ -448,7 +448,7 @@ def check_environment(options, orchestration_config):
 def test_offload_fs_container(orchestration_config, messages):
     test_name = "Offload filesystem container"
     test_header(test_name)
-    dfs_client = get_dfs_from_options(orchestration_config, messages)
+    dfs_client = get_dfs_from_options(orchestration_config, messages, dry_run=False)
     display_uri = dfs_client.gen_uri(
         orchestration_config.offload_fs_scheme,
         orchestration_config.offload_fs_container,
@@ -467,7 +467,6 @@ def test_offload_fs_container(orchestration_config, messages):
 
 def get_config_with_connect_overrides(connect_options):
     override_dict = {
-        "execute": True,
         "verbose": connect_options.verbose,
         "hive_timeout_s": CONNECT_HIVE_TIMEOUT_S,
     }

@@ -148,6 +148,7 @@ class TestCurrentBackendTable(TestCase):
                 {
                     "owner_table": self.schema + "." + FACT_NAME,
                     "create_backend_db": True,
+                    "execute": True,
                 }
             )
         except OffloadException:
@@ -157,6 +158,7 @@ class TestCurrentBackendTable(TestCase):
                     "owner_table": self.schema + "." + FACT_NAME,
                     "reset_backend_table": True,
                     "create_backend_db": True,
+                    "execute": True,
                 }
             )
 

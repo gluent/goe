@@ -45,7 +45,9 @@ class TestCommandStepsIntegration(TestCommandSteps):
             config = cached_current_options()
             messages = get_test_messages(config, "TestCommandStepsIntegration")
             client = orchestration_repo_client_factory(
-                config, messages, trace_action="repo_client(test_command_steps_repo)"
+                config,
+                messages,
+                trace_action="repo_client(test_command_steps_repo)",
             )
             codes = client.get_command_step_codes()
             step_constants = self._get_step_constants()

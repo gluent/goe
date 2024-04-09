@@ -79,7 +79,6 @@ EXPECTED_CONFIG_ARGS = [
     "data_governance_auto_tags_csv",
     "data_governance_auto_properties_csv",
     "dev_log_level",
-    "execute",
     "error_on_token",
     "frontend_odbc_driver_name",
     "google_dataproc_batches_subnet",
@@ -251,7 +250,6 @@ class OrchestrationConfig:
     db_type: str
     dev_log_level: str
     error_on_token: Optional[str]
-    execute: bool
     frontend_odbc_driver_name: Optional[str]
     google_dataproc_batches_subnet: Optional[str]
     google_dataproc_batches_version: Optional[str]
@@ -417,9 +415,6 @@ class OrchestrationConfig:
                 "dev_log_level", orchestration_defaults.dev_log_level_default()
             ),
             error_on_token=config_dict.get("error_on_token"),
-            execute=config_dict.get(
-                "execute", orchestration_defaults.execute_default()
-            ),
             frontend_odbc_driver_name=config_dict.get(
                 "frontend_odbc_driver_name",
                 orchestration_defaults.frontend_odbc_driver_name_default(),

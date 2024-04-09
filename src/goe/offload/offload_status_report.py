@@ -200,6 +200,7 @@ class OffloadStatusReport(object):
             self._orchestration_config.target,
             self._orchestration_config,
             self._messages,
+            dry_run=(not self._execute),
         )
         self._backend_info = self._backend_api.backend_report_info()
         self._backend_db_type = self._orchestration_config.target
@@ -255,7 +256,7 @@ class OffloadStatusReport(object):
         )
 
         self._repo_client = orchestration_repo_client_factory(
-            self._orchestration_config, self._messages
+            self._orchestration_config, self._messages, dry_run=(not self._execute)
         )
 
         # General initialisations...

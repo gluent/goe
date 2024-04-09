@@ -30,6 +30,7 @@ from goe.util.misc_functions import standard_file_name, is_pos_int
 
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
+    from goe.offload.offload_messages import OffloadMessages
 
 
 class OffloadOptionError(Exception):
@@ -128,12 +129,18 @@ def normalise_data_sampling_options(options):
         )
 
 
-def normalise_ddl_file(options, config: "OrchestrationConfig"):
+def normalise_ddl_file(
+    options, config: "OrchestrationConfig", messages: "OffloadMessages"
+):
     """Validates path pointed to by ddl_file and generates a new path if AUTO. Mutates options."""
     if options.ddl_file:
         options.ddl_file = options.ddl_file.strip()
     else:
         return options.ddl_file
+
+    if options.execute and options.ddl_file:
+        messages.notice(offload_constants.DDL_FILE_EXECUTE_MESSAGE_TEXT)
+        options.execute = False
 
     if options.ddl_file.upper() == offload_constants.DDL_FILE_AUTO:
         # Use an auto-generated path.

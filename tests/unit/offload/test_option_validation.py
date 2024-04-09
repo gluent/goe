@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from goe.offload import offload_constants, option_validation as module_under_test
+from goe.offload.offload_messages import OffloadMessages
 
 from tests.unit.test_functions import (
     build_mock_offload_operation,
@@ -75,9 +76,10 @@ def test_generate_ddl_file_path(
 
 
 def test_normalise_ddl_file_auto(config: "OrchestrationConfig"):
+    fake_messages = OffloadMessages()
     fake_operation = build_mock_offload_operation()
     fake_operation.ddl_file = offload_constants.DDL_FILE_AUTO
-    module_under_test.normalise_ddl_file(fake_operation, config)
+    module_under_test.normalise_ddl_file(fake_operation, config, fake_messages)
     assert isinstance(fake_operation.ddl_file, str)
 
 
@@ -98,11 +100,14 @@ def test_normalise_ddl_file_auto(config: "OrchestrationConfig"):
 def test_normalise_ddl_file_path(
     path: str, expect_exception: bool, config: "OrchestrationConfig"
 ):
+    fake_messages = OffloadMessages()
     fake_operation = build_mock_offload_operation()
     fake_operation.ddl_file = path
     if expect_exception:
         with pytest.raises(Exception):
-            _ = module_under_test.normalise_ddl_file(fake_operation, config)
+            _ = module_under_test.normalise_ddl_file(
+                fake_operation, config, fake_messages
+            )
     else:
         # No exception expected.
-        _ = module_under_test.normalise_ddl_file(fake_operation, config)
+        _ = module_under_test.normalise_ddl_file(fake_operation, config, fake_messages)

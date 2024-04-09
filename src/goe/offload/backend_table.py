@@ -989,6 +989,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             self._dfs_client = get_dfs_from_options(
                 self._orchestration_config,
                 messages=self._messages,
+                dry_run=self._dry_run,
                 do_not_connect=self._do_not_connect,
             )
             self._backend_dfs = self._dfs_client.backend_dfs
@@ -2440,7 +2441,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             ),
         )
         pre_register_data_gov_fn()
-        self._offload_step(
+        executed_commands: list = self._offload_step(
             command_steps.STEP_CREATE_TABLE, lambda: self.create_backend_table()
         )
         post_register_data_gov_fn()
@@ -2494,7 +2495,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def create_backend_table(self):
+    def create_backend_table(self) -> list:
         pass
 
     @abstractmethod

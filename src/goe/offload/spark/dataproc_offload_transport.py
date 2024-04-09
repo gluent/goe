@@ -334,7 +334,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         return self._messages.offload_step(
             command_steps.STEP_STAGING_TRANSPORT,
             step_fn,
-            execute=self._offload_options.execute,
+            execute=(not self._dry_run),
         )
 
     def ping_source_rdbms(self):

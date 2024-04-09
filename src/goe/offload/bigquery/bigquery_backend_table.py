@@ -469,7 +469,7 @@ class BackendBigQueryTable(BackendTableInterface):
         """Do nothing on BigQuery"""
         pass
 
-    def create_backend_table(self):
+    def create_backend_table(self) -> list:
         """Create a table in BigQuery based on object state.
         Creating a new table may change our world view so the function drops state if in execute mode.
         If dry_run then we leave state in place to allow other operations to preview.

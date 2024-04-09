@@ -46,7 +46,6 @@ def get_config_overrides(
 ):
     """Return config from story enhanced with certain attributes from orchestration_config"""
     base_config = {
-        "execute": True,
         "verbose": orchestration_config.verbose,
         "vverbose": orchestration_config.vverbose,
     }

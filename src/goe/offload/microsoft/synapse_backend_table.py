@@ -433,7 +433,7 @@ class BackendSynapseTable(BackendTableInterface):
     def compute_final_table_stats(self, incremental_stats, materialized_join=False):
         return self._db_api.compute_stats(self.db_name, self.table_name)
 
-    def create_backend_table(self):
+    def create_backend_table(self) -> list:
         """Create a table in Synapse based on object state.
         For efficiency, we compute backend stats immediately after table creation to initialise empty stats
         objects on each column. These will be updated using a single table level command after the final load.

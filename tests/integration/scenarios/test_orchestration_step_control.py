@@ -89,10 +89,9 @@ def test_offload_step_dim(config, schema, data_db):
         "owner_table": schema + "." + STEP_DIM,
         "skip": [step_title_to_step_id(step_title(command_steps.STEP_VALIDATE_DATA))],
         "reset_backend_table": True,
+        "execute": False,
     }
-    offload_messages = run_offload(
-        options, config, messages, config_overrides={"execute": False}
-    )
+    offload_messages = run_offload(options, config, messages)
     assert (
         messages_step_executions(
             offload_messages, step_title(command_steps.STEP_VALIDATE_DATA)
@@ -105,10 +104,9 @@ def test_offload_step_dim(config, schema, data_db):
         "owner_table": schema + "." + STEP_DIM,
         "skip": [step_title_to_step_id(step_title(command_steps.STEP_VALIDATE_CASTS))],
         "reset_backend_table": True,
+        "execute": False,
     }
-    offload_messages = run_offload(
-        options, config, messages, config_overrides={"execute": False}
-    )
+    offload_messages = run_offload(options, config, messages)
     assert (
         messages_step_executions(
             offload_messages, step_title(command_steps.STEP_VALIDATE_CASTS)
@@ -123,10 +121,9 @@ def test_offload_step_dim(config, schema, data_db):
             step_title_to_step_id(step_title(command_steps.STEP_VERIFY_EXPORTED_DATA))
         ],
         "reset_backend_table": True,
+        "execute": False,
     }
-    offload_messages = run_offload(
-        options, config, messages, config_overrides={"execute": False}
-    )
+    offload_messages = run_offload(options, config, messages)
     assert (
         messages_step_executions(
             offload_messages, step_title(command_steps.STEP_VERIFY_EXPORTED_DATA)
@@ -139,12 +136,12 @@ def test_offload_step_dim(config, schema, data_db):
         "owner_table": schema + "." + STEP_DIM,
         "error_before_step": step_title(command_steps.STEP_CREATE_TABLE),
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=FORCED_EXCEPTION_TEXT,
     )
 
@@ -153,6 +150,7 @@ def test_offload_step_dim(config, schema, data_db):
         "owner_table": schema + "." + STEP_DIM,
         "error_before_step": step_title(command_steps.STEP_FINAL_LOAD),
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options, config, messages, expected_exception_string=FORCED_EXCEPTION_TEXT

@@ -113,7 +113,7 @@ def copy_rdbms_stats_to_backend(
             % offload_target_table.backend_db_name()
         )
 
-    dry_run = bool(not offload_options.execute)
+    dry_run = bool(not offload_operation.execute)
     rdbms_tab_stats = offload_source_table.table_stats
     rdbms_col_stats = rdbms_tab_stats["column_stats"]
     tab_stats = {

@@ -211,6 +211,7 @@ class HybridViewService(object):
             messages=self._messages,
             backend_db=self._backend_table_owner,
             backend_table=self._backend_table_name,
+            execute=(not self._dry_run),
         )
         status, agg_msg = validator.validate(
             safe=False,
@@ -293,6 +294,7 @@ class HybridViewService(object):
             self._connection_options,
             self._messages,
             hybrid_metadata=self._offload_metadata,
+            dry_run=self._dry_run,
         )
 
     def _get_backend_detail(self, attribute_name=None):

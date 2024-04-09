@@ -76,7 +76,13 @@ def create_and_offload_dim_table(config, frontend_api, messages, schema):
     )
     # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
     try:
-        run_offload({"owner_table": schema + "." + DIM_NAME, "create_backend_db": True})
+        run_offload(
+            {
+                "owner_table": schema + "." + DIM_NAME,
+                "create_backend_db": True,
+                "execute": True,
+            }
+        )
     except OffloadException:
         # If this one fails then we let the exception bubble up.
         run_offload(
@@ -84,6 +90,7 @@ def create_and_offload_dim_table(config, frontend_api, messages, schema):
                 "owner_table": schema + "." + DIM_NAME,
                 "reset_backend_table": True,
                 "create_backend_db": True,
+                "execute": True,
             }
         )
 

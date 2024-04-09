@@ -317,7 +317,7 @@ def build_mock_options(mock_env: dict):
     assert mock_env
     k = mock.patch.dict(os.environ, mock_env)
     k.start()
-    c = OrchestrationConfig.from_dict({"verbose": False, "execute": False})
+    c = OrchestrationConfig.from_dict({"verbose": False})
     k.stop()
     return c
 

@@ -15,8 +15,6 @@
 """ TestOrchestrationMetadata: Unit test library to test orchestration metadata API for configured frontend.
 """
 
-import copy
-
 from unittest import TestCase, main
 
 from goe.orchestration import orchestration_constants

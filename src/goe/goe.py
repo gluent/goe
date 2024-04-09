@@ -2256,7 +2256,7 @@ class OffloadOperation(BaseOperation):
         normalise_offload_predicate_options(self)
         normalise_verify_options(self)
         normalise_data_sampling_options(self)
-        normalise_ddl_file(self.ddl_file, self.owner, self.table_name, config)
+        normalise_ddl_file(self, config)
 
         self._setup_offload_step(messages)
 
@@ -2890,6 +2890,7 @@ def offload_table(
                 messages, "staging area", offload_target_table, offload_options.execute
             )
 
+    # TODO act upon ddl-file here perhaps
     existing_metadata = None
     if offload_target_table.exists() and not offload_operation.reset_backend_table:
         # We need to pickup defaults for an existing table here, BEFORE we start looking for data to offload (get_offload_data_manager())

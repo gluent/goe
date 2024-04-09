@@ -219,7 +219,7 @@ def test_identifiers_bad_char_column_names(config, schema, data_db):
 
     if config.target == DBTYPE_IMPALA:
         messages.log(f"Skipping {id} for Impala")
-        return
+        pytest.skip(f"Skipping {id} for Impala")
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -280,7 +280,7 @@ def test_identifiers_table_name_case(config, schema, data_db):
 
     if not backend_api.case_sensitive_identifiers():
         messages.log(f"Skipping {id} because case_sensitive_identifiers() == False")
-        return
+        pytest.skip(f"Skipping {id} because case_sensitive_identifiers() == False")
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 

@@ -44,7 +44,6 @@ from goe.offload.offload_constants import (
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
-    NUM_BUCKETS_FALLBACK,
 )
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import hs2_connection_log_message
@@ -97,6 +96,7 @@ EXPECTED_CONFIG_ARGS = [
     "hadoop_port",
     "hadoop_ssh_user",
     "webhdfs_verify_ssl",
+    "hash_distribution_threshold",
     "hiveserver2_auth_mechanism",
     "hdfs_data",
     "hdfs_home",
@@ -135,8 +135,6 @@ EXPECTED_CONFIG_ARGS = [
     "netezza_app_user",
     "netezza_app_pass",
     "not_null_propagation",
-    "num_buckets_max",
-    "num_buckets_threshold",
     "offload_fs_container",
     "offload_fs_prefix",
     "offload_fs_scheme",
@@ -192,8 +190,6 @@ EXPECTED_CONFIG_ARGS = [
     "sqoop_password_file",
     "sqoop_queue_name",
     "sqoop_overrides",
-    "spark_thrift_host",
-    "spark_thrift_port",
     "suppress_stdout",
     "synapse_auth_mechanism",
     "synapse_collation",
@@ -271,6 +267,7 @@ class OrchestrationConfig:
     hadoop_port: Optional[int]
     hadoop_ssh_user: Optional[str]
     webhdfs_verify_ssl: Optional[str]
+    hash_distribution_threshold: Optional[str]
     hiveserver2_auth_mechanism: Optional[str]
     hdfs_data: Optional[str]
     hdfs_home: Optional[str]
@@ -291,8 +288,6 @@ class OrchestrationConfig:
     log_level: Optional[str]
     log_path: str
     not_null_propagation: Optional[str]
-    num_buckets_max: Optional[str]
-    num_buckets_threshold: Optional[str]
     offload_fs_azure_account_key: Optional[str]
     offload_fs_azure_account_name: Optional[str]
     offload_fs_azure_account_domain: Optional[str]
@@ -334,11 +329,10 @@ class OrchestrationConfig:
         self.not_null_propagation = (
             self.not_null_propagation.upper() if self.not_null_propagation else None
         )
-        self.num_buckets_max = int(self.num_buckets_max or NUM_BUCKETS_FALLBACK)
-        self.num_buckets_threshold = normalise_size_option(
-            self.num_buckets_threshold,
+        self.hash_distribution_threshold = normalise_size_option(
+            self.hash_distribution_threshold,
             binary_sizes=True,
-            strict_name="DEFAULT_BUCKETS_THRESHOLD",
+            strict_name="HASH_DISTRIBUTION_THRESHOLD",
         )
 
     @staticmethod
@@ -483,6 +477,10 @@ class OrchestrationConfig:
                 "webhdfs_verify_ssl",
                 orchestration_defaults.webhdfs_verify_ssl_default(),
             ),
+            hash_distribution_threshold=config_dict.get(
+                "hash_distribution_threshold",
+                orchestration_defaults.hash_distribution_threshold_default(),
+            ),
             hiveserver2_auth_mechanism=config_dict.get(
                 "hiveserver2_auth_mechanism",
                 orchestration_defaults.hiveserver2_auth_mechanism_default(),
@@ -600,13 +598,6 @@ class OrchestrationConfig:
             not_null_propagation=config_dict.get(
                 "not_null_propagation",
                 orchestration_defaults.not_null_propagation_default(),
-            ),
-            num_buckets_max=config_dict.get(
-                "num_buckets_max", orchestration_defaults.num_buckets_max_default()
-            ),
-            num_buckets_threshold=config_dict.get(
-                "num_buckets_threshold",
-                orchestration_defaults.num_buckets_threshold_default(),
             ),
             offload_fs_azure_account_key=config_dict.get(
                 "offload_fs_azure_account_key",
@@ -909,12 +900,6 @@ class OrchestrationConfig:
             ldap_password_file=config_dict.get(
                 "ldap_password_file",
                 orchestration_defaults.ldap_password_file_default(),
-            ),
-            spark_thrift_host=config_dict.get(
-                "spark_thrift_host", orchestration_defaults.spark_thrift_host_default()
-            ),
-            spark_thrift_port=config_dict.get(
-                "spark_thrift_port", orchestration_defaults.spark_thrift_port_default()
             ),
         )
 

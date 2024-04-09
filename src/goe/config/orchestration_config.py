@@ -96,6 +96,7 @@ EXPECTED_CONFIG_ARGS = [
     "hadoop_port",
     "hadoop_ssh_user",
     "webhdfs_verify_ssl",
+    "hash_distribution_threshold",
     "hiveserver2_auth_mechanism",
     "hdfs_data",
     "hdfs_home",
@@ -134,7 +135,6 @@ EXPECTED_CONFIG_ARGS = [
     "netezza_app_user",
     "netezza_app_pass",
     "not_null_propagation",
-    "num_buckets_threshold",
     "offload_fs_container",
     "offload_fs_prefix",
     "offload_fs_scheme",
@@ -267,6 +267,7 @@ class OrchestrationConfig:
     hadoop_port: Optional[int]
     hadoop_ssh_user: Optional[str]
     webhdfs_verify_ssl: Optional[str]
+    hash_distribution_threshold: Optional[str]
     hiveserver2_auth_mechanism: Optional[str]
     hdfs_data: Optional[str]
     hdfs_home: Optional[str]
@@ -287,7 +288,6 @@ class OrchestrationConfig:
     log_level: Optional[str]
     log_path: str
     not_null_propagation: Optional[str]
-    num_buckets_threshold: Optional[str]
     offload_fs_azure_account_key: Optional[str]
     offload_fs_azure_account_name: Optional[str]
     offload_fs_azure_account_domain: Optional[str]
@@ -329,10 +329,10 @@ class OrchestrationConfig:
         self.not_null_propagation = (
             self.not_null_propagation.upper() if self.not_null_propagation else None
         )
-        self.num_buckets_threshold = normalise_size_option(
-            self.num_buckets_threshold,
+        self.hash_distribution_threshold = normalise_size_option(
+            self.hash_distribution_threshold,
             binary_sizes=True,
-            strict_name="DEFAULT_BUCKETS_THRESHOLD",
+            strict_name="HASH_DISTRIBUTION_THRESHOLD",
         )
 
     @staticmethod
@@ -477,6 +477,10 @@ class OrchestrationConfig:
                 "webhdfs_verify_ssl",
                 orchestration_defaults.webhdfs_verify_ssl_default(),
             ),
+            hash_distribution_threshold=config_dict.get(
+                "hash_distribution_threshold",
+                orchestration_defaults.hash_distribution_threshold_default(),
+            ),
             hiveserver2_auth_mechanism=config_dict.get(
                 "hiveserver2_auth_mechanism",
                 orchestration_defaults.hiveserver2_auth_mechanism_default(),
@@ -594,10 +598,6 @@ class OrchestrationConfig:
             not_null_propagation=config_dict.get(
                 "not_null_propagation",
                 orchestration_defaults.not_null_propagation_default(),
-            ),
-            num_buckets_threshold=config_dict.get(
-                "num_buckets_threshold",
-                orchestration_defaults.num_buckets_threshold_default(),
             ),
             offload_fs_azure_account_key=config_dict.get(
                 "offload_fs_azure_account_key",

@@ -286,8 +286,8 @@ def max_offload_chunk_count_default():
     return os.environ.get("MAX_OFFLOAD_CHUNK_COUNT") or "100"
 
 
-def num_buckets_threshold_default() -> str:
-    return os.environ.get("DEFAULT_BUCKETS_THRESHOLD") or "0"
+def hash_distribution_threshold_default() -> str:
+    return os.environ.get("HASH_DISTRIBUTION_THRESHOLD") or "1G"
 
 
 def num_bytes_fudge_default():

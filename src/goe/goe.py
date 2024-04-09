@@ -1329,7 +1329,7 @@ class BaseOperation(object):
             )
             self.offload_stats_method = OFFLOAD_STATS_METHOD_NATIVE
 
-        self._num_buckets_threshold = config.num_buckets_threshold
+        self._hash_distribution_threshold = config.hash_distribution_threshold
 
         self.max_offload_chunk_size = normalise_size_option(
             self.max_offload_chunk_size,
@@ -1563,7 +1563,6 @@ class BaseOperation(object):
         self,
         column_names,
         rdbms_table,
-        opts,
         messages,
         bucket_hash_column_supported,
     ):
@@ -1586,7 +1585,7 @@ class BaseOperation(object):
                 )
                 if (
                     bucket_hash_column_supported
-                    and (size or 0) >= self._num_buckets_threshold
+                    and (size or 0) >= self._hash_distribution_threshold
                 ):
                     self.bucket_hash_col = self.default_bucket_hash_col(
                         rdbms_table, messages
@@ -1662,7 +1661,6 @@ class BaseOperation(object):
         self.validate_bucket_hash_col(
             offload_source_table.get_column_names(),
             offload_source_table,
-            offload_options,
             messages,
             offload_target_table.bucket_hash_column_supported(),
         )

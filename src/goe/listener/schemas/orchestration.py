@@ -394,35 +394,7 @@ class OffloadOptions(BaseSchema):
         cli=("--no-version-check"),
         no_api=True,
     )
-    num_buckets: Optional[str] = Field(
-        default=defaults.num_buckets_default(),
-        title="Number of buckets",
-        description=(
-            "Number of offload bucket partitions to create in offloaded table. "
-            "Can be “AUTO” or a positive integer <= NUM_BUCKETS_MAX."
-        ),
-        cli=("--num-buckets"),
-    )
 
-    @validator("num_buckets")
-    def validate_num_buckets(cls, v):
-        if v == "AUTO":
-            return v
-        if isinstance(v, int):
-            if v < 1 or v > 16:
-                raise ValueError(
-                    "Number of buckets must be between 1 and 16"  # todo: fix me
-                )
-            return int(v)
-        else:
-            raise ValueError("Number of buckets must be a positive integer or 'AUTO'")
-
-    num_location_files: Optional[int] = Field(
-        default=None,
-        title="Number of location files",
-        description="Maximum parallelism for this offloaded table (number of external table location files)",
-        cli=("--num-location-files"),
-    )
     offload_by_subpartition: Optional[bool] = Field(
         default=False,
         title="Offload by subpartition",

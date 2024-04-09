@@ -70,7 +70,6 @@ class HadoopColumn(ColumnMetadataInterface):
         data_default=None,
         safe_mapping=True,
         partition_info=None,
-        bucket_info=None,
     ):
         super(HadoopColumn, self).__init__(
             name,
@@ -82,7 +81,6 @@ class HadoopColumn(ColumnMetadataInterface):
             data_default=data_default,
             safe_mapping=safe_mapping,
             partition_info=partition_info,
-            bucket_info=bucket_info,
             char_semantics=CANONICAL_CHAR_SEMANTICS_BYTE,
         )
 

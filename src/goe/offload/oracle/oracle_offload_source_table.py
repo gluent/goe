@@ -1388,7 +1388,6 @@ class OracleSourceTable(OffloadSourceTableInterface):
                 data_default=col.data_default,
                 safe_mapping=safe_mapping,
                 partition_info=None,
-                bucket_info=None,
                 char_length=col.char_length,
                 char_semantics=char_semantics,
             )

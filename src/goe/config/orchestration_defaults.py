@@ -43,9 +43,6 @@ from goe.offload.offload_constants import (
     LIVY_IDLE_SESSION_TIMEOUT,
     LIVY_MAX_SESSIONS,
     NOT_NULL_PROPAGATION_AUTO,
-    NUM_BUCKETS_AUTO,
-    NUM_BUCKETS_FALLBACK,
-    NUM_LOCATION_FILES_FALLBACK,
     OFFLOAD_STATS_METHOD_COPY,
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_TRANSPORT_AUTO,
@@ -289,20 +286,8 @@ def max_offload_chunk_count_default():
     return os.environ.get("MAX_OFFLOAD_CHUNK_COUNT") or "100"
 
 
-def num_buckets_default():
-    return os.environ.get("DEFAULT_BUCKETS", NUM_BUCKETS_AUTO)
-
-
-def num_buckets_max_default() -> str:
-    return int(os.environ.get("DEFAULT_BUCKETS_MAX") or str(NUM_BUCKETS_FALLBACK))
-
-
-def num_buckets_threshold_default() -> str:
-    return os.environ.get("DEFAULT_BUCKETS_THRESHOLD") or "0"
-
-
-def num_location_files_default():
-    return int(os.environ.get("NUM_LOCATION_FILES") or NUM_LOCATION_FILES_FALLBACK)
+def hash_distribution_threshold_default() -> str:
+    return os.environ.get("HASH_DISTRIBUTION_THRESHOLD") or "1G"
 
 
 def num_bytes_fudge_default():
@@ -968,19 +953,6 @@ def data_governance_auto_properties_default():
 
 def data_governance_custom_properties_default():
     return os.environ.get("DATA_GOVERNANCE_CUSTOM_PROPERTIES")
-
-
-###########################################################################
-# QUERY ENGINE DEFAULTS
-###########################################################################
-
-
-def spark_thrift_host_default() -> Optional[str]:
-    return os.environ.get("SPARK_THRIFT_HOST")
-
-
-def spark_thrift_port_default() -> Optional[str]:
-    return os.environ.get("SPARK_THRIFT_PORT")
 
 
 ###########################################################################

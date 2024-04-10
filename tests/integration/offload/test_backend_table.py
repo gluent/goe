@@ -24,6 +24,7 @@ import decimal
 import logging
 from unittest import TestCase, main
 
+from goe.exceptions import OffloadException
 from goe.goe import OffloadOperation
 from goe.offload.column_metadata import (
     CanonicalColumn,
@@ -34,7 +35,6 @@ from goe.offload.column_metadata import (
     GOE_TYPE_INTEGER_8,
 )
 from goe.offload.factory.backend_table_factory import backend_table_factory
-from goe.offload.offload import OffloadException
 from goe.offload.offload_constants import DBTYPE_IMPALA
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,

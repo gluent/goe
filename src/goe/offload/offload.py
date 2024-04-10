@@ -23,6 +23,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from goe.config import config_descriptions, orchestration_defaults
+from goe.exceptions import OffloadException
 from goe.filesystem.goe_dfs import VALID_OFFLOAD_FS_SCHEMES
 from goe.data_governance.hadoop_data_governance_constants import (
     DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
@@ -45,6 +46,7 @@ from goe.offload.offload_source_table import (
 from goe.offload.offload_transport import VALID_OFFLOAD_TRANSPORT_METHODS
 from goe.offload.operation.sort_columns import check_and_alter_backend_sort_columns
 from goe.offload.operation.data_type_controls import DECIMAL_COL_TYPE_SYNTAX_TEMPLATE
+from goe.offload.operation.ddl_file import write_ddl_to_ddl_file
 from goe.offload.option_validation import (
     active_data_append_options,
     check_opt_is_posint,
@@ -61,6 +63,7 @@ from goe.persistence.orchestration_metadata import (
 from goe.util.misc_functions import format_list_for_logging
 
 if TYPE_CHECKING:
+    from goe.goe import OffloadOperation
     from goe.offload.backend_table import BackendTableInterface
     from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
@@ -68,10 +71,6 @@ if TYPE_CHECKING:
 
 
 OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT = "Column mismatch detected between the source and backend table. Resolve before offloading"
-
-
-class OffloadException(Exception):
-    pass
 
 
 def check_ipa_predicate_type_option_conflicts(
@@ -191,13 +190,19 @@ def check_table_structure(frontend_table, backend_table, messages: OffloadMessag
 
 
 def create_final_backend_table_step(
-    offload_target_table,
-    offload_operation,
+    offload_target_table: "BackendTableInterface",
+    offload_operation: "OffloadOperation",
     goe_object_type=DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
 ):
     """Create the final backend table"""
-    if not offload_target_table.table_exists() or offload_operation.reset_backend_table:
-        offload_target_table.create_backend_table_step(goe_object_type)
+    if (
+        not offload_target_table.table_exists()
+        or offload_operation.reset_backend_table
+        or offload_operation.ddl_file
+    ):
+        ddl = offload_target_table.create_backend_table_step(goe_object_type)
+        if offload_operation.ddl_file:
+            write_ddl_to_ddl_file(offload_operation.ddl_file, ddl)
     else:
         check_and_alter_backend_sort_columns(offload_target_table, offload_operation)
 

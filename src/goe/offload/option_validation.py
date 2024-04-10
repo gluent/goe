@@ -13,12 +13,9 @@
 # limitations under the License.
 
 from optparse import OptionValueError
-import os
 import re
 
-from typing import TYPE_CHECKING
-
-from goe.filesystem.goe_dfs import get_scheme_from_location_uri
+from goe.exceptions import OffloadOptionError
 from goe.offload import offload_constants
 from goe.offload.predicate_offload import GenericPredicate
 from goe.offload.offload_source_table import (
@@ -26,19 +23,7 @@ from goe.offload.offload_source_table import (
     OFFLOAD_PARTITION_TYPE_RANGE,
     OFFLOAD_PARTITION_TYPE_LIST,
 )
-from goe.util.misc_functions import standard_file_name, is_pos_int
-
-if TYPE_CHECKING:
-    from goe.config.orchestration_config import OrchestrationConfig
-    from goe.offload.offload_messages import OffloadMessages
-
-
-class OffloadOptionError(Exception):
-    def __init__(self, detail):
-        self.detail = detail
-
-    def __str__(self):
-        return repr(self.detail)
+from goe.util.misc_functions import is_pos_int
 
 
 def active_data_append_options(
@@ -95,17 +80,6 @@ def check_opt_is_posint(
         )
 
 
-def generate_ddl_file_path(
-    owner: str, table_name: str, config: "OrchestrationConfig"
-) -> str:
-    """Generates a default path when DDL file option == AUTO."""
-    file_name = standard_file_name(
-        f"{owner}.{table_name}", extension=".sql", with_datetime=True
-    )
-    log_path = os.path.join(config.log_path, file_name)
-    return log_path
-
-
 def normalise_data_sampling_options(options):
     if hasattr(options, "data_sample_pct"):
         if isinstance(options.data_sample_pct, str) and re.search(
@@ -127,43 +101,6 @@ def normalise_data_sampling_options(options):
             options.data_sample_parallelism,
             allow_zero=True,
         )
-
-
-def normalise_ddl_file(
-    options, config: "OrchestrationConfig", messages: "OffloadMessages"
-):
-    """Validates path pointed to by ddl_file and generates a new path if AUTO. Mutates options."""
-    if options.ddl_file:
-        options.ddl_file = options.ddl_file.strip()
-    else:
-        return options.ddl_file
-
-    if options.execute and options.ddl_file:
-        messages.notice(offload_constants.DDL_FILE_EXECUTE_MESSAGE_TEXT)
-        options.execute = False
-
-    if options.ddl_file.upper() == offload_constants.DDL_FILE_AUTO:
-        # Use an auto-generated path.
-        options.ddl_file = generate_ddl_file_path(
-            options.owner, options.table_name, config
-        )
-        return
-
-    # Simplistic check that the file path looks like a cloud storage one.
-    if ":" in options.ddl_file:
-        # We don't need to know the scheme right now, just validation that it is supported.
-        _ = get_scheme_from_location_uri(options.ddl_file)
-        return
-
-    # Assume local filesystem, we can validate the path.
-
-    if os.path.exists(options.ddl_file):
-        raise OffloadOptionError(f"DDL path already exists: {options.ddl_file}")
-
-    if "/" in options.ddl_file[1:]:
-        dirname = os.path.dirname(options.ddl_file)
-        if not os.path.isdir(dirname):
-            raise OffloadOptionError(f"DDL file directory does not exist: {dirname}")
 
 
 def normalise_offload_predicate_options(options):

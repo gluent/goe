@@ -30,6 +30,7 @@ import orjson
 
 from goe.config import orchestration_defaults
 from goe.config.config_validation_functions import normalise_size_option
+from goe.exceptions import OffloadException, OffloadOptionError
 from goe.filesystem.goe_dfs import (
     get_scheme_from_location_uri,
     OFFLOAD_FS_SCHEME_INHERIT,
@@ -61,7 +62,7 @@ from goe.offload.column_metadata import (
     GOE_TYPE_TIMESTAMP_TZ,
 )
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
-from goe.offload.option_validation import normalise_ddl_file
+from goe.offload.operation.ddl_file import normalise_ddl_file
 from goe.offload.offload_source_data import (
     get_offload_type_for_config,
     OFFLOAD_SOURCE_CLIENT_OFFLOAD,
@@ -91,7 +92,6 @@ from goe.offload.operation.transport import (
     offload_data_to_target,
 )
 from goe.offload.offload import (
-    OffloadException,
     active_data_append_options,
     check_ipa_predicate_type_option_conflicts,
     check_table_structure,
@@ -112,7 +112,6 @@ from goe.offload.operation.partition_controls import (
     validate_offload_partition_granularity,
 )
 from goe.offload.option_validation import (
-    OffloadOptionError,
     check_opt_is_posint,
     normalise_data_sampling_options,
     normalise_offload_predicate_options,

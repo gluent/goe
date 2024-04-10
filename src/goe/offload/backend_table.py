@@ -2425,7 +2425,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             self._offload_step(command_steps.STEP_CREATE_DB, lambda: self.create_db())
             post_register_data_gov_fn()
 
-    def create_backend_table_step(self, goe_object_type):
+    def create_backend_table_step(self, goe_object_type) -> list:
         (
             pre_register_data_gov_fn,
             post_register_data_gov_fn,
@@ -2445,6 +2445,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             command_steps.STEP_CREATE_TABLE, lambda: self.create_backend_table()
         )
         post_register_data_gov_fn()
+        return executed_commands
 
     def empty_staging_area_step(self, staging_file):
         self._offload_step(

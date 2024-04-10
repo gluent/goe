@@ -14,8 +14,8 @@
 
 from unittest import main
 
+from goe.exceptions import OffloadException
 from goe.offload.factory.backend_api_factory import backend_api_factory
-from goe.offload.offload import OffloadException
 from goe.offload.offload_constants import DBTYPE_SPARK
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,

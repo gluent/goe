@@ -17,8 +17,8 @@
 from goe.offload.column_metadata import (
     get_partition_source_column_names,
 )
+from goe.exceptions import OffloadException
 from goe.offload.offload import (
-    OffloadException,
     get_current_offload_hv,
     get_prior_offloaded_hv,
 )

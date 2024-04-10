@@ -541,11 +541,10 @@ def get_temp_path(tmp_dir="/tmp", prefix="goe_tmp_", suffix=""):
 
 
 def write_temp_file(data, prefix="goe_tmp_", suffix=""):
-    """writes some data to a temporary file and returns the path to the file"""
+    """Writes some data to a temporary file and returns the path to the file"""
     tmp_path = get_temp_path(prefix=prefix, suffix=suffix)
-    fh = open(tmp_path, "w")
-    fh.write(data)
-    fh.close()
+    with open(tmp_path, "w") as fh:
+        fh.write(data)
     return tmp_path
 
 

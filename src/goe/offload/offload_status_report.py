@@ -37,6 +37,7 @@ from goe.goe import (
     get_rdbms_db_name,
 )
 from goe.config.orchestration_config import OrchestrationConfig
+from goe.exceptions import OffloadOptionError
 from goe.offload import offload_constants
 from goe.offload.backend_api import (
     REPORT_ATTR_BACKEND_DISPLAY_NAME,
@@ -46,7 +47,6 @@ from goe.offload.backend_api import (
 from goe.offload.factory.backend_api_factory import backend_api_factory
 from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
-from goe.offload.option_validation import OffloadOptionError
 from goe.offload.offload_functions import STARTS_WITH_DATE_PATTERN_RE
 from goe.offload.offload_messages import (
     OffloadMessages,

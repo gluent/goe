@@ -96,7 +96,7 @@ def normalise_ddl_file(
 
 def write_ddl_to_ddl_file(
     ddl_file: str,
-    ddl: list[str],
+    ddl: list,
     config: "OrchestrationConfig",
     messages: "OffloadMessages",
 ):

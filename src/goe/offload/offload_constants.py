@@ -145,8 +145,9 @@ RESET_HYBRID_VIEW_EXCEPTION_TEXT = (
 )
 TOTAL_ROWS_OFFLOADED_LOG_TEXT = "Total rows offloaded"
 DDL_FILE_EXECUTE_MESSAGE_TEXT = (
-    "Switch command to non-exectute mode due to --ddl-file option"
+    "Switching command to non-exectute mode due to --ddl-file option"
 )
+DDL_FILE_WRITE_MESSAGE_TEMPLATE = "Table DDL has been written to file: {}"
 
 # Offload capabilities we can switch on/off by backend db type
 # Any capabilities that are version specific will have extra code in the BackendApi method

@@ -2853,7 +2853,10 @@ def offload_table(
             return_none_on_failure=True
         )
 
-    create_final_backend_table_step(offload_target_table, offload_operation)
+    if not create_final_backend_table_step(
+        offload_target_table, offload_operation, offload_options, messages
+    ):
+        return True
 
     data_transport_client = offload_transport_factory(
         offload_operation.offload_transport_method,

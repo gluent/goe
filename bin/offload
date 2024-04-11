@@ -18,6 +18,7 @@
 import sys
 
 from goe.config.config_checks import check_cli_path
+from goe.exceptions import OffloadOptionError
 
 check_cli_path()
 
@@ -33,7 +34,7 @@ from goe.goe import (
     OFFLOAD_OP_NAME,
     get_log_fh,
 )
-from goe.offload.offload import OffloadOptionError, get_offload_options
+from goe.offload.offload import get_offload_options
 from goe.orchestration.cli_entry_points import offload_by_cli
 from goe.util.goe_log import log_exception
 

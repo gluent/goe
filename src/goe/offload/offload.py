@@ -63,6 +63,7 @@ from goe.persistence.orchestration_metadata import (
 from goe.util.misc_functions import format_list_for_logging
 
 if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
     from goe.goe import OffloadOperation
     from goe.offload.backend_table import BackendTableInterface
     from goe.persistence.orchestration_repo_client import (
@@ -132,6 +133,7 @@ def check_ipa_predicate_type_option_conflicts(
 
 def check_table_structure(frontend_table, backend_table, messages: OffloadMessages):
     """Compare frontend and backend columns by name and throw an exception if there is a mismatch.
+
     Ideally we would use SchemaSyncAnalyzer for this but circular dependencies prevent that for the time being.
     FIXME revisit this in the future to see if we can hook into SchemaSyncAnalyzer for comparison, see GOE-1307
     """
@@ -192,9 +194,15 @@ def check_table_structure(frontend_table, backend_table, messages: OffloadMessag
 def create_final_backend_table_step(
     offload_target_table: "BackendTableInterface",
     offload_operation: "OffloadOperation",
+    config: "OrchestrationConfig",
+    messages: OffloadMessages,
     goe_object_type=DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
-):
-    """Create the final backend table"""
+) -> bool:
+    """Create the final backend table.
+
+    Returns:
+      A boolean for "do not exit early"
+    """
     if (
         not offload_target_table.table_exists()
         or offload_operation.reset_backend_table
@@ -202,9 +210,11 @@ def create_final_backend_table_step(
     ):
         ddl = offload_target_table.create_backend_table_step(goe_object_type)
         if offload_operation.ddl_file:
-            write_ddl_to_ddl_file(offload_operation.ddl_file, ddl)
+            write_ddl_to_ddl_file(offload_operation.ddl_file, ddl, config, messages)
+            return False
     else:
         check_and_alter_backend_sort_columns(offload_target_table, offload_operation)
+    return True
 
 
 def drop_backend_table_step(

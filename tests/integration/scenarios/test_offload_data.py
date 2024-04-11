@@ -570,7 +570,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
 
     if not frontend_api.nanoseconds_supported():
         messages.log(f"Skipping {id} on frontend system")
-        pytest.skip(f"Skipping {id} on rontend system")
+        pytest.skip(f"Skipping {id} on frontend system")
 
     backend_api = get_backend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(

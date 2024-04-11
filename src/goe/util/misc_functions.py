@@ -23,7 +23,7 @@ import getpass
 import inspect
 import logging
 import math
-import os, os.path
+import os
 import random
 import re
 import string
@@ -144,7 +144,7 @@ def parse_python_from_string(value):
         # datetime ?
         try:
             value = parser.parse(value)
-        except ValueError as e:
+        except ValueError:
             pass
 
     return value
@@ -216,7 +216,7 @@ def is_number(s):
     try:
         float(s)
         return True
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return False
 
 
@@ -535,12 +535,12 @@ def human_size_to_bytes(size, binary_sizes=True):
 
 # not used tempfile.mkstemp for get_temp_path/write_temp_file as sometimes
 # want to generate a file name to use remotely or fully control the random section
-def get_temp_path(tmp_dir="/tmp", prefix="goe_tmp_", suffix=""):
+def get_temp_path(tmp_dir: str = "/tmp", prefix: str = "goe_tmp_", suffix: str = ""):
     suffix_str = (".%s" % suffix.lstrip(".")) if suffix else ""
-    return "%s/%s%s%s" % (tmp_dir, prefix, str(uuid.uuid4()), suffix_str)
+    return os.path.join(tmp_dir, "%s%s%s" % (prefix, str(uuid.uuid4()), suffix_str))
 
 
-def write_temp_file(data, prefix="goe_tmp_", suffix=""):
+def write_temp_file(data, prefix: str = "goe_tmp_", suffix: str = ""):
     """Writes some data to a temporary file and returns the path to the file"""
     tmp_path = get_temp_path(prefix=prefix, suffix=suffix)
     with open(tmp_path, "w") as fh:

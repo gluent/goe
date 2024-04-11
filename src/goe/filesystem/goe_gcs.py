@@ -334,7 +334,7 @@ class GOEGcs(GOEDfs):
         else:
             return None
 
-    def write(self, dfs_path, data, overwrite=False):
+    def write(self, dfs_path: str, data, overwrite=False):
         assert dfs_path
         assert isinstance(dfs_path, str)
         logger.info("write(%s)" % dfs_path)

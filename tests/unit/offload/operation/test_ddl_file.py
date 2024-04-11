@@ -13,12 +13,14 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING
+from unittest import mock
 
 import pytest
 
 from goe.offload import offload_constants
 from goe.offload.operation import ddl_file as module_under_test
 from goe.offload.offload_messages import OffloadMessages
+from goe.util.misc_functions import get_temp_path
 
 from tests.unit.test_functions import (
     build_mock_offload_operation,
@@ -31,7 +33,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(scope="module")
-def config():
+def config() -> "OrchestrationConfig":
     return build_mock_options(FAKE_ORACLE_BQ_ENV)
 
 
@@ -89,3 +91,33 @@ def test_normalise_ddl_file_path(
     else:
         # No exception expected.
         _ = module_under_test.normalise_ddl_file(fake_operation, config, fake_messages)
+
+
+@pytest.mark.parametrize(
+    "ddl_list",
+    [
+        [
+            "CREATE TABLE foo (bar INT);",
+        ],
+        [
+            "DROP TABLE foo;",
+            "CREATE TABLE foo (bar INT);",
+        ],
+        [],
+    ],
+)
+def test_write_ddl_to_ddl_file(ddl_list: list, config):
+    fake_messages = OffloadMessages()
+    ddl_file = get_temp_path(prefix="test_write_ddl_to_ddl_file", suffix=".sql")
+    m = mock.mock_open()
+    with mock.patch("goe.offload.operation.ddl_file.open", m):
+        module_under_test.write_ddl_to_ddl_file(
+            ddl_file, ddl_list, config, fake_messages
+        )
+    fh = m()
+    assert fh.write.mock_calls
+    write_arg = fh.write.mock_calls[0].args[0]
+    # Check the header is included in the write call.
+    assert module_under_test.DDL_FILE_HEADER in write_arg
+    # Check all lines of the DDL are in the write call.
+    assert all(_ in write_arg for _ in ddl_list)

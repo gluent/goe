@@ -500,6 +500,8 @@ class OffloadMessages(object):
                 self.log("Done", ansi_code="green")
                 if record_step_delta:
                     self.step_delta(title, td)
+            else:
+                self.step_no_delta(title)
 
             if step_repo_logging(parent_command_type):
                 self._repo_client.end_command_step(
@@ -590,6 +592,13 @@ class OffloadMessages(object):
             self.steps[step]["count"] += 1
         else:
             self.steps[step] = {"seconds": time_delta.total_seconds(), "count": 1}
+
+    def step_no_delta(self, step):
+        """Record a step without any time delta, for non-execture mode."""
+        if step in self.steps:
+            self.steps[step]["count"] += 1
+        else:
+            self.steps[step] = {"seconds": 0, "count": 1}
 
     def log_step_deltas(self, topn=10, detail=VVERBOSE):
         logger.info("log_step_deltas()")

@@ -17,13 +17,13 @@ jobs:
         with:
           # Fetch all tags
           fetch-depth: 0
-      
+
       - name: Set up JDK & SBT
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 11
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -36,7 +36,7 @@ jobs:
         run: make package
 
       - name: Move package to `dist/`
-        run: mv target/goe_*.tar.gz dist/goe.tar.gz
+        run: mv goe_*.tar.gz dist/goe.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: artifacts
-          path: dist/goe.tar.gz
+          path: dist
 
       - name: Add package to current release
         uses: softprops/action-gh-release@v2

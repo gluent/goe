@@ -52,7 +52,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: artifacts
-          path: dist/goe.tar.gz
+          path: dist
 
       - name: Add package to current release
         uses: softprops/action-gh-release@v2

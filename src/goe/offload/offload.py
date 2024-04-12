@@ -191,30 +191,33 @@ def check_table_structure(frontend_table, backend_table, messages: OffloadMessag
         )
 
 
-def create_final_backend_table_step(
+def create_ddl_file_step(
     offload_target_table: "BackendTableInterface",
     offload_operation: "OffloadOperation",
     config: "OrchestrationConfig",
     messages: OffloadMessages,
-    goe_object_type=DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
-) -> bool:
-    """Create the final backend table.
+):
+    """Create a DDL file for the final backend table."""
+    if not offload_operation.ddl_file:
+        return
 
-    Returns:
-      A boolean for "do not exit early"
-    """
-    if (
-        not offload_target_table.table_exists()
-        or offload_operation.reset_backend_table
-        or offload_operation.ddl_file
-    ):
-        ddl = offload_target_table.create_backend_table_step(goe_object_type)
-        if offload_operation.ddl_file:
-            write_ddl_to_ddl_file(offload_operation.ddl_file, ddl, config, messages)
-            return False
+    def step_fn():
+        ddl = offload_target_table.create_backend_table()
+        write_ddl_to_ddl_file(offload_operation.ddl_file, ddl, config, messages)
+
+    messages.offload_step(command_steps.STEP_DDL_FILE, step_fn, execute=False)
+
+
+def create_final_backend_table_step(
+    offload_target_table: "BackendTableInterface",
+    offload_operation: "OffloadOperation",
+    goe_object_type=DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
+):
+    """Create the final backend table."""
+    if not offload_target_table.table_exists() or offload_operation.reset_backend_table:
+        offload_target_table.create_backend_table_step(goe_object_type)
     else:
         check_and_alter_backend_sort_columns(offload_target_table, offload_operation)
-    return True
 
 
 def drop_backend_table_step(

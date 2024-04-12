@@ -95,6 +95,7 @@ from goe.offload.offload import (
     active_data_append_options,
     check_ipa_predicate_type_option_conflicts,
     check_table_structure,
+    create_ddl_file_step,
     create_final_backend_table_step,
     drop_backend_table_step,
     get_current_offload_hv,
@@ -411,10 +412,6 @@ def get_db_charset(opts):
     )
 
 
-def next_power_of_two(x):
-    return int(2 ** (math.ceil(math.log(x, 2))))
-
-
 def nls_lang_exists():
     return os.environ.get("NLS_LANG")
 
@@ -491,20 +488,10 @@ ts = None
 
 
 def log_timestamp(ansi_code="grey"):
-    if options and options.execute:
-        global ts
-        ts = datetime.now()
-        ts = ts.replace(microsecond=0)
-        log(ts.strftime("%c"), detail=verbose, ansi_code=ansi_code)
-
-
-def log_timedelta(ansi_code="grey", hybrid_options=None):
-    use_opts = hybrid_options or options
-    if use_opts.execute:
-        ts2 = datetime.now()
-        ts2 = ts2.replace(microsecond=0)
-        log("Step time: %s" % (ts2 - ts), detail=verbose, ansi_code=ansi_code)
-        return ts2 - ts
+    global ts
+    ts = datetime.now()
+    ts = ts.replace(microsecond=0)
+    log(ts.strftime("%c"), detail=verbose, ansi_code=ansi_code)
 
 
 # TODO Should really be named oracle_adm_connection
@@ -2830,6 +2817,14 @@ def offload_table(
         data_gov_client=data_gov_client,
     )
 
+    if offload_operation.ddl_file:
+        # For DDL file creation we need to drop out early, before we concern
+        # ourselves with database creation or table drop commands.
+        create_ddl_file_step(
+            offload_target_table, offload_operation, offload_options, messages
+        )
+        return True
+
     if offload_operation.create_backend_db:
         offload_target_table.create_backend_db_step()
 
@@ -2853,10 +2848,7 @@ def offload_table(
             return_none_on_failure=True
         )
 
-    if not create_final_backend_table_step(
-        offload_target_table, offload_operation, offload_options, messages
-    ):
-        return True
+    create_final_backend_table_step(offload_target_table, offload_operation)
 
     data_transport_client = offload_transport_factory(
         offload_operation.offload_transport_method,

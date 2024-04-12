@@ -86,7 +86,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
 
     if config.target != offload_constants.DBTYPE_SYNAPSE:
         messages.log(f"Skipping {id} for backend: {config.target}")
-        return
+        pytest.skip(f"Skipping {id} for backend: {config.target}")
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -115,7 +115,10 @@ def test_offload_hash_column_synapse(config, schema, data_db):
         "create_backend_db": True,
     }
     run_offload(
-        options, config, messages, config_overrides={"num_buckets_threshold": "10g"}
+        options,
+        config,
+        messages,
+        config_overrides={"hash_distribution_threshold": "10g"},
     )
     assert standard_dimension_assertion(
         config,
@@ -138,7 +141,10 @@ def test_offload_hash_column_synapse(config, schema, data_db):
         "reset_backend_table": True,
     }
     run_offload(
-        options, config, messages, config_overrides={"num_buckets_threshold": "10g"}
+        options,
+        config,
+        messages,
+        config_overrides={"hash_distribution_threshold": "10g"},
     )
     assert standard_dimension_assertion(
         config,
@@ -160,7 +166,10 @@ def test_offload_hash_column_synapse(config, schema, data_db):
         "reset_backend_table": True,
     }
     run_offload(
-        options, config, messages, config_overrides={"num_buckets_threshold": "0.1k"}
+        options,
+        config,
+        messages,
+        config_overrides={"hash_distribution_threshold": "0.1k"},
     )
     assert standard_dimension_assertion(
         config,

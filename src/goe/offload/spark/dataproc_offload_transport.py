@@ -111,21 +111,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         if self._dataproc_batches_version:
             gcloud_cmd.append(f"--version={self._dataproc_batches_version}")
         if self._dataproc_batches_subnet:
-            if not self._dataproc_project or not self._dataproc_region:
-                raise OffloadTransportException(
-                    "GOOGLE_DATAPROC_PROJECT and GOOGLE_DATAPROC_REGION are required when using GOOGLE_DATAPROC_BATCHES_SUBNET"
-                )
-            subnet = "/".join(
-                [
-                    "projects",
-                    self._dataproc_project,
-                    "regions",
-                    self._dataproc_region,
-                    "subnetworks",
-                    self._dataproc_batches_subnet,
-                ]
-            )
-            gcloud_cmd.append(f"--subnet={subnet}")
+            gcloud_cmd.append(f"--subnet={self._dataproc_batches_subnet}")
         gcloud_cmd.append(f"--deps-bucket={self._offload_fs_container}")
         return gcloud_cmd
 

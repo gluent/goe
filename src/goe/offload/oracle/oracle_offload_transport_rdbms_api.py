@@ -321,18 +321,20 @@ FROM  (
         convert_expressions_on_rdbms_side=False,
         for_spark=False,
         nan_values_as_null=False,
+        for_qi=False,
     ):
         """Returns an expression suitable for reading a specific column from the RDBMS table.
         Takes column_expression as an input rather than a column name because a transformation may already have
         taken place.
-        for_spark: Spark fails to process TS WITH LOCAL TIME ZONE and INTERVALs so we convert to character in the DB
+        for_spark: Spark fails to process TS WITH LOCAL TIME ZONE and INTERVALs so we convert to character in the DB.
+        for_qi: Allows different behaviour for Query Import.
         """
         self.debug("get_rdbms_query_cast()")
         ff_scale = self._get_ts_ff_scale(max_ts_scale)
         cast_expression = column_expression
         if rdbms_column.data_type == ORACLE_TYPE_TIMESTAMP_LOCAL_TZ:
             cast_expression = (
-                "CONCAT(CAST(%s AS VARCHAR2(64)),' UTC')" % column_expression
+                f"CONCAT(CAST({column_expression} AS VARCHAR2(64)),' UTC')"
             )
         elif rdbms_column.data_type == ORACLE_TYPE_TIMESTAMP_TZ:
             # We need to cast this in the DB to ensure we use tzinfo matching the DB - not matching the client
@@ -344,26 +346,25 @@ FROM  (
             rdbms_column.data_type == ORACLE_TYPE_DATE
             and convert_expressions_on_rdbms_side
         ):
-            cast_expression = "TO_CHAR(%s,'YYYY-MM-DD HH24:MI:SS')" % column_expression
+            cast_expression = f"TO_CHAR({column_expression},'YYYY-MM-DD HH24:MI:SS')"
         elif (
             rdbms_column.data_type == ORACLE_TYPE_TIMESTAMP
             and convert_expressions_on_rdbms_side
         ):
-            cast_expression = "TO_CHAR(%s,'YYYY-MM-DD HH24:MI:SS.FF%s')" % (
-                column_expression,
-                ff_scale,
+            cast_expression = (
+                f"TO_CHAR({column_expression},'YYYY-MM-DD HH24:MI:SS.FF{ff_scale}')"
             )
         elif (
             staging_column.is_string_based()
             and rdbms_column.data_type in (ORACLE_TYPE_NUMBER, ORACLE_TYPE_FLOAT)
             and convert_expressions_on_rdbms_side
         ):
-            cast_expression = "TO_CHAR(%s,'TM')" % column_expression
-        elif (
-            rdbms_column.data_type in (ORACLE_TYPE_INTERVAL_DS, ORACLE_TYPE_INTERVAL_YM)
-            and for_spark
-        ):
-            cast_expression = "TO_CHAR(%s)" % column_expression
+            cast_expression = f"TO_CHAR({column_expression},'TM')"
+        elif rdbms_column.data_type in (
+            ORACLE_TYPE_INTERVAL_DS,
+            ORACLE_TYPE_INTERVAL_YM,
+        ) and (for_spark or for_qi):
+            cast_expression = f"TO_CHAR({column_expression})"
         elif (
             rdbms_column.data_type == ORACLE_TYPE_NUMBER
             and rdbms_column.data_precision
@@ -375,16 +376,13 @@ FROM  (
             # Spark cannot handle this (tested up to Spark 2.3):
             #   pyspark.sql.utils.AnalysisException: u'Decimal scale (5) cannot be greater than precision (3).;'
             # Therefore we have this workaround:
-            cast_expression = "CAST(%s AS NUMBER)" % column_expression
+            cast_expression = f"CAST({column_expression} AS NUMBER)"
         elif (
             rdbms_column.data_type
             in (ORACLE_TYPE_BINARY_FLOAT, ORACLE_TYPE_BINARY_DOUBLE)
             and nan_values_as_null
         ):
-            cast_expression = (
-                "CASE WHEN %s IN ('NaN','Infinity','-Infinity') THEN NULL ELSE %s END"
-                % (column_expression, column_expression)
-            )
+            cast_expression = f"CASE WHEN {column_expression} IN ('NaN','Infinity','-Infinity') THEN NULL ELSE {column_expression} END"
         elif rdbms_column.data_type == ORACLE_TYPE_XMLTYPE:
             # Note, getClobVal() only works when the input column includes the table/alias reference.
             cast_expression = (

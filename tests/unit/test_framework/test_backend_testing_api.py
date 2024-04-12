@@ -119,47 +119,6 @@ class TestBackendTestingApi(TestCase):
         ]
         self.assertIsInstance(self.test_api.host_compare_sql_projection(cols), str)
 
-    def _test_transient_error_rerunner(self):
-        global transient_error_global_counter
-        if self.test_api.transient_query_error_identification_strings():
-
-            class TransientException(Exception):
-                pass
-
-            def test_callable():
-                global transient_error_global_counter
-                transient_error_global_counter += 1
-                raise TransientException(
-                    "Pretend exception: {}".format(
-                        self.test_api.transient_query_error_identification_strings()[0]
-                    )
-                )
-
-            try:
-                transient_error_global_counter = 0
-                self.test_api.transient_error_rerunner(test_callable, pause_seconds=0.1)
-            except TransientException:
-                # Ran twice
-                self.assertEqual(transient_error_global_counter, 2)
-
-            try:
-                transient_error_global_counter = 0
-                self.test_api.transient_error_rerunner(
-                    test_callable, max_retries=0, pause_seconds=0.1
-                )
-            except TransientException:
-                # Ran once
-                self.assertEqual(transient_error_global_counter, 1)
-
-            try:
-                transient_error_global_counter = 0
-                self.test_api.transient_error_rerunner(
-                    test_callable, max_retries=2, pause_seconds=0.1
-                )
-            except TransientException:
-                # Ran three times
-                self.assertEqual(transient_error_global_counter, 3)
-
     def _test_unit_test_query_options(self):
         self.assertIsInstance(self.test_api.unit_test_query_options(), dict)
 
@@ -169,7 +128,6 @@ class TestBackendTestingApi(TestCase):
         self._test_create_table_as_select()
         self._test_goe_type_mapping_generated_table_col_specs()
         self._test_host_compare_sql_projection()
-        self._test_transient_error_rerunner()
         self._test_unit_test_query_options()
 
 

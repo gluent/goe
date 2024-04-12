@@ -446,7 +446,9 @@ def test_offload_rpa_int8(config, schema, data_db):
         messages.log(
             f"Skipping {id} for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
+        )
 
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"
@@ -519,7 +521,7 @@ def test_offload_rpa_string(config, schema, data_db):
     if config.db_type == offload_constants.DBTYPE_TERADATA:
         # TODO In Teradata MVP we don't support string based partitioning.
         messages.log(f"Skipping {id} for system/type: {config.db_type}")
-        return
+        pytest.skip(f"Skipping {id} for system/type: {config.db_type}")
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -549,7 +551,9 @@ def test_offload_rpa_nvarchar2(config, schema, data_db):
         messages.log(
             f"Skipping {id} for system/type: {config.db_type}/{ORACLE_TYPE_NVARCHAR2}"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} for system/type: {config.db_type}/{ORACLE_TYPE_NVARCHAR2}"
+        )
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -580,7 +584,9 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         messages.log(
             f"Skipping {id} partition function tests due to goe_partition_functions_supported() == False"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} partition function tests due to goe_partition_functions_supported() == False"
+        )
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
 
@@ -590,7 +596,9 @@ def test_offload_rpa_udf_int8(config, schema, data_db):
         messages.log(
             f"Skipping {id} for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} for system/type: {config.db_type}/{frontend_api.test_type_canonical_int_8()}"
+        )
 
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({id})"
@@ -624,7 +632,9 @@ def test_offload_rpa_udf_string(config, schema, data_db):
         messages.log(
             f"Skipping {id} partition function tests due to goe_partition_functions_supported() == False"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} partition function tests due to goe_partition_functions_supported() == False"
+        )
 
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(
@@ -657,7 +667,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
 
     if config.db_type != offload_constants.DBTYPE_ORACLE:
         messages.log(f"Skipping {id} for system/type: {config.db_type}/AlphaString")
-        return
+        pytest.skip(f"Skipping {id} for system/type: {config.db_type}/AlphaString")
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -755,7 +765,9 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
         messages.log(
             f"Skipping {id} for {config.db_type} because empty partitions are not a thing"
         )
-        return
+        pytest.skip(
+            f"Skipping {id} for {config.db_type} because empty partitions are not a thing"
+        )
 
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)

@@ -955,10 +955,6 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
             db_name, table_name, column_name, project_expression
         )
 
-    def smart_connector_test_command(self, db_name=None, table_name=None):
-        assert db_name and table_name
-        return f"SELECT current_date() FROM {db_name}.{table_name} LIMIT 1"
-
     def sql_median_expression(self, db_name, table_name, column_name):
         """No single Snowflake function for median of any data type so pick to suit column"""
         column = self.get_column(db_name, table_name, column_name)
@@ -999,12 +995,12 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
 
         non_sampled_type = self.gen_default_numeric_column("x").format_data_type()
         return {
-            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: number(4, 3)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: SNOWFLAKE_TYPE_NUMBER
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: (
+                number(4, 3) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: (
+                SNOWFLAKE_TYPE_NUMBER if sampling_enabled else non_sampled_type
+            ),
             # NUM_10_M5 is NUMBER(4,0) mapped to 2-BYTE and back to NUMBER(5)
             STORY_TEST_OFFLOAD_NUMS_NUM_4: number(5, 0),
             STORY_TEST_OFFLOAD_NUMS_NUM_3_2: number(3, 2),
@@ -1012,18 +1008,18 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
             STORY_TEST_OFFLOAD_NUMS_NUM_3_5: number(5, 5),
             # NUM_10_M5 is NUMBER(10,0) mapped to 8-BYTE and back to NUMBER(19)
             STORY_TEST_OFFLOAD_NUMS_NUM_10_M5: number(19, 0),
-            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: number(10, 0)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_36_3: number(36, 3)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_37_3: number(37, 3)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: number(38, 3)
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: (
+                number(10, 0) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_36_3: (
+                number(36, 3) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_37_3: (
+                number(37, 3) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: (
+                number(38, 3) if sampling_enabled else non_sampled_type
+            ),
         }
 
     def story_test_table_extra_col_info(self):
@@ -1101,10 +1097,6 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
             },
         }
         return extra_cols
-
-    def transient_query_error_identification_strings(self) -> list:
-        """No additional known transient errors on Snowflake"""
-        return self._transient_query_error_identification_global_strings()
 
     def unit_test_query_options(self):
         return {"QUERY_TAG": "'my-tag'"}

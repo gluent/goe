@@ -26,7 +26,7 @@ from abc import ABCMeta, abstractmethod
 import collections
 import inspect
 import logging
-from typing import Callable, Optional
+from typing import Callable, Optional, TYPE_CHECKING
 
 from goe.data_governance.hadoop_data_governance import (
     data_governance_register_new_db_step,
@@ -69,6 +69,9 @@ from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 from goe.orchestration import command_steps
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
+
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
 
 
 class BackendTableException(Exception):
@@ -128,10 +131,10 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def __init__(
         self,
-        db_name,
-        table_name,
-        backend_type,
-        orchestration_options,
+        db_name: str,
+        table_name: str,
+        backend_type: str,
+        orchestration_options: "OrchestrationConfig",
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
@@ -208,6 +211,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         # Cache some attributes in state
         self._columns = None
         self._partition_columns = None
+        self._has_rows = None
         self._log_profile_after_final_table_load = None
         self._log_profile_after_verification_queries = None
 
@@ -2092,6 +2096,11 @@ class BackendTableInterface(metaclass=ABCMeta):
         else:
             column_name = column.upper()
         return self._final_table_casts[column_name]["verify_cast"]
+
+    def has_rows(self):
+        if self._has_rows is None:
+            self._has_rows = self._db_api.table_has_rows(self.db_name, self.table_name)
+        return self._has_rows
 
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)

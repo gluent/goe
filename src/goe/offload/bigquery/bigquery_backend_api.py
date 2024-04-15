@@ -2191,8 +2191,14 @@ FROM   %(from_db_table)s%(where)s""" % {
     def table_distribution(self, db_name, table_name):
         return None
 
-    def table_exists(self, db_name, table_name):
+    def table_exists(self, db_name: str, table_name: str) -> bool:
         return self._object_exists(db_name, table_name, table_type="TABLE")
+
+    def table_has_rows(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table has rows or not."""
+        sql = f"SELECT 1 FROM {self.enclose_object_reference(db_name, table_name)} LIMIT 1"
+        row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
+        return bool(row)
 
     def target_version(self):
         """No version available via SQL or API for BigQuery"""

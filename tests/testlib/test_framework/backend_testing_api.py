@@ -24,7 +24,6 @@ import logging
 import subprocess
 from subprocess import PIPE, STDOUT
 import sys
-import time
 
 from goe.offload.column_metadata import (
     CanonicalColumn,

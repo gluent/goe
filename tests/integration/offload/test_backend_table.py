@@ -432,6 +432,9 @@ class TestCurrentBackendTable(TestCase):
         else:
             self.assertFalse(cols)
 
+    def _test_has_rows(self):
+        self.assertTrue(self.api.has_rows())
+
     def _test_get_staging_table_location(self):
         try:
             self.api.get_staging_table_location()
@@ -617,6 +620,7 @@ class TestCurrentBackendTable(TestCase):
         self._test_get_default_location()
         self._test_get_partition_columns()
         self._test_get_staging_table_location()
+        self._test_has_rows()
         self._test_result_cache_area_exists()
         self._test_setup_result_cache_area()
         self._test_setup_staging_area()

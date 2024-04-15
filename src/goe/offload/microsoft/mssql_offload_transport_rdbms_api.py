@@ -82,7 +82,6 @@ class OffloadTransportMSSQLApi(OffloadTransportRdbmsApiInterface):
         nan_values_as_null=False,
     ):
         """Returns an expression suitable for reading a specific column from the RDBMS table"""
-        self.debug("get_rdbms_query_cast()")
         raise NotImplementedError("MSSQL get_rdbms_query_cast() pending implementation")
 
     def get_rdbms_session_setup_commands(

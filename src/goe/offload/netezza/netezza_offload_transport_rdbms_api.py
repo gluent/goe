@@ -83,7 +83,6 @@ class OffloadTransportNetezzaApi(OffloadTransportRdbmsApiInterface):
         nan_values_as_null=False,
     ):
         """Returns an expression suitable for reading a specific column from the RDBMS table"""
-        self.debug("get_rdbms_query_cast()")
         raise NotImplementedError(
             "Netezza get_rdbms_query_cast() pending implementation"
         )

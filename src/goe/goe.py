@@ -14,13 +14,11 @@
 
 import os
 import sys
-
 from copy import copy
 from datetime import datetime, timedelta
 import json
 import logging
 import os.path
-import math
 from optparse import OptionParser, Option, OptionValueError, SUPPRESS_HELP
 import re
 import traceback
@@ -93,7 +91,6 @@ from goe.offload.operation.transport import (
 )
 from goe.offload.offload import (
     active_data_append_options,
-    check_ipa_predicate_type_option_conflicts,
     check_table_structure,
     create_ddl_file_step,
     create_final_backend_table_step,
@@ -114,6 +111,7 @@ from goe.offload.operation.partition_controls import (
 )
 from goe.offload.option_validation import (
     check_opt_is_posint,
+    check_ipa_predicate_type_option_conflicts,
     normalise_data_sampling_options,
     normalise_offload_predicate_options,
     normalise_stats_options,
@@ -149,8 +147,9 @@ from goe.util.ora_query import get_oracle_connection
 from goe.util.redis_tools import RedisClient
 
 if TYPE_CHECKING:
-    from goe.offload.backend_table import BackendTableInterface
     from goe.config.orchestration_config import OrchestrationConfig
+    from goe.offload.backend_table import BackendTableInterface
+    from goe.offload.offload_source_data import OffloadSourceDataInterface
 
 
 dev_logger = logging.getLogger("goe")
@@ -650,12 +649,12 @@ def verify_row_count_by_aggs(
 
 
 def offload_data_verification(
-    offload_source_table,
-    offload_target_table,
+    offload_source_table: OffloadSourceTableInterface,
+    offload_target_table: "BackendTableInterface",
     offload_operation,
-    offload_options,
-    messages,
-    source_data_client,
+    offload_options: "OrchestrationConfig",
+    messages: OffloadMessages,
+    source_data_client: "OffloadSourceDataInterface",
 ):
     """Verify offloaded data by either rowcount or sampling aggregation functions.
     Boundary conditions used to verify only those partitions offloaded by the current operation.
@@ -1651,7 +1650,11 @@ class BaseOperation(object):
             offload_target_table.bucket_hash_column_supported(),
         )
 
-    def defaults_for_existing_table(self, messages):
+    def defaults_for_existing_table(
+        self,
+        offload_target_table: "BackendTableInterface",
+        messages: OffloadMessages,
+    ):
         """Default bucket hash column and datatype mappings from existing table
         This is required for setting up a pre-existing table and is used by
         incremental partition append.
@@ -1660,10 +1663,18 @@ class BaseOperation(object):
         existing_metadata = self.get_hybrid_metadata()
 
         if not existing_metadata:
-            raise OffloadException(
-                offload_constants.MISSING_METADATA_EXCEPTION_TEMPLATE
-                % (self.owner, self.table_name)
+            if offload_target_table.has_rows():
+                # If the table has rows but no metadata then we need to abort.
+                raise OffloadException(
+                    offload_constants.MISSING_METADATA_EXCEPTION_TEMPLATE
+                    % (self.owner, self.table_name)
+                )
+            # If the table is empty then we allow the offload to continue.
+            messages.log(
+                f"Allowing Offload to populate exists empty table: {offload_target_table.db_name}.{offload_target_table.table_name}",
+                detail=VERBOSE,
             )
+            return None
 
         self.set_bucket_info_from_metadata(existing_metadata, messages)
 
@@ -2518,14 +2529,14 @@ def canonical_to_rdbms_mappings(
 
 
 def offload_operation_logic(
-    offload_operation,
-    offload_source_table,
-    offload_target_table,
-    offload_options,
-    source_data_client,
+    offload_operation: OffloadOperation,
+    offload_source_table: OffloadSourceTableInterface,
+    offload_target_table: "BackendTableInterface",
+    offload_options: "OrchestrationConfig",
+    source_data_client: "OffloadSourceDataInterface",
     existing_metadata,
-    messages,
-):
+    messages: OffloadMessages,
+) -> bool:
     """Logic defining what will be offloaded and what the final objects will look like
     There's a lot goes on in here but one key item to note is there are 2 distinct routes through:
     1) The table either is new or is being reset, we take on board lots of options to define the final table
@@ -2640,7 +2651,11 @@ def offload_operation_logic(
             messages=messages,
         )
 
-    if offload_target_table.exists() and not offload_operation.reset_backend_table:
+    if (
+        offload_target_table.exists()
+        and offload_target_table.has_rows()
+        and not offload_operation.reset_backend_table
+    ):
         if incr_append_capable:
             if source_data_client.nothing_to_offload():
                 return False
@@ -2733,8 +2748,11 @@ def offload_table(
 
     existing_metadata = None
     if offload_target_table.exists() and not offload_operation.reset_backend_table:
-        # We need to pickup defaults for an existing table here, BEFORE we start looking for data to offload (get_offload_data_manager())
-        existing_metadata = offload_operation.defaults_for_existing_table(messages)
+        # We need to pickup defaults for an existing table here,
+        # BEFORE we start looking for data to offload (get_offload_data_manager()).
+        existing_metadata = offload_operation.defaults_for_existing_table(
+            offload_target_table, messages
+        )
         check_table_structure(offload_source_table, offload_target_table, messages)
         offload_target_table.refresh_operational_settings(
             offload_operation, rdbms_columns=offload_source_table.columns
@@ -2757,7 +2775,7 @@ def offload_table(
             )
         )
 
-    source_data_client = messages.offload_step(
+    source_data_client: "OffloadSourceDataInterface" = messages.offload_step(
         command_steps.STEP_FIND_OFFLOAD_DATA,
         lambda: get_offload_data_manager(
             offload_source_table,

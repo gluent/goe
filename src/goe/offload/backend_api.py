@@ -1849,8 +1849,12 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def table_exists(self, db_name, table_name):
-        pass
+    def table_exists(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table exists or not."""
+
+    @abstractmethod
+    def table_has_rows(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table has rows or not."""
 
     @abstractmethod
     def target_version(self):

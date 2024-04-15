@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import re
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 from goe.config import orchestration_defaults
 from goe.offload.factory.offload_transport_rdbms_api_factory import (
@@ -24,7 +24,6 @@ from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_transport import (
     OffloadTransportException,
     OffloadTransportSpark,
-    FRONTEND_TRACE_MODULE,
     MISSING_ROWS_SPARK_WARNING,
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
@@ -36,6 +35,12 @@ from goe.offload.offload_transport import (
 from goe.orchestration import command_steps
 from goe.util.misc_functions import write_temp_file
 
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+    from goe.offload.backend_table import BackendTableInterface
+    from goe.offload.offload_messages import OffloadMessages
+    from goe.offload.offload_source_table import OffloadSourceTableInterface
+
 
 GCLOUD_PROPERTY_SEPARATOR = ",GSEP,"
 
@@ -45,11 +50,11 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
 
     def __init__(
         self,
-        offload_source_table,
-        offload_target_table,
+        offload_source_table: "OffloadSourceTableInterface",
+        offload_target_table: "BackendTableInterface",
         offload_operation,
-        offload_options,
-        messages,
+        offload_options: "OrchestrationConfig",
+        messages: "OffloadMessages",
         dfs_client,
         rdbms_columns_override=None,
     ):

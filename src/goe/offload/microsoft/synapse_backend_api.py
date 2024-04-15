@@ -1910,24 +1910,30 @@ FROM   %(from_db_table)s%(where)s""" % {
                     stats.extend(
                         [
                             col_stat_name[0],  # name
-                            int(
-                                1
-                                / stats_row[
+                            (
+                                int(
+                                    1
+                                    / stats_row[
+                                        dbcc_showstatistics_stat_header.density.value
+                                    ]
+                                )
+                                if stats_row[
                                     dbcc_showstatistics_stat_header.density.value
                                 ]
-                            )
-                            if stats_row[dbcc_showstatistics_stat_header.density.value]
-                            else 0,  # ndv
+                                else 0
+                            ),  # ndv
                             None,  # num_nulls
-                            int(
-                                stats_row[
+                            (
+                                int(
+                                    stats_row[
+                                        dbcc_showstatistics_stat_header.average_key_length.value
+                                    ]
+                                )
+                                if stats_row[
                                     dbcc_showstatistics_stat_header.average_key_length.value
                                 ]
-                            )
-                            if stats_row[
-                                dbcc_showstatistics_stat_header.average_key_length.value
-                            ]
-                            else 0,  # avg_col_len
+                                else 0
+                            ),  # avg_col_len
                             None,  # low_value
                             None,  # high_value
                             col_stat_name[2],  # max_col_len
@@ -2393,7 +2399,7 @@ FROM   %(from_db_table)s%(where)s""" % {
         )
         return row[0] if row else row
 
-    def table_exists(self, db_name, table_name):
+    def table_exists(self, db_name: str, table_name: str) -> bool:
         sql = dedent(
             """\
                     SELECT table_name
@@ -2408,6 +2414,12 @@ FROM   %(from_db_table)s%(where)s""" % {
             log_level=VVERBOSE,
             query_params=[self._synapse_database, db_name, table_name],
         )
+        return bool(row)
+
+    def table_has_rows(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table has rows or not."""
+        sql = f"SELECT 1 FROM {self.enclose_object_reference(db_name, table_name)} LIMIT 1"
+        row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return bool(row)
 
     def target_version(self):

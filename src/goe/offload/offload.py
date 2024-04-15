@@ -40,7 +40,6 @@ from goe.offload.offload_metadata_functions import (
 )
 from goe.offload.offload_source_data import offload_source_data_factory
 from goe.offload.offload_source_table import (
-    OFFLOAD_PARTITION_TYPE_RANGE,
     OFFLOAD_PARTITION_TYPE_LIST,
 )
 from goe.offload.offload_transport import VALID_OFFLOAD_TRANSPORT_METHODS
@@ -49,15 +48,14 @@ from goe.offload.operation.data_type_controls import DECIMAL_COL_TYPE_SYNTAX_TEM
 from goe.offload.operation.ddl_file import write_ddl_to_ddl_file
 from goe.offload.option_validation import (
     active_data_append_options,
+    check_ipa_predicate_type_option_conflicts,
     check_opt_is_posint,
 )
 from goe.orchestration import command_steps
 from goe.persistence.orchestration_metadata import (
     hwm_column_names_from_predicates,
-    INCREMENTAL_PREDICATE_TYPE_PREDICATE,
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
-    INCREMENTAL_PREDICATE_TYPE_RANGE,
     INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV,
 )
 from goe.util.misc_functions import format_list_for_logging
@@ -66,69 +64,14 @@ if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
     from goe.goe import OffloadOperation
     from goe.offload.backend_table import BackendTableInterface
+    from goe.offload.offload_source_data import OffloadSourceDataInterface
+    from goe.offload.offload_source_table import OffloadSourceTableInterface
     from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )
 
 
 OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT = "Column mismatch detected between the source and backend table. Resolve before offloading"
-
-
-def check_ipa_predicate_type_option_conflicts(
-    options, exc_cls=OffloadException, rdbms_table=None
-):
-    ipa_predicate_type = getattr(options, "ipa_predicate_type", None)
-    active_lpa_opts = active_data_append_options(
-        options,
-        partition_type=OFFLOAD_PARTITION_TYPE_LIST,
-        ignore_partition_names_opt=True,
-    )
-    active_rpa_opts = active_data_append_options(
-        options,
-        partition_type=OFFLOAD_PARTITION_TYPE_RANGE,
-        ignore_partition_names_opt=True,
-    )
-    if ipa_predicate_type in [
-        INCREMENTAL_PREDICATE_TYPE_RANGE,
-        INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
-    ]:
-        if active_lpa_opts:
-            raise exc_cls(
-                "LIST %s with %s: %s"
-                % (
-                    offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
-                    ipa_predicate_type,
-                    ", ".join(active_lpa_opts),
-                )
-            )
-        if rdbms_table and active_rpa_opts:
-            # If we have access to an RDBMS table then we can check if the partition column data types are valid for IPA
-            unsupported_types = rdbms_table.unsupported_partition_data_types(
-                partition_type_override=OFFLOAD_PARTITION_TYPE_RANGE
-            )
-            if unsupported_types:
-                raise exc_cls(
-                    "RANGE %s with partition data types: %s"
-                    % (
-                        offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
-                        ", ".join(unsupported_types),
-                    )
-                )
-    elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST:
-        if active_rpa_opts:
-            raise exc_cls(
-                "RANGE %s with %s: %s"
-                % (
-                    offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
-                    ipa_predicate_type,
-                    ", ".join(active_rpa_opts),
-                )
-            )
-    elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_PREDICATE:
-        if not options.offload_predicate:
-            raise exc_cls(
-                offload_constants.IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT
-            )
 
 
 def check_table_structure(frontend_table, backend_table, messages: OffloadMessages):
@@ -239,8 +182,8 @@ def drop_backend_table_step(
 
 
 def get_current_offload_hv(
-    offload_source_table,
-    source_data_client,
+    offload_source_table: "OffloadSourceTableInterface",
+    source_data_client: "OffloadSourceDataInterface",
     offload_operation,
     messages: OffloadMessages,
 ):
@@ -293,7 +236,10 @@ def get_current_offload_hv(
 
 
 def get_prior_offloaded_hv(
-    rdbms_table, source_data_client, offload_operation, messages: OffloadMessages
+    rdbms_table: "OffloadSourceTableInterface",
+    source_data_client: "OffloadSourceDataInterface",
+    offload_operation,
+    messages: OffloadMessages,
 ):
     """Identifies the HV for a RANGE offload of the partition prior to the offload
     If there is pre-offload metadata we can use that otherwise we need to go back to the list of partitions
@@ -348,16 +294,16 @@ def get_prior_offloaded_hv(
 
 
 def get_offload_data_manager(
-    offload_source_table,
-    offload_target_table,
-    offload_operation,
+    offload_source_table: "OffloadSourceTableInterface",
+    offload_target_table: "BackendTableInterface",
+    offload_operation: "OffloadOperation",
     offload_options,
     messages: OffloadMessages,
     existing_metadata,
     source_client_type,
     partition_columns=None,
     include_col_offload_source_table=False,
-):
+) -> "OffloadSourceDataInterface":
     """Return a source data manager object which has methods for slicing and dicing RDBMS partitions and state
     containing which partitions to offload and data to construct hybrid view/verification predicates
     """
@@ -368,10 +314,6 @@ def get_offload_data_manager(
     ):
         # "not offload_target_table.is_view()" because we pass through here for presented joins too and do not expect previous metadata
         messages.log("Pre-offload metadata: " + str(existing_metadata), detail=VVERBOSE)
-        if not existing_metadata:
-            messages.warning(
-                "Backend table exists but hybrid metadata is missing, this appears to be recovery from a failed offload"
-            )
 
     if include_col_offload_source_table and existing_metadata:
         col_offload_source_table_override = OffloadSourceTable.create(
@@ -424,11 +366,11 @@ def offload_backend_db_message(
 
 
 def offload_type_force_effects(
-    hybrid_operation,
-    source_data_client,
+    hybrid_operation: "OffloadOperation",
+    source_data_client: "OffloadSourceDataInterface",
     original_metadata,
-    offload_source_table,
-    messages,
+    offload_source_table: "OffloadSourceTableInterface",
+    messages: OffloadMessages,
 ):
     if source_data_client.is_incremental_append_capable():
         original_offload_type = original_metadata.offload_type

@@ -222,6 +222,9 @@ def test_ddl_file_new_table_local_fs(config, schema, data_db):
         config, schema, data_db, test_table, ddl_file_prefix, backend_api, messages
     )
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_ddl_file_existing_table_local_fs(config, schema, data_db):
     """Test requesting a DDL file to local FS for a previously offloaded table."""
@@ -247,6 +250,9 @@ def test_ddl_file_existing_table_local_fs(config, schema, data_db):
     exsting_table_ddl_file_tests(
         config, schema, data_db, test_table, ddl_file_prefix, backend_api, messages
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
 
 
 def test_ddl_file_new_table_cloud_storage(config, schema, data_db):
@@ -292,3 +298,6 @@ def test_ddl_file_new_table_cloud_storage(config, schema, data_db):
         messages,
         dfs_client=dfs_client,
     )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

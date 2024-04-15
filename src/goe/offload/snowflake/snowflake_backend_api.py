@@ -1949,7 +1949,7 @@ class BackendSnowflakeApi(BackendApiInterface):
     def table_distribution(self, db_name, table_name):
         return None
 
-    def table_exists(self, db_name, table_name):
+    def table_exists(self, db_name: str, table_name: str) -> bool:
         """Return True/False if a table exists using SHOW TABLES.
         DESCRIBE TABLE/SHOW TABLES are much faster than using INFORMATION_SCHEMA but both have problems:
         SHOW TABLES is has case-insensitive LIKE and IN clauses plus throws exceptions if the schema doesn't exist.
@@ -1987,6 +1987,12 @@ class BackendSnowflakeApi(BackendApiInterface):
             else:
                 raise
         return False
+
+    def table_has_rows(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table has rows or not."""
+        sql = f"SELECT 1 FROM {self.enclose_object_reference(db_name, table_name)} LIMIT 1"
+        row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
+        return bool(row)
 
     def target_version(self):
         """Return version of the backend SQL engine in x.y.z format that can be used by GOEVersion().

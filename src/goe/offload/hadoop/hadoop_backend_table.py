@@ -24,6 +24,7 @@
 
 import logging
 import os
+from typing import TYPE_CHECKING
 
 from goe.data_governance.hadoop_data_governance import (
     data_governance_register_new_table_step,
@@ -69,6 +70,9 @@ from goe.offload.staging.parquet.parquet_column import (
     PARQUET_TYPE_INT64,
 )
 
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+
 
 ###############################################################################
 # CONSTANTS
@@ -99,10 +103,10 @@ class BackendHadoopTable(BackendTableInterface):
 
     def __init__(
         self,
-        db_name,
-        table_name,
-        backend_type,
-        orchestration_options,
+        db_name: str,
+        table_name: str,
+        backend_type: str,
+        orchestration_options: "OrchestrationConfig",
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,

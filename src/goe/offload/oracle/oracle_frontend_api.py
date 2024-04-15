@@ -260,7 +260,7 @@ class OracleFrontendApi(FrontendApiInterface):
                 and CREATE_TABLE_ORACLE_PARTITION_SPEC in table_properties
             )
             raise NotImplementedError(
-                f"Create table partitioning pending implementation"
+                "Create table partitioning pending implementation"
             )
 
         sql = (
@@ -358,6 +358,7 @@ class OracleFrontendApi(FrontendApiInterface):
         arg_list=None,
         log_level=None,
         not_when_dry_running=False,
+        commit=False,
     ):
         """Wrapper over cx_Oracle callfunc to additionally get and close a cursor"""
         logger.debug("Calling SQL function %s" % sql_fn)
@@ -391,6 +392,8 @@ class OracleFrontendApi(FrontendApiInterface):
                 return None
         finally:
             self._close_cursor()
+            if commit:
+                self._db_conn.commit()
 
     def _execute_query_fetch_x(
         self,
@@ -836,6 +839,7 @@ class OracleFrontendApi(FrontendApiInterface):
         arg_list=None,
         log_level=VERBOSE,
         not_when_dry_running=False,
+        commit=False,
     ):
         return self._execute_plsql_function(
             sql_fn,
@@ -844,6 +848,7 @@ class OracleFrontendApi(FrontendApiInterface):
             arg_list=arg_list,
             log_level=log_level,
             not_when_dry_running=not_when_dry_running,
+            commit=commit,
         )
 
     def fetchmany_takes_fetch_size(self):

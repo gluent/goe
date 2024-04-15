@@ -14,8 +14,9 @@
 
 from optparse import OptionValueError
 import re
+from typing import TYPE_CHECKING
 
-from goe.exceptions import OffloadOptionError
+from goe.exceptions import OffloadException, OffloadOptionError
 from goe.offload import offload_constants
 from goe.offload.predicate_offload import GenericPredicate
 from goe.offload.offload_source_table import (
@@ -23,7 +24,17 @@ from goe.offload.offload_source_table import (
     OFFLOAD_PARTITION_TYPE_RANGE,
     OFFLOAD_PARTITION_TYPE_LIST,
 )
+from goe.persistence.orchestration_metadata import (
+    INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+    INCREMENTAL_PREDICATE_TYPE_LIST,
+    INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+    INCREMENTAL_PREDICATE_TYPE_RANGE,
+)
 from goe.util.misc_functions import is_pos_int
+
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+    from goe.offload.offload_source_table import OffloadSourceTableInterface
 
 
 def active_data_append_options(
@@ -80,6 +91,63 @@ def check_opt_is_posint(
         )
 
 
+def check_ipa_predicate_type_option_conflicts(
+    options, exc_cls=OffloadException, rdbms_table: "OffloadSourceTableInterface" = None
+):
+    ipa_predicate_type = getattr(options, "ipa_predicate_type", None)
+    active_lpa_opts = active_data_append_options(
+        options,
+        partition_type=OFFLOAD_PARTITION_TYPE_LIST,
+        ignore_partition_names_opt=True,
+    )
+    active_rpa_opts = active_data_append_options(
+        options,
+        partition_type=OFFLOAD_PARTITION_TYPE_RANGE,
+        ignore_partition_names_opt=True,
+    )
+    if ipa_predicate_type in [
+        INCREMENTAL_PREDICATE_TYPE_RANGE,
+        INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+    ]:
+        if active_lpa_opts:
+            raise exc_cls(
+                "LIST %s with %s: %s"
+                % (
+                    offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                    ipa_predicate_type,
+                    ", ".join(active_lpa_opts),
+                )
+            )
+        if rdbms_table and active_rpa_opts:
+            # If we have access to an RDBMS table then we can check if the partition column data types are valid for IPA
+            unsupported_types = rdbms_table.unsupported_partition_data_types(
+                partition_type_override=OFFLOAD_PARTITION_TYPE_RANGE
+            )
+            if unsupported_types:
+                raise exc_cls(
+                    "RANGE %s with partition data types: %s"
+                    % (
+                        offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                        ", ".join(unsupported_types),
+                    )
+                )
+    elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_LIST:
+        if active_rpa_opts:
+            raise exc_cls(
+                "RANGE %s with %s: %s"
+                % (
+                    offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
+                    ipa_predicate_type,
+                    ", ".join(active_rpa_opts),
+                )
+            )
+    elif ipa_predicate_type == INCREMENTAL_PREDICATE_TYPE_PREDICATE:
+        if not options.offload_predicate:
+            raise exc_cls(
+                offload_constants.IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT
+            )
+
+
 def normalise_data_sampling_options(options):
     if hasattr(options, "data_sample_pct"):
         if isinstance(options.data_sample_pct, str) and re.search(
@@ -124,7 +192,7 @@ def normalise_offload_predicate_options(options):
         )
 
 
-def normalise_stats_options(options, target_backend):
+def normalise_stats_options(options, target_backend: str):
     if options.offload_stats_method not in [
         offload_constants.OFFLOAD_STATS_METHOD_NATIVE,
         offload_constants.OFFLOAD_STATS_METHOD_HISTORY,

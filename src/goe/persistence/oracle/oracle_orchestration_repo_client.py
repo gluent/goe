@@ -122,6 +122,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             "offload_repo.delete_offload_metadata",
             arg_list=[frontend_owner, frontend_name],
             not_when_dry_running=True,
+            commit=True,
         )
 
     def _get_metadata(self, frontend_owner: str, frontend_name: str) -> dict:
@@ -266,6 +267,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             "offload_repo.save_offload_metadata",
             arg_list=[frontend_owner, frontend_name, ora_metadata],
             not_when_dry_running=True,
+            commit=True,
         )
         # FrontendApi logging won't show metadata values due to being in an Oracle type. So we log it here for
         # benefit of support.

@@ -12,5 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Uncomment the line below if the default Python is v2 but Python 3 is also available
-#export PYSPARK_PYTHON=python3
+export PYSPARK_PYTHON=python3

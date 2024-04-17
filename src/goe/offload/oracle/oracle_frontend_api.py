@@ -726,11 +726,23 @@ class OracleFrontendApi(FrontendApiInterface):
                 setup_cursor()
             except cxo.DatabaseError as exc:
                 # Add more error codes to the list below as required.
-                if any(_ in str(exc) for _ in ("ORA-02396", "ORA-03113", "ORA-03114")):
+                if any(
+                    _ in str(exc)
+                    for _ in (
+                        "ORA-02396",
+                        "ORA-2396",
+                        "ORA-03113",
+                        "ORA-3113",
+                        "ORA-03114",
+                        "ORA-3114",
+                    )
+                ):
                     # Reconnect and try again (not in a loop, just try once and if we can't get going again then fail)
                     # "ORA-02396: exceeded maximum idle time, please connect again": Session sniped due to profile.
                     # "ORA-03113: end-of-file on communication channel: comes hand in hand with ORA-03114.
                     # "ORA-03114: not connected to Oracle": e.g. when a firewall rule severs an idle session.
+                    # Sometimes error codes are not padded with a zero, for example:
+                    #    DPI-1080: connection was closed by ORA-2396
                     self._log(
                         f"Reconnecting to Oracle due to: {str(exc)}", detail=VVERBOSE
                     )

@@ -19,7 +19,6 @@ Ideally these would migrate to better locations in time.
 
 from datetime import datetime, timedelta
 from optparse import SUPPRESS_HELP
-from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from goe.config import config_descriptions, orchestration_defaults
@@ -27,9 +26,6 @@ from goe.exceptions import OffloadException
 from goe.filesystem.goe_dfs import VALID_OFFLOAD_FS_SCHEMES
 from goe.data_governance.hadoop_data_governance_constants import (
     DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
-)
-from goe.offload.column_metadata import (
-    get_column_names,
 )
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload import offload_constants
@@ -58,7 +54,6 @@ from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
     INCREMENTAL_PREDICATE_TYPES_WITH_PREDICATE_IN_HV,
 )
-from goe.util.misc_functions import format_list_for_logging
 
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
@@ -69,69 +64,6 @@ if TYPE_CHECKING:
     from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )
-
-
-OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT = "Column mismatch detected between the source and backend table. Resolve before offloading"
-
-
-def check_table_structure(frontend_table, backend_table, messages: OffloadMessages):
-    """Compare frontend and backend columns by name and throw an exception if there is a mismatch.
-
-    Ideally we would use SchemaSyncAnalyzer for this but circular dependencies prevent that for the time being.
-    FIXME revisit this in the future to see if we can hook into SchemaSyncAnalyzer for comparison, see GOE-1307
-    """
-    frontend_cols = frontend_table.get_column_names(conv_fn=str.upper)
-    backend_cols = get_column_names(
-        backend_table.get_non_synthetic_columns(), conv_fn=str.upper
-    )
-    new_frontend_cols = sorted([_ for _ in frontend_cols if _ not in backend_cols])
-    missing_frontend_cols = sorted([_ for _ in backend_cols if _ not in frontend_cols])
-    if new_frontend_cols and not missing_frontend_cols:
-        # There are extra columns in the source and no dropped columns, we can recommend Schema Sync
-        messages.warning(
-            dedent(
-                """\
-                                New columns detected in the source table. Use Schema Sync to resolve.
-                                Recommended schema_sync command to add columns to {}:
-                                    schema_sync --include {}.{} -x
-                                """
-            ).format(
-                backend_table.backend_db_name(),
-                frontend_table.owner,
-                frontend_table.table_name,
-            ),
-            ansi_code="red",
-        )
-        raise OffloadException(
-            "{}: {}.{}".format(
-                OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT,
-                frontend_table.owner,
-                frontend_table.table_name,
-            )
-        )
-    elif missing_frontend_cols:
-        # There are extra columns in the source but also dropped columns, Schema Sync cannot be used
-        column_table = [
-            (frontend_table.frontend_db_name(), backend_table.backend_db_name())
-        ]
-        column_table.extend([(_, "-") for _ in new_frontend_cols])
-        column_table.extend([("-", _) for _ in missing_frontend_cols])
-        messages.warning(
-            dedent(
-                """\
-                                The following column mismatches were detected between the source and backend table:
-                                {}
-                                """
-            ).format(format_list_for_logging(column_table, underline_char="-")),
-            ansi_code="red",
-        )
-        raise OffloadException(
-            "{}: {}.{}".format(
-                OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT,
-                frontend_table.owner,
-                frontend_table.table_name,
-            )
-        )
 
 
 def create_ddl_file_step(

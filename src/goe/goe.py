@@ -86,12 +86,12 @@ from goe.offload.operation.data_type_controls import (
     canonical_columns_from_columns_csv,
     offload_source_to_canonical_mappings,
 )
+from goe.offload.operation.table_structure_checks import check_table_structure
 from goe.offload.operation.transport import (
     offload_data_to_target,
 )
 from goe.offload.offload import (
     active_data_append_options,
-    check_table_structure,
     create_ddl_file_step,
     create_final_backend_table_step,
     drop_backend_table_step,

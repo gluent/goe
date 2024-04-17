@@ -13,19 +13,14 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING
+from unittest import mock
 
 import pytest
 
 from goe.offload.bigquery import bigquery_column
 from goe.offload.column_metadata import (
     CanonicalColumn,
-    GOE_TYPE_DATE,
-    GOE_TYPE_DECIMAL,
     GOE_TYPE_INTEGER_1,
-    GOE_TYPE_TIME,
-    GOE_TYPE_TIMESTAMP,
-    GOE_TYPE_TIMESTAMP_TZ,
-    GOE_TYPE_VARIABLE_STRING,
 )
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.operation import table_structure_checks as module_under_test
@@ -144,6 +139,41 @@ def test_check_table_columns_by_name(
 
 
 @pytest.mark.parametrize(
+    "extra_frontend_names,missing_frontend_names",
+    [
+        (
+            [],
+            [],
+        ),
+        # Missing backend column.
+        (
+            ["COL_2"],
+            [],
+        ),
+        # Missing frontend column.
+        (
+            [],
+            ["COL_2"],
+        ),
+        # Missing backend columns.
+        (
+            ["COL_2", "COL_3"],
+            [],
+        ),
+    ],
+)
+def test_check_table_columns_by_name_logging(
+    extra_frontend_names: list, missing_frontend_names: list, messages
+):
+    fake_table = mock.MagicMock()
+    fake_table.frontend_db_name = lambda: "System A"
+    fake_table.backend_db_name = lambda: "System B"
+    module_under_test.check_table_columns_by_name_logging(
+        fake_table, fake_table, extra_frontend_names, missing_frontend_names, messages
+    )
+
+
+@pytest.mark.parametrize(
     "frontend_columns,backend_columns,expected_return_dict",
     [
         # Happy path, no expected mismatches.
@@ -231,7 +261,7 @@ def test_check_table_columns_by_name(
                 ),
             ],
             {
-                "COL_N2": GOE_TYPE_VARIABLE_STRING,
+                "COL_N2": bigquery_column.BIGQUERY_TYPE_STRING,
             },
         ),
         # Strings to numbers is not currently supported.
@@ -263,9 +293,9 @@ def test_check_table_columns_by_name(
                 ),
             ],
             {
-                "COL_S2": GOE_TYPE_DECIMAL,
-                "COL_S3": GOE_TYPE_DECIMAL,
-                "COL_S4": GOE_TYPE_DECIMAL,
+                "COL_S2": bigquery_column.BIGQUERY_TYPE_NUMERIC,
+                "COL_S3": bigquery_column.BIGQUERY_TYPE_BIGNUMERIC,
+                "COL_S4": bigquery_column.BIGQUERY_TYPE_NUMERIC,
             },
         ),
         # Strings to dates is not currently supported.
@@ -297,9 +327,9 @@ def test_check_table_columns_by_name(
                 ),
             ],
             {
-                "COL_S2": GOE_TYPE_DATE,
-                "COL_S3": GOE_TYPE_TIMESTAMP,
-                "COL_S4": GOE_TYPE_TIMESTAMP_TZ,
+                "COL_S2": bigquery_column.BIGQUERY_TYPE_DATE,
+                "COL_S3": bigquery_column.BIGQUERY_TYPE_DATETIME,
+                "COL_S4": bigquery_column.BIGQUERY_TYPE_TIMESTAMP,
             },
         ),
         # Backend TIME is not supported.
@@ -333,10 +363,10 @@ def test_check_table_columns_by_name(
                 ),
             ],
             {
-                "COL_N2": GOE_TYPE_TIME,
-                "COL_S1": GOE_TYPE_TIME,
-                "COL_D1": GOE_TYPE_TIME,
-                "COL_T1": GOE_TYPE_TIME,
+                "COL_N2": bigquery_column.BIGQUERY_TYPE_TIME,
+                "COL_S1": bigquery_column.BIGQUERY_TYPE_TIME,
+                "COL_D1": bigquery_column.BIGQUERY_TYPE_TIME,
+                "COL_T1": bigquery_column.BIGQUERY_TYPE_TIME,
             },
         ),
     ],
@@ -353,3 +383,25 @@ def test_check_table_columns_by_type_oracle_to_bigquery(
     bigquery_table._columns = backend_columns
     result = module_under_test.check_table_columns_by_type(oracle_table, bigquery_table)
     assert result == expected_return_dict
+
+
+@pytest.mark.parametrize(
+    "invalid_combinations",
+    [
+        {},
+        {
+            "COL_N2": bigquery_column.BIGQUERY_TYPE_TIME,
+            "COL_S1": bigquery_column.BIGQUERY_TYPE_TIME,
+            "COL_D1": bigquery_column.BIGQUERY_TYPE_TIME,
+            "COL_T1": bigquery_column.BIGQUERY_TYPE_TIME,
+        },
+    ],
+)
+def test_check_table_columns_by_type_logging(invalid_combinations: dict, messages):
+    fake_table = mock.MagicMock()
+    fake_table.frontend_db_name = lambda: "System A"
+    fake_table.backend_db_name = lambda: "System B"
+    fake_table.get_column = lambda x: CanonicalColumn("COL-NAME", GOE_TYPE_INTEGER_1)
+    module_under_test.check_table_columns_by_type_logging(
+        fake_table, fake_table, invalid_combinations, messages
+    )

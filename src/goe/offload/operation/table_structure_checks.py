@@ -53,19 +53,12 @@ def check_table_structure(
         frontend_cols, backend_cols
     )
     if new_frontend_cols or missing_frontend_cols:
-        column_table = [
-            (frontend_table.frontend_db_name(), backend_table.backend_db_name())
-        ]
-        column_table.extend([(_, "-") for _ in new_frontend_cols])
-        column_table.extend([("-", _) for _ in missing_frontend_cols])
-        messages.warning(
-            dedent(
-                """\
-                                The following column mismatches were detected between the source and backend table:
-                                {}
-                                """
-            ).format(format_list_for_logging(column_table, underline_char="-")),
-            ansi_code="red",
+        check_table_columns_by_name_logging(
+            frontend_table,
+            backend_table,
+            new_frontend_cols,
+            missing_frontend_cols,
+            messages,
         )
         raise OffloadException(
             "{}: {}.{}".format(
@@ -76,8 +69,18 @@ def check_table_structure(
         )
 
     # Check data types are compatible via canonical classes.
-    # TODO this code does not satisfy the above comment yet.
-    # check_table_columns_by_type(frontend_table, backend_table)
+    invalid_combinations = check_table_columns_by_type(frontend_table, backend_table)
+    if invalid_combinations:
+        check_table_columns_by_type_logging(
+            frontend_table, backend_table, invalid_combinations, messages
+        )
+        raise OffloadException(
+            "{}: {}.{}".format(
+                OFFLOAD_SCHEMA_CHECK_EXCEPTION_TEXT,
+                frontend_table.owner,
+                frontend_table.table_name,
+            )
+        )
 
 
 def check_table_columns_by_name(frontend_cols: list, backend_cols: list) -> tuple:
@@ -95,6 +98,28 @@ def check_table_columns_by_name(frontend_cols: list, backend_cols: list) -> tupl
     return new_frontend_names, missing_frontend_names
 
 
+def check_table_columns_by_name_logging(
+    frontend_table: "OffloadSourceTableInterface",
+    backend_table: "BackendTableInterface",
+    new_frontend_cols: list,
+    missing_frontend_cols: list,
+    messages: OffloadMessages,
+):
+    if not new_frontend_cols and not missing_frontend_cols:
+        return
+    column_table = [
+        (frontend_table.frontend_db_name(), backend_table.backend_db_name())
+    ]
+    column_table.extend([(_, "-") for _ in new_frontend_cols])
+    column_table.extend([("-", _) for _ in missing_frontend_cols])
+    messages.warning(
+        "The following column mismatches were detected between the source and backend table:\n{}".format(
+            format_list_for_logging(column_table, underline_char="-")
+        ),
+        ansi_code="red",
+    )
+
+
 def check_table_columns_by_type(
     frontend_table: "OffloadSourceTableInterface",
     backend_table: "BackendTableInterface",
@@ -102,7 +127,7 @@ def check_table_columns_by_type(
     """Check data types are compatible via canonical classes.
 
     Returns:
-        A dict of frontend column names that are incompatible with the canonical type of the backend column.
+        A dict of frontend column names with the incompatible backend data type.
     """
     invalid_combinations = {}
     target_canonical_cols = backend_table.get_canonical_columns()
@@ -119,5 +144,38 @@ def check_table_columns_by_type(
             # The types are a valid offload combination.
             continue
         # If we get here then we have an invalid combination
-        invalid_combinations[rdbms_col.name] = target_canonical_col.data_type
+        backend_col = match_table_column(rdbms_col.name, backend_table.get_columns())
+        invalid_combinations[rdbms_col.name] = backend_col.data_type
     return invalid_combinations
+
+
+def check_table_columns_by_type_logging(
+    frontend_table: "OffloadSourceTableInterface",
+    backend_table: "BackendTableInterface",
+    invalid_combinations: dict,
+    messages: OffloadMessages,
+):
+    if not invalid_combinations:
+        return
+    column_table = [
+        (
+            f"{frontend_table.frontend_db_name()} Column",
+            f"{frontend_table.frontend_db_name()} Type",
+            f"{backend_table.backend_db_name()} Type",
+        )
+    ]
+    for col_name, backend_type in invalid_combinations.items():
+        frontend_col = frontend_table.get_column(col_name)
+        column_table.append(
+            (
+                col_name,
+                frontend_col.data_type,
+                backend_type,
+            )
+        )
+    messages.warning(
+        "The following column mismatches were detected between the source and backend table:\n{}".format(
+            format_list_for_logging(column_table, underline_char="-")
+        ),
+        ansi_code="red",
+    )

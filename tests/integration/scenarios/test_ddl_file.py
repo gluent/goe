@@ -73,11 +73,14 @@ def data_db(schema, config):
 def step_assertions(offload_messages):
     """Check that we didn't run Offload steps that come after the DDL file is produced."""
     assert (
-        command_steps.step_title(command_steps.STEP_CREATE_TABLE)
-        in offload_messages.steps
+        command_steps.step_title(command_steps.STEP_DDL_FILE) in offload_messages.steps
     )
     # After creating the DDL file Offload should stop, therefore
     # we should never see data staged or loaded.
+    assert (
+        command_steps.step_title(command_steps.STEP_CREATE_TABLE)
+        not in offload_messages.steps
+    ), f"We ran an offload step that shouldn't be run: {command_steps.step_title(command_steps.STEP_CREATE_TABLE)}"
     assert (
         command_steps.step_title(command_steps.STEP_STAGING_TRANSPORT)
         not in offload_messages.steps

@@ -46,7 +46,7 @@ def check_table_structure(
       - Check data types are compatible across valid remappings, e.g. frontend date to backend string.
     """
     frontend_cols = frontend_table.columns
-    backend_cols = backend_table.get_columns()
+    backend_cols = backend_table.get_non_synthetic_columns()
 
     # Check case insensitive names match.
     new_frontend_cols, missing_frontend_cols = check_table_columns_by_name(

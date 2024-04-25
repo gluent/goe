@@ -24,6 +24,7 @@ from uuid import UUID
 from pydantic import UUID4, Field, Json, PositiveInt, validator
 
 # GOE
+from goe.config import option_descriptions
 import goe.config.orchestration_defaults as defaults
 from goe.listener.schemas.base import BaseSchema, TotaledResults
 from goe.orchestration.execution_id import ExecutionId
@@ -725,9 +726,7 @@ class OffloadOptions(BaseSchema):
     reset_backend_table: Optional[bool] = Field(
         default=False,
         title="Reset backend table",
-        description=(
-            "Remove backend data table. Use with caution - this will delete previously offloaded data for this table!"
-        ),
+        description=option_descriptions.RESET_BACKEND_TABLE,
         cli=("--reset-backend-table"),
     )
     reset_hybrid_view: Optional[bool] = Field(
@@ -737,6 +736,12 @@ class OffloadOptions(BaseSchema):
             "Reset Incremental Partition Append or Predicate-Based Offload predicates in the hybrid view."
         ),
         cli=("--reset-hybrid-view"),
+    )
+    reuse_backend_table: Optional[bool] = Field(
+        default=False,
+        title="Reuse backend table",
+        description=option_descriptions.REUSE_BACKEND_TABLE,
+        cli=("--reuse-backend-table"),
     )
     skip: Optional[str] = Field(
         default=None,

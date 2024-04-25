@@ -71,6 +71,7 @@ from tests.testlib.test_framework.test_functions import (
 
 OFFLOAD_DIM = "STORY_DIM"
 OFFLOAD_DIM2 = "STORY_EXISTS_DIM"
+OFFLOAD_DIM3 = "STORY_EXISTS_META_DIM"
 OFFLOAD_FACT = "STORY_FACT"
 OFFLOAD_FACT2 = "STORY_EXISTS_FACT"
 
@@ -641,8 +642,8 @@ def test_offload_basic_fact(config, schema, data_db):
     frontend_api.close()
 
 
-def test_offload_dim_to_existing_table(config, schema, data_db):
-    id = "test_offload_dim_to_existing_table"
+def test_offload_dim_to_existing_table_no_metadata(config, schema, data_db):
+    id = "test_offload_dim_to_existing_table_no_metadata"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
@@ -708,8 +709,108 @@ def test_offload_dim_to_existing_table(config, schema, data_db):
     frontend_api.close()
 
 
-def test_offload_fact_to_existing_table(config, schema, data_db):
-    id = "test_offload_fact_to_existing_table"
+def test_offload_dim_to_existing_table_with_metadata(config, schema, data_db):
+    id = "test_offload_dim_to_existing_table_with_metadata"
+    messages = get_test_messages(config, id)
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
+
+    test_table = OFFLOAD_DIM3
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+            schema, test_table, empty=True
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, test_table
+            ),
+            lambda: drop_offload_metadata(repo_client, schema, test_table),
+        ],
+    )
+
+    # Offload the empty table.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "reset_backend_table": True,
+        "create_backend_db": True,
+        "execute": True,
+    }
+    run_offload(options, config, messages)
+
+    assert backend_table_exists(
+        config, backend_api, messages, data_db, test_table
+    ), "Backend table should exist"
+    assert (
+        backend_table_count(config, backend_api, messages, data_db, test_table) == 0
+    ), "Backend table should be empty"
+
+    # Recreate the table but this time with data.
+    # Do not drop the metadata.
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+            schema,
+            test_table,
+        ),
+    )
+
+    # Attempt to offload to the empty table - expect this to fail.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "execute": True,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=(
+            offload_constants.METADATA_EMPTY_TABLE_EXCEPTION_TEMPLATE
+            % (schema.upper(), test_table.upper())
+        ),
+    )
+
+    assert (
+        backend_table_count(config, backend_api, messages, data_db, test_table) == 0
+    ), "Backend table should be empty"
+
+    # Offload to the empty table.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "reuse_backend_table": True,
+        "execute": True,
+    }
+    run_offload(options, config, messages)
+
+    assert (
+        backend_table_count(config, backend_api, messages, data_db, test_table) > 0
+    ), "Backend table should NOT be empty"
+
+    # Re-try should do nothing, even with reuse option.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "reuse_backend_table": True,
+        "execute": True,
+    }
+    run_offload(options, config, messages, expected_status=False)
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def test_offload_fact_to_existing_table_no_metadata(config, schema, data_db):
+    id = "test_offload_fact_to_existing_table_no_metadata"
     messages = get_test_messages(config, id)
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)

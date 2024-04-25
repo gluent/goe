@@ -26,7 +26,7 @@ from typing import Union, TYPE_CHECKING
 
 import orjson
 
-from goe.config import orchestration_defaults
+from goe.config import option_descriptions, orchestration_defaults
 from goe.config.config_validation_functions import normalise_size_option
 from goe.exceptions import OffloadException, OffloadOptionError
 from goe.filesystem.goe_dfs import (
@@ -243,6 +243,7 @@ EXPECTED_OFFLOAD_ARGS = [
     "purge_backend_table",
     "reset_backend_table",
     "reset_hybrid_view",
+    "reuse_backend_table",
     "sort_columns_csv",
     "sqoop_additional_options",
     "sqoop_mapreduce_map_memory_mb",
@@ -1662,7 +1663,14 @@ class BaseOperation(object):
         """
         existing_metadata = self.get_hybrid_metadata()
 
-        if not existing_metadata:
+        if existing_metadata:
+            if not offload_target_table.has_rows() and not self.reuse_backend_table:
+                # If the table is empty but has metadata then we need to abort unless using --reuse-backend-table.
+                raise OffloadException(
+                    offload_constants.METADATA_EMPTY_TABLE_EXCEPTION_TEMPLATE
+                    % (self.owner.upper(), self.table_name.upper())
+                )
+        else:
             if offload_target_table.has_rows():
                 # If the table has rows but no metadata then we need to abort.
                 raise OffloadException(
@@ -2263,6 +2271,7 @@ class OffloadOperation(BaseOperation):
             purge_backend_table=options.purge_backend_table,
             reset_backend_table=options.reset_backend_table,
             reset_hybrid_view=options.reset_hybrid_view,
+            reuse_backend_table=options.reuse_backend_table,
             skip=options.skip,
             sort_columns_csv=options.sort_columns_csv,
             sqoop_additional_options=options.sqoop_additional_options,
@@ -2459,6 +2468,7 @@ class OffloadOperation(BaseOperation):
             ),
             reset_backend_table=operation_dict.get("reset_backend_table", False),
             reset_hybrid_view=operation_dict.get("reset_hybrid_view", False),
+            reuse_backend_table=operation_dict.get("reuse_backend_table", False),
             skip=operation_dict.get("skip", orchestration_defaults.skip_default()),
             sort_columns_csv=operation_dict.get(
                 "sort_columns_csv", orchestration_defaults.sort_columns_default()
@@ -3237,7 +3247,7 @@ def get_options(usage=None, operation_name=None):
         dest="reset_backend_table",
         action="store_true",
         default=False,
-        help="Remove backend data table. Use with caution - this will delete previously offloaded data for this table!",
+        help=option_descriptions.RESET_BACKEND_TABLE,
     )
     opt.add_option(
         "--reset-hybrid-view",
@@ -3245,6 +3255,13 @@ def get_options(usage=None, operation_name=None):
         action="store_true",
         default=False,
         help="Reset Incremental Partition Append or Predicate-Based Offload predicates in the hybrid view.",
+    )
+    opt.add_option(
+        "--reuse-backend-table",
+        dest="reuse_backend_table",
+        action="store_true",
+        default=False,
+        help=option_descriptions.REUSE_BACKEND_TABLE,
     )
     opt.add_option(
         "--purge",

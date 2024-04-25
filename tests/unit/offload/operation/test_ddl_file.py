@@ -63,6 +63,12 @@ def test_normalise_ddl_file_auto(config: "OrchestrationConfig"):
     assert isinstance(fake_operation.ddl_file, str)
 
 
+def test_ddl_file_header():
+    h = module_under_test.ddl_file_header()
+    assert h
+    assert isinstance(h, str)
+
+
 @pytest.mark.parametrize(
     "path,expect_exception",
     [

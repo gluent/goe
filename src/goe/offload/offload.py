@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from optparse import SUPPRESS_HELP
 from typing import TYPE_CHECKING
 
-from goe.config import config_descriptions, orchestration_defaults
+from goe.config import option_descriptions, orchestration_defaults
 from goe.exceptions import OffloadException
 from goe.filesystem.goe_dfs import VALID_OFFLOAD_FS_SCHEMES
 from goe.data_governance.hadoop_data_governance_constants import (
@@ -476,7 +476,7 @@ def get_offload_options(opt):
         type=int,
         dest="data_sample_parallelism",
         default=orchestration_defaults.data_sample_parallelism_default(),
-        help=config_descriptions.DATA_SAMPLE_PARALLELISM,
+        help=option_descriptions.DATA_SAMPLE_PARALLELISM,
     )
     opt.add_option(
         "--ddl-file",
@@ -695,5 +695,5 @@ def get_offload_options(opt):
         dest="verify_parallelism",
         type=int,
         default=orchestration_defaults.verify_parallelism_default(),
-        help=config_descriptions.VERIFY_PARALLELISM,
+        help=option_descriptions.VERIFY_PARALLELISM,
     )

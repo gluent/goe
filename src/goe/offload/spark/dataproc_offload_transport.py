@@ -38,6 +38,7 @@ from goe.util.misc_functions import write_temp_file
 
 
 GCLOUD_PROPERTY_SEPARATOR = ",GSEP,"
+BATCHES_TTL_MARKER = "WARNING: Batch job is CANCELLED."
 
 
 class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
@@ -259,6 +260,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._stop_validation_polling_thread()
 
         if not self._dry_run:
+            self._verify_batches_log(cmd_out)
             rows_imported = self._get_rows_imported_from_spark_log(cmd_out)
             rows_imported_from_sql_stats = self._rdbms_api.log_sql_stats(
                 self._rdbms_module,
@@ -281,6 +283,16 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
 
         self._check_rows_imported(rows_imported)
         return rows_imported
+
+    def _verify_batches_log(self, batches_output: str):
+        """Check for issues/errors in the log that should trigger us to stop at this point."""
+        if re.search(r"^{}$".format(BATCHES_TTL_MARKER), batches_output, re.M):
+            self.warning(
+                f"Found Dataproc Batches TTL warning in command output: {BATCHES_TTL_MARKER}"
+            )
+            raise OffloadTransportException(
+                "Dataproc Batch is incomplete due to TTL, increase GOOGLE_DATAPROC_BATCHES_TTL"
+            )
 
     def _verify_rdbms_connectivity(self):
         """Use a simple canary query for verification test"""

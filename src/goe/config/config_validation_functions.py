@@ -145,6 +145,11 @@ def normalise_bigquery_options(options, exc_cls=OrchestrationConfigException):
             raise exc_cls(
                 f"Invalid value for GOOGLE_DATAPROC_BATCHES_VERSION: {options.google_dataproc_batches_version}"
             )
+    if options.google_dataproc_batches_ttl:
+        if not re.match(r"^[1-9][0-9]*[mhd]$", options.google_dataproc_batches_ttl):
+            raise exc_cls(
+                f"Invalid value for GOOGLE_DATAPROC_BATCHES_TTL: {options.google_dataproc_batches_ttl}"
+            )
 
 
 def normalise_hadoop_options(options, exc_cls=OrchestrationConfigException):

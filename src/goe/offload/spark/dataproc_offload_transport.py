@@ -278,7 +278,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._stop_validation_polling_thread()
 
         if not self._dry_run:
-            self._verify_batch(batch_name, cmd_out)
+            self._verify_batch(batch_name)
             rows_imported = self._get_rows_imported_from_spark_log(cmd_out)
             rows_imported_from_sql_stats = self._rdbms_api.log_sql_stats(
                 self._rdbms_module,

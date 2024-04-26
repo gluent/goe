@@ -160,7 +160,7 @@ def test_spark_submit_canary_construct():
     _ = spark_submit_jdbc_connectivity_checker(config, messages)
 
 
-def test_dataproc(config, messages, oracle_table, fake_operation):
+def test_dataproc_cmd(config, messages, oracle_table, fake_operation):
     fake_dfs_client = Mock()
     fake_target_table = Mock()
     client = offload_transport_factory(
@@ -175,6 +175,16 @@ def test_dataproc(config, messages, oracle_table, fake_operation):
     cmd = client._gcloud_dataproc_command()
     assert isinstance(cmd, list)
 
+    assert (
+        f"--project={config.google_dataproc_project}" in cmd
+    ), f"project option is missing from cmd: {cmd}"
+    assert (
+        f"--cluster={config.google_dataproc_cluster}" in cmd
+    ), f"cluster option is missing from cmd: {cmd}"
+    assert (
+        f"--region={config.google_dataproc_region}" in cmd
+    ), f"region option is missing from cmd: {cmd}"
+
 
 def test_dataproc_canary_construct():
     config = build_mock_options(FAKE_ORACLE_BQ_ENV)
@@ -185,10 +195,6 @@ def test_dataproc_canary_construct():
 def test_dataproc_batches_cmd(config, messages, oracle_table, fake_operation):
     fake_dfs_client = Mock()
     fake_target_table = Mock()
-    # Mock some settings that we can check in the final command.
-    config.google_dataproc_project = "p"
-    config.google_dataproc_batches_ttl = "4d"
-
     client = offload_transport_factory(
         OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
         oracle_table,
@@ -204,9 +210,15 @@ def test_dataproc_batches_cmd(config, messages, oracle_table, fake_operation):
     assert (
         f"--project={config.google_dataproc_project}" in cmd
     ), f"project option is missing from cmd: {cmd}"
-
-    # TTL.
-    assert any("--ttl=" in _ for _ in cmd), f"ttl option is missing from cmd: {cmd}"
+    assert (
+        f"--region={config.google_dataproc_region}" in cmd
+    ), f"region option is missing from cmd: {cmd}"
+    assert (
+        f"--service-account={config.google_dataproc_service_account}" in cmd
+    ), f"service account option is missing from cmd: {cmd}"
+    assert (
+        f"--ttl={config.google_dataproc_batches_ttl}" in cmd
+    ), f"ttl option is missing from cmd: {cmd}"
 
 
 @pytest.mark.parametrize(

@@ -73,6 +73,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
         self._dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._dataproc_batches_ttl = offload_options.google_dataproc_batches_ttl
         self._dataproc_batches_version = offload_options.google_dataproc_batches_version
 
     ###########################################################################
@@ -113,6 +114,8 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             gcloud_cmd.append(f"--version={self._dataproc_batches_version}")
         if self._dataproc_batches_subnet:
             gcloud_cmd.append(f"--subnet={self._dataproc_batches_subnet}")
+        if self._dataproc_batches_ttl:
+            gcloud_cmd.append(f"--ttl={self._dataproc_batches_ttl}")
         gcloud_cmd.append(f"--deps-bucket={self._offload_fs_container}")
         return gcloud_cmd
 
@@ -394,6 +397,7 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
         self._dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._dataproc_batches_ttl = offload_options.google_dataproc_batches_ttl
         self._dataproc_batches_version = offload_options.google_dataproc_batches_version
         self._spark_files_csv = offload_options.offload_transport_spark_files
         self._spark_jars_csv = offload_options.offload_transport_spark_jars

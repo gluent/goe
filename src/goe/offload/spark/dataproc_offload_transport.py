@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import re
 from typing import Union
 
@@ -20,7 +21,7 @@ from goe.offload.factory.offload_transport_rdbms_api_factory import (
     offload_transport_rdbms_api_factory,
 )
 from goe.offload.frontend_api import FRONTEND_TRACE_MODULE
-from goe.offload.offload_messages import VVERBOSE
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.offload_transport import (
     OffloadTransportException,
     OffloadTransportSpark,
@@ -39,6 +40,8 @@ from goe.util.misc_functions import write_temp_file
 
 GCLOUD_PROPERTY_SEPARATOR = ",GSEP,"
 BATCHES_TTL_MARKER = "WARNING: Batch job is CANCELLED."
+GCLOUD_BATCHES_STATE_CANCELLED = "CANCELLED"
+GCLOUD_BATCHES_STATE_FAILED = "FAILED"
 
 
 class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
@@ -96,7 +99,22 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             suffix=suffix,
         )
 
-    def _gcloud_dataproc_command(self) -> list:
+    def _gcloud_dataproc_describe_command(self, batch_name: str) -> list:
+        gcloud_cmd = [
+            OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
+            "dataproc",
+            "jobs",
+            "describe",
+            batch_name,
+            "--format=json",
+        ]
+        if self._dataproc_project:
+            gcloud_cmd.append(f"--project={self._dataproc_project}")
+        if self._dataproc_region:
+            gcloud_cmd.append(f"--region={self._dataproc_region}")
+        return gcloud_cmd
+
+    def _gcloud_dataproc_submit_command(self, id: str = None) -> list:
         gcloud_cmd = [
             OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
             "dataproc",
@@ -108,6 +126,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             gcloud_cmd.append(f"--project={self._dataproc_project}")
         if self._dataproc_region:
             gcloud_cmd.append(f"--region={self._dataproc_region}")
+        gcloud_cmd.append(f"--batch={id}")
         if self._dataproc_service_account:
             gcloud_cmd.append(f"--service-account={self._dataproc_service_account}")
         if self._dataproc_batches_version:
@@ -119,21 +138,19 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         gcloud_cmd.append(f"--deps-bucket={self._offload_fs_container}")
         return gcloud_cmd
 
-    def _get_batch_name_option(self) -> list:
-        # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
+    def _get_batch_name(self) -> str:
+        """Return a Dataproc Batch name.
+
+        Valid names only accept a simple set of characters and are 4-63 characters in length only.
+        """
         batch_name_root = re.sub(
             r"[^a-zA-Z0-9\-]+", "", self._target_db_name + "-" + self._load_table_name
         )
-        batch_name_opt = [
-            "--batch={}".format(
-                self._get_transport_app_name(
-                    sep="-", ts=True, name_override=batch_name_root
-                ).lower()[:64]
-            )
-        ]
-        return batch_name_opt
+        return self._get_transport_app_name(
+            sep="-", ts=True, name_override=batch_name_root
+        ).lower()[:64]
 
-    def _get_spark_gcloud_command(self, pyspark_body):
+    def _get_spark_gcloud_command(self, pyspark_body, id: str = None):
         """Submit PySpark code via gcloud"""
 
         def cli_safe_the_password(k, v):
@@ -173,7 +190,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             else:
                 remote_spark_jars_csv = spark_listener_jar_remote_path
 
-        gcloud_cmd = self._gcloud_dataproc_command()
+        gcloud_cmd = self._gcloud_dataproc_submit_command(id=id)
 
         spark_config_props, no_log_password = [], []
         [
@@ -230,11 +247,9 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             [f"--files={remote_spark_files_csv}"] if remote_spark_files_csv else []
         )
 
-        batch_name_opt = self._get_batch_name_option()
         cmd = (
             gcloud_cmd
             + [options_file_remote_path]
-            + batch_name_opt
             + jars_opt
             + files_opt
             + properties_clause
@@ -250,11 +265,12 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
 
         rows_imported = None
         pyspark_body = self._get_pyspark_body(partition_chunk)
+        batch_name = self._get_batch_name()
         (
             spark_gcloud_cmd,
             no_log_password,
             py_rm_commands,
-        ) = self._get_spark_gcloud_command(pyspark_body)
+        ) = self._get_spark_gcloud_command(pyspark_body, id=batch_name)
 
         self._start_validation_polling_thread()
         rc, cmd_out = self._run_os_cmd(
@@ -263,7 +279,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._stop_validation_polling_thread()
 
         if not self._dry_run:
-            self._verify_batches_log(cmd_out)
+            self._verify_batch(batch_name, cmd_out)
             rows_imported = self._get_rows_imported_from_spark_log(cmd_out)
             rows_imported_from_sql_stats = self._rdbms_api.log_sql_stats(
                 self._rdbms_module,
@@ -287,9 +303,60 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._check_rows_imported(rows_imported)
         return rows_imported
 
-    def _verify_batches_log(self, batches_output: str):
-        """Check for issues/errors in the log that should trigger us to stop at this point."""
-        if re.search(r"^{}$".format(BATCHES_TTL_MARKER), batches_output, re.M):
+    def _verify_batch(self, batch_name: str, submit_cmd_output: str):
+        """Check for issues/errors in the batch that should trigger us to stop at this point.
+
+        submit_cmd_output is only used if are unable to get the status from a describe command.
+        """
+        describe_cmd = self._gcloud_dataproc_describe_command(batch_name)
+        # Command below is optional because we don't want to fail a job if the describe command fails.
+        # Only if the describe command successfully tells us the batch failed.
+        rc, describe_cmd_output = self._run_os_cmd(
+            self._ssh_cmd_prefix() + describe_cmd, optional=True
+        )
+        if rc == 0 and describe_cmd_output:
+            # NJNJ need to remove password
+            self.log(
+                f"Batch description:\n{describe_cmd_output}",
+                detail=VVERBOSE,
+            )
+            if not self._verify_batch_by_describe(describe_cmd_output):
+                self._verify_batch_by_log(submit_cmd_output)
+        else:
+            self._verify_batch_by_log(submit_cmd_output)
+
+    def _verify_batch_by_describe(self, describe_output: str) -> bool:
+        """Verify a batch based on the output of the describe command.
+
+        Return:
+            True is we checked the status, False if we were unable to check.
+        """
+        describe_output_no_passwords = "\n".join(
+            _ for _ in describe_output.split("\n") if "password" not in _
+        )
+        try:
+            reponse_dict = json.loads(describe_output_no_passwords)
+        except Exception as exc:
+            # If we can't decode the output then log it and fall back to submit output checking.
+            self.log(f"Exception describing Dataproc batch: {str(exc)}", detail=VERBOSE)
+            return False
+        state = reponse_dict.get("state")
+        if state and state in [
+            GCLOUD_BATCHES_STATE_CANCELLED,
+            GCLOUD_BATCHES_STATE_FAILED,
+        ]:
+            if state == GCLOUD_BATCHES_STATE_CANCELLED:
+                raise OffloadTransportException(
+                    "Dataproc Batch is incomplete due to TTL, increase GOOGLE_DATAPROC_BATCHES_TTL"
+                )
+            else:
+                raise OffloadTransportException(
+                    f"Dataproc batch failed with state: {state}"
+                )
+
+    def _verify_batch_by_log(self, submit_cmd_output: str):
+        """Verify a batch based on the output of the submit command."""
+        if re.search(r"^{}$".format(BATCHES_TTL_MARKER), submit_cmd_output, re.M):
             self.warning(
                 f"Found Dataproc Batches TTL warning in command output: {BATCHES_TTL_MARKER}"
             )
@@ -407,16 +474,12 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
         self._rdbms_table = None
         self._staging_format = None
 
-    def _get_batch_name_option(self) -> list:
+    def _get_batch_name(self) -> str:
+        """Return a Dataproc Batch name for canary check."""
         # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
-        batch_name_opt = [
-            "--batch={}".format(
-                self._get_transport_app_name(
-                    sep="-", ts=True, name_override="canary"
-                ).lower()[:64]
-            )
-        ]
-        return batch_name_opt
+        return self._get_transport_app_name(
+            sep="-", ts=True, name_override="canary"
+        ).lower()[:64]
 
     ###########################################################################
     # PUBLIC METHODS
@@ -429,7 +492,7 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
 class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
     """Submit PySpark to Dataproc via gcloud to transport data."""
 
-    def _gcloud_dataproc_command(self) -> list:
+    def _gcloud_dataproc_submit_command(self, id: str = None) -> list:
         gcloud_cmd = [
             OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
             "dataproc",
@@ -451,9 +514,6 @@ class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
                 f"--impersonate-service-account={self._dataproc_service_account}"
             )
         return gcloud_cmd
-
-    def _get_batch_name_option(self) -> list:
-        return []
 
 
 class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcloud):

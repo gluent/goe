@@ -172,7 +172,7 @@ def test_dataproc_cmd(config, messages, oracle_table, fake_operation):
         messages,
         fake_dfs_client,
     )
-    cmd = client._gcloud_dataproc_command()
+    cmd = client._gcloud_dataproc_submit_command()
     assert isinstance(cmd, list)
 
     assert (
@@ -184,6 +184,10 @@ def test_dataproc_cmd(config, messages, oracle_table, fake_operation):
     assert (
         f"--region={config.google_dataproc_region}" in cmd
     ), f"region option is missing from cmd: {cmd}"
+    # batch option should NOT be in standard Dataproc job commands.
+    assert all(
+        "--batch=" not in _ for _ in cmd
+    ), f"batch option is incorrectly in cmd: {cmd}"
 
 
 def test_dataproc_canary_construct():
@@ -204,7 +208,7 @@ def test_dataproc_batches_cmd(config, messages, oracle_table, fake_operation):
         messages,
         fake_dfs_client,
     )
-    cmd = client._gcloud_dataproc_command()
+    cmd = client._gcloud_dataproc_submit_command()
     assert isinstance(cmd, list)
 
     assert (
@@ -213,12 +217,174 @@ def test_dataproc_batches_cmd(config, messages, oracle_table, fake_operation):
     assert (
         f"--region={config.google_dataproc_region}" in cmd
     ), f"region option is missing from cmd: {cmd}"
+    assert any("--batch=" in _ for _ in cmd), f"batch option is missing from cmd: {cmd}"
     assert (
         f"--service-account={config.google_dataproc_service_account}" in cmd
     ), f"service account option is missing from cmd: {cmd}"
     assert (
         f"--ttl={config.google_dataproc_batches_ttl}" in cmd
     ), f"ttl option is missing from cmd: {cmd}"
+
+
+def test_dataproc_batches_describe_cmd(config, messages, oracle_table, fake_operation):
+    fake_dfs_client = Mock()
+    fake_target_table = Mock()
+    client = offload_transport_factory(
+        OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+        oracle_table,
+        fake_target_table,
+        fake_operation,
+        config,
+        messages,
+        fake_dfs_client,
+    )
+    batch_name = "my-unit-batch"
+    cmd = client._gcloud_dataproc_describe_command(batch_name)
+    assert isinstance(cmd, list)
+
+    assert (
+        f"--project={config.google_dataproc_project}" in cmd
+    ), f"project option is missing from cmd: {cmd}"
+    assert (
+        f"--region={config.google_dataproc_region}" in cmd
+    ), f"region option is missing from cmd: {cmd}"
+    assert batch_name in cmd, f"batch '{batch_name}' is missing from cmd: {cmd}"
+
+
+@pytest.mark.parametrize(
+    "cmd_output,expect_exception",
+    [
+        # Describe output for a successful job.
+        (
+            """{
+  "createTime": "2024-04-26T08:10:01.214382Z",
+  "creator": "sa@p.iam.gserviceaccount.com",
+  "environmentConfig": {
+    "executionConfig": {
+      "serviceAccount": "sa@p.iam.gserviceaccount.com",
+      "subnetworkUri": "projects/p/regions/west1/subnetworks/s",
+      "ttl": "86400s"
+    },
+    "peripheralsConfig": {
+      "sparkHistoryServerConfig": {}
+    }
+  },
+  "name": "projects/p/locations/west1/batches/goe-batch-20240426080958",
+  "operation": "projects/p/locations/west1/operations/b4873-4952-3f5d-884d-cec5a2d09",
+  "state": "SUCCEEDED",
+  "stateHistory": [
+    {
+      "state": "PENDING",
+      "stateStartTime": "2024-04-26T08:10:01.214382Z"
+    },
+    {
+      "state": "RUNNING",
+      "stateStartTime": "2024-04-26T08:12:02.032731Z"
+    }
+  ],
+  "stateTime": "2024-04-26T08:13:55.084692Z",
+  "uuid": "12cea"
+}""",
+            False,
+        ),
+        # Describe output for a cancelled job.
+        (
+            """{
+  "createTime": "2024-04-26T10:09:11.916627Z",
+  "creator": "sa@p.iam.gserviceaccount.com",
+  "environmentConfig": {
+    "executionConfig": {
+      "serviceAccount": "sa@p.iam.gserviceaccount.com",
+      "subnetworkUri": "projects/p/regions/west1/subnetworks/s",
+      "ttl": "600s"
+    },
+    "peripheralsConfig": {
+      "sparkHistoryServerConfig": {}
+    }
+  },
+  "name": "projects/p/locations/west1/batches/goe-batch-20240426080958",
+  "operation": "projects/p/locations/west1/operations/b4873-4952-3f5d-884d-cec5a2d09",
+  "state": "CANCELLED",
+  "stateHistory": [
+    {
+      "state": "PENDING",
+      "stateStartTime": "2024-04-26T10:09:11.916627Z"
+    },
+    {
+      "state": "RUNNING",
+      "stateStartTime": "2024-04-26T10:10:33.461859Z"
+    },
+    {
+      "state": "CANCELLING",
+      "stateMessage": "Cancelling batch as ttl exceeded",
+      "stateStartTime": "2024-04-26T10:19:12.387649Z"
+    }
+  ],
+  "stateTime": "2024-04-26T10:19:12.454387Z",
+  "uuid": "12cea"
+}""",
+            True,
+        ),
+        # Describe output for a failed job.
+        (
+            """{
+  "createTime": "2024-04-26T10:09:11.916627Z",
+  "creator": "sa@p.iam.gserviceaccount.com",
+  "environmentConfig": {
+    "executionConfig": {
+      "serviceAccount": "sa@p.iam.gserviceaccount.com",
+      "subnetworkUri": "projects/p/regions/west1/subnetworks/s",
+      "ttl": "600s"
+    },
+    "peripheralsConfig": {
+      "sparkHistoryServerConfig": {}
+    }
+  },
+  "name": "projects/p/locations/west1/batches/goe-batch-20240426080958",
+  "operation": "projects/p/locations/west1/operations/a2d09",
+  "state": "FAILED",
+  "stateHistory": [
+    {
+      "state": "PENDING",
+      "stateStartTime": "2024-04-26T10:25:59.242854Z"
+    },
+    {
+      "state": "RUNNING",
+      "stateStartTime": "2024-04-26T10:27:24.305264Z"
+    }
+  ],
+  "stateMessage": "Job failed with message [SyntaxError: invalid syntax]. Additional details can be found at:\\nhttps://console.cloud.google.com/dataproc/batches/west1/goe-batch-20240426080958?project=p\\ngcloud dataproc batches wait 'goe-batch-20240426080958' --region 'west1' --project 'p'\\nhttps://console.cloud.google.com/storage/browser/dataproc-staging-west1-123-l/batch-3347f/\\ngs://dataproc-staging-west1-123-l/google-cloud-dataproc-metainfo/2ad11/jobs/srvls-batch-3347f/driveroutput.*",
+  "stateTime": "2024-04-26T10:27:48.237750Z",
+  "uuid": "12cea"
+}""",
+            True,
+        ),
+    ],
+)
+def test_dataproc_batch_describe(
+    config,
+    messages,
+    oracle_table,
+    fake_operation,
+    cmd_output: str,
+    expect_exception: bool,
+):
+    fake_dfs_client = Mock()
+    fake_target_table = Mock()
+    client = offload_transport_factory(
+        OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+        oracle_table,
+        fake_target_table,
+        fake_operation,
+        config,
+        messages,
+        fake_dfs_client,
+    )
+    if expect_exception:
+        with pytest.raises(Exception) as _:
+            client._verify_batch_by_describe(cmd_output)
+    else:
+        client._verify_batch_by_describe(cmd_output)
 
 
 @pytest.mark.parametrize(
@@ -245,12 +411,6 @@ com.oracle.database.jdbc#ojdbc11 added as a dependency
 ('spark.app.id', 'app-20240423092933-0000')
 root
 |-- PROD_ID: integer (nullable = true)
-|-- CUST_ID: integer (nullable = true)
-|-- TIME_ID: string (nullable = true)
-|-- CHANNEL_ID: integer (nullable = true)
-|-- PROMO_ID: string (nullable = true)
-|-- QUANTITY_SOLD: string (nullable = true)
-|-- AMOUNT_SOLD: string (nullable = true)
 |-- GOE_OFFLOAD_BATCH: decimal(38,10) (nullable = true)
 
 24/04/23 09:29:44 INFO PathOutputCommitterFactory: No output committer factory defined, defaulting to FileOutputCommitterFactory
@@ -259,16 +419,16 @@ root
 Batch [goe-goetest-20240423092754] finished.
 metadata:
 '@type': type.com/g.c.d.v1.BatchOperationMetadata
-batch: projects/goe/locations/west1/batches/goe-goetest-storyfact-20240423092754
-batchUuid: 01f7d-ce45-4756-aafc-1c3c9015a
+batch: projects/goe/locations/west1/batches/goe-test-20240423092754
+batchUuid: 1c3c9015a
 createTime: '2024-04-23T09:27:56.885549Z'
 description: Batch
 labels:
 goog-dataproc-batch-id: goe-goetest-20240423092754
-goog-dataproc-batch-uuid: 01f7d-ce45-4756-aafc-1cc4b015a
+goog-dataproc-batch-uuid: 1cc4b015a
 goog-dataproc-location: west1
 operationType: BATCH
-name: projects/goe/regions/west1/operations/efb33-a3f8-3d12-babe-de36f5147""",
+name: projects/goe/regions/west1/operations/babe-de36f5147""",
             False,
         ),
         (
@@ -292,12 +452,6 @@ com.oracle.database.jdbc#ojdbc11 added as a dependency
 ('spark.app.id', 'app-20240423092933-0000')
 root
 |-- PROD_ID: integer (nullable = true)
-|-- CUST_ID: integer (nullable = true)
-|-- TIME_ID: string (nullable = true)
-|-- CHANNEL_ID: integer (nullable = true)
-|-- PROMO_ID: string (nullable = true)
-|-- QUANTITY_SOLD: string (nullable = true)
-|-- AMOUNT_SOLD: string (nullable = true)
 |-- GOE_OFFLOAD_BATCH: decimal(38,10) (nullable = true)
 
 24/04/23 09:29:44 INFO PathOutputCommitterFactory: No output committer factory defined, defaulting to FileOutputCommitterFactory
@@ -307,16 +461,16 @@ WARNING: Batch job is CANCELLED.
 Batch [goe-goetest-20240423092754] finished.
 metadata:
 '@type': type.com/g.c.d.v1.BatchOperationMetadata
-batch: projects/goe/locations/west1/batches/goe-goetest-storyfact-20240423092754
+batch: projects/goe/locations/west1/batches/goe-test-20240423092754
 batchUuid: 01f7d-ce45-4756-aafc-1c3c9015a
 createTime: '2024-04-23T09:27:56.885549Z'
 description: Batch
 labels:
 goog-dataproc-batch-id: goe-goetest-20240423092754
-goog-dataproc-batch-uuid: 01f7d-ce45-4756-aafc-1cc4b015a
+goog-dataproc-batch-uuid: aafc-1cc4b015a
 goog-dataproc-location: west1
 operationType: BATCH
-name: projects/goe/regions/west1/operations/efb33-a3f8-3d12-babe-de36f5147""",
+name: projects/goe/regions/west1/operations/babe-de36f5147""",
             True,
         ),
     ],
@@ -342,9 +496,9 @@ def test_dataproc_batches_output(
     )
     if expect_exception:
         with pytest.raises(Exception) as _:
-            client._verify_batches_log(cmd_output)
+            client._verify_batch_by_log(cmd_output)
     else:
-        client._verify_batches_log(cmd_output)
+        client._verify_batch_by_log(cmd_output)
 
 
 def test_dataproc_batches_canary_construct():

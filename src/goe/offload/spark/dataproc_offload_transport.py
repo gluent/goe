@@ -344,17 +344,19 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         rdbms_source_query = "(%s) v" % self._rdbms_api.get_rdbms_canary_query()
         pyspark_body = self._get_pyspark_body(canary_query=rdbms_source_query)
         self.log("PySpark: " + pyspark_body, detail=VVERBOSE)
+        batch_name = self._get_batch_name()
         (
             spark_gcloud_cmd,
             no_log_password,
             py_rm_commands,
-        ) = self._get_spark_gcloud_command(pyspark_body)
+        ) = self._get_spark_gcloud_command(pyspark_body, id=batch_name)
         rc, cmd_out = self._run_os_cmd(
             self._ssh_cmd_prefix() + spark_gcloud_cmd, no_log_items=no_log_password
         )
         # Remove any pyspark scripts we created
         if py_rm_commands:
             [self._run_os_cmd(_) for _ in py_rm_commands]
+        self._verify_batch(batch_name)
         # If we got this far then we're in good shape
         return True
 

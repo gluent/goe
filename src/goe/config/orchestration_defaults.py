@@ -213,6 +213,10 @@ def google_dataproc_batches_subnet_default() -> Optional[str]:
     return os.environ.get("GOOGLE_DATAPROC_BATCHES_SUBNET")
 
 
+def google_dataproc_batches_ttl_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_DATAPROC_BATCHES_TTL")
+
+
 def google_dataproc_batches_version_default() -> Optional[str]:
     return os.environ.get("GOOGLE_DATAPROC_BATCHES_VERSION")
 

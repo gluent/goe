@@ -311,9 +311,9 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             self._ssh_cmd_prefix() + describe_cmd, optional=True
         )
         if rc == 0 and describe_cmd_output:
-            self._verify_batch_by_describe(describe_cmd_output)
+            self._verify_batch_describe_response(describe_cmd_output)
 
-    def _verify_batch_by_describe(self, describe_output: str) -> bool:
+    def _verify_batch_describe_response(self, describe_output: str) -> bool:
         """Verify a batch based on the output of the describe command.
 
         Return:

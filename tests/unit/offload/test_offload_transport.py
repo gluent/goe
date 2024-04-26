@@ -382,9 +382,9 @@ def test_dataproc_batch_describe(
     )
     if expect_exception:
         with pytest.raises(Exception) as _:
-            client._verify_batch_by_describe(cmd_output)
+            client._verify_batch_describe_response(cmd_output)
     else:
-        client._verify_batch_by_describe(cmd_output)
+        client._verify_batch_describe_response(cmd_output)
 
 
 def test_dataproc_batches_canary_construct():

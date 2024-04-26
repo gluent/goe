@@ -315,11 +315,6 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             self._ssh_cmd_prefix() + describe_cmd, optional=True
         )
         if rc == 0 and describe_cmd_output:
-            # NJNJ need to remove password
-            self.log(
-                f"Batch description:\n{describe_cmd_output}",
-                detail=VVERBOSE,
-            )
             if not self._verify_batch_by_describe(describe_cmd_output):
                 self._verify_batch_by_log(submit_cmd_output)
         else:
@@ -331,11 +326,8 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         Return:
             True is we checked the status, False if we were unable to check.
         """
-        describe_output_no_passwords = "\n".join(
-            _ for _ in describe_output.split("\n") if "password" not in _
-        )
         try:
-            reponse_dict = json.loads(describe_output_no_passwords)
+            reponse_dict = json.loads(describe_output)
         except Exception as exc:
             # If we can't decode the output then log it and fall back to submit output checking.
             self.log(f"Exception describing Dataproc batch: {str(exc)}", detail=VERBOSE)

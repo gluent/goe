@@ -39,7 +39,6 @@ from goe.util.misc_functions import write_temp_file
 
 
 GCLOUD_PROPERTY_SEPARATOR = ",GSEP,"
-BATCHES_TTL_MARKER = "WARNING: Batch job is CANCELLED."
 GCLOUD_BATCHES_STATE_CANCELLED = "CANCELLED"
 GCLOUD_BATCHES_STATE_FAILED = "FAILED"
 
@@ -303,11 +302,8 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._check_rows_imported(rows_imported)
         return rows_imported
 
-    def _verify_batch(self, batch_name: str, submit_cmd_output: str):
-        """Check for issues/errors in the batch that should trigger us to stop at this point.
-
-        submit_cmd_output is only used if are unable to get the status from a describe command.
-        """
+    def _verify_batch(self, batch_name: str):
+        """Check for issues/errors in the batch that should trigger us to stop at this point."""
         describe_cmd = self._gcloud_dataproc_describe_command(batch_name)
         # Command below is optional because we don't want to fail a job if the describe command fails.
         # Only if the describe command successfully tells us the batch failed.
@@ -315,10 +311,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             self._ssh_cmd_prefix() + describe_cmd, optional=True
         )
         if rc == 0 and describe_cmd_output:
-            if not self._verify_batch_by_describe(describe_cmd_output):
-                self._verify_batch_by_log(submit_cmd_output)
-        else:
-            self._verify_batch_by_log(submit_cmd_output)
+            self._verify_batch_by_describe(describe_cmd_output)
 
     def _verify_batch_by_describe(self, describe_output: str) -> bool:
         """Verify a batch based on the output of the describe command.
@@ -345,16 +338,6 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
                 raise OffloadTransportException(
                     f"Dataproc batch failed with state: {state}"
                 )
-
-    def _verify_batch_by_log(self, submit_cmd_output: str):
-        """Verify a batch based on the output of the submit command."""
-        if re.search(r"^{}$".format(BATCHES_TTL_MARKER), submit_cmd_output, re.M):
-            self.warning(
-                f"Found Dataproc Batches TTL warning in command output: {BATCHES_TTL_MARKER}"
-            )
-            raise OffloadTransportException(
-                "Dataproc Batch is incomplete due to TTL, increase GOOGLE_DATAPROC_BATCHES_TTL"
-            )
 
     def _verify_rdbms_connectivity(self):
         """Use a simple canary query for verification test"""

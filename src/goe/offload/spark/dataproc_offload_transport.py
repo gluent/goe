@@ -103,7 +103,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         gcloud_cmd = [
             OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
             "dataproc",
-            "jobs",
+            "batches",
             "describe",
             batch_name,
             "--format=json",

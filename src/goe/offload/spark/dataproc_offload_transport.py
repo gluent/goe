@@ -491,6 +491,10 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
             sep="-", ts=True, name_override="canary"
         ).lower()[:64]
 
+    def _verify_batch(self, batch_name: str):
+        # No-op when not Dataproc Batches.
+        pass
+
     ###########################################################################
     # PUBLIC METHODS
     ###########################################################################

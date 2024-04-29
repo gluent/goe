@@ -2,7 +2,7 @@
 A simple and flexible way to copy data from an Oracle Database to Google BigQuery.
 
 # Downloading GOE
-At present GOE is a command line tool. Alongside installing the Python package we also require some extra artefacts, everything you need to run the software is provided in a versioned package which can be downloaded from [here](https://github.com/gluent/goe/releases) or alternatively built locally.
+At present GOE is a command line tool. Alongside installing the Python package we also require some extra artefacts, everything you need to run the software is provided in a versioned package which can be downloaded from [here](https://github.com/gluent/goe/releases/latest/download/goe.tar.gz) or alternatively built locally.
 
 # Offload Home
 In addition to the GOE software we need a supporting directory tree called the Offload Home. This is identified using the `OFFLOAD_HOME` environment variable. In this directory we keep configuration files, logs and the GOE software if you choose not to run scripts directly out of the cloned repo. Offload Home will also typically contain a Python virtual environment into which the GOE package and dependencies will be installed, you can run these out of the repository directory but, for separation of duties purposes, may choose to keep the source code away from users of the tool.

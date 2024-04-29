@@ -165,6 +165,7 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
                 self._fixed_goe_parameters = {"CELL_OFFLOAD_PROCESSING": "FALSE"}
             else:
                 self._fixed_goe_parameters = {}
+            self._close_adm_connection()
         return self._fixed_goe_parameters
 
     def _get_fixed_sqoop_parameters(self, max_ts_scale):

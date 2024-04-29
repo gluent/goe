@@ -80,8 +80,12 @@ def oracle_table(config, messages):
     return test_table_object
 
 
-def test_query_import_construct(config, messages, oracle_table):
-    fake_operation = build_mock_offload_operation()
+@pytest.fixture
+def fake_operation():
+    return build_mock_offload_operation()
+
+
+def test_query_import_construct(config, messages, oracle_table, fake_operation):
     fake_dfs_client = Mock()
     fake_target_table = Mock()
     _ = offload_transport_factory(
@@ -100,9 +104,13 @@ def test_query_import_construct(config, messages, oracle_table):
     [(0, False), (1, False), (999_999_999_999, True)],
 )
 def test_is_query_import_available(
-    config, messages, oracle_table, small_table_threshold, expected_status
+    config,
+    messages,
+    oracle_table,
+    fake_operation,
+    small_table_threshold,
+    expected_status,
 ):
-    fake_operation = build_mock_offload_operation()
     fake_operation.offload_transport_small_table_threshold = small_table_threshold
     assert (
         is_query_import_available(
@@ -112,8 +120,7 @@ def test_is_query_import_available(
     )
 
 
-def test_sqoop_construct(config, messages, oracle_table):
-    fake_operation = build_mock_offload_operation()
+def test_sqoop_construct(config, messages, oracle_table, fake_operation):
     fake_dfs_client = Mock()
     fake_target_table = Mock()
     _ = offload_transport_factory(
@@ -133,8 +140,7 @@ def test_sqoop_canary_construct():
     _ = sqoop_jdbc_connectivity_checker(config, messages)
 
 
-def test_spark_submit_construct(config, messages, oracle_table):
-    fake_operation = build_mock_offload_operation()
+def test_spark_submit_construct(config, messages, oracle_table, fake_operation):
     fake_dfs_client = Mock()
     fake_target_table = Mock()
     _ = offload_transport_factory(
@@ -154,8 +160,7 @@ def test_spark_submit_canary_construct():
     _ = spark_submit_jdbc_connectivity_checker(config, messages)
 
 
-def test_dataproc(config, messages, oracle_table):
-    fake_operation = build_mock_offload_operation()
+def test_dataproc_cmd(config, messages, oracle_table, fake_operation):
     fake_dfs_client = Mock()
     fake_target_table = Mock()
     client = offload_transport_factory(
@@ -167,8 +172,22 @@ def test_dataproc(config, messages, oracle_table):
         messages,
         fake_dfs_client,
     )
-    cmd = client._gcloud_dataproc_command()
+    cmd = client._gcloud_dataproc_submit_command()
     assert isinstance(cmd, list)
+
+    assert (
+        f"--project={config.google_dataproc_project}" in cmd
+    ), f"project option is missing from cmd: {cmd}"
+    assert (
+        f"--cluster={config.google_dataproc_cluster}" in cmd
+    ), f"cluster option is missing from cmd: {cmd}"
+    assert (
+        f"--region={config.google_dataproc_region}" in cmd
+    ), f"region option is missing from cmd: {cmd}"
+    # batch option should NOT be in standard Dataproc job commands.
+    assert all(
+        "--batch=" not in _ for _ in cmd
+    ), f"batch option is incorrectly in cmd: {cmd}"
 
 
 def test_dataproc_canary_construct():
@@ -177,8 +196,7 @@ def test_dataproc_canary_construct():
     _ = spark_dataproc_jdbc_connectivity_checker(config, messages)
 
 
-def test_dataproc_batches(config, messages, oracle_table):
-    fake_operation = build_mock_offload_operation()
+def test_dataproc_batches_cmd(config, messages, oracle_table, fake_operation):
     fake_dfs_client = Mock()
     fake_target_table = Mock()
     client = offload_transport_factory(
@@ -190,8 +208,183 @@ def test_dataproc_batches(config, messages, oracle_table):
         messages,
         fake_dfs_client,
     )
-    cmd = client._gcloud_dataproc_command()
+    cmd = client._gcloud_dataproc_submit_command()
     assert isinstance(cmd, list)
+
+    assert (
+        f"--project={config.google_dataproc_project}" in cmd
+    ), f"project option is missing from cmd: {cmd}"
+    assert (
+        f"--region={config.google_dataproc_region}" in cmd
+    ), f"region option is missing from cmd: {cmd}"
+    assert any("--batch=" in _ for _ in cmd), f"batch option is missing from cmd: {cmd}"
+    assert (
+        f"--service-account={config.google_dataproc_service_account}" in cmd
+    ), f"service account option is missing from cmd: {cmd}"
+    assert (
+        f"--ttl={config.google_dataproc_batches_ttl}" in cmd
+    ), f"ttl option is missing from cmd: {cmd}"
+
+
+def test_dataproc_batches_describe_cmd(config, messages, oracle_table, fake_operation):
+    fake_dfs_client = Mock()
+    fake_target_table = Mock()
+    client = offload_transport_factory(
+        OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+        oracle_table,
+        fake_target_table,
+        fake_operation,
+        config,
+        messages,
+        fake_dfs_client,
+    )
+    batch_name = "my-unit-batch"
+    cmd = client._gcloud_dataproc_describe_command(batch_name)
+    assert isinstance(cmd, list)
+
+    assert (
+        f"--project={config.google_dataproc_project}" in cmd
+    ), f"project option is missing from cmd: {cmd}"
+    assert (
+        f"--region={config.google_dataproc_region}" in cmd
+    ), f"region option is missing from cmd: {cmd}"
+    assert batch_name in cmd, f"batch '{batch_name}' is missing from cmd: {cmd}"
+
+
+@pytest.mark.parametrize(
+    "cmd_output,expect_exception",
+    [
+        # Describe output for a successful job.
+        (
+            """{
+  "createTime": "2024-04-26T08:10:01.214382Z",
+  "creator": "sa@p.iam.gserviceaccount.com",
+  "environmentConfig": {
+    "executionConfig": {
+      "serviceAccount": "sa@p.iam.gserviceaccount.com",
+      "subnetworkUri": "projects/p/regions/west1/subnetworks/s",
+      "ttl": "86400s"
+    },
+    "peripheralsConfig": {
+      "sparkHistoryServerConfig": {}
+    }
+  },
+  "name": "projects/p/locations/west1/batches/goe-batch-20240426080958",
+  "operation": "projects/p/locations/west1/operations/b4873-4952-3f5d-884d-cec5a2d09",
+  "state": "SUCCEEDED",
+  "stateHistory": [
+    {
+      "state": "PENDING",
+      "stateStartTime": "2024-04-26T08:10:01.214382Z"
+    },
+    {
+      "state": "RUNNING",
+      "stateStartTime": "2024-04-26T08:12:02.032731Z"
+    }
+  ],
+  "stateTime": "2024-04-26T08:13:55.084692Z",
+  "uuid": "12cea"
+}""",
+            False,
+        ),
+        # Describe output for a cancelled job.
+        (
+            """{
+  "createTime": "2024-04-26T10:09:11.916627Z",
+  "creator": "sa@p.iam.gserviceaccount.com",
+  "environmentConfig": {
+    "executionConfig": {
+      "serviceAccount": "sa@p.iam.gserviceaccount.com",
+      "subnetworkUri": "projects/p/regions/west1/subnetworks/s",
+      "ttl": "600s"
+    },
+    "peripheralsConfig": {
+      "sparkHistoryServerConfig": {}
+    }
+  },
+  "name": "projects/p/locations/west1/batches/goe-batch-20240426080958",
+  "operation": "projects/p/locations/west1/operations/b4873-4952-3f5d-884d-cec5a2d09",
+  "state": "CANCELLED",
+  "stateHistory": [
+    {
+      "state": "PENDING",
+      "stateStartTime": "2024-04-26T10:09:11.916627Z"
+    },
+    {
+      "state": "RUNNING",
+      "stateStartTime": "2024-04-26T10:10:33.461859Z"
+    },
+    {
+      "state": "CANCELLING",
+      "stateMessage": "Cancelling batch as ttl exceeded",
+      "stateStartTime": "2024-04-26T10:19:12.387649Z"
+    }
+  ],
+  "stateTime": "2024-04-26T10:19:12.454387Z",
+  "uuid": "12cea"
+}""",
+            True,
+        ),
+        # Describe output for a failed job.
+        (
+            """{
+  "createTime": "2024-04-26T10:09:11.916627Z",
+  "creator": "sa@p.iam.gserviceaccount.com",
+  "environmentConfig": {
+    "executionConfig": {
+      "serviceAccount": "sa@p.iam.gserviceaccount.com",
+      "subnetworkUri": "projects/p/regions/west1/subnetworks/s",
+      "ttl": "600s"
+    },
+    "peripheralsConfig": {
+      "sparkHistoryServerConfig": {}
+    }
+  },
+  "name": "projects/p/locations/west1/batches/goe-batch-20240426080958",
+  "operation": "projects/p/locations/west1/operations/a2d09",
+  "state": "FAILED",
+  "stateHistory": [
+    {
+      "state": "PENDING",
+      "stateStartTime": "2024-04-26T10:25:59.242854Z"
+    },
+    {
+      "state": "RUNNING",
+      "stateStartTime": "2024-04-26T10:27:24.305264Z"
+    }
+  ],
+  "stateMessage": "Job failed with message [SyntaxError: invalid syntax]. Additional details can be found at:\\nhttps://console.cloud.google.com/dataproc/batches/west1/goe-batch-20240426080958?project=p\\ngcloud dataproc batches wait 'goe-batch-20240426080958' --region 'west1' --project 'p'\\nhttps://console.cloud.google.com/storage/browser/dataproc-staging-west1-123-l/batch-3347f/\\ngs://dataproc-staging-west1-123-l/google-cloud-dataproc-metainfo/2ad11/jobs/srvls-batch-3347f/driveroutput.*",
+  "stateTime": "2024-04-26T10:27:48.237750Z",
+  "uuid": "12cea"
+}""",
+            True,
+        ),
+    ],
+)
+def test_dataproc_batch_describe(
+    config,
+    messages,
+    oracle_table,
+    fake_operation,
+    cmd_output: str,
+    expect_exception: bool,
+):
+    fake_dfs_client = Mock()
+    fake_target_table = Mock()
+    client = offload_transport_factory(
+        OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+        oracle_table,
+        fake_target_table,
+        fake_operation,
+        config,
+        messages,
+        fake_dfs_client,
+    )
+    if expect_exception:
+        with pytest.raises(Exception) as _:
+            client._verify_batch_describe_response(cmd_output)
+    else:
+        client._verify_batch_describe_response(cmd_output)
 
 
 def test_dataproc_batches_canary_construct():

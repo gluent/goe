@@ -527,7 +527,7 @@ class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
 
     def _tune_dataproc_for_parallelism(self) -> list:
         # No-op when not Dataproc Batches.
-        pass
+        return []
 
     def _verify_batch(self, batch_name: str):
         # No-op when not Dataproc Batches.

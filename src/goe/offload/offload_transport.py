@@ -740,7 +740,7 @@ class OffloadTransport(object, metaclass=ABCMeta):
             offload_options.sqoop_overrides,
             offload_options.offload_transport_spark_overrides,
         )
-        self._offload_transport_parallelism = (
+        self._offload_transport_parallelism = int(
             offload_operation.offload_transport_parallelism
         )
         self._validation_polling_interval = (

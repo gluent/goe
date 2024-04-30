@@ -387,6 +387,96 @@ def test_dataproc_batch_describe(
         client._verify_batch_describe_response(cmd_output)
 
 
+@pytest.mark.parametrize(
+    "offload_parallelism,offload_spark_props,expected_result",
+    [
+        (4, {}, []),
+        (
+            12,
+            {},
+            [
+                "spark.executor.cores=16",
+            ],
+        ),
+        (
+            32,
+            {},
+            [
+                "spark.executor.cores=16",
+            ],
+        ),
+        (
+            34,
+            {},
+            [
+                "spark.executor.cores=16",
+                "spark.executor.instances=3",
+            ],
+        ),
+        (
+            48,
+            {},
+            [
+                "spark.executor.cores=16",
+                "spark.executor.instances=3",
+            ],
+        ),
+        (
+            49,
+            {},
+            [
+                "spark.executor.cores=16",
+                "spark.executor.instances=4",
+            ],
+        ),
+        # If either setting has already been manually set then we don't interfere.
+        (
+            64,
+            {"spark.executor.cores": 1},
+            [],
+        ),
+        (
+            64,
+            {"spark.executor.instances": 1},
+            [],
+        ),
+        (
+            64,
+            {"spark.executor.unrelated": 123},
+            [
+                "spark.executor.cores=16",
+                "spark.executor.instances=4",
+            ],
+        ),
+    ],
+)
+def test_dataproc_batches_tune_dataproc_for_parallelism(
+    config,
+    messages,
+    oracle_table,
+    fake_operation,
+    offload_parallelism: int,
+    offload_spark_props: dict,
+    expected_result: list,
+):
+    fake_dfs_client = Mock()
+    fake_target_table = Mock()
+    fake_operation.offload_transport_parallelism = offload_parallelism
+    client = offload_transport_factory(
+        OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+        oracle_table,
+        fake_target_table,
+        fake_operation,
+        config,
+        messages,
+        fake_dfs_client,
+    )
+    if offload_spark_props:
+        client._spark_config_properties = offload_spark_props
+    result = client._tune_dataproc_for_parallelism()
+    assert result == expected_result
+
+
 def test_dataproc_batches_canary_construct():
     config = build_mock_options(FAKE_ORACLE_BQ_ENV)
     messages = OffloadMessages()

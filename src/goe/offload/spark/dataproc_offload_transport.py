@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+import math
 import re
 from typing import Union
 
@@ -210,20 +211,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             )
             no_log_password = [{"item": password_config_to_obscure, "prior": "--conf"}]
 
-        if (
-            "spark.cores.min" not in self._spark_config_properties
-            and self._offload_transport_parallelism
-        ):
-            # If the user has not configured spark.cores.min then default to offload_transport_parallelism + 1
-            # This only applies to Dataproc Serverless and therefore is not injected
-            # into self._spark_config_properties.
-            spark_config_props.extend(
-                [
-                    "spark.cores.min={}".format(
-                        str(self._offload_transport_parallelism + 1)
-                    )
-                ]
-            )
+        spark_config_props.extend(self._tune_dataproc_for_parallelism())
 
         if self._offload_transport_jvm_overrides:
             spark_config_props.extend(
@@ -302,6 +290,51 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._check_rows_imported(rows_imported)
         return rows_imported
 
+    def _tune_dataproc_for_parallelism(self) -> list:
+        """Modify Spark Dataproc settings to cater for Offload parallelism.
+
+        As of 2024-05-01 the default value for spark.executor.cores is 4 and value values are 4, 8 and 16 only.
+        This is specifying cores per executor instance, spark.executor.instances, which defaults to 2.
+
+        Ensures spark.executor.cores covers the requested parallelism when <= 32.
+        Ensures spark.executor.instances covers the requested parallelism when > 32.
+
+        Returns:
+            list: A list of extra Spark properties or an empty list.
+        """
+
+        def executor_cores() -> int:
+            if self._offload_transport_parallelism > 8:
+                return 16
+            elif self._offload_transport_parallelism > 4:
+                return 8
+            else:
+                return None
+
+        def executor_instances() -> int:
+            if self._offload_transport_parallelism <= 32:
+                # With cores at 16 then default of two instances is adequate.
+                return None
+            return math.ceil(self._offload_transport_parallelism / 16)
+
+        if (
+            "spark.executor.cores" not in self._spark_config_properties
+            and "spark.executor.instances" not in self._spark_config_properties
+            and self._offload_transport_parallelism
+        ):
+            # If the user has not configured spark.executor.cores/instances then
+            # increase them from defaults to cater for offload_transport_parallelism.
+            # This only applies to Dataproc Batches and therefore is not injected
+            # into self._spark_config_properties.
+            props = []
+            if executor_cores():
+                props.append(f"spark.executor.cores={executor_cores()}")
+            if executor_instances():
+                props.append(f"spark.executor.instances={executor_instances()}")
+            return props
+        else:
+            return []
+
     def _verify_batch(self, batch_name: str):
         """Check for issues/errors in the batch that should trigger us to stop at this point."""
         describe_cmd = self._gcloud_dataproc_describe_command(batch_name)
@@ -316,7 +349,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
     def _verify_batch_describe_response(self, describe_output: str) -> bool:
         """Verify a batch based on the output of the describe command.
 
-        Return:
+        Returns:
             True is we checked the status, False if we were unable to check.
         """
         try:
@@ -491,6 +524,14 @@ class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
                 f"--impersonate-service-account={self._dataproc_service_account}"
             )
         return gcloud_cmd
+
+    def _tune_dataproc_for_parallelism(self) -> list:
+        # No-op when not Dataproc Batches.
+        return []
+
+    def _verify_batch(self, batch_name: str):
+        # No-op when not Dataproc Batches.
+        pass
 
 
 class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcloud):

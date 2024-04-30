@@ -872,7 +872,7 @@ FROM %s.%s""" % (
             )
         )
 
-    def predicate_to_where_clause(self, predicate, columns_override=None):
+    def predicate_to_where_clause(self, predicate, columns_override=None) -> str:
         return hadoop_predicate.predicate_to_where_clause(
             columns_override or self.get_columns(), predicate
         )

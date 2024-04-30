@@ -2151,7 +2151,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         """Return boolean indicating if table has >0 rows satisfying predicate"""
 
     @abstractmethod
-    def predicate_to_where_clause(self, predicate, columns_override=None):
+    def predicate_to_where_clause(self, predicate, columns_override=None) -> str:
         pass
 
     def refresh_operational_settings(

@@ -14,6 +14,8 @@
 
 """data_type_controls: Library of functions used in GOE related to offload transport."""
 
+from typing import TYPE_CHECKING
+
 from goe.data_governance.hadoop_data_governance import (
     data_governance_update_metadata_step,
 )
@@ -23,10 +25,18 @@ from goe.offload.offload_constants import (
     OFFLOAD_STATS_METHOD_HISTORY,
     OFFLOAD_STATS_METHOD_NATIVE,
 )
-from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
+from goe.offload.offload_messages import OffloadMessages, VERBOSE
 from goe.offload.offload_transport_functions import transport_and_load_offload_chunk
 from goe.offload.operation.stats_controls import copy_rdbms_stats_to_backend
 from goe.orchestration import command_steps
+from goe.persistence import orchestration_metadata
+
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+    from goe.offload.backend_table import BackendTableInterface
+    from goe.offload.offload_source_data import OffloadSourceDataInterface
+    from goe.offload.offload_source_table import OffloadSourceTableInterface
+    from goe.offload.offload_transport import OffloadTransport
 
 
 def announce_offload_chunk(
@@ -47,12 +57,12 @@ def announce_offload_chunk(
 
 
 def offload_data_to_target(
-    data_transport_client,
-    offload_source_table,
-    offload_target_table,
+    data_transport_client: "OffloadTransport",
+    offload_source_table: "OffloadSourceTableInterface",
+    offload_target_table: "BackendTableInterface",
     offload_operation,
-    offload_options,
-    source_data_client,
+    offload_options: "OrchestrationConfig",
+    source_data_client: "OffloadSourceDataInterface",
     messages: OffloadMessages,
     data_gov_client,
 ):

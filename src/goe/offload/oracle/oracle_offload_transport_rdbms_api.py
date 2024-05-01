@@ -601,7 +601,13 @@ FROM  (
             )
             partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION
         elif predicate_offload_clause:
-            if id_split_col:
+            if partition_count > 0 and not is_iot:
+                self.log(
+                    "Splitting PBO offload into ROWID ranges due to identified partition list",
+                    detail=VVERBOSE,
+                )
+                partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT
+            elif id_split_col:
                 self.log("Splitting PBO offload into id ranges", detail=VVERBOSE)
                 partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE
             else:

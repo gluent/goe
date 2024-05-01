@@ -91,9 +91,10 @@
 
 
 import datetime
+import logging
+import operator
 from optparse import OptionValueError
 import traceback
-import logging
 
 import lark
 from lark import Tree, Token
@@ -125,6 +126,10 @@ RULE_HINT = {
     "__and_relation_group_star_0": "AND:            groups of predicates combined with AND must be surrounded by parentheses",
     "__or_relation_group_star_1": "OR:             groups of predicates combined with OR must be surrounded by parentheses",
 }
+
+
+class GenericPredicateNonMatchingValue(Exception):
+    pass
 
 
 def python_timestamp_to_string(python_ts, with_time=True, subsecond=0):
@@ -240,10 +245,28 @@ class GenericPredicate:
         column_nodes = self.ast.find_pred(lambda tree: tree.data == "column")
         return list(set([get_alias_column(n) for n in column_nodes]))
 
-    def column_names(self):
+    def column_names(self) -> list:
         """Find column names in a predicate and return as a list"""
         column_nodes = self.ast.find_pred(lambda tree: tree.data == "column")
         return list(set([n.children[-1].value for n in column_nodes]))
+
+    def column_value_match(self, column_name: str, comparison_value) -> bool:
+        assert (
+            not self.has_or_groups()
+        ), "column_value_match() is not supported on predicates containing OR relation groups"
+        try:
+            GenericPredicateVisitor(column_name, comparison_value).visit_topdown(
+                self.ast
+            )
+            return True
+        except GenericPredicateNonMatchingValue:
+            return False
+
+    def has_or_groups(self) -> bool:
+        """Return True of the predicate contains or_relation_groups."""
+        return bool(
+            list(self.ast.find_pred(lambda tree: tree.data == "or_relation_group"))
+        )
 
     def rename_column(self, original_name, new_name):
         """Assume original_name and new_name are case insensitive,
@@ -353,6 +376,64 @@ class RawToInternalAST(lark.Transformer):
     def decimal_value(self, items):
         (value,) = items
         return Tree("numeric_value", [value.update(value=float(value))])
+
+
+class GenericPredicateVisitor(lark.Visitor):
+    def __init__(self, column_name, comparison_value):
+        self._column_name = column_name.upper()
+        self._comparison_value = comparison_value
+
+    def _expression_for_column(self, expr) -> bool:
+        return bool(
+            expr.data == "column"
+            and expr.children[-1].value.upper() == self._column_name
+        )
+
+    def _column_value_comparison(self, comp_fn, pred_value) -> bool:
+        if not comp_fn(self._comparison_value, pred_value):
+            raise GenericPredicateNonMatchingValue
+
+    def _column_value_satisfies_node(self, comp_fn, children):
+        lhs, rhs = children
+        if self._expression_for_column(lhs):
+            # Compare using rhs value
+            self._column_value_comparison(comp_fn, rhs.children[-1].value)
+        elif self._expression_for_column(rhs):
+            # Compare using lhs value
+            self._column_value_comparison(comp_fn, lhs.children[-1].value)
+        # Ignore any expressions that are not for the column of interest.
+
+    def equals(self, items):
+        self._column_value_satisfies_node(operator.eq, items.children)
+
+    def greater_than(self, items):
+        self._column_value_satisfies_node(operator.gt, items.children)
+
+    def greater_than_or_equal(self, items: Tree):
+        self._column_value_satisfies_node(operator.ge, items.children)
+
+    def less_than(self, items):
+        self._column_value_satisfies_node(operator.lt, items.children)
+
+    def less_than_or_equal(self, items):
+        self._column_value_satisfies_node(operator.le, items.children)
+
+    def not_equals(self, items):
+        self._column_value_satisfies_node(operator.ne, items.children)
+
+    def in_relation(self, items):
+        lhs, rhs = items.children
+        if self._expression_for_column(lhs):
+            if self._comparison_value not in [
+                _.children[-1].value for _ in rhs.children
+            ]:
+                raise GenericPredicateNonMatchingValue
+
+    def not_in_relation(self, items):
+        lhs, rhs = items.children
+        if self._expression_for_column(lhs):
+            if self._comparison_value in [_.children[-1].value for _ in rhs.children]:
+                raise GenericPredicateNonMatchingValue
 
 
 class GenericPredicateToTyped(lark.Transformer):

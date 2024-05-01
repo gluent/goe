@@ -1199,7 +1199,7 @@ class OffloadSourceDataInterface(metaclass=ABCMeta):
     def source_partitions(self):
         return self._source_partitions
 
-    def populate_source_partitions(self, sort_by_hv=False):
+    def populate_source_partitions(self, sort_by_hv=False) -> OffloadSourcePartitions:
         logger.debug("populate_source_partitions")
         if not self._source_partitions:
             source_partitions = OffloadSourcePartitions.from_source_table(
@@ -1680,6 +1680,31 @@ class OffloadSourceDataPredicate(OffloadSourceDataInterface):
                 )
 
             self._set_post_offload_predicates(source_has_rows)
+
+            if (
+                not self._inflight_offload_predicate.has_or_groups()
+                and len(self._partition_columns) == 1
+            ):
+                # For a simple PREDICATE_AND_RANGE PBO we can identify which partitions overlap
+                # the predicate. This can then be used to optimise the transport query.
+                #
+                # We can only support trivial (i.e. easy to apply) predicates such as:
+                #   part_column >= literal AND part_column < literal AND other_column = 123
+                #
+                # No OR predicates and no composite partition keys.
+                self.populate_source_partitions()
+
+                def filter_fn(p):
+                    return bool(
+                        self._inflight_offload_predicate.column_value_match(
+                            self._partition_columns[0].name,
+                            p.partition_values_python[0],
+                        )
+                    )
+
+                self._partitions_to_offload, _ = (
+                    self._source_partitions.split_partitions(filter_fn)
+                )
 
             # Case 3 needs to retain RANGE HVs
             (
@@ -2210,10 +2235,8 @@ class OffloadSourceDataIpaRange(OffloadSourceDataInterface):
 
         def more_human_readable_python_hwm(python_hwm):
             # convert to str to remove datatype info and chop off any redundant trailing fractional seconds
-            str_fn = (
-                lambda x: re.sub(r"\.000000$", "", str(x))
-                if type(x) is datetime64
-                else str(x)
+            str_fn = lambda x: (
+                re.sub(r"\.000000$", "", str(x)) if type(x) is datetime64 else str(x)
             )
             return str([str_fn(hv) for hv in python_hwm])
 

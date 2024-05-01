@@ -111,7 +111,10 @@ def offload_data_to_target(
         messages.log("No partitions to offload")
         # exit early, skipping any stats steps (GOE-1300)
         return 0
-    elif source_data_client.partitions_to_offload.count() > 0:
+    elif (
+        source_data_client.partitions_to_offload.count() > 0
+        and not offload_operation.inflight_offload_predicate
+    ):
         for i, (chunk, remaining) in enumerate(
             source_data_client.get_partitions_to_offload_chunks()
         ):
@@ -128,6 +131,15 @@ def offload_data_to_target(
             if rows_imported and rows_imported >= 0:
                 rows_offloaded = (rows_offloaded or 0) + rows_imported
         progress_message(source_data_client.partitions_to_offload.count(), 0, 0)
+    elif (
+        offload_operation.inflight_offload_predicate
+        and source_data_client.partitions_to_offload.count() > 0
+    ):
+        # This is a predicate based offload that also knows which partitions it is relevant to.
+        # No partition chunking, we want the entire predicate in a single pass.
+        rows_imported = transport_and_load_offload_chunk_fn(
+            partition_chunk=source_data_client.partitions_to_offload
+        )
     else:
         rows_imported = transport_and_load_offload_chunk_fn()
         if rows_imported and rows_imported >= 0:

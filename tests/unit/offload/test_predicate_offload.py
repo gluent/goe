@@ -23,6 +23,7 @@ from optparse import OptionValueError
 
 from lark import Tree, Token
 import numpy as np
+import pytest
 
 from goe.offload.predicate_offload import GenericPredicate, parse_predicate_dsl
 from goe.offload.bigquery import bigquery_column, bigquery_predicate
@@ -111,30 +112,77 @@ TERADATA_COLUMNS = [
 ]
 
 
+@pytest.mark.parametrize(
+    "dsl_value_str, ast_token_values",
+    [
+        ("3.141", ("SIGNED_DECIMAL", float(3.141))),
+        ("+3.141", ("SIGNED_DECIMAL", float(3.141))),
+        ("-3.141", ("SIGNED_DECIMAL", float(-3.141))),
+        (" 3.141", ("SIGNED_DECIMAL", float(3.141))),
+        (" 3.141 ", ("SIGNED_DECIMAL", float(3.141))),
+        ("3.", ("SIGNED_DECIMAL", float(3))),
+        ("3", ("SIGNED_INTEGER", int(3))),
+        ("+3", ("SIGNED_INTEGER", int(3))),
+        ("-3", ("SIGNED_INTEGER", int(-3))),
+        (" 3", ("SIGNED_INTEGER", int(3))),
+        ("3 ", ("SIGNED_INTEGER", int(3))),
+        (" 3 ", ("SIGNED_INTEGER", int(3))),
+    ],
+)
+def test_predicate_parse_single_numeric(dsl_value_str, ast_token_values):
+    assert parse_predicate_dsl(
+        "numeric({})".format(dsl_value_str), top_level_node="value"
+    ) == Tree("numeric_value", [Token(*ast_token_values)])
+
+
+@pytest.mark.parametrize(
+    "dsl_value_str, ast_token_values",
+    [
+        ("2012-01-01", ("DATE", np.datetime64("2012-01-01"))),
+        ("2001-01-01 12:00:01", ("TIMESTAMP", np.datetime64("2001-01-01 12:00:01"))),
+        ("2001-01-01 06:00:01", ("TIMESTAMP", np.datetime64("2001-01-01 06:00:01"))),
+        (
+            "2001-01-01 12:00:01.050",
+            ("TIMESTAMP_FRACTIONAL", np.datetime64("2001-01-01 12:00:01.050")),
+        ),
+        (
+            "2001-01-01 06:00:01.000090",
+            ("TIMESTAMP_FRACTIONAL", np.datetime64("2001-01-01 06:00:01.000090")),
+        ),
+        (
+            "2001-01-01 06:00:01.000000123",
+            ("TIMESTAMP_FRACTIONAL", np.datetime64("2001-01-01 06:00:01.000000123")),
+        ),
+        ("2012-01-01", ("DATE", np.datetime64("2012-01-01"))),
+    ],
+)
+def test_predicate_parse_single_datetime(dsl_value_str, ast_token_values):
+    assert parse_predicate_dsl(
+        "datetime({})".format(dsl_value_str), top_level_node="value"
+    ) == Tree("datetime_value", [Token(*ast_token_values)])
+
+
+@pytest.mark.parametrize(
+    "dsl_value_str",
+    [
+        "test string",
+        "test' string",
+        'test \\" string',
+        "",
+        "`~!@#$%^&*()_+-={}[]|\:;?/>.<,0987654321",
+        "\u00f6",
+    ],
+)
+def test_predicate_parse_single_string(dsl_value_str):
+    assert parse_predicate_dsl(
+        'string("{}")'.format(dsl_value_str), top_level_node="value"
+    ) == Tree(
+        "string_value",
+        [Token("ESCAPED_STRING", dsl_value_str.replace('\\"', '"'))],
+    )
+
+
 class TestIdaPredicateParse(TestCase):
-    def _test_parse_single_numeric(self, dsl_value_str, ast_token_values):
-        self.assertEqual(
-            parse_predicate_dsl(
-                "numeric({})".format(dsl_value_str), top_level_node="value"
-            ),
-            Tree("numeric_value", [Token(*ast_token_values)]),
-        )
-
-    def test_parse_numeric(self):
-        self._test_parse_single_numeric("3.141", ("SIGNED_DECIMAL", float(3.141)))
-        self._test_parse_single_numeric("+3.141", ("SIGNED_DECIMAL", float(3.141)))
-        self._test_parse_single_numeric("-3.141", ("SIGNED_DECIMAL", float(-3.141)))
-        self._test_parse_single_numeric(" 3.141", ("SIGNED_DECIMAL", float(3.141)))
-        self._test_parse_single_numeric(" 3.141 ", ("SIGNED_DECIMAL", float(3.141)))
-        self._test_parse_single_numeric("3.", ("SIGNED_DECIMAL", float(3)))
-
-        self._test_parse_single_numeric("3", ("SIGNED_INTEGER", int(3)))
-        self._test_parse_single_numeric("+3", ("SIGNED_INTEGER", int(3)))
-        self._test_parse_single_numeric("-3", ("SIGNED_INTEGER", int(-3)))
-
-        self._test_parse_single_numeric(" 3", ("SIGNED_INTEGER", int(3)))
-        self._test_parse_single_numeric("3 ", ("SIGNED_INTEGER", int(3)))
-        self._test_parse_single_numeric(" 3 ", ("SIGNED_INTEGER", int(3)))
 
     def _test_parse_single_datetime(self, dsl_value_str, ast_token_values):
         self.assertEqual(
@@ -145,9 +193,6 @@ class TestIdaPredicateParse(TestCase):
         )
 
     def test_parse_datetime(self):
-        self._test_parse_single_datetime(
-            "2012-01-01", ("DATE", np.datetime64("2012-01-01"))
-        )
         self.assertRaises(
             OptionValueError, self._test_parse_single_datetime, "2012-01-0", None
         )
@@ -160,12 +205,6 @@ class TestIdaPredicateParse(TestCase):
         # self.assertRaises(OptionValueError, self._test_parse_single_datetime, '2012-01-00', None)
         # self.assertRaises(OptionValueError, self._test_parse_single_datetime, '2012-00-01', None)
 
-        self._test_parse_single_datetime(
-            "2001-01-01 12:00:01", ("TIMESTAMP", np.datetime64("2001-01-01 12:00:01"))
-        )
-        self._test_parse_single_datetime(
-            "2001-01-01 06:00:01", ("TIMESTAMP", np.datetime64("2001-01-01 06:00:01"))
-        )
         self.assertRaises(
             OptionValueError,
             self._test_parse_single_datetime,
@@ -173,18 +212,6 @@ class TestIdaPredicateParse(TestCase):
             ("TIMESTAMP", np.datetime64("2012-01-01 06:00:01")),
         )
 
-        self._test_parse_single_datetime(
-            "2001-01-01 12:00:01.050",
-            ("TIMESTAMP_FRACTIONAL", np.datetime64("2001-01-01 12:00:01.050")),
-        )
-        self._test_parse_single_datetime(
-            "2001-01-01 06:00:01.000090",
-            ("TIMESTAMP_FRACTIONAL", np.datetime64("2001-01-01 06:00:01.000090")),
-        )
-        self._test_parse_single_datetime(
-            "2001-01-01 06:00:01.000000123",
-            ("TIMESTAMP_FRACTIONAL", np.datetime64("2001-01-01 06:00:01.000000123")),
-        )
         self.assertRaises(
             OptionValueError,
             self._test_parse_single_datetime,
@@ -200,26 +227,6 @@ class TestIdaPredicateParse(TestCase):
 
         # below literal value correctness testing is out of scope
         # self.assertRaises(OptionValueError, self._test_parse_single_datetime, '2012-01-01 25:00:01', None)
-
-    def _test_parse_single_string(self, dsl_value_str, ast_value_str=None):
-        ast_value_str = dsl_value_str if ast_value_str is None else ast_value_str
-        self.assertEqual(
-            parse_predicate_dsl(
-                'string("{}")'.format(dsl_value_str), top_level_node="value"
-            ),
-            Tree(
-                "string_value",
-                [Token("ESCAPED_STRING", ast_value_str.replace('\\"', '"'))],
-            ),
-        )
-
-    def test_parse_string(self):
-        self._test_parse_single_string("test string")
-        self._test_parse_single_string("test' string")
-        self._test_parse_single_string('test \\" string')
-        self._test_parse_single_string("")
-        self._test_parse_single_string("`~!@#$%^&*()_+-={}[]|\:;?/>.<,0987654321")
-        self._test_parse_single_string("\u00f6")
 
     def test_column_names(self):
         expect_col_names = [
@@ -239,41 +246,41 @@ class TestIdaPredicateParse(TestCase):
         for dsl, col_names in expect_col_names:
             self.assertEqual(set(GenericPredicate(dsl).column_names()), set(col_names))
 
-    def test_parse_errors(self):
-        self.assertRaises(OptionValueError, parse_predicate_dsl, "")
-        self.assertRaises(OptionValueError, parse_predicate_dsl, "column(hi)")
-        self.assertRaises(OptionValueError, parse_predicate_dsl, "column(hi) >")
-        self.assertRaises(
-            OptionValueError, parse_predicate_dsl, "column(hi) > numeric()"
-        )
-        self.assertRaises(
-            OptionValueError, parse_predicate_dsl, "column(hi) > numeric(+-23)"
-        )
-        self.assertRaises(
-            OptionValueError, parse_predicate_dsl, "column(hi) == numeric(23)"
-        )
-        self.assertRaises(
-            OptionValueError, parse_predicate_dsl, "(column(hi) = numeric(23)"
-        )
-        self.assertRaises(
-            OptionValueError, parse_predicate_dsl, "Column(hi) = numeric(23)"
-        )
-        self.assertRaises(
-            OptionValueError, parse_predicate_dsl, "column(hi) = column(there)"
-        )
 
-    def test_parse_complex_dsl(self):
-        parse_dsl = [
-            "column(YEAR) < numeric(2012) OR (column(YEAR) = numeric(2012) AND column(MONTH) < numeric(6))",
-            "(column(YEAR) < numeric(2012) OR (column(YEAR) = numeric(2012) AND column(MONTH) < numeric(6)))",
-            "((column(YEAR) < numeric(2012)) OR ((column(YEAR) = numeric(2012)) AND (column(MONTH) < numeric(6))))",
+@pytest.mark.parametrize(
+    "predicate_dsl",
+    [
+        "column(YEAR) < numeric(2012) OR (column(YEAR) = numeric(2012) AND column(MONTH) < numeric(6))",
+        "(column(YEAR) < numeric(2012) OR (column(YEAR) = numeric(2012) AND column(MONTH) < numeric(6)))",
+        "((column(YEAR) < numeric(2012)) OR ((column(YEAR) = numeric(2012)) AND (column(MONTH) < numeric(6))))",
+        (
             "(((column(YEAR) < numeric(2012)) "
-            + "OR ((column(YEAR) = numeric(2012)) AND (column(MONTH) < numeric(6)))) "
-            + "OR (((column(YEAR) = numeric(2012)) AND (column(MONTH) = numeric(6))) AND (column(DAY) < numeric(30))))",
-        ]
+            "OR ((column(YEAR) = numeric(2012)) AND (column(MONTH) < numeric(6)))) "
+            "OR (((column(YEAR) = numeric(2012)) AND (column(MONTH) = numeric(6))) AND (column(DAY) < numeric(30))))"
+        ),
+    ],
+)
+def test_parse_complex_dsl(predicate_dsl):
+    GenericPredicate(predicate_dsl)
 
-        for predicate_dsl in parse_dsl:
-            GenericPredicate(predicate_dsl)
+
+@pytest.mark.parametrize(
+    "predicate_dsl",
+    [
+        "",
+        "column(hi)",
+        "column(hi) >",
+        "column(hi) > numeric()",
+        "column(hi) > numeric(+-23)",
+        "column(hi) == numeric(23)",
+        "(column(hi) = numeric(23)",
+        "Column(hi) = numeric(23)",
+        "column(hi) = column(there)",
+    ],
+)
+def test_parse_errors(predicate_dsl):
+    with pytest.raises(OptionValueError) as _:
+        parse_predicate_dsl(predicate_dsl)
 
 
 class TestIdaPredicateMethods(TestCase):
@@ -293,7 +300,12 @@ class TestIdaPredicateMethods(TestCase):
         self.assertEqual(pred.column_names(), ["NEW_NAME"])
         self.assertEqual(pred.dsl, "column(NEW_NAME) = numeric(3)")
 
-        dsl = "((column(original_name) = numeric(3) AND column(original_name) != datetime(2001-01-01)) OR (column(new_name) IN (numeric(7)) OR column(other_name) NOT IN (numeric(12))))"
+        dsl = (
+            "((column(original_name) = numeric(3) "
+            "AND column(original_name) != datetime(2001-01-01)) "
+            "OR (column(new_name) IN (numeric(7)) "
+            "OR column(other_name) NOT IN (numeric(12))))"
+        )
         pred = GenericPredicate(dsl)
         self.assertEqual(
             set(pred.column_names()), set(["ORIGINAL_NAME", "NEW_NAME", "OTHER_NAME"])
@@ -418,6 +430,339 @@ class TestIdaPredicateDataTypes(TestCase):
                 TERADATA_COLUMNS,
                 GenericPredicate(predicate_dsl),
             )
+
+
+@pytest.mark.parametrize(
+    "predicate_dsl,column_name,comparison_value,expect_pass",
+    [
+        # We expect to use this for predicates with ANDs only.
+        (
+            "column(YEAR) < numeric(2012) OR column(YEAR) = numeric(2013)",
+            "year",
+            2012,
+            False,
+        ),
+        # eq
+        (
+            "column(YEAR) = numeric(2012)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(MONTH) = numeric(11) AND column(year) = numeric(2012)",
+            "year",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) = numeric(2013)",
+            "Year",
+            2012,
+            False,
+        ),
+        (
+            "column(YEAR) = numeric(2013) AND column(YEAR) = numeric(2012)",
+            "YEAR",
+            2012,
+            False,
+        ),
+        # lt
+        (
+            "column(YEAR) < numeric(2013)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) < numeric(2012)",
+            "YEAR",
+            2012,
+            False,
+        ),
+        # le
+        (
+            "column(YEAR) <= numeric(2013)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) <= numeric(2012)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) <= numeric(2011)",
+            "YEAR",
+            2012,
+            False,
+        ),
+        # gt
+        (
+            "column(YEAR) > numeric(2011)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) > numeric(2012)",
+            "YEAR",
+            2012,
+            False,
+        ),
+        # ge
+        (
+            "column(YEAR) >= numeric(2011)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) >= numeric(2012)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) >= numeric(2013)",
+            "YEAR",
+            2012,
+            False,
+        ),
+        # ne
+        (
+            "column(YEAR) != numeric(2011)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) != numeric(2012)",
+            "YEAR",
+            2012,
+            False,
+        ),
+        # in
+        (
+            "column(YEAR) in (numeric(2011),numeric(2012))",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) in (numeric(2011),numeric(2013))",
+            "YEAR",
+            2012,
+            False,
+        ),
+        # not in
+        (
+            "column(YEAR) not in (numeric(2011),numeric(2013))",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) not in (numeric(2011),numeric(2012))",
+            "YEAR",
+            2012,
+            False,
+        ),
+        # combinations
+        (
+            "column(YEAR) >= numeric(2010) AND column(YEAR) < numeric(2013)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
+            "column(YEAR) >= numeric(2010) AND column(YEAR) < numeric(2012)",
+            "YEAR",
+            2012,
+            False,
+        ),
+    ],
+)
+def test_generic_predicate_column_value_match_numeric(
+    predicate_dsl: str, column_name: str, comparison_value, expect_pass: bool
+):
+    if " OR " in predicate_dsl:
+        with pytest.raises(Exception) as _:
+            GenericPredicate(predicate_dsl).column_value_match(
+                column_name, comparison_value
+            )
+    else:
+        assert (
+            GenericPredicate(predicate_dsl).column_value_match(
+                column_name, comparison_value
+            )
+            == expect_pass
+        )
+
+
+@pytest.mark.parametrize(
+    "predicate_dsl,column_name,comparison_value,expect_pass",
+    [
+        # eq
+        (
+            "column(DTTM) = datetime(2012-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(id) = numeric(11) AND column(dttm) = datetime(2012-01-01)",
+            "dttm",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) = datetime(2012-01-02)",
+            "DtTm",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        (
+            "column(DTTM) = datetime(2012-01-01) AND column(DTTM) = datetime(2012-01-02)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        # lt
+        (
+            "column(DTTM) < datetime(2012-01-02)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) < datetime(2012-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        # le
+        (
+            "column(DTTM) <= datetime(2012-01-02)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) <= datetime(2012-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) <= datetime(2011-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        # gt
+        (
+            "column(DTTM) > datetime(2011-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) > datetime(2012-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        # ge
+        (
+            "column(DTTM) >= datetime(2011-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) >= datetime(2012-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) >= datetime(2013-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        # ne
+        (
+            "column(DTTM) != datetime(2013-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) != datetime(2012-01-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        # in
+        (
+            "column(DTTM) in (datetime(2012-01-01),datetime(2013-01-01))",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) in (datetime(2011-01-01),datetime(2013-01-01))",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        # not in
+        (
+            "column(DTTM) not in (datetime(2011-01-01),datetime(2013-01-01))",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) not in (datetime(2012-01-01),datetime(2013-01-01))",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            False,
+        ),
+        # combinations
+        (
+            "column(DTTM) >= datetime(2012-01-01) AND column(DTTM) < datetime(2012-02-01)",
+            "DTTM",
+            np.datetime64("2012-01-01"),
+            True,
+        ),
+        (
+            "column(DTTM) >= datetime(2012-01-01) AND column(DTTM) < datetime(2012-02-01)",
+            "DTTM",
+            np.datetime64("2012-03-01"),
+            False,
+        ),
+    ],
+)
+def test_generic_predicate_column_value_match_datetime(
+    predicate_dsl: str, column_name: str, comparison_value, expect_pass: bool
+):
+    if " OR " in predicate_dsl:
+        with pytest.raises(Exception) as _:
+            GenericPredicate(predicate_dsl).column_value_match(
+                column_name, comparison_value
+            )
+    else:
+        assert (
+            GenericPredicate(predicate_dsl).column_value_match(
+                column_name, comparison_value
+            )
+            == expect_pass
+        )
 
 
 if __name__ == "__main__":

@@ -24,12 +24,14 @@ from goe.offload.offload_source_data import (
     OffloadSourcePartition,
     OffloadSourcePartitions,
 )
-from goe.offload.offload_source_table import OFFLOAD_PARTITION_TYPE_RANGE
 from goe.offload.offload_transport_rdbms_api import (
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD,
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION,
 )
+from goe.offload.predicate_offload import GenericPredicate
 from tests.unit.test_functions import (
     build_mock_options,
     build_fake_oracle_table,
@@ -350,6 +352,91 @@ def test_get_transport_split_type_oracle_subpartitioned(
         fake_oracle_subpartitioned_table,
         parallelism,
         fake_oracle_subpartitioned_table.partition_type,
+        rdbms_columns,
+        offload_by_subpartition,
+        predicate_offload_clause,
+    )
+
+    assert isinstance(split_return, tuple)
+    assert split_return[0] == expected_split_type
+    assert split_return[1] == expected_parallelism
+
+
+@pytest.mark.parametrize(
+    "parallelism,pk_cols,offload_by_subpartition,partition_chunk,expected_split_type,expected_parallelism",
+    [
+        (
+            2,
+            [
+                "ID",
+            ],
+            False,
+            None,
+            # PBO with no known partitions should always split by ID range if there's a suitable PK.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE,
+            2,
+        ),
+        (
+            2,
+            None,
+            False,
+            None,
+            # PBO with no known partitions should always split by ID range if there's NO suitable PK.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD,
+            2,
+        ),
+        (
+            3,
+            [
+                "ID",
+            ],
+            False,
+            offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
+            # PBO with 2 known partitions and parallel 3 should split by ROWID range.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+            3,
+        ),
+        (
+            2,
+            [
+                "ID",
+            ],
+            False,
+            offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
+            # PBO with 2 known partitions and parallel 2 should split by partition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
+            2,
+        ),
+    ],
+)
+def test_get_transport_split_type_oracle_pbo(
+    oracle_config,
+    messages,
+    fake_oracle_table,
+    parallelism,
+    pk_cols,
+    offload_by_subpartition,
+    partition_chunk,
+    expected_split_type,
+    expected_parallelism,
+):
+    fake_oracle_table._primary_key_columns = pk_cols
+    api = offload_transport_rdbms_api_factory(
+        fake_oracle_table.owner,
+        fake_oracle_table.table_name,
+        oracle_config,
+        messages,
+        dry_run=True,
+    )
+    rdbms_columns = fake_oracle_table.columns
+    predicate_offload_clause = GenericPredicate("column(ID) > numeric(1)")
+    offload_by_subpartition = False
+
+    split_return = api.get_transport_split_type(
+        partition_chunk,
+        fake_oracle_table,
+        parallelism,
+        fake_oracle_table.partition_type,
         rdbms_columns,
         offload_by_subpartition,
         predicate_offload_clause,

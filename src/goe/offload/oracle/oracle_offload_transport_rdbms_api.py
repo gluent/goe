@@ -41,7 +41,9 @@ from goe.offload.offload_transport_rdbms_api import (
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD,
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE,
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_TYPE_TEXT,
 )
 from goe.offload.oracle.oracle_column import (
     ORACLE_TYPE_FLOAT,
@@ -63,7 +65,7 @@ from goe.util.misc_functions import id_generator
 
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
-    from goe.offload.oracle.oracle_column import OracleColumn
+    from goe.offload.column_metadata import ColumnMetadataInterface
     from goe.offload.offload_messages import OffloadMessages
     from goe.offload.offload_source_data import OffloadSourcePartitions
     from goe.offload.offload_source_table import OffloadSourceTableInterface
@@ -102,10 +104,10 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
 
     def __init__(
         self,
-        rdbms_owner,
-        rdbms_table_name,
-        offload_options,
-        messages,
+        rdbms_owner: str,
+        rdbms_table_name: str,
+        offload_options: "OrchestrationConfig",
+        messages: "OffloadMessages",
         dry_run=False,
     ):
         super().__init__(
@@ -128,6 +130,7 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
             TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
             TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD,
             TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE,
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE,
         ]
 
     ###########################################################################
@@ -241,9 +244,37 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
         else:
             return ""
 
-    def _get_id_range(self, rdbms_col_name, partition_chunk=None):
-        """Function to get the MIN and MAX values for an id column, used to create
-        non-overlapping ranges for splitting IOT tables between transport processes.
+    ###########################################################################
+    # PUBLIC METHODS
+    ###########################################################################
+
+    def convert_query_import_expressions_on_rdbms_side(self):
+        return False
+
+    def generate_transport_action(self):
+        id_str = id_generator()
+        # Action in Oracle is trimmed at 32 bytes, we do the same here
+        return ("%s_%s" % (id_str, self._rdbms_table_name.lower()))[:32]
+
+    def get_id_column_for_range_splitting(
+        self,
+        rdbms_table: "OffloadSourceTableInterface",
+    ) -> "ColumnMetadataInterface":
+        if len(rdbms_table.get_primary_key_columns()) != 1:
+            return None
+        pk_col = match_table_column(
+            rdbms_table.get_primary_key_columns()[0], rdbms_table.columns
+        )
+        if pk_col.data_type in (ORACLE_TYPE_NUMBER, ORACLE_TYPE_DATE):
+            return pk_col
+        return None
+
+    def get_id_range(
+        self, rdbms_col_name: str, predicate_offload_clause: str, partition_chunk=None
+    ) -> tuple:
+        """Function to get the MIN and MAX values for an id column.
+
+        Used to create non-overlapping ranges for splitting IOT tables between transport processes.
         partition_chunk: Used to restrict the MIN/MAX query to a single partition IF chunk is for single partition.
         The query is structured specifically to take advantage of Oracle's MIN/MAX optimization, e.g.:
             ----------------------------------------------------------------
@@ -261,20 +292,24 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
             |   9 |      INDEX FULL SCAN (MIN/MAX)| GOE_RANGE_IOT_MONTH_PK |
             ----------------------------------------------------------------
         """
+        predicate_clause = ""
+        if predicate_offload_clause:
+            predicate_clause = f"\n    WHERE {predicate_offload_clause}"
         min_max_row = None
         min_max_qry = """SELECT min_v.val, max_v.val
 FROM  (
     SELECT MIN(%(col)s) AS val
-    FROM   "%(owner)s"."%(table)s"%(partition_clause)s
+    FROM   "%(owner)s"."%(table)s"%(partition_clause)s%(predicate_clause)s
 ) min_v
 , (
     SELECT MAX(%(col)s) AS val
-    FROM   "%(owner)s"."%(table)s"%(partition_clause)s
+    FROM   "%(owner)s"."%(table)s"%(partition_clause)s%(predicate_clause)s
 ) max_v""" % {
             "owner": self._rdbms_owner,
             "table": self._rdbms_table_name,
             "col": rdbms_col_name,
             "partition_clause": self._get_iot_single_partition_clause(partition_chunk),
+            "predicate_clause": predicate_clause,
         }
         self.log("Oracle SQL:\n%s" % min_max_qry, detail=VVERBOSE)
         cx = get_rdbms_connection_for_oracle(
@@ -307,18 +342,6 @@ FROM  (
             except:
                 pass
         return min_max_row[0], min_max_row[1]
-
-    ###########################################################################
-    # PUBLIC METHODS
-    ###########################################################################
-
-    def convert_query_import_expressions_on_rdbms_side(self):
-        return False
-
-    def generate_transport_action(self):
-        id_str = id_generator()
-        # Action in Oracle is trimmed at 32 bytes, we do the same here
-        return ("%s_%s" % (id_str, self._rdbms_table_name.lower()))[:32]
 
     def get_rdbms_query_cast(
         self,
@@ -536,33 +559,23 @@ FROM  (
         self,
         partition_chunk: "OffloadSourcePartitions",
         rdbms_table: "OffloadSourceTableInterface",
-        parallelism,
-        rdbms_partition_type,
-        rdbms_columns,
-        offload_by_subpartition,
-        predicate_offload_clause,
+        parallelism: int,
+        rdbms_partition_type: str,
+        offload_by_subpartition: bool,
+        predicate_offload_clause: str,
+        native_range_split_available: bool = False,
     ) -> tuple:
         """
-        Return split type and any tuned transport parallelism in a tuple.
+        Return split type and any tuned transport parallelism.
 
         If there are more partitions/subpartitions than the requested parallelism then split by
         partition/subpartition, otherwise we split the few partitions by Oracle extent (ROWID ranges),
         id ranges or MOD ranges.
         """
 
-        def get_id_column_for_range_splitting() -> "OracleColumn":
-            if len(rdbms_table.get_primary_key_columns()) != 1:
-                return None
-            pk_col = match_table_column(
-                rdbms_table.get_primary_key_columns()[0], rdbms_columns
-            )
-            if pk_col.data_type == ORACLE_TYPE_NUMBER:
-                return pk_col
-            return None
-
         self.debug("get_transport_split_type()")
         is_iot = rdbms_table.is_iot()
-        id_split_col = get_id_column_for_range_splitting()
+        id_split_col = self.get_id_column_for_range_splitting(rdbms_table)
         partition_by = None
         if partition_chunk and partition_chunk.count() > 0:
             partition_count = partition_chunk.count()
@@ -608,8 +621,17 @@ FROM  (
                 )
                 partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT
             elif id_split_col:
-                self.log("Splitting PBO offload into id ranges", detail=VVERBOSE)
-                partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE
+                if id_split_col and native_range_split_available:
+                    self.log(
+                        "Splitting PBO offload into native id ranges", detail=VVERBOSE
+                    )
+                    partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE
+                elif id_split_col.is_number_based():
+                    self.log("Splitting PBO offload into id ranges", detail=VVERBOSE)
+                    partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE
+                else:
+                    self.log("Splitting PBO offload by MOD()", detail=VVERBOSE)
+                    partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD
             else:
                 self.log("Splitting PBO offload by MOD()", detail=VVERBOSE)
                 partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD
@@ -630,15 +652,15 @@ FROM  (
                 partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION
             elif id_split_col:
                 if partition_count == 1:
-                    self.log(
-                        "Splitting IOT into id ranges for single partition",
-                        detail=VVERBOSE,
-                    )
+                    self.log("Splitting IOT for single partition", detail=VVERBOSE)
                 else:
-                    self.log(
-                        "Splitting non-partitioned IOT into id ranges", detail=VVERBOSE
-                    )
-                partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE
+                    self.log("Splitting non-partitioned IOT", detail=VVERBOSE)
+                if id_split_col and native_range_split_available:
+                    partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE
+                elif id_split_col and id_split_col.is_number_based():
+                    partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE
+                else:
+                    partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD
             else:
                 if partition_count == 1:
                     self.log(
@@ -650,21 +672,25 @@ FROM  (
         else:
             self.log("Splitting table into ROWID ranges", detail=VVERBOSE)
             partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT
-        self.log("Transport rowsource split type: %s" % partition_by, detail=VVERBOSE)
+        self.log(
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_TYPE_TEXT + partition_by, detail=VVERBOSE
+        )
         assert partition_by in self._transport_row_source_query_split_methods
         return partition_by, tuned_parallelism
 
     def get_transport_row_source_query(
         self,
-        partition_by_prm,
+        partition_by_prm: str,
         rdbms_table: "OffloadSourceTableInterface",
         consistent_read,
         parallelism,
         offload_by_subpartition,
         mod_column,
-        predicate_offload_clause,
+        predicate_offload_clause: str,
         partition_chunk: "OffloadSourcePartitions" = None,
-        pad=None,
+        pad: int = None,
+        id_col_min=None,
+        id_col_max=None,
     ) -> str:
         """Define a frontend query that will retrieve data from a table dividing it by a split method
         such as partition or rowid range.
@@ -677,7 +703,7 @@ FROM  (
         assert partition_by_prm in self._transport_row_source_query_split_methods
 
         is_iot = rdbms_table.is_iot()
-        rdbms_pk_cols = rdbms_table.get_primary_key_columns()
+        id_split_col = self.get_id_column_for_range_splitting(rdbms_table)
 
         if partition_by_prm == TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT and is_iot:
             raise NotImplementedError(
@@ -697,23 +723,6 @@ FROM  (
 
         owner_table = '"%s"."%s"' % (self._rdbms_owner, self._rdbms_table_name)
         partition_by = partition_by_prm
-        if partition_by == TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE:
-            # Range split pre-processing which may result in change of split method
-            if not rdbms_pk_cols:
-                raise OffloadTransportRdbmsApiException(
-                    "Table %s cannot be split by range without primary key"
-                    % owner_table
-                )
-            col_min, col_max = self._get_id_range(
-                rdbms_pk_cols[0], partition_chunk=partition_chunk
-            )
-            if col_min is None or col_max is None:
-                self.log(
-                    "Switching from range to mod data split due to blank values",
-                    detail=VVERBOSE,
-                )
-                partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD
-
         union_all = self._row_source_query_union_all_clause(pad)
 
         if partition_by in (
@@ -762,9 +771,9 @@ FROM  (
                     partition_param = "NULL"
             union_branch_template = (
                 "SELECT /*+ NO_INDEX(g) USE_NL(g) LEADING(r) */ g.*, %(batch)s AS %(batch_col)s "
-                + "FROM %(owner_table)s%(scn_clause)s g, "
-                + "TABLE(offload.offload_rowid_ranges('%(owner)s', '%(table)s', %(partition_param)s, %(subpartition_param)s, %(degree)s, %(batch)s)) r "
-                + "WHERE g.rowid BETWEEN CHARTOROWID(r.min_rowid_vc) and CHARTOROWID(r.max_rowid_vc)"
+                "FROM %(owner_table)s%(scn_clause)s g, "
+                "TABLE(offload.offload_rowid_ranges('%(owner)s', '%(table)s', %(partition_param)s, %(subpartition_param)s, %(degree)s, %(batch)s)) r "
+                "WHERE g.rowid BETWEEN CHARTOROWID(r.min_rowid_vc) and CHARTOROWID(r.max_rowid_vc)"
             )
             if predicate_offload_clause:
                 union_branch_template += " AND (%s)" % predicate_offload_clause
@@ -807,11 +816,21 @@ FROM  (
                 "scn_clause": scn_clause,
                 "extra_where_clause": extra_where_clause,
             }
+        elif partition_by == TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE:
+            part_clause = self._get_iot_single_partition_clause(partition_chunk)
+            row_source = (
+                f"SELECT g.*, {rdbms_table.enclose_identifier(id_split_col.name)} AS {TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN}"
+                f"\nFROM {owner_table}{part_clause}{scn_clause} g"
+            )
+            if predicate_offload_clause:
+                row_source += "\nWHERE (%s)" % predicate_offload_clause
         elif partition_by == TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE:
-            batch_source_col = rdbms_pk_cols[0]
             # Create a range of min/max tuples spanning the entire id range
-            id_ranges = split_ranges_for_id_range(col_min, col_max, parallelism)
-            union_branch_template = "SELECT g.*, %(batch)s AS %(batch_col)s FROM %(owner_table)s%(part_clause)s%(scn_clause)s g WHERE %(batch_source_col)s >= %(low_val)s AND %(batch_source_col)s < %(high_val)s"
+            id_ranges = split_ranges_for_id_range(id_col_min, id_col_max, parallelism)
+            union_branch_template = (
+                "SELECT g.*, %(batch)s AS %(batch_col)s FROM %(owner_table)s%(part_clause)s%(scn_clause)s g "
+                "WHERE %(batch_source_col)s >= %(low_val)s AND %(batch_source_col)s < %(high_val)s"
+            )
             if predicate_offload_clause:
                 union_branch_template += " AND (%s)" % predicate_offload_clause
             row_source = union_all.join(
@@ -825,7 +844,7 @@ FROM  (
                             partition_chunk
                         ),
                         "scn_clause": scn_clause,
-                        "batch_source_col": batch_source_col,
+                        "batch_source_col": id_split_col.name,
                         "low_val": lowhigh[0],
                         "high_val": lowhigh[1],
                     }

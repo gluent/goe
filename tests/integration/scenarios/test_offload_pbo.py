@@ -56,7 +56,10 @@ from tests.integration.scenarios.scenario_runner import (
     run_offload,
     run_setup,
 )
-from tests.integration.scenarios.setup_functions import drop_backend_test_table
+from tests.integration.scenarios.setup_functions import (
+    drop_backend_test_table,
+    no_query_import_transport_method,
+)
 from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
@@ -71,7 +74,6 @@ from tests.testlib.test_framework.test_functions import (
 
 EXC_TABLE = "STORY_PBO_EXC"
 DIM_TABLE = "STORY_PBO_DIM"
-DIM_TABLE_LATE = "STORY_PBO_D_LATE"
 RANGE_TABLE = "STORY_PBO_RANGE"
 LIST_TABLE = "STORY_PBO_LIST"
 
@@ -854,6 +856,10 @@ def test_offload_pbo_range(config, schema, data_db):
                 test_constants.SALES_BASED_FACT_HV_3,
             )
         ),
+        # Ideally we should exercise other transport methods.
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
+        ),
         "reset_backend_table": True,
         "create_backend_db": True,
     }
@@ -892,6 +898,9 @@ def test_offload_pbo_range(config, schema, data_db):
         "owner_table": schema + "." + RANGE_TABLE,
         "offload_predicate": GenericPredicate(
             "column(time_id) = datetime(%s)" % test_constants.SALES_BASED_FACT_HV_1
+        ),
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
         ),
     }
     run_offload(options, config, messages)
@@ -1011,6 +1020,9 @@ def test_offload_pbo_list(config, schema, data_db):
             "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(3)))"
             % (test_constants.SALES_BASED_FACT_HV_1)
         ),
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
+        ),
         "reset_backend_table": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
@@ -1058,6 +1070,9 @@ def test_offload_pbo_list(config, schema, data_db):
         "offload_predicate": GenericPredicate(
             "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(4)))"
             % (test_constants.SALES_BASED_FACT_HV_1)
+        ),
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
         ),
     }
     messages.log(f"{id}:2", detail=VVERBOSE)

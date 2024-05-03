@@ -450,6 +450,12 @@ class TestIdaPredicateDataTypes(TestCase):
             True,
         ),
         (
+            "numeric(2012) = column(YEAR)",
+            "YEAR",
+            2012,
+            True,
+        ),
+        (
             "column(MONTH) = numeric(11) AND column(year) = numeric(2012)",
             "year",
             2012,
@@ -530,6 +536,12 @@ class TestIdaPredicateDataTypes(TestCase):
             "YEAR",
             2012,
             False,
+        ),
+        (
+            "numeric(2013) >= column(YEAR)",
+            "YEAR",
+            2012,
+            True,
         ),
         # ne
         (
@@ -760,6 +772,403 @@ def test_generic_predicate_column_value_match_datetime(
         assert (
             GenericPredicate(predicate_dsl).column_value_match(
                 column_name, comparison_value
+            )
+            == expect_pass
+        )
+
+
+@pytest.mark.parametrize(
+    "predicate_dsl,column_name,comparison_range,expect_pass",
+    [
+        # eq
+        (
+            "column(YEAR) = numeric(2011)",
+            "YEAR",
+            (None, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) = numeric(2012)",
+            "YEAR",
+            (None, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) = numeric(2009)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) = numeric(2011)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) = numeric(2012)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        # lt
+        (
+            "column(YEAR) < numeric(2011)",
+            "YEAR",
+            (None, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) < numeric(2011)",
+            "YEAR",
+            (None, 2010),
+            True,
+        ),
+        (
+            "column(YEAR) < numeric(2011)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) < numeric(2012)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) < numeric(2010)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        # le
+        (
+            "column(YEAR) <= numeric(2011)",
+            "YEAR",
+            (None, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) <= numeric(2011)",
+            "YEAR",
+            (None, 2010),
+            True,
+        ),
+        (
+            "column(YEAR) <= numeric(2010)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) <= numeric(2011)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) <= numeric(2012)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) <= numeric(2000)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        # gt
+        (
+            "column(YEAR) > numeric(2011)",
+            "YEAR",
+            (None, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) > numeric(2011)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) > numeric(2012)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) > numeric(2013)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        # ge
+        (
+            "column(YEAR) >= numeric(2011)",
+            "YEAR",
+            (None, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) >= numeric(2011)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) >= numeric(2012)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) >= numeric(2013)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        # ne - everything is a match for ne.
+        (
+            "column(YEAR) != numeric(2011)",
+            "YEAR",
+            (None, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) != numeric(2012)",
+            "YEAR",
+            (2011, 2012),
+            True,
+        ),
+        # in
+        (
+            "column(YEAR) in (numeric(2011),numeric(2012))",
+            "YEAR",
+            (None, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) in (numeric(2012),numeric(2013))",
+            "YEAR",
+            (None, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) in (numeric(2013),numeric(2014))",
+            "YEAR",
+            (None, 2012),
+            False,
+        ),
+        # not in - everything is a match for not in.
+        (
+            "column(YEAR) not in (numeric(2011),numeric(2012))",
+            "YEAR",
+            (None, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) not in (numeric(2011),numeric(2012))",
+            "YEAR",
+            (2011, 2012),
+            True,
+        ),
+        # combinations
+        (
+            "column(YEAR) >= numeric(2009) AND column(YEAR) < numeric(2010)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) >= numeric(2010) AND column(YEAR) < numeric(2011)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) >= numeric(2011) AND column(YEAR) < numeric(2012)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) >= numeric(2012) AND column(YEAR) < numeric(2013)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) > numeric(2009) AND column(YEAR) < numeric(2013)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) > numeric(2009) AND column(YEAR) < numeric(2011)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) > numeric(2011) AND column(YEAR) < numeric(2013)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) > numeric(2012) AND column(YEAR) < numeric(2013)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) > numeric(2009) AND column(YEAR) < numeric(2010)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+        (
+            "column(YEAR) > numeric(2001) AND column(YEAR) < numeric(2020)",
+            "YEAR",
+            (2010, 2012),
+            True,
+        ),
+        (
+            "column(YEAR) > numeric(2001) AND column(YEAR) < numeric(2020) AND column(YEAR) = numeric(2015)",
+            "YEAR",
+            (2010, 2012),
+            False,
+        ),
+    ],
+)
+def test_generic_predicate_column_value_range_num(
+    predicate_dsl: str, column_name: str, comparison_range: tuple, expect_pass: bool
+):
+    if " OR " in predicate_dsl:
+        with pytest.raises(Exception) as _:
+            GenericPredicate(predicate_dsl).column_range_match(
+                column_name, comparison_range[0], comparison_range[1]
+            )
+    elif expect_pass:
+        assert GenericPredicate(predicate_dsl).column_range_match(
+            column_name, comparison_range
+        ), f"Predicate ({predicate_dsl}) not in range: {comparison_range}"
+    else:
+        assert not GenericPredicate(predicate_dsl).column_range_match(
+            column_name, comparison_range
+        ), f"Predicate ({predicate_dsl}) should NOT match range: {comparison_range}"
+
+
+# Not been as comprehensive for datetime, just shake down each comparison.
+@pytest.mark.parametrize(
+    "predicate_dsl,column_name,comparison_range,expect_pass",
+    [
+        # eq
+        (
+            "column(DTTM) = datetime(2012-03-01)",
+            "DTTM",
+            (None, np.datetime64("2012-02-01")),
+            False,
+        ),
+        (
+            "column(DTTM) = datetime(2012-01-01)",
+            "DTTM",
+            (np.datetime64("2000-02-01"), np.datetime64("2012-02-01")),
+            True,
+        ),
+        (
+            "column(DTTM) = datetime(2012-02-01)",
+            "DTTM",
+            (np.datetime64("2000-02-01"), np.datetime64("2012-02-01")),
+            False,
+        ),
+        # lt
+        (
+            "column(DTTM) < datetime(2012-03-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            True,
+        ),
+        (
+            "column(DTTM) < datetime(2012-02-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            False,
+        ),
+        # le
+        (
+            "column(DTTM) <= datetime(2012-03-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            True,
+        ),
+        (
+            "column(DTTM) <= datetime(2012-02-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            True,
+        ),
+        (
+            "column(DTTM) <= datetime(2012-01-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            False,
+        ),
+        # gt
+        (
+            "column(DTTM) > datetime(2012-03-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            False,
+        ),
+        (
+            "column(DTTM) > datetime(2012-02-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            True,
+        ),
+        # ge
+        (
+            "column(DTTM) >= datetime(2012-03-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            False,
+        ),
+        (
+            "column(DTTM) >= datetime(2012-02-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            True,
+        ),
+        (
+            "column(DTTM) >= datetime(2012-01-01)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            True,
+        ),
+        # ne
+        (
+            "column(DTTM) != datetime(2012-02-10)",
+            "DTTM",
+            (np.datetime64("2012-02-01"), np.datetime64("2012-03-01")),
+            True,
+        ),
+    ],
+)
+def test_generic_predicate_column_value_range_datetime(
+    predicate_dsl: str, column_name: str, comparison_range: tuple, expect_pass: bool
+):
+    if " OR " in predicate_dsl:
+        with pytest.raises(Exception) as _:
+            GenericPredicate(predicate_dsl).column_range_match(
+                column_name, comparison_range[0], comparison_range[1]
+            )
+    else:
+        assert (
+            GenericPredicate(predicate_dsl).column_range_match(
+                column_name, comparison_range
             )
             == expect_pass
         )

@@ -250,14 +250,26 @@ class GenericPredicate:
         column_nodes = self.ast.find_pred(lambda tree: tree.data == "column")
         return list(set([n.children[-1].value for n in column_nodes]))
 
+    def column_range_match(self, column_name: str, comparison_range: tuple) -> bool:
+        assert (
+            not self.has_or_groups()
+        ), "column_value_match() is not supported on predicates containing OR relation groups"
+        try:
+            GenericPredicateVisitor(
+                column_name, comparison_range=comparison_range
+            ).visit_topdown(self.ast)
+            return True
+        except GenericPredicateNonMatchingValue:
+            return False
+
     def column_value_match(self, column_name: str, comparison_value) -> bool:
         assert (
             not self.has_or_groups()
         ), "column_value_match() is not supported on predicates containing OR relation groups"
         try:
-            GenericPredicateVisitor(column_name, comparison_value).visit_topdown(
-                self.ast
-            )
+            GenericPredicateVisitor(
+                column_name, comparison_value=comparison_value
+            ).visit_topdown(self.ast)
             return True
         except GenericPredicateNonMatchingValue:
             return False
@@ -379,9 +391,12 @@ class RawToInternalAST(lark.Transformer):
 
 
 class GenericPredicateVisitor(lark.Visitor):
-    def __init__(self, column_name, comparison_value):
+    def __init__(self, column_name, comparison_value=None, comparison_range=None):
+        assert column_name
+        assert comparison_value or comparison_range
         self._column_name = column_name.upper()
         self._comparison_value = comparison_value
+        self._comparison_range = comparison_range
 
     def _expression_for_column(self, expr) -> bool:
         return bool(
@@ -389,51 +404,117 @@ class GenericPredicateVisitor(lark.Visitor):
             and expr.children[-1].value.upper() == self._column_name
         )
 
-    def _column_value_comparison(self, comp_fn, pred_value) -> bool:
-        if not comp_fn(self._comparison_value, pred_value):
+    def _value_comparison(self, comp_fn, lhs, rhs) -> bool:
+        if not comp_fn(lhs, rhs):
             raise GenericPredicateNonMatchingValue
 
-    def _column_value_satisfies_node(self, comp_fn, children):
+    def _value_satisfies_node(self, comp_fn, comparison_value, children):
         lhs, rhs = children
         if self._expression_for_column(lhs):
             # Compare using rhs value
-            self._column_value_comparison(comp_fn, rhs.children[-1].value)
+            self._value_comparison(comp_fn, comparison_value, rhs.children[-1].value)
         elif self._expression_for_column(rhs):
             # Compare using lhs value
-            self._column_value_comparison(comp_fn, lhs.children[-1].value)
+            self._value_comparison(comp_fn, lhs.children[-1].value, comparison_value)
         # Ignore any expressions that are not for the column of interest.
 
     def equals(self, items):
-        self._column_value_satisfies_node(operator.eq, items.children)
+        if self._comparison_value is not None:
+            self._value_satisfies_node(
+                operator.eq, self._comparison_value, items.children
+            )
+        else:
+            if self._comparison_range[0] is not None:
+                # Lower bound should be LE predicate value.
+                self._value_satisfies_node(
+                    operator.le, self._comparison_range[0], items.children
+                )
+            # Upper bound should be GT predicate value.
+            self._value_satisfies_node(
+                operator.gt, self._comparison_range[1], items.children
+            )
 
     def greater_than(self, items):
-        self._column_value_satisfies_node(operator.gt, items.children)
+        if self._comparison_value is not None:
+            self._value_satisfies_node(
+                operator.gt, self._comparison_value, items.children
+            )
+        else:
+            # For greater-than we only need to consider the upper bound.
+            # Upper bound should be GT predicate value.
+            self._value_satisfies_node(
+                operator.gt, self._comparison_range[1], items.children
+            )
 
     def greater_than_or_equal(self, items: Tree):
-        self._column_value_satisfies_node(operator.ge, items.children)
+        if self._comparison_value is not None:
+            self._value_satisfies_node(
+                operator.ge, self._comparison_value, items.children
+            )
+        else:
+            # For GTE we only need to consider the upper bound.
+            # Upper bound should be GT predicate value.
+            self._value_satisfies_node(
+                operator.gt, self._comparison_range[1], items.children
+            )
 
     def less_than(self, items):
-        self._column_value_satisfies_node(operator.lt, items.children)
+        if self._comparison_value is not None:
+            self._value_satisfies_node(
+                operator.lt, self._comparison_value, items.children
+            )
+        else:
+            # For less-than we only need to consider the lower bound.
+            if self._comparison_range[0] is not None:
+                # Lower bound should be LT predicate value.
+                self._value_satisfies_node(
+                    operator.lt, self._comparison_range[0], items.children
+                )
 
     def less_than_or_equal(self, items):
-        self._column_value_satisfies_node(operator.le, items.children)
+        if self._comparison_value is not None:
+            self._value_satisfies_node(
+                operator.le, self._comparison_value, items.children
+            )
+        else:
+            # For less-than-or-equal we only need to consider the lower bound.
+            if self._comparison_range[0] is not None:
+                # Lower bound should be LTE predicate value.
+                self._value_satisfies_node(
+                    operator.le, self._comparison_range[0], items.children
+                )
 
     def not_equals(self, items):
-        self._column_value_satisfies_node(operator.ne, items.children)
+        if self._comparison_value is not None:
+            self._value_satisfies_node(
+                operator.ne, self._comparison_value, items.children
+            )
+        # else:
+        # For a range there's nothing we can.
+        # Any partition "could" have data that happens to not-equal the predicate.
 
     def in_relation(self, items):
-        lhs, rhs = items.children
-        if self._expression_for_column(lhs):
-            if self._comparison_value not in [
-                _.children[-1].value for _ in rhs.children
-            ]:
-                raise GenericPredicateNonMatchingValue
+        if self._comparison_value is not None:
+            lhs, rhs = items.children
+            if self._expression_for_column(lhs):
+                if self._comparison_value not in [
+                    _.children[-1].value for _ in rhs.children
+                ]:
+                    raise GenericPredicateNonMatchingValue
+        else:
+            raise NotImplementedError
 
     def not_in_relation(self, items):
-        lhs, rhs = items.children
-        if self._expression_for_column(lhs):
-            if self._comparison_value in [_.children[-1].value for _ in rhs.children]:
-                raise GenericPredicateNonMatchingValue
+        if self._comparison_value is not None:
+            lhs, rhs = items.children
+            if self._expression_for_column(lhs):
+                if self._comparison_value in [
+                    _.children[-1].value for _ in rhs.children
+                ]:
+                    raise GenericPredicateNonMatchingValue
+        # else:
+        # For a range there's nothing we can.
+        # Any partition "could" have data that happens to be not-in the predicate list.
 
 
 class GenericPredicateToTyped(lark.Transformer):

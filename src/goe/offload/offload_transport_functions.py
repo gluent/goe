@@ -395,7 +395,7 @@ def transport_and_load_offload_chunk(
         )
 
         return rows_staged
-    except Exception as exc:
+    except Exception:
         repo_client.end_offload_chunk(chunk_id, orchestration_constants.COMMAND_ERROR)
         raise
 

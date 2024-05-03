@@ -69,6 +69,9 @@ from goe.offload.offload_transport_functions import (
     schema_paths,
 )
 from goe.offload.offload_transport_rdbms_api import (
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD,
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE,
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
 )
 from goe.offload.offload_xform_functions import apply_transformation
@@ -90,6 +93,7 @@ from goe.util.polling_thread import PollingThread
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
     from goe.offload.backend_table import BackendTableInterface
+    from goe.offload.column_metadata import ColumnMetadataInterface
     from goe.offload.offload_messages import OffloadMessages
     from goe.offload.offload_source_data import OffloadSourcePartitions
     from goe.offload.offload_source_table import OffloadSourceTableInterface
@@ -1125,7 +1129,12 @@ class OffloadTransport(object, metaclass=ABCMeta):
             return self._rdbms_columns[0].name
 
     def _get_transport_row_source_query(
-        self, partition_by, partition_chunk=None, pad=None
+        self,
+        partition_by: str,
+        partition_chunk=None,
+        pad=None,
+        id_col_min=None,
+        id_col_max=None,
     ):
         if self._rdbms_offload_predicate:
             self.log(
@@ -1147,22 +1156,35 @@ class OffloadTransport(object, metaclass=ABCMeta):
             predicate_offload_clause,
             partition_chunk=partition_chunk,
             pad=pad,
+            id_col_min=id_col_min,
+            id_col_max=id_col_max,
         )
 
     def _get_spark_jdbc_query_text(
-        self, split_column, split_type, partition_chunk, sql_comment=None
+        self,
+        split_type: str,
+        partition_chunk,
+        sql_comment=None,
+        id_col_min=None,
+        id_col_max=None,
     ) -> str:
         """Adds an outer query around the row source query produced by get_transport_row_source_query."""
         self.debug(
             "_get_spark_jdbc_query_text(%s, %s, %s)"
-            % (split_column, split_type, sql_comment)
+            % (TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN, split_type, sql_comment)
         )
         colexpressions, colnames = self._build_offload_query_lists(for_spark=True)
         rdbms_sql_projection = self._sql_projection_from_offload_query_expression_list(
-            colexpressions, colnames, extra_cols=[split_column.upper()]
+            colexpressions,
+            colnames,
+            extra_cols=[TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN],
         )
         row_source_subquery = self._get_transport_row_source_query(
-            split_type, partition_chunk=partition_chunk, pad=6
+            split_type,
+            partition_chunk=partition_chunk,
+            pad=6,
+            id_col_min=id_col_min,
+            id_col_max=id_col_max,
         )
         rdbms_source_query = """(SELECT %(row_source_hint)s%(sql_comment)s %(rdbms_projection)s
 FROM (%(row_source_subquery)s) %(table_alias)s) v2""" % {
@@ -1174,7 +1196,12 @@ FROM (%(row_source_subquery)s) %(table_alias)s) v2""" % {
         }
         return rdbms_source_query
 
-    def _get_transport_split_type(self, partition_chunk) -> str:
+    def _get_transport_split_type(
+        self, partition_chunk, native_range_split_available: bool = False
+    ) -> str:
+        predicate_offload_clause = self._rdbms_table.predicate_to_where_clause(
+            self._rdbms_offload_predicate
+        )
         (
             split_row_source_by,
             tuned_parallelism,
@@ -1183,9 +1210,9 @@ FROM (%(row_source_subquery)s) %(table_alias)s) v2""" % {
             self._rdbms_table,
             self._offload_transport_parallelism,
             self._rdbms_partition_type,
-            self._rdbms_columns,
             self._offload_by_subpartition,
-            self._rdbms_offload_predicate,
+            predicate_offload_clause,
+            native_range_split_available=native_range_split_available,
         )
         if (
             tuned_parallelism
@@ -1444,13 +1471,13 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
     def _column_type_read_remappings(self):
         return self._offload_transport_type_remappings(return_as_list=False)
 
-    def _standalone_spark(self):
+    def _standalone_spark(self) -> bool:
         return bool(
             self._offload_options.backend_distribution
             not in HADOOP_BASED_BACKEND_DISTRIBUTIONS
         )
 
-    def _option_from_properties(self, option_name, property_name):
+    def _option_from_properties(self, option_name, property_name) -> list:
         """Small helper function to pluck a property value from self._spark_config_properties"""
         if property_name in self._spark_config_properties:
             return [option_name, self._spark_config_properties[property_name]]
@@ -1463,9 +1490,36 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
             jdbc_option_clauses = ".option('oracle.jdbc.timezoneAsRegion', 'false')"
         return jdbc_option_clauses
 
+    def _get_id_range(
+        self, split_row_source_by, id_range_column, partition_chunk
+    ) -> tuple:
+        col_name = (
+            id_range_column
+            if isinstance(id_range_column, str)
+            else id_range_column.name
+        )
+        predicate_offload_clause = self._rdbms_table.predicate_to_where_clause(
+            self._rdbms_offload_predicate
+        )
+        id_col_min, id_col_max = self._rdbms_api.get_id_range(
+            col_name, predicate_offload_clause, partition_chunk=partition_chunk
+        )
+        if id_col_min is None or id_col_max is None:
+            self.log(
+                f"Switching from range to mod data split due to blank values: {id_col_min} -> {id_col_max}",
+                detail=VVERBOSE,
+            )
+            split_row_source_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD
+            id_col_min = None
+            id_col_max = None
+        return split_row_source_by, id_col_min, id_col_max
+
+    def _get_id_column_for_range_splitting(self) -> "ColumnMetadataInterface":
+        return self._rdbms_api.get_id_column_for_range_splitting(self._rdbms_table)
+
     def _get_pyspark_body(
         self, partition_chunk=None, create_spark_context=True, canary_query=None
-    ):
+    ) -> str:
         """Return pyspark code to copy data to the load table.
         Shared by multiple sub-classes.
         When defining the parallel chunks we set the upperBound (batch_col_max) one higher than the actual value.
@@ -1509,19 +1563,42 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                 )
             return "\n".join(password_python)
 
+        batch_col_min = 0
+        batch_col_max = self._offload_transport_parallelism
+        id_col_min = None
+        id_col_max = None
         if canary_query:
             custom_schema_clause = ""
             rdbms_source_query = canary_query
             transport_app_name = "GOE Connect"
             load_db_name, load_table_name = "", ""
         else:
-            split_row_source_by = self._get_transport_split_type(partition_chunk)
+            split_row_source_by = self._get_transport_split_type(
+                partition_chunk, native_range_split_available=True
+            )
+            if split_row_source_by in (
+                TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE,
+                TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE,
+            ):
+                id_range_column = self._get_id_column_for_range_splitting()
+                split_row_source_by, id_col_min, id_col_max = self._get_id_range(
+                    split_row_source_by, id_range_column, partition_chunk
+                )
+
+                if (
+                    split_row_source_by
+                    == TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE
+                ):
+                    batch_col_min = id_col_min
+                    batch_col_max = id_col_max
+
             custom_schema_clause = self._column_type_read_remappings()
             rdbms_source_query = self._get_spark_jdbc_query_text(
-                TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
                 split_row_source_by,
                 partition_chunk,
                 sql_comment=self._rdbms_action,
+                id_col_min=id_col_min,
+                id_col_max=id_col_max,
             )
             transport_app_name = self._get_transport_app_name()
             load_db_name, load_table_name = self._load_db_name, self._load_table_name
@@ -1581,8 +1658,9 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
             "get_password_snippet": password_snippet,
             "rdbms_source_query": self._spark_sql_option_safe(rdbms_source_query),
             "batch_col": TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
+            "batch_col_min": batch_col_min,
             # batch_col_max is one higher than reality, see header comment
-            "batch_col_max": self._offload_transport_parallelism,
+            "batch_col_max": batch_col_max,
             "parallelism": self._offload_transport_parallelism,
             "custom_schema_clause": (
                 (",\n    " + custom_schema_clause) if custom_schema_clause else ""
@@ -1671,7 +1749,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                 dbtable=\"\"\"%(rdbms_source_query)s\"\"\",
                 fetchSize=%(fetch_size)s,
                 partitionColumn='%(batch_col)s',
-                lowerBound=0,
+                lowerBound=%(batch_col_min)s,
                 upperBound=%(batch_col_max)s,
                 numPartitions=%(parallelism)s%(custom_schema_clause)s
             )%(jdbc_option_clauses)s.load()
@@ -1698,6 +1776,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
                 % ",".join(proj_col(_.name) for _ in self._rdbms_columns)
             )
         else:
+            # Remove any synthetic split/partition column from the projection.
             pyspark_body += (
                 dedent(
                     """\
@@ -2027,11 +2106,16 @@ class OffloadTransportSparkThrift(OffloadTransportSpark):
         )
         hive_sql_projection = "\n,      ".join(_.name for _ in self._rdbms_columns)
         split_row_source_by = self._get_transport_split_type(partition_chunk)
+        id_range_column = self._get_id_column_for_range_splitting()
+        split_row_source_by, id_col_min, id_col_max = self._get_id_range(
+            split_row_source_by, id_range_column, partition_chunk
+        )
         rdbms_source_query = self._get_spark_jdbc_query_text(
-            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
             split_row_source_by,
             partition_chunk,
             sql_comment=self._rdbms_action,
+            id_col_min=id_col_min,
+            id_col_max=id_col_max,
         )
         custom_schema_clause = self._column_type_read_remappings()
 

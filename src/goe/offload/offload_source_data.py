@@ -1694,17 +1694,24 @@ class OffloadSourceDataPredicate(OffloadSourceDataInterface):
                 # No OR predicates and no composite partition keys.
                 self.populate_source_partitions()
 
-                def filter_fn(p):
-                    return bool(
-                        self._inflight_offload_predicate.column_value_match(
-                            self._partition_columns[0].name,
-                            p.partition_values_python[0],
-                        )
-                    )
+                prior_hv = None
+                partitions_to_offload = []
+                for p in reversed(self._source_partitions.get_partitions()):
+                    if self._inflight_offload_predicate.column_range_match(
+                        self._partition_columns[0].name,
+                        (prior_hv, p.partition_values_python[0]),
+                    ):
+                        partitions_to_offload.append(p)
+                    prior_hv = p.partition_values_python[0]
 
-                self._partitions_to_offload, _ = (
-                    self._source_partitions.split_partitions(filter_fn)
+                self._partitions_to_offload = OffloadSourcePartitions(
+                    partitions_to_offload
                 )
+                if self._partitions_to_offload.count():
+                    self.log(
+                        f"Found {self._partitions_to_offload.count()} partitions matching offload predicate",
+                        detail=VVERBOSE,
+                    )
 
             # Case 3 needs to retain RANGE HVs
             (

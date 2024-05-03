@@ -29,7 +29,6 @@ from goe.offload.offload_messages import OffloadMessages, VERBOSE
 from goe.offload.offload_transport_functions import transport_and_load_offload_chunk
 from goe.offload.operation.stats_controls import copy_rdbms_stats_to_backend
 from goe.orchestration import command_steps
-from goe.persistence import orchestration_metadata
 
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
@@ -140,6 +139,8 @@ def offload_data_to_target(
         rows_imported = transport_and_load_offload_chunk_fn(
             partition_chunk=source_data_client.partitions_to_offload
         )
+        if rows_imported and rows_imported >= 0:
+            rows_offloaded = rows_imported
     else:
         rows_imported = transport_and_load_offload_chunk_fn()
         if rows_imported and rows_imported >= 0:

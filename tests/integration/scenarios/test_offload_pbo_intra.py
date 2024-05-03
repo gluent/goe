@@ -48,7 +48,10 @@ from tests.integration.scenarios.scenario_runner import (
     run_offload,
     run_setup,
 )
-from tests.integration.scenarios.setup_functions import drop_backend_test_table
+from tests.integration.scenarios.setup_functions import (
+    drop_backend_test_table,
+    no_query_import_transport_method,
+)
 from tests.integration.scenarios.test_offload_pbo import (
     check_predicate_count_matches_log,
     pbo_assertion,
@@ -207,6 +210,9 @@ def offload_pbo_intra_day_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "2")),
         "ipa_predicate_type": ipa_and_predicate_type,
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
+        ),
     }
     run_offload(
         options,
@@ -220,6 +226,9 @@ def offload_pbo_intra_day_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "2")),
         "ipa_predicate_type": ipa_and_predicate_type,
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
+        ),
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -276,6 +285,9 @@ def offload_pbo_intra_day_std_range_tests(
         "offload_predicate": GenericPredicate(
             gen_pred(hv_pred, hv_1, hv_2, ["3", "4"])
         ),
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
+        ),
     }
     messages.log(f"{test_id}:2", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -316,6 +328,9 @@ def offload_pbo_intra_day_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate_modify_hybrid_view": False,
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "5")),
+        "offload_transport_method": no_query_import_transport_method(
+            config, no_table_centric_sqoop=True
+        ),
     }
     messages.log(f"{test_id}:3", detail=VVERBOSE)
     run_offload(options, config, messages)

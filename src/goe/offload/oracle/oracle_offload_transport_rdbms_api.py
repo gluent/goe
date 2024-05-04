@@ -265,7 +265,11 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
         pk_col = match_table_column(
             rdbms_table.get_primary_key_columns()[0], rdbms_table.columns
         )
-        if pk_col.data_type in (ORACLE_TYPE_NUMBER, ORACLE_TYPE_DATE):
+        if pk_col.data_type in (
+            ORACLE_TYPE_NUMBER,
+            ORACLE_TYPE_DATE,
+            ORACLE_TYPE_TIMESTAMP,
+        ):
             return pk_col
         return None
 

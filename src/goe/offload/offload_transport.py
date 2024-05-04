@@ -76,6 +76,7 @@ from goe.offload.offload_transport_rdbms_api import (
 )
 from goe.offload.offload_xform_functions import apply_transformation
 from goe.offload.operation.data_type_controls import char_semantics_override_map
+from goe.offload.spark.pyspark_literal import PysparkLiteral
 from goe.orchestration import command_steps
 
 from goe.filesystem.goe_dfs import DFS_TYPE_FILE
@@ -1658,9 +1659,9 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
             "get_password_snippet": password_snippet,
             "rdbms_source_query": self._spark_sql_option_safe(rdbms_source_query),
             "batch_col": TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN,
-            "batch_col_min": batch_col_min,
+            "batch_col_min": PysparkLiteral.format_literal(batch_col_min),
             # batch_col_max is one higher than reality, see header comment
-            "batch_col_max": batch_col_max,
+            "batch_col_max": PysparkLiteral.format_literal(batch_col_max),
             "parallelism": self._offload_transport_parallelism,
             "custom_schema_clause": (
                 (",\n    " + custom_schema_clause) if custom_schema_clause else ""

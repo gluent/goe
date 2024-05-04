@@ -496,7 +496,7 @@ def test_offload_transport_oracle_iot_ts_spark_submit(config, schema, data_db):
         messages.log(f"Skipping {id} for frontend: {config.db_type}")
         pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
-    if not is_spark_submit_available(None, config, messages=messages):
+    if not is_spark_submit_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Spark Submit is not configured")
         pytest.skip(f"Skipping {id} because Spark Submit is not configured")
 
@@ -599,7 +599,7 @@ def test_offload_transport_oracle_iot_str_spark_submit(config, schema, data_db):
         messages.log(f"Skipping {id} for frontend: {config.db_type}")
         pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
-    if not is_spark_submit_available(None, config, messages=messages):
+    if not is_spark_submit_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Spark Submit is not configured")
         pytest.skip(f"Skipping {id} because Spark Submit is not configured")
 

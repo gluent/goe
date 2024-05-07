@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 # Copyright 2016 The GOE Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -1684,6 +1682,8 @@ class OffloadSourceDataPredicate(OffloadSourceDataInterface):
             if (
                 not self._inflight_offload_predicate.has_or_groups()
                 and len(self._partition_columns) == 1
+                and self._partition_append_predicate_type
+                == INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE_AND_PREDICATE
             ):
                 # For a simple PREDICATE_AND_RANGE PBO we can identify which partitions overlap
                 # the predicate. This can then be used to optimise the transport query.
@@ -2097,7 +2097,8 @@ class OffloadSourceDataIpaRange(OffloadSourceDataInterface):
     def _rpa_partition_already_offloaded(
         self, partition, partition_already_marked_offloaded
     ):
-        """This method is used to differentiate between true RANGE and LIST_AS_RANGE.
+        """Differentiate between true RANGE and LIST_AS_RANGE.
+
         rdbms_min <= backend_max: If there's data in Oracle older than backend max then current partition must
                                   be offloaded and we'll stop iterating when we find a HWM beyond backend max
         p.partition_values_python <= backend_max: If the HV for current partition is older than backend max then it must

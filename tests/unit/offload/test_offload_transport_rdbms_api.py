@@ -372,37 +372,37 @@ def test_get_transport_split_type_oracle_subpartitioned(
             TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE,
             2,
         ),
-        # (
-        #    2,
-        #    None,
-        #    False,
-        #    None,
-        #    # PBO with no known partitions should always split by ID range if there's NO suitable PK.
-        #    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD,
-        #    2,
-        # ),
-        # (
-        #    3,
-        #    [
-        #        "ID",
-        #    ],
-        #    False,
-        #    offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
-        #    # PBO with 2 known partitions and parallel 3 should split by ROWID range.
-        #    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
-        #    3,
-        # ),
-        # (
-        #    2,
-        #    [
-        #        "ID",
-        #    ],
-        #    False,
-        #    offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
-        #    # PBO with 2 known partitions and parallel 2 should split by partition.
-        #    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
-        #    2,
-        # ),
+        (
+            2,
+            None,
+            False,
+            None,
+            # PBO with no known partitions should always split by ID range if there's NO suitable PK.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD,
+            2,
+        ),
+        (
+            3,
+            [
+                "ID",
+            ],
+            False,
+            offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
+            # PBO with 2 known partitions and parallel 3 should split by ROWID range.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
+            3,
+        ),
+        (
+            2,
+            [
+                "ID",
+            ],
+            False,
+            offload_partitions_from_rdbms_partitions(FAKE_ORACLE_PARTITIONS[:2]),
+            # PBO with 2 known partitions and parallel 2 should split by partition.
+            TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
+            2,
+        ),
     ],
 )
 def test_get_transport_split_type_oracle_pbo(

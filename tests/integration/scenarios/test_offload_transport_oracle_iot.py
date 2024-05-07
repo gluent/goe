@@ -218,7 +218,7 @@ def iot_str_dim_tests(
         backend_api,
         config,
         messages,
-        frontend_sqls=gen_num_dim_table_ddl(frontend_api, schema, table_name),
+        frontend_sqls=gen_str_dim_table_ddl(frontend_api, schema, table_name),
         python_fns=[
             lambda: drop_backend_test_table(
                 config, backend_api, messages, data_db, table_name

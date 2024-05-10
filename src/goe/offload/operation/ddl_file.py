@@ -110,7 +110,7 @@ def write_ddl_to_ddl_file(
     assert ddl_file
     ddl_str = "\n".join(ddl)
     header = ddl_file_header()
-    ddl_file_contents = f"{header}\n{ddl_str}"
+    ddl_file_contents = f"{header}\n{ddl_str}\n"
     if ":" in ddl_file:
         # Cloud storage.
         # dry_run=False below because, even in preview mode we need to write the file.

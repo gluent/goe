@@ -149,7 +149,7 @@ RESET_HYBRID_VIEW_EXCEPTION_TEXT = (
 )
 TOTAL_ROWS_OFFLOADED_LOG_TEXT = "Total rows offloaded"
 DDL_FILE_EXECUTE_MESSAGE_TEXT = (
-    "Switching command to non-exectute mode due to --ddl-file option"
+    "Switching command to non-execute mode due to --ddl-file option"
 )
 DDL_FILE_WRITE_MESSAGE_TEMPLATE = "Table DDL has been written to file: {}"
 

@@ -28,7 +28,7 @@ RESET_BACKEND_TABLE = "Remove backend data table. Use with caution - this will d
 
 REUSE_BACKEND_TABLE = (
     "Allow Offload to re-use an empty backend table when there is already Offload metadata. "
-    "This may be useful if a backend table had data removed by an administrator and a re-offlaod is required"
+    "This may be useful if a backend table had data removed by an administrator and a re-offload is required"
 )
 
 VERIFY_PARALLELISM = (

@@ -24,9 +24,7 @@ DATA_SAMPLE_PARALLELISM = (
     "Values of 0 or 1 will execute the query without parallelism"
 )
 
-RESET_BACKEND_TABLE = (
-    "Remove backend data table. Use with caution - this will delete previously offloaded data for this table!",
-)
+RESET_BACKEND_TABLE = "Remove backend data table. Use with caution - this will delete previously offloaded data for this table!"
 
 REUSE_BACKEND_TABLE = (
     "Allow Offload to re-use an empty backend table when there is already Offload metadata. "

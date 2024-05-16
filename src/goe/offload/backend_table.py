@@ -368,7 +368,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                 % (canonical_column.partition_info.range_end, range_max)
             )
 
-    def _create_db(self, db_name, comment=None, properties=None):
+    def _create_db(self, db_name, comment=None, properties=None, with_terminator=False):
         """Call through to relevant BackendApi to create a final database/dataset/schema.
         location can mean different things to different backends.
         """
@@ -383,23 +383,32 @@ class BackendTableInterface(metaclass=ABCMeta):
             return []
         else:
             return self._db_api.create_database(
-                db_name, comment=comment, properties=properties
+                db_name,
+                comment=comment,
+                properties=properties,
+                with_terminator=with_terminator,
             )
 
-    def _create_final_db(self, location=None):
+    def _create_final_db(self, location=None, with_terminator=False):
         comment = BACKEND_DB_COMMENT_TEMPLATE.format(
             db_name_type="Offload", db_name_label=self.db_name_label()
         )
         return self._create_db(
-            self.db_name, comment=comment, properties={"location": location}
+            self.db_name,
+            comment=comment,
+            properties={"location": location},
+            with_terminator=with_terminator,
         )
 
-    def _create_load_db(self, location=None):
+    def _create_load_db(self, location=None, with_terminator=False):
         comment = BACKEND_DB_COMMENT_TEMPLATE.format(
             db_name_type="Offload load", db_name_label=self.db_name_label()
         )
         return self._create_db(
-            self._load_db_name, comment=comment, properties={"location": location}
+            self._load_db_name,
+            comment=comment,
+            properties={"location": location},
+            with_terminator=with_terminator,
         )
 
     def _create_result_cache_db(self, location=None):
@@ -1072,7 +1081,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     def _recreate_load_table(self, staging_file):
         """Drop and create the staging/load table and any supporting filesystem directory"""
         self._drop_load_table()
-        self._create_load_table(staging_file)
+        return self._create_load_table(staging_file)
 
     def _result_cache_db_exists(self):
         return self._db_api.database_exists(self._result_cache_db_name)
@@ -1507,7 +1516,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     # enforced private methods
 
     @abstractmethod
-    def _create_load_table(self, staging_file):
+    def _create_load_table(self, staging_file, with_terminator=False) -> list:
         pass
 
     @abstractmethod
@@ -2354,7 +2363,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     # Final table enforced methods/properties
 
     @abstractmethod
-    def create_db(self):
+    def create_db(self, with_terminator=False) -> list:
         pass
 
     @abstractmethod
@@ -2415,7 +2424,8 @@ class BackendTableInterface(metaclass=ABCMeta):
                 optional=True,
             )
 
-    def create_backend_db_step(self):
+    def create_backend_db_step(self) -> list:
+        executed_commands = []
         if self.create_database_supported() and self._user_requested_create_backend_db:
             (
                 pre_register_data_gov_fn,
@@ -2431,8 +2441,11 @@ class BackendTableInterface(metaclass=ABCMeta):
                 ),
             )
             pre_register_data_gov_fn()
-            self._offload_step(command_steps.STEP_CREATE_DB, lambda: self.create_db())
+            executed_commands: list = self._offload_step(
+                command_steps.STEP_CREATE_DB, lambda: self.create_db()
+            )
             post_register_data_gov_fn()
+        return executed_commands
 
     def create_backend_table_step(self, goe_object_type) -> list:
         (

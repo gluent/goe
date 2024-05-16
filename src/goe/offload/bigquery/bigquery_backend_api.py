@@ -946,8 +946,11 @@ class BackendBigQueryApi(BackendApiInterface):
     ):
         raise NotImplementedError("Compute statistics does not apply for BigQuery")
 
-    def create_database(self, db_name, comment=None, properties=None):
-        """Use the BigQuery API to create a dataset.
+    def create_database(
+        self, db_name, comment=None, properties=None, with_terminator=False
+    ):
+        """Create a BigQuery dataset using SQL.
+
         properties: Allows properties["location"] to specify a BigQuery location, e.g. "us-west"
         """
         assert db_name
@@ -961,22 +964,21 @@ class BackendBigQueryApi(BackendApiInterface):
                 "Dataset already exists, not attempting to create: %s" % db_name,
                 detail=VVERBOSE,
             )
-        new_dataset = bigquery.Dataset(self._bq_dataset_id(db_name))
-        log_cmd = "create_dataset(%s" % self._bq_dataset_id(db_name)
+            return []
+        sql = "CREATE SCHEMA {}".format(
+            self.enclose_identifier(self._bq_dataset_id(db_name))
+        )
+        options = []
         if comment:
-            log_cmd += ", description='%s'" % comment
-            new_dataset.description = comment
+            options.append(f"description='{comment}'")
         if properties and properties.get("location"):
-            log_cmd += ", location=%s" % properties["location"]
-            new_dataset.location = properties["location"]
-        log_cmd += ")"
-        self._log("BigQuery call: %s" % log_cmd, detail=VERBOSE)
-        if not self._dry_run:
-            self._client.create_dataset(new_dataset)
-        return [log_cmd]
-
-    def create_sequence_table(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for BigQuery")
+            options.append("location='{}'".format(properties["location"]))
+        if options:
+            sql += " OPTIONS({})".format(",".join(options))
+        if with_terminator:
+            sql += ";"
+        cmds = self.execute_ddl(sql)
+        return cmds
 
     def create_table(
         self,
@@ -991,8 +993,10 @@ class BackendBigQueryApi(BackendApiInterface):
         sort_column_names=None,
         without_db_name=False,
         sync=None,
+        with_terminator=False,
     ):
-        """Create a BigQuery table
+        """Create a BigQuery table.
+
         sort_column_names: Only applicable for partitioned tables
         storage_format: Only used for external table otherwise FILE_STORAGE_FORMAT_BIGTABLE
         location: Only used for external table
@@ -1013,6 +1017,8 @@ class BackendBigQueryApi(BackendApiInterface):
             table_properties=table_properties,
             sort_column_names=sort_column_names,
         )
+        if with_terminator:
+            sql += ";"
         cmds = self.execute_ddl(sql, sync=sync)
 
         # Check table was created with KMS encryption if requested

@@ -77,7 +77,13 @@ def create_ddl_file_step(
         return
 
     def step_fn():
-        ddl = offload_target_table.create_backend_table()
+        ddl = []
+        if (
+            offload_operation.create_backend_db
+            and offload_target_table.create_database_supported()
+        ):
+            ddl.extend(offload_target_table.create_db(with_terminator=True))
+        ddl.extend(offload_target_table.create_backend_table(with_terminator=True))
         write_ddl_to_ddl_file(offload_operation.ddl_file, ddl, config, messages)
 
     messages.offload_step(command_steps.STEP_DDL_FILE, step_fn, execute=False)

@@ -1079,7 +1079,9 @@ class BackendSynapseApi(BackendApiInterface):
             )
         return self.execute_ddl(sqls) if sqls else sqls
 
-    def create_database(self, db_name, comment=None, properties=None):
+    def create_database(
+        self, db_name, comment=None, properties=None, with_terminator=False
+    ):
         """Create a Synapse schema which is a database in GOE terminology.
         properties: not applicable
         comment: not applicable
@@ -1095,10 +1097,9 @@ class BackendSynapseApi(BackendApiInterface):
                 detail=VVERBOSE,
             )
         sql = "CREATE SCHEMA %s" % self.enclose_identifier(db_name)
+        if with_terminator:
+            sql += ";"
         return self.execute_ddl(sql)
-
-    def create_sequence_table(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for Synapse")
 
     def create_table(
         self,
@@ -1113,6 +1114,7 @@ class BackendSynapseApi(BackendApiInterface):
         sort_column_names=None,
         without_db_name=False,
         sync=None,
+        with_terminator=False,
     ):
         """Create an Azure Synapse SQL table
         See abstract method for more description
@@ -1141,6 +1143,8 @@ class BackendSynapseApi(BackendApiInterface):
             table_properties=table_properties,
             sort_column_names=sort_column_names,
         )
+        if with_terminator:
+            sql += ";"
         return self.execute_ddl(sql, sync=sync)
 
     def create_view(

@@ -176,8 +176,6 @@ IMPALA_UDF_LIB = "to_internal.so"
 
 IMPALA_PROFILE_LOG_LENGTH = 1024 * 32
 
-SEQUENCE_COLUMN_NAME = "n"
-
 
 ###########################################################################
 # GLOBAL FUNCTIONS
@@ -776,7 +774,9 @@ class BackendHadoopApi(BackendApiInterface):
             # which I (NJ) cannot fully track down. Instead I drop state so we'll start afresh if required.
             self.drop_state()
 
-    def create_database(self, db_name, comment=None, properties=None):
+    def create_database(
+        self, db_name, comment=None, properties=None, with_terminator=False
+    ):
         """Create a Hadoop database.
         properties: Allows properties["location"] to specify a DFS location
         """
@@ -791,31 +791,10 @@ class BackendHadoopApi(BackendApiInterface):
             sql += " COMMENT '%s'" % comment
         if properties and properties.get("location"):
             sql += " LOCATION '%s'" % properties["location"]
+        if with_terminator:
+            sql += ";"
 
         return self.execute_ddl(sql)
-
-    def create_sequence_table(self, db_name, table_name):
-        """Create an empty options.sequence_table_name appropriate for the backend.
-        options.sequence_table_name is tricky to deal with because we can leave the db part out,
-        e.g. both of these are valid:
-            options.sequence_table_name = 'udf_db.my_sequence_table.
-            options.sequence_table_name = 'my_sequence_table.
-        This function needs to cater for that.
-        """
-        assert table_name
-        without_db_name = bool(not db_name)
-        sequence_table_columns = [
-            HadoopColumn(SEQUENCE_COLUMN_NAME, data_type=HADOOP_TYPE_INT)
-        ]
-        return self.create_table(
-            db_name,
-            table_name,
-            sequence_table_columns,
-            None,
-            FILE_STORAGE_FORMAT_PARQUET,
-            without_db_name=without_db_name,
-            sync=True,
-        )
 
     def create_view(
         self,

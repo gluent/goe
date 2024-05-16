@@ -174,21 +174,20 @@ class TestBackendApi(TestCase):
                 pass
 
     def _test_create_database(self):
-        if self.connect_to_backend:
-            try:
-                self.assertIsInstance(self.api.create_database(self.db), list)
-                self.assertIsInstance(
-                    self.api.create_database(self.db, comment="Some comment"), list
-                )
-                self.assertIsInstance(
-                    self.api.create_database(
-                        self.db,
-                        properties={"location": "/some/place", "transient": True},
-                    ),
-                    list,
-                )
-            except NotImplementedError:
-                pass
+        try:
+            self.assertIsInstance(self.api.create_database(self.db), list)
+            self.assertIsInstance(
+                self.api.create_database(self.db, comment="Some comment"), list
+            )
+            self.assertIsInstance(
+                self.api.create_database(
+                    self.db,
+                    properties={"location": "/some/place", "transient": True},
+                ),
+                list,
+            )
+        except NotImplementedError:
+            pass
 
     def _test_create_table(self):
         column_list = [

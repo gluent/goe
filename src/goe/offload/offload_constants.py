@@ -147,6 +147,7 @@ OFFLOAD_TYPE_CHANGE_FOR_SUBPART_EXCEPTION_TEXT = "Switching from offload type FU
 RESET_HYBRID_VIEW_EXCEPTION_TEXT = (
     "Offload data identification options required with --reset-hybrid-view"
 )
+TARGET_HAS_DATA_MESSAGE_TEMPLATE = "Target table %s.%s already has data. Offload with --reset-backend-table to overwrite table data"
 TOTAL_ROWS_OFFLOADED_LOG_TEXT = "Total rows offloaded"
 DDL_FILE_EXECUTE_MESSAGE_TEXT = (
     "Switching command to non-execute mode due to --ddl-file option"

@@ -2670,6 +2670,10 @@ def offload_operation_logic(
             if source_data_client.nothing_to_offload():
                 return False
         else:
+            messages.notice(
+                offload_constants.TARGET_HAS_DATA_MESSAGE_TEMPLATE
+                % (offload_target_table.db_name, offload_target_table.table_name)
+            )
             return False
 
     return True

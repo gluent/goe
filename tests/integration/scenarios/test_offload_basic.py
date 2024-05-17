@@ -45,6 +45,7 @@ from tests.integration.scenarios.assertion_functions import (
     sales_based_fact_assertion,
     standard_dimension_assertion,
     text_in_events,
+    text_in_messages,
 )
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
@@ -346,7 +347,11 @@ def test_offload_basic_dim(config, schema, data_db):
         "owner_table": schema + "." + test_table,
         "execute": True,
     }
-    run_offload(options, config, messages, expected_status=False)
+    offload_messages = run_offload(options, config, messages, expected_status=False)
+    assert text_in_messages(
+        offload_messages,
+        offload_constants.TARGET_HAS_DATA_MESSAGE_TEMPLATE % (data_db, backend_name),
+    )
 
     # Reset offload the dimension adding backend partitioning (if supported).
     options = {

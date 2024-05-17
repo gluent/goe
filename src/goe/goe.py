@@ -1679,7 +1679,7 @@ class BaseOperation(object):
                 )
             # If the table is empty then we allow the offload to continue.
             messages.log(
-                f"Allowing Offload to populate exists empty table: {offload_target_table.db_name}.{offload_target_table.table_name}",
+                f"Allowing Offload to populate existing empty table: {offload_target_table.db_name}.{offload_target_table.table_name}",
                 detail=VERBOSE,
             )
             return None

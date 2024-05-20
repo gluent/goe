@@ -38,7 +38,7 @@ def predicate_to_template(backend_columns):
     )
 
 
-def predicate_to_where_clause(backend_columns, predicate) -> str:
+def predicate_to_where_clause(backend_columns, predicate):
     with predicate_offload.handle_parse_errors():
         to_literal_ast = (
             predicate_to_template(backend_columns) * TypedPredicateToSnowflakeLiterals()

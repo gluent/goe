@@ -1155,7 +1155,7 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def predicate_to_where_clause(self, predicate, columns_override=None) -> str:
+    def predicate_to_where_clause(self, predicate, columns_override=None):
         pass
 
     @abstractmethod

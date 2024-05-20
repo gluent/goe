@@ -875,7 +875,7 @@ class TeradataSourceTable(OffloadSourceTableInterface):
         row = self._db_api.execute_query_fetch_one(sql)
         return bool(row)
 
-    def predicate_to_where_clause(self, predicate, columns_override=None) -> str:
+    def predicate_to_where_clause(self, predicate, columns_override=None):
         if not predicate:
             return None
         return teradata_predicate.predicate_to_where_clause(

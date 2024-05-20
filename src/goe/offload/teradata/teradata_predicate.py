@@ -35,7 +35,7 @@ def predicate_to_literal_template(teradata_columns):
     )
 
 
-def predicate_to_where_clause(teradata_columns, predicate) -> str:
+def predicate_to_where_clause(teradata_columns, predicate):
     with predicate_offload.handle_parse_errors():
         to_literal_ast = (
             predicate_to_literal_template(teradata_columns)

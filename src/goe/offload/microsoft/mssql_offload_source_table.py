@@ -490,7 +490,7 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
             self.__class__.__name__ + "." + inspect.currentframe().f_code.co_names
         )
 
-    def predicate_to_where_clause(self, predicate, columns_override=None) -> str:
+    def predicate_to_where_clause(self, predicate, columns_override=None):
         raise NotImplementedError(
             self.__class__.__name__ + "." + inspect.currentframe().f_code.co_names
         )

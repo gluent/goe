@@ -40,7 +40,7 @@ def predicate_to_bind_template(oracle_columns):
     )
 
 
-def predicate_to_where_clause(oracle_columns, predicate) -> str:
+def predicate_to_where_clause(oracle_columns, predicate):
     with predicate_offload.handle_parse_errors():
         to_literal_ast = (
             predicate_to_literal_template(oracle_columns)

@@ -19,7 +19,6 @@
 
 from contextlib import contextmanager
 from itertools import groupby
-from typing import TYPE_CHECKING
 
 import cx_Oracle as cxo
 
@@ -61,12 +60,6 @@ from goe.offload.oracle.oracle_offload_source_table import (
 )
 from goe.util.misc_functions import id_generator
 
-if TYPE_CHECKING:
-    from goe.config.orchestration_config import OrchestrationConfig
-    from goe.offload.oracle.oracle_column import OracleColumn
-    from goe.offload.offload_messages import OffloadMessages
-    from goe.offload.offload_source_data import OffloadSourcePartitions
-    from goe.offload.offload_source_table import OffloadSourceTableInterface
 
 ###########################################################################
 # CONSTANTS
@@ -534,8 +527,8 @@ FROM  (
 
     def get_transport_split_type(
         self,
-        partition_chunk: "OffloadSourcePartitions",
-        rdbms_table: "OffloadSourceTableInterface",
+        partition_chunk,
+        rdbms_table,
         parallelism,
         rdbms_partition_type,
         rdbms_columns,
@@ -544,25 +537,13 @@ FROM  (
     ) -> tuple:
         """
         Return split type and any tuned transport parallelism in a tuple.
-
         If there are more partitions/subpartitions than the requested parallelism then split by
         partition/subpartition, otherwise we split the few partitions by Oracle extent (ROWID ranges),
         id ranges or MOD ranges.
         """
-
-        def get_id_column_for_range_splitting() -> "OracleColumn":
-            if len(rdbms_table.get_primary_key_columns()) != 1:
-                return None
-            pk_col = match_table_column(
-                rdbms_table.get_primary_key_columns()[0], rdbms_columns
-            )
-            if pk_col.data_type == ORACLE_TYPE_NUMBER:
-                return pk_col
-            return None
-
         self.debug("get_transport_split_type()")
         is_iot = rdbms_table.is_iot()
-        id_split_col = get_id_column_for_range_splitting()
+        rdbms_pk_cols = rdbms_table.get_primary_key_columns()
         partition_by = None
         if partition_chunk and partition_chunk.count() > 0:
             partition_count = partition_chunk.count()
@@ -600,14 +581,12 @@ FROM  (
                 detail=VVERBOSE,
             )
             partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION
-        elif predicate_offload_clause:
-            if id_split_col:
-                self.log("Splitting PBO offload into id ranges", detail=VVERBOSE)
-                partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE
-            else:
-                self.log("Splitting PBO offload by MOD()", detail=VVERBOSE)
-                partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD
         elif is_iot:
+            pk_col_types = [
+                _.data_type
+                for _ in rdbms_columns
+                if _.name.upper() == rdbms_pk_cols[0].upper()
+            ]
             # partition_count > 1 below because we treat a single partition IOT offload like a non-partitioned one.
             if (
                 partition_count > 1
@@ -622,7 +601,7 @@ FROM  (
                     )
                     tuned_parallelism = partition_count
                 partition_by = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION
-            elif id_split_col:
+            elif pk_col_types and pk_col_types[0] == ORACLE_TYPE_NUMBER:
                 if partition_count == 1:
                     self.log(
                         "Splitting IOT into id ranges for single partition",
@@ -651,13 +630,13 @@ FROM  (
     def get_transport_row_source_query(
         self,
         partition_by_prm,
-        rdbms_table: "OffloadSourceTableInterface",
+        rdbms_table,
         consistent_read,
         parallelism,
         offload_by_subpartition,
         mod_column,
         predicate_offload_clause,
-        partition_chunk: "OffloadSourcePartitions" = None,
+        partition_chunk=None,
         pad=None,
     ) -> str:
         """Define a frontend query that will retrieve data from a table dividing it by a split method

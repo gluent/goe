@@ -400,7 +400,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             with_terminator=with_terminator,
         )
 
-    def _create_load_db(self, location=None, with_terminator=False):
+    def _create_load_db(self, location=None, with_terminator=False) -> list:
         comment = BACKEND_DB_COMMENT_TEMPLATE.format(
             db_name_type="Offload load", db_name_label=self.db_name_label()
         )
@@ -1801,6 +1801,14 @@ class BackendTableInterface(metaclass=ABCMeta):
             ansi_joined_tables,
             sync=True,
         )
+
+    def create_load_db(self, location=None, with_terminator=False) -> list:
+        if self._db_api.load_db_transport_supported():
+            return self._create_load_db(
+                location=location, with_terminator=with_terminator
+            )
+        else:
+            return []
 
     def db_exists(self):
         return self._db_api.database_exists(self.db_name)

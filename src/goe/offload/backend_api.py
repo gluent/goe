@@ -351,10 +351,9 @@ class BackendApiInterface(metaclass=ABCMeta):
             for _ in column_list
         ]
         max_name = max(len(_[0]) for _ in sql_cols)
-        max_type = max(len(_[1]) for _ in sql_cols)
-        col_template = f"%-{max_name}s %-{max_type}s %s"
+        col_template = f"%-{max_name}s %s%s"
         return "    " + "\n,   ".join(
-            [col_template % (_[0], _[1], _[2]) for _ in sql_cols]
+            [col_template % (_[0], _[1], f" {_[2]}" if _[2] else "") for _ in sql_cols]
         )
 
     def _create_table_column_nn_clause_common(

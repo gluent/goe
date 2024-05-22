@@ -128,6 +128,9 @@ ORACLE_SUPPORTED_LIST_DATA_TYPES = [
 
 ORACLE_VERSION_WITH_SUBPART_MIN_MAX_OPTIMIZATION = "12.1.0"
 ORACLE_VERSION_WITH_CELL_OFFLOAD_PROCESSING = "11.2.0"
+# This is an assumption. We've seen Smart Scan issues on 11.2.x and 12.1.x in the past.
+# Assuming that by v18 these issues were resolved. See issue 172 for details.
+ORACLE_VERSION_SAFE_FOR_CELL_OFFLOAD_PROCESSING = "18.0.0"
 
 
 ###########################################################################
@@ -149,6 +152,12 @@ def oracle_version_supports_exadata(db_version: str) -> bool:
     return GOEVersion(db_version) >= GOEVersion(
         ORACLE_VERSION_WITH_CELL_OFFLOAD_PROCESSING
     )
+
+
+def oracle_version_is_smart_scan_unsafe(db_version: str) -> bool:
+    return oracle_version_supports_exadata(db_version) and GOEVersion(
+        db_version
+    ) < GOEVersion(ORACLE_VERSION_SAFE_FOR_CELL_OFFLOAD_PROCESSING)
 
 
 ###########################################################################
@@ -367,9 +376,9 @@ class OracleSourceTable(OffloadSourceTableInterface):
                 ):
                     table_stats["partition_stats"][row[0]] = {
                         "num_rows": row[1],
-                        "num_bytes": (row[2] * self._db_block_size)
-                        if row[2]
-                        else row[2],
+                        "num_bytes": (
+                            (row[2] * self._db_block_size) if row[2] else row[2]
+                        ),
                         "avg_row_len": row[3],
                     }
 
@@ -539,9 +548,9 @@ class OracleSourceTable(OffloadSourceTableInterface):
                     partition_name=partition_name,
                     partition_position=partition_position,
                     subpartition_count=subpartition_count,
-                    subpartition_names=[subpartition_name]
-                    if subpartition_name is not None
-                    else None,
+                    subpartition_names=(
+                        [subpartition_name] if subpartition_name is not None else None
+                    ),
                     high_values_csv=partition_high_value,
                     partition_size=partition_bytes,
                     num_rows=num_rows,
@@ -818,7 +827,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
 
     def _sample_data_types_execute_query(self, sample_sql):
         query_options = {}
-        if oracle_version_supports_exadata(self._db_version):
+        if oracle_version_is_smart_scan_unsafe(self._db_version):
             query_options = {"CELL_OFFLOAD_PROCESSING": "FALSE"}
         return self._db_api.execute_query_fetch_one(
             sample_sql, query_options=query_options, log_level=VERBOSE, profile=True

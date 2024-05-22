@@ -262,3 +262,9 @@ def test_oracle_version_is_smart_scan_unsafe():
         ),
         bool,
     )
+    assert oracle_offload_source_table.oracle_version_is_smart_scan_unsafe(
+        oracle_offload_source_table.ORACLE_VERSION_WITH_CELL_OFFLOAD_PROCESSING
+    )
+    assert not oracle_offload_source_table.oracle_version_is_smart_scan_unsafe(
+        oracle_offload_source_table.ORACLE_VERSION_SAFE_FOR_CELL_OFFLOAD_PROCESSING
+    )

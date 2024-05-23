@@ -72,6 +72,17 @@ class OffloadTransportNetezzaApi(OffloadTransportRdbmsApiInterface):
         id_str = id_generator()
         return "%s_%s" % (id_str, self._rdbms_table_name.lower())
 
+    def get_id_column_for_range_splitting(
+        self,
+        rdbms_table,
+    ) -> str:
+        raise NotImplementedError(
+            "Netezza get_id_column_for_range_splitting() pending implementation"
+        )
+
+    def get_id_range(self, rdbms_col_name: str, partition_chunk=None) -> tuple:
+        raise NotImplementedError("Netezza get_id_range() pending implementation")
+
     def get_rdbms_query_cast(
         self,
         column_expression,
@@ -116,8 +127,9 @@ class OffloadTransportNetezzaApi(OffloadTransportRdbmsApiInterface):
         parallelism,
         rdbms_partition_type,
         rdbms_columns,
-        offload_by_subpartition,
+        offload_by_subpartition: bool,
         predicate_offload_clause,
+        native_range_split_available: bool = False,
     ) -> tuple:
         raise NotImplementedError("Netezza get_transport_split_type() not implemented.")
 

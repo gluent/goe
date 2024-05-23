@@ -294,6 +294,13 @@ class OrchestrationConfig:
     offload_fs_container: str
     offload_fs_prefix: Optional[str]
     offload_fs_scheme: str
+    offload_staging_format: str
+    offload_transport: str
+    offload_transport_cmd_host: str
+    offload_transport_user: str
+    offload_transport_spark_submit_executable: Optional[str]
+    offload_transport_spark_thrift_host: Optional[str]
+    use_oracle_wallet: bool
 
     def __init__(self, do_not_connect=False, **kwargs):
         """Do not expect to construct directly via __init__.

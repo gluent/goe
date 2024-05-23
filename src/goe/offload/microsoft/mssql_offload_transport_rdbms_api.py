@@ -71,6 +71,17 @@ class OffloadTransportMSSQLApi(OffloadTransportRdbmsApiInterface):
         id_str = id_generator()
         return "%s_%s" % (id_str, self._rdbms_table_name.lower())
 
+    def get_id_column_for_range_splitting(
+        self,
+        rdbms_table,
+    ) -> str:
+        raise NotImplementedError(
+            "MSSQL get_id_column_for_range_splitting() pending implementation"
+        )
+
+    def get_id_range(self, rdbms_col_name: str, partition_chunk=None) -> tuple:
+        raise NotImplementedError("MSSQL get_id_range() pending implementation")
+
     def get_rdbms_query_cast(
         self,
         column_expression,
@@ -113,8 +124,9 @@ class OffloadTransportMSSQLApi(OffloadTransportRdbmsApiInterface):
         parallelism,
         rdbms_partition_type,
         rdbms_columns,
-        offload_by_subpartition,
+        offload_by_subpartition: bool,
         predicate_offload_clause,
+        native_range_split_available: bool = False,
     ) -> tuple:
         raise NotImplementedError("MSSQL get_transport_split_type() not implemented.")
 
@@ -129,6 +141,8 @@ class OffloadTransportMSSQLApi(OffloadTransportRdbmsApiInterface):
         predicate_offload_clause,
         partition_chunk=None,
         pad=None,
+        id_col_min=None,
+        id_col_max=None,
     ) -> str:
         raise NotImplementedError(
             "MSSQL get_transport_row_source_query() not implemented."

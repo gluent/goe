@@ -34,6 +34,9 @@ from goe.offload.offload_metadata_functions import (
     OFFLOAD_TYPE_INCREMENTAL,
 )
 from goe.offload.offload_transport import MISSING_ROWS_IMPORTED_WARNING
+from goe.offload.offload_transport_rdbms_api import (
+    TRANSPORT_ROW_SOURCE_QUERY_SPLIT_TYPE_TEXT,
+)
 from goe.offload.oracle.oracle_column import ORACLE_TYPE_TIMESTAMP
 from goe.util.misc_functions import get_temp_path
 
@@ -419,11 +422,10 @@ def load_table_is_compressed(db_name, table_name, config, dfs_client, messages):
 def offload_rowsource_split_type_assertion(
     messages: "OffloadMessages", story_id: str, split_type: str
 ):
-    search = "Transport rowsource split type: %s" % split_type
+    search = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_TYPE_TEXT + split_type
     if not text_in_log(messages, search, "(%s)" % (story_id)):
         messages.log(
-            "offload_rowsource_split_type_assertion failed: %s != %s"
-            % (search, split_type)
+            f"offload_rowsource_split_type_assertion failed, did not find: {search}"
         )
         return False
     return True
@@ -506,7 +508,7 @@ def standard_dimension_assertion(
         return False
 
     if split_type:
-        if not offload_rowsource_split_type_assertion(story_id, split_type):
+        if not offload_rowsource_split_type_assertion(messages, story_id, split_type):
             return False
 
     return True
@@ -622,7 +624,7 @@ def sales_based_fact_assertion(
         return False
 
     if split_type:
-        if not offload_rowsource_split_type_assertion(story_id, split_type):
+        if not offload_rowsource_split_type_assertion(messages, story_id, split_type):
             return False
 
     return True

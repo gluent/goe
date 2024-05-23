@@ -269,52 +269,34 @@ class BackendBigQueryApi(BackendApiInterface):
             )
 
     def _create_external_table(
-        self, db_name, table_name, column_list, storage_format, location=None
-    ):
-        """Create a BigQuery external table using the API"""
+        self,
+        db_name,
+        table_name,
+        storage_format,
+        location=None,
+        with_terminator=False,
+    ) -> list:
+        """Create a BigQuery external table using SQL"""
         assert db_name
         assert table_name
-        if storage_format not in [
-            FILE_STORAGE_FORMAT_AVRO,
-            FILE_STORAGE_FORMAT_PARQUET,
-        ]:
-            assert column_list
-        assert valid_column_list(column_list), (
-            "Incorrectly formed column_list: %s" % column_list
-        )
         assert storage_format in (
             FILE_STORAGE_FORMAT_AVRO,
-            FILE_STORAGE_FORMAT_BIGTABLE,
             FILE_STORAGE_FORMAT_PARQUET,
-        )
+        ), f"Unsupported staging format: {storage_format}"
         assert location
 
-        if storage_format in [FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET]:
-            # In BigQuery Avro/Parquet external table are to be created over existing files, no schema can be specified
-            column_spec = None
-        else:
-            column_spec = [
-                bigquery.SchemaField(
-                    _.name,
-                    _.format_data_type(),
-                    mode="NULLABLE" if _.nullable else "REQUIRED",
-                )
-                for _ in column_list
-            ]
-
-        new_table = bigquery.Table(
-            self._bq_table_id(db_name, table_name), schema=column_spec
+        sql = """CREATE EXTERNAL TABLE {db_table}
+OPTIONS (format ='{format}',
+         uris = ['{location}'],
+         description = 'GOE staging table');
+""".format(
+            db_table=self.enclose_object_reference(db_name, table_name),
+            format=storage_format,
+            location=location,
         )
-
-        external_config = bigquery.ExternalConfig(storage_format)
-        external_config.source_uris = [location]
-        new_table.external_data_configuration = external_config
-
-        log_cmd = pprint.pformat(new_table.to_api_repr())
-        self._log("BigQuery call: %s" % log_cmd, detail=VERBOSE)
-        if not self._dry_run:
-            created_table = self._client.create_table(new_table)
-        return [log_cmd]
+        if with_terminator:
+            sql += ";"
+        return self.execute_ddl(sql)
 
     def _create_table_properties_clause(self, table_properties):
         """Build OPTIONS clause for CREATE TABLE statements from table_properties dict. Add kms key details (if set)"""
@@ -1005,7 +987,11 @@ class BackendBigQueryApi(BackendApiInterface):
         """
         if external:
             return self._create_external_table(
-                db_name, table_name, column_list, storage_format, location=location
+                db_name,
+                table_name,
+                storage_format,
+                location=location,
+                with_terminator=with_terminator,
             )
 
         # Normal (non-external) table

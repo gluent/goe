@@ -323,6 +323,13 @@ class TestDataTypeMappings(TestCase):
             CanonicalColumn(
                 "COL_DEC_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
             ),
+            CanonicalColumn(
+                "COL_DEC_10_2_UNSAFE",
+                GOE_TYPE_DECIMAL,
+                data_precision=10,
+                data_scale=2,
+                safe_mapping=False,
+            ),
             CanonicalColumn("COL_FLOAT", GOE_TYPE_FLOAT),
             CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
             CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
@@ -366,7 +373,9 @@ class TestDataTypeMappings(TestCase):
         check_if_not_none(test_column, expected_column, "nullable")
 
     def validate_source_vs_expected_columns(self, source_columns, expected_columns):
-        assert len(source_columns) == len(expected_columns), "%s != %s" % (
+        assert len(source_columns) == len(
+            expected_columns
+        ), "%s (source) != %s (expected)" % (
             len(source_columns),
             len(expected_columns),
         )
@@ -643,6 +652,12 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
             OracleColumn("COL_DEC_NO_P_S", ORACLE_TYPE_NUMBER),
             OracleColumn(
                 "COL_DEC_10_2", ORACLE_TYPE_NUMBER, data_precision=10, data_scale=2
+            ),
+            OracleColumn(
+                "COL_DEC_10_2_UNSAFE",
+                ORACLE_TYPE_NUMBER,
+                data_precision=None,
+                data_scale=None,
             ),
             OracleColumn("COL_FLOAT", ORACLE_TYPE_BINARY_FLOAT),
             OracleColumn("COL_DOUBLE", ORACLE_TYPE_BINARY_DOUBLE),
@@ -1731,6 +1746,12 @@ class TestBackendHiveDataTypeMappings(TestDataTypeMappings):
             HadoopColumn(
                 "COL_DEC_10_2", HADOOP_TYPE_DECIMAL, data_precision=18, data_scale=4
             ),
+            HadoopColumn(
+                "COL_DEC_10_2_UNSAFE",
+                HADOOP_TYPE_DECIMAL,
+                data_precision=18,
+                data_scale=4,
+            ),
             HadoopColumn("COL_FLOAT", HADOOP_TYPE_FLOAT),
             HadoopColumn("COL_DOUBLE", HADOOP_TYPE_DOUBLE),
             HadoopColumn("COL_DATE", HADOOP_TYPE_DATE),
@@ -1899,6 +1920,12 @@ class TestBackendImpalaDataTypeMappings(TestDataTypeMappings):
             HadoopColumn(
                 "COL_DEC_10_2", HADOOP_TYPE_DECIMAL, data_precision=18, data_scale=4
             ),
+            HadoopColumn(
+                "COL_DEC_10_2_UNSAFE",
+                HADOOP_TYPE_DECIMAL,
+                data_precision=18,
+                data_scale=4,
+            ),
             HadoopColumn("COL_FLOAT", HADOOP_TYPE_FLOAT),
             HadoopColumn("COL_DOUBLE", HADOOP_TYPE_DOUBLE),
             HadoopColumn("COL_DATE", HADOOP_TYPE_TIMESTAMP),
@@ -2050,6 +2077,12 @@ class TestBackendBigQueryDataTypeMappings(TestDataTypeMappings):
             BigQueryColumn(
                 "COL_DEC_10_2", BIGQUERY_TYPE_NUMERIC, data_precision=10, data_scale=2
             ),
+            BigQueryColumn(
+                "COL_DEC_10_2_UNSAFE",
+                BIGQUERY_TYPE_NUMERIC,
+                data_precision=None,
+                data_scale=None,
+            ),
             BigQueryColumn("COL_FLOAT", BIGQUERY_TYPE_FLOAT64),
             BigQueryColumn("COL_DOUBLE", BIGQUERY_TYPE_FLOAT64),
             BigQueryColumn("COL_DATE", BIGQUERY_TYPE_DATE),
@@ -2132,6 +2165,7 @@ class TestAvroDataTypeMappings(TestDataTypeMappings):
             StagingAvroColumn("COL_INT_38", AVRO_TYPE_STRING),
             StagingAvroColumn("COL_DEC_NO_P_S", AVRO_TYPE_STRING),
             StagingAvroColumn("COL_DEC_10_2", AVRO_TYPE_STRING),
+            StagingAvroColumn("COL_DEC_10_2_UNSAFE", AVRO_TYPE_STRING),
             StagingAvroColumn("COL_FLOAT", AVRO_TYPE_FLOAT),
             StagingAvroColumn("COL_DOUBLE", AVRO_TYPE_DOUBLE),
             StagingAvroColumn("COL_DATE", AVRO_TYPE_STRING),
@@ -2278,6 +2312,7 @@ class TestParquetDataTypeMappings(TestDataTypeMappings):
             StagingParquetColumn("COL_INT_38", PARQUET_TYPE_STRING),
             StagingParquetColumn("COL_DEC_NO_P_S", PARQUET_TYPE_STRING),
             StagingParquetColumn("COL_DEC_10_2", PARQUET_TYPE_STRING),
+            StagingParquetColumn("COL_DEC_10_2_UNSAFE", PARQUET_TYPE_STRING),
             StagingParquetColumn("COL_FLOAT", PARQUET_TYPE_FLOAT),
             StagingParquetColumn("COL_DOUBLE", PARQUET_TYPE_DOUBLE),
             StagingParquetColumn("COL_DATE", PARQUET_TYPE_STRING),
@@ -2508,6 +2543,7 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
             SnowflakeColumn("COL_INT_38", SNOWFLAKE_TYPE_NUMBER),
             SnowflakeColumn("COL_DEC_NO_P_S", SNOWFLAKE_TYPE_NUMBER),
             SnowflakeColumn("COL_DEC_10_2", SNOWFLAKE_TYPE_NUMBER),
+            SnowflakeColumn("COL_DEC_10_2_UNSAFE", SNOWFLAKE_TYPE_NUMBER),
             SnowflakeColumn("COL_FLOAT", SNOWFLAKE_TYPE_FLOAT),
             SnowflakeColumn("COL_DOUBLE", SNOWFLAKE_TYPE_FLOAT),
             SnowflakeColumn("COL_DATE", SNOWFLAKE_TYPE_DATE),
@@ -2803,6 +2839,12 @@ class TestBackendSynapseDataTypeMappings(TestDataTypeMappings):
             SynapseColumn("COL_DEC_NO_P_S", SYNAPSE_TYPE_NUMERIC),
             SynapseColumn(
                 "COL_DEC_10_2", SYNAPSE_TYPE_NUMERIC, data_precision=10, data_scale=2
+            ),
+            SynapseColumn(
+                "COL_DEC_10_2_UNSAFE",
+                SYNAPSE_TYPE_NUMERIC,
+                data_precision=10,
+                data_scale=2,
             ),
             SynapseColumn("COL_FLOAT", SYNAPSE_TYPE_REAL),
             SynapseColumn("COL_DOUBLE", SYNAPSE_TYPE_FLOAT),

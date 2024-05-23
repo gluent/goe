@@ -1006,6 +1006,11 @@ def normalise_options(options, normalise_owner_table=True):
                 "Invalid value for LOG_LEVEL: %s" % options.log_level
             )
 
+    if options.reset_backend_table and options.reuse_backend_table:
+        raise OptionValueError(
+            "Conflicting options --reset-backend-table with --reuse-backend-table cannot be used together"
+        )
+
     if options.reset_backend_table and not options.force:
         options.force = True
 

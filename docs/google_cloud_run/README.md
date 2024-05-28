@@ -1,13 +1,13 @@
 # Executing GOE Commands via Cloud Run Jobs
 
-Below is an example of how to submit GOE using Cloud Build and then execute jobs using the software via Cloud Run.
+Below is an example of how to submit GOE using Cloud Build and then execute GOE commands via Cloud Run.
 
 ## Pre-requisites
 
 You must first have:
 
 - Installed the GOE repository into the source RDBMS system using the same version of the software that will be built in this process.
-- Prepared your `offload.env` file and copied into the same location as the files in this directory.
+- Prepared and tested your `offload.env` file.
 
 ## Helper variables
 
@@ -22,16 +22,24 @@ SVC_ACCOUNT="your-goe-service-account@${PROJECT}.iam.gserviceaccount.com"
 
 ## Create a GOE Build
 
-### Fetch GOE release
+Follow these steps from within the directory containing the `Dockerfile` and `goe.sh` files.
 
+### Download a GOE release
+
+For example:
 ```
 wget -q -O goe.tar.gz \
 https://github.com/gluent/goe/releases/download/v${GOE_VERSION}/goe.tar.gz
 ```
 
-### Submit the Build
+### Include an Offload configuration file
 
-From within the directory containing these files, the GOE package and `offload.env` file.
+For example:
+```
+scp goe-node:/opt/goe/offload/conf/offload.env ./
+```
+
+### Submit the Build
 
 ```
 gcloud builds submit . --tag gcr.io/${PROJECT}/goe-${GOE_VERSION} \
@@ -39,10 +47,11 @@ gcloud builds submit . --tag gcr.io/${PROJECT}/goe-${GOE_VERSION} \
  --gcs-log-dir=gs://${BUCKET}/gcbr-logs
 ```
 
-## Run a Connect Job
+## Example Connect Command
 
 ```
 JOB_NAME=connect-$(date +'%Y%m%d-%H%M%S')
+
 gcloud run jobs create ${JOB_NAME} \
   --project=${PROJECT} --region ${REGION} \
   --network=${NETWORK} \
@@ -55,10 +64,11 @@ gcloud run jobs execute ${JOB_NAME} --wait \
 --project=${PROJECT} --region=${REGION}
 ```
 
-## Run an Offload Job
+## Example Offload Command
 
 ```
 JOB_NAME=offload-ACME-FACT-$(date +'%Y%m%d-%H%M%S')
+
 gcloud run jobs create ${JOB_NAME} \
   --project=${PROJECT} --region ${REGION} \
   --network=${NETWORK} \

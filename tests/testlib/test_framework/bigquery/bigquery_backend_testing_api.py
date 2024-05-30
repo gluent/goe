@@ -1066,11 +1066,6 @@ FROM %(db_table)s""" % {
             db_name, table_name, column_name, project_expression
         )
 
-    def smart_connector_test_command(self, db_name=None, table_name=None):
-        # Smart connector test query needs a dataset on BigQuery, see GOE-2005 for details.
-        assert db_name and table_name
-        return f"SELECT current_date() FROM {db_name}.{table_name} LIMIT 1"
-
     def sql_median_expression(self, db_name, table_name, column_name):
         """BigQuery PERCENTILE_DISC suits all data types."""
         return "PERCENTILE_DISC(%s, 0.5) OVER ()" % self.enclose_identifier(column_name)
@@ -1145,20 +1140,6 @@ FROM %(db_table)s""" % {
             },
         }
         return extra_cols
-
-    def transient_query_error_identification_strings(self) -> list:
-        bigquery_error_strings = [
-            # Often seen running Hybrid Queries in sql-fap, predicate and datetime-full.
-            "io.grpc.StatusRuntimeException: INTERNAL: request failed: internal error",
-            # Seen during v4.2.0 release running predicate Hybrid Query.
-            "The job encountered an internal error during execution and was unable to complete successfully",
-            # Seen during v4.2.0 release running sql-fap Hybrid Query.
-            "describeTable: ERROR : 13: Read timed out",
-        ]
-        return (
-            self._transient_query_error_identification_global_strings()
-            + bigquery_error_strings
-        )
 
     def unit_test_query_options(self):
         return {}

@@ -75,8 +75,6 @@ from goe.offload.offload_constants import (
     LOG_LEVEL_DETAIL,
     LOG_LEVEL_DEBUG,
     MISSING_METADATA_EXCEPTION_TEMPLATE,
-    OFFLOAD_BUCKET_NAME,
-    NUM_BUCKETS_AUTO,
     OFFLOAD_STATS_METHOD_COPY,
     OFFLOAD_STATS_METHOD_NATIVE,
     OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
@@ -163,7 +161,6 @@ from goe.data_governance.hadoop_data_governance import (
 from goe.util.misc_functions import (
     all_int_chars,
     csv_split,
-    bytes_to_human_size,
     standard_log_name,
 )
 from goe.util.ora_query import get_oracle_connection
@@ -225,8 +222,6 @@ EXPECTED_OFFLOAD_ARGS = [
     "max_offload_chunk_count",
     "max_offload_chunk_size",
     "not_null_columns_csv",
-    "num_buckets",
-    "num_location_files",
     "offload_by_subpartition",
     "offload_chunk_column",
     "offload_distribute_enabled",
@@ -502,10 +497,6 @@ def get_offload_type(
         with_messages=with_messages,
     )
     return offload_type
-
-
-def offload_bucket_name():
-    return OFFLOAD_BUCKET_NAME
 
 
 global ts
@@ -813,7 +804,7 @@ def normalise_column_transformations(
         ]
 
     for ct in column_transformation_list:
-        if not ":" in ct:
+        if ":" not in ct:
             raise OffloadOptionError("Missing transformation for column: %s" % ct)
 
         m = re.search(r"^([\w$#]+):([\w$#]+)(\(%s\))?$" % param_match, ct)
@@ -1015,33 +1006,6 @@ def valid_canonical_decimal_spec(prec, spec, max_decimal_precision, max_decimal_
     return True
 
 
-def check_bucket_location_combinations(options):
-    """check some parameter combinations and return:
-    (valid_combination, message)
-    """
-    if options.target == DBTYPE_IMPALA:
-        return (True, None)
-
-    future_num_location_files = int(
-        options.num_location_files
-        or orchestration_defaults.num_location_files_default()
-    )
-    if options.num_buckets != "AUTO" and (
-        int(options.num_buckets) < 1
-        or int(options.num_buckets) > future_num_location_files
-    ):
-        return (
-            False,
-            "--num-buckets must be between 1 and --num-location-files/NUM_LOCATION_FILES, please check your environment configuration file",
-        )
-    if future_num_location_files < 1:
-        return (
-            False,
-            "--num-location-files must be greater than 0, please check your environment configuration file",
-        )
-    return (True, None)
-
-
 def option_is_in_list(options, option_name, cli_name, validation_list, to_upper=True):
     if hasattr(options, option_name) and getattr(options, option_name):
         opt_val = getattr(options, option_name)
@@ -1129,10 +1093,6 @@ def normalise_options(options, normalise_owner_table=True):
     options.skip = (
         options.skip if type(options.skip) is list else options.skip.lower().split(",")
     )
-
-    valid_combination, message = check_bucket_location_combinations(options)
-    if not valid_combination:
-        raise OffloadOptionError(message)
 
     if options.offload_partition_lower_value and not all_int_chars(
         options.offload_partition_lower_value, allow_negative=True
@@ -1285,12 +1245,6 @@ def get_default_location_fs_scheme(offload_target_table):
         return None
 
 
-def num_location_files_enabled(offload_target):
-    """--num-location-files is ineffective for Impala offloads where the value is tied to the number of buckets"""
-    return False
-    # return bool(offload_target != DBTYPE_IMPALA)
-
-
 def normalise_storage_options(options, backend_api):
     options.storage_format = (
         options.storage_format or backend_api.default_storage_format()
@@ -1334,7 +1288,6 @@ class BaseOperation(object):
         self._messages = messages
         self.hwm_in_hybrid_view = None
         self.inflight_offload_predicate = None
-        self.bucket_hash_method = None
         # This is a hidden partition filter we can feed into "find partition" logic. Not exposed to the user
         self.less_or_equal_value = None
         self.goe_version = strict_version_ready(version())
@@ -1376,8 +1329,7 @@ class BaseOperation(object):
             )
             self.offload_stats_method = OFFLOAD_STATS_METHOD_NATIVE
 
-        self._num_buckets_max = config.num_buckets_max
-        self._num_buckets_threshold = config.num_buckets_threshold
+        self._hash_distribution_threshold = config.hash_distribution_threshold
 
         self.max_offload_chunk_size = normalise_size_option(
             self.max_offload_chunk_size,
@@ -1607,86 +1559,15 @@ class BaseOperation(object):
             )
         self.bucket_hash_col = upper_or_none(new_bucket_hash_col)
 
-    def override_num_buckets(self, num_buckets_override, messages=None):
-        """Pass messages as None to supress any warnings/notices"""
-        if (
-            self.num_buckets
-            and num_buckets_override
-            and self.num_buckets != num_buckets_override
-            and messages
-        ):
-            messages.notice(
-                "Retaining number of hash buckets from offloaded table (ignoring --num-buckets, using %s)"
-                % num_buckets_override
-            )
-        self.num_buckets = num_buckets_override
-
-    def num_buckets_cap(self, offload_target):
-        """We have an annoying chicken-and-egg option dependency between --num-buckets and --num-location-files.
-        num_buckets_cap() and num_location_files_enabled() help make sense of it
-        """
-        if (
-            num_location_files_enabled(offload_target)
-            and self.num_location_files is not None
-        ):
-            return min(self._num_buckets_max, self.num_location_files)
-        else:
-            return self._num_buckets_max
-
-    def auto_tune_num_buckets(self, rdbms_table, messages, offload_target):
-        """Decide whether to downgrade --num-buckets to 1 based on the RDBMS tables size if:
-        1) not partitioned then overall size < $DEFAULT_BUCKETS_THRESHOLD
-        2) partitioned then largest partition size < $DEFAULT_BUCKETS_THRESHOLD
-        Otherwise leave it alone
-        """
-        auto_tune_reason = None
-        if self.num_buckets == NUM_BUCKETS_AUTO:
-            self.num_buckets = self.num_buckets_cap(offload_target)
-            if (
-                num_location_files_enabled(offload_target)
-                and self.num_location_files < self._num_buckets_max
-            ):
-                auto_tune_reason = "due to --num-location-files"
-        else:
-            # no auto tuning
-            return
-
-        if rdbms_table.is_partitioned():
-            size = rdbms_table.get_max_partition_size()
-            size_literal = "partitions"
-        else:
-            size = rdbms_table.size_in_bytes
-            size_literal = "size"
-        auto_tune = bool(size and (size or 0) < self._num_buckets_threshold)
-        messages.log(
-            "Checking if --num-buckets should be reduced (%s < %s): %s"
-            % (size, self._num_buckets_threshold, auto_tune),
-            detail=VVERBOSE,
-        )
-        if auto_tune:
-            auto_tune_reason = "for table with small %s (<= %s)" % (
-                size_literal,
-                bytes_to_human_size(size),
-            )
-            self.num_buckets = 1
-        if auto_tune_reason:
-            messages.notice(
-                "Using --num-buckets %s %s, override available with explicit value for --num-buckets"
-                % (self.num_buckets, auto_tune_reason)
-            )
-
     def validate_bucket_hash_col(
         self,
         column_names,
         rdbms_table,
-        opts,
         messages,
-        synthetic_bucketing_supported,
         bucket_hash_column_supported,
     ):
-        if not synthetic_bucketing_supported and not bucket_hash_column_supported:
+        if not bucket_hash_column_supported:
             self.bucket_hash_col = None
-            self.bucket_hash_method = None
             return
 
         if self.bucket_hash_col and self.bucket_hash_col.upper() not in column_names:
@@ -1702,12 +1583,12 @@ class BaseOperation(object):
                     if rdbms_table.is_partitioned()
                     else rdbms_table.size_in_bytes
                 )
-                if synthetic_bucketing_supported or (
+                if (
                     bucket_hash_column_supported
-                    and (size or 0) >= self._num_buckets_threshold
+                    and (size or 0) >= self._hash_distribution_threshold
                 ):
                     self.bucket_hash_col = self.default_bucket_hash_col(
-                        rdbms_table, opts, messages
+                        rdbms_table, messages
                     )
                     if not self.bucket_hash_col:
                         raise OffloadException(
@@ -1750,7 +1631,6 @@ class BaseOperation(object):
             )
         else:
             self.bucket_hash_col = None
-            self.bucket_hash_method = None
 
     def set_offload_partition_functions_from_metadata(self, existing_metadata):
         if existing_metadata and existing_metadata.offload_partition_functions:
@@ -1781,9 +1661,7 @@ class BaseOperation(object):
         self.validate_bucket_hash_col(
             offload_source_table.get_column_names(),
             offload_source_table,
-            offload_options,
             messages,
-            offload_target_table.synthetic_bucketing_supported(),
             offload_target_table.bucket_hash_column_supported(),
         )
 
@@ -1887,27 +1765,6 @@ class BaseOperation(object):
                     % (self.ipa_predicate_type, rpa_opts_set),
                     detail=VVERBOSE,
                 )
-
-    def set_bucket_hash_method_for_backend(
-        self, backend_table, new_backend_columns, messages
-    ):
-        if not backend_table.synthetic_bucketing_supported():
-            self.bucket_hash_method = None
-            return
-        backend_column = match_table_column(self.bucket_hash_col, new_backend_columns)
-        method, _ = backend_table.synthetic_bucket_filter_capable_column(backend_column)
-        if method:
-            messages.log(
-                "Using optimized bucket expression for to enable bucket partition pruning: %s"
-                % method,
-                detail=VVERBOSE,
-            )
-            self.bucket_hash_method = method
-        else:
-            messages.warning(
-                "Not using optimized bucket expression for %s, consider using a different column via --bucket-hash-column"
-                % self.bucket_hash_col
-            )
 
     def validate_partition_columns(
         self,
@@ -2259,7 +2116,7 @@ class OffloadOperation(BaseOperation):
         """Return a dictionary of official attributes, none of the convenience attributes/methods we also store"""
         return self._vars(EXPECTED_OFFLOAD_ARGS)
 
-    def default_bucket_hash_col(self, source_table, opts, messages):
+    def default_bucket_hash_col(self, source_table, messages):
         """Choose a default hashing column in order of preference below:
         1) If single column PK use that
         2) Choose most selective column based on optimiser stats
@@ -2370,8 +2227,6 @@ class OffloadOperation(BaseOperation):
             max_offload_chunk_count=options.max_offload_chunk_count,
             max_offload_chunk_size=options.max_offload_chunk_size,
             not_null_columns_csv=options.not_null_columns_csv,
-            num_buckets=options.num_buckets,
-            num_location_files=options.num_location_files,
             offload_by_subpartition=options.offload_by_subpartition,
             offload_chunk_column=options.offload_chunk_column,
             offload_distribute_enabled=options.offload_distribute_enabled,
@@ -2513,10 +2368,6 @@ class OffloadOperation(BaseOperation):
                 orchestration_defaults.max_offload_chunk_size_default(),
             ),
             not_null_columns_csv=operation_dict.get("not_null_columns_csv"),
-            num_buckets=operation_dict.get(
-                "num_buckets", orchestration_defaults.num_buckets_default()
-            ),
-            num_location_files=operation_dict.get("num_location_files"),
             offload_by_subpartition=operation_dict.get("offload_by_subpartition"),
             offload_chunk_column=operation_dict.get("offload_chunk_column"),
             offload_distribute_enabled=operation_dict.get(
@@ -2737,9 +2588,6 @@ def offload_operation_logic(
             canonical_columns
         )
 
-        offload_operation.set_bucket_hash_method_for_backend(
-            offload_target_table, backend_columns, messages
-        )
         offload_target_table.set_columns(backend_columns)
     else:
         # The backend table already exists therefore some options should be ignored/defaulted
@@ -3418,16 +3266,6 @@ def get_options(usage=None, operation_name=None):
         dest="max_offload_chunk_count",
         default=orchestration_defaults.max_offload_chunk_count_default(),
         help="Restrict number of partitions offloaded per cycle. Allowable values between 1 and 1000.",
-    )
-    opt.add_option(
-        "--num-buckets",
-        dest="num_buckets",
-        help="Number of offload bucket partitions to create in offloaded table.",
-        default=orchestration_defaults.num_buckets_default(),
-    )
-    # No default for --num-location_files because we need to know the difference between NUM_LOCATION_FILES=16 and an explicit --num-location-files=16
-    opt.add_option(
-        "--num-location-files", dest="num_location_files", help=SUPPRESS_HELP
     )
     opt.add_option(
         "--bucket-hash-column",

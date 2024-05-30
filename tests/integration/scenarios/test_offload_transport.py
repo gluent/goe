@@ -69,7 +69,6 @@ from tests.integration.test_functions import (
     cached_current_options,
     cached_default_test_user,
 )
-from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
@@ -79,12 +78,6 @@ from tests.testlib.test_framework.test_functions import (
 
 LOAD_TABLE_COMP_DIM1 = "STORY_OT_LOADT_COMP1"
 LOAD_TABLE_COMP_DIM2 = "STORY_OT_LOADT_COMP2"
-ORACLE_FACT_TABLE = "STORY_OTRANSP_FACT"
-OFFLOAD_SPLIT_FACT = "STORY_SPLIT_TYPE_FACT"
-OFFLOAD_NULLS = "STORY_OTRANSP_NULLS"
-LPA_LARGE_NUMS = "STORY_LPA_LG_NUMS"
-RPA_LARGE_NUMS = "STORY_RPA_LG_NUMS"
-LOTS_NUMS = "12345678901234567890123456789012345678"
 POLL_VALIDATION_SLIVY = "STORY_OTRANSP_POLLVAL_SL"
 POLL_VALIDATION_SSUBMIT = "STORY_OTRANSP_POLLVAL_SS"
 POLL_VALIDATION_STHRIFT = "STORY_OTRANSP_POLLVAL_ST"
@@ -95,8 +88,6 @@ SPARK_THRIFT_DIM = "STORY_OTRANSP_SPARK_THRIFT"
 SPARK_LIVY_DIM = "STORY_OTRANSP_SPARK_LIVY"
 SQOOP_DIM = "STORY_OTRANSP_SQOOP"
 SQOOP_BY_QUERY_DIM = "STORY_OTRANSP_SQOOP_BY_QUERY"
-
-OFFLOAD_TRANSPORT_YARN_QUEUE_NAME = "default"
 
 
 @pytest.fixture
@@ -308,7 +299,7 @@ def test_offload_transport_spark_submit(config, schema, data_db):
 
     if not is_spark_submit_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because spark-submit is not configured")
-        return
+        pytest.skip(f"Skipping {id} because spark-submit is not configured")
 
     simple_offload_test(
         config,
@@ -329,7 +320,7 @@ def test_offload_transport_dataproc_cluster(config, schema, data_db):
 
     if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Dataproc is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Dataproc is not configured")
 
     simple_offload_test(
         config,
@@ -350,7 +341,7 @@ def test_offload_transport_dataproc_batches(config, schema, data_db):
 
     if not is_spark_gcloud_batches_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Dataproc Batches is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Dataproc Batches is not configured")
 
     simple_offload_test(
         config,
@@ -371,7 +362,7 @@ def test_offload_transport_spark_thrift(config, schema, data_db):
 
     if not is_spark_submit_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Spark Thriftserver is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
 
     simple_offload_test(
         config,
@@ -392,7 +383,7 @@ def test_offload_transport_spark_livy(config, schema, data_db):
 
     if not is_livy_available(config, None, messages=messages):
         messages.log(f"Skipping {id} because Spark Livy is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Spark Livy is not configured")
 
     simple_offload_test(
         config,
@@ -413,7 +404,7 @@ def test_offload_transport_sqoop_table(config, schema, data_db):
 
     if not is_sqoop_available(None, config, messages=messages):
         messages.log(f"Skipping {id} because Sqoop is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
     simple_offload_test(
         config,
@@ -434,7 +425,7 @@ def test_offload_transport_sqoop_by_query(config, schema, data_db):
 
     if not is_sqoop_by_query_available(config, messages=messages):
         messages.log(f"Skipping {id} because Sqoop is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
     simple_offload_test(
         config,
@@ -475,7 +466,7 @@ def test_offload_transport_load_table_no_qi(config, schema, data_db):
         messages.log(
             f"Skipping {id} tests because we only have Query Import at our disposal"
         )
-        return
+        pytest.skip(f"Skipping {id} because we only have Query Import at our disposal")
 
     load_table_compression_tests(
         config,
@@ -495,7 +486,7 @@ def test_offload_transport_polling_validation_spark_submit(config, schema, data_
 
     if not is_spark_submit_available(config, None):
         messages.log(f"Skipping {id} because spark-submit is not configured")
-        return
+        pytest.skip(f"Skipping {id} because spark-submit is not configured")
 
     offload_transport_polling_validation_tests(
         config,
@@ -515,7 +506,7 @@ def test_offload_transport_polling_validation_spark_thrift(config, schema, data_
 
     if not is_spark_thrift_available(config, None):
         messages.log(f"Skipping {id} because Spark Thriftserver is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
 
     offload_transport_polling_validation_tests(
         config,
@@ -537,7 +528,7 @@ def test_offload_transport_polling_validation_spark_livy(config, schema, data_db
 
     if not is_livy_available(config, None):
         messages.log(f"Skipping {id} because Spark Livy is not configured")
-        return
+        pytest.skip(f"Skipping {id} because Spark Livy is not configured")
 
     offload_transport_polling_validation_tests(
         config,

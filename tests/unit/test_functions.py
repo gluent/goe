@@ -92,8 +92,10 @@ FAKE_ORACLE_BQ_ENV.update(
         "GOOGLE_DATAPROC_CLUSTER": "cluster-name",
         "GOOGLE_DATAPROC_PROJECT": "dp-project",
         "GOOGLE_DATAPROC_REGION": "us-central1",
+        "GOOGLE_DATAPROC_SERVICE_ACCOUNT": "sa@proj.com",
         "GOOGLE_DATAPROC_BATCHES_SUBNET": "my-subnet1",
         "GOOGLE_DATAPROC_BATCHES_VERSION": "1.1",
+        "GOOGLE_DATAPROC_BATCHES_TTL": "1d",
         "GOOGLE_KMS_KEY_RING_PROJECT": "kms-project",
         "GOOGLE_KMS_KEY_RING_LOCATION": "US",
         "GOOGLE_KMS_KEY_RING_NAME": "ring-name",
@@ -327,6 +329,7 @@ def build_mock_offload_operation():
     fake_operation.execute = False
     fake_operation.allow_floating_point_conversions = False
     fake_operation.offload_transport_fetch_size = 100
+    fake_operation.offload_transport_parallelism = 4
     fake_operation.offload_transport_small_table_threshold = 1024 * 1024
     fake_operation.offload_transport_spark_properties = {}
     fake_operation.unicode_string_columns_csv = None

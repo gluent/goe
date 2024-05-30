@@ -602,9 +602,7 @@ class InsertSyntheticPartitionClauses(lark.Transformer):
         value_obj, value_type = value.children[0].value
         column_name = column.children[0].value
 
-        partition_columns = get_partition_columns(
-            self.table_columns, exclude_bucket_column=True
-        )
+        partition_columns = get_partition_columns(self.table_columns)
         synthetic_part_col = match_partition_column_by_source(
             column_name, partition_columns
         )

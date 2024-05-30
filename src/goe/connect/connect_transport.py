@@ -152,20 +152,12 @@ def run_sqoop_tests(options, orchestration_config, messages):
     test_sqoop_import(orchestration_config, messages)
 
 
-def is_spark_thrift_connector_available(orchestration_config):
-    return bool(
-        orchestration_config.spark_thrift_host
-        and orchestration_config.spark_thrift_port
-    )
-
-
 def run_spark_tests(options, orchestration_config, messages):
     if not (
         is_livy_available(orchestration_config, None)
         or is_spark_submit_available(orchestration_config, None)
         or is_spark_gcloud_available(orchestration_config, None)
         or is_spark_thrift_available(orchestration_config, None)
-        or is_spark_thrift_connector_available(orchestration_config)
     ):
         log("Skipping Spark tests because not configured", detail=VVERBOSE)
         return
@@ -178,7 +170,7 @@ def run_spark_tests(options, orchestration_config, messages):
 
 
 def test_spark_thrift_server(options, orchestration_config, messages):
-    hosts_to_check, extra_connector_hosts = set(), set()
+    hosts_to_check = set()
     if (
         options.original_offload_transport_spark_thrift_host
         and orchestration_config.offload_transport_spark_thrift_port

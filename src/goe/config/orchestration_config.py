@@ -44,7 +44,6 @@ from goe.offload.offload_constants import (
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
-    NUM_BUCKETS_FALLBACK,
 )
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import hs2_connection_log_message
@@ -84,6 +83,7 @@ EXPECTED_CONFIG_ARGS = [
     "error_on_token",
     "frontend_odbc_driver_name",
     "google_dataproc_batches_subnet",
+    "google_dataproc_batches_ttl",
     "google_dataproc_batches_version",
     "google_dataproc_cluster",
     "google_dataproc_project",
@@ -97,6 +97,7 @@ EXPECTED_CONFIG_ARGS = [
     "hadoop_port",
     "hadoop_ssh_user",
     "webhdfs_verify_ssl",
+    "hash_distribution_threshold",
     "hiveserver2_auth_mechanism",
     "hdfs_data",
     "hdfs_home",
@@ -135,8 +136,6 @@ EXPECTED_CONFIG_ARGS = [
     "netezza_app_user",
     "netezza_app_pass",
     "not_null_propagation",
-    "num_buckets_max",
-    "num_buckets_threshold",
     "offload_fs_container",
     "offload_fs_prefix",
     "offload_fs_scheme",
@@ -192,8 +191,6 @@ EXPECTED_CONFIG_ARGS = [
     "sqoop_password_file",
     "sqoop_queue_name",
     "sqoop_overrides",
-    "spark_thrift_host",
-    "spark_thrift_port",
     "suppress_stdout",
     "synapse_auth_mechanism",
     "synapse_collation",
@@ -258,6 +255,7 @@ class OrchestrationConfig:
     execute: bool
     frontend_odbc_driver_name: Optional[str]
     google_dataproc_batches_subnet: Optional[str]
+    google_dataproc_batches_ttl: Optional[str]
     google_dataproc_batches_version: Optional[str]
     google_dataproc_cluster: Optional[str]
     google_dataproc_project: Optional[str]
@@ -271,6 +269,7 @@ class OrchestrationConfig:
     hadoop_port: Optional[int]
     hadoop_ssh_user: Optional[str]
     webhdfs_verify_ssl: Optional[str]
+    hash_distribution_threshold: Optional[str]
     hiveserver2_auth_mechanism: Optional[str]
     hdfs_data: Optional[str]
     hdfs_home: Optional[str]
@@ -291,14 +290,19 @@ class OrchestrationConfig:
     log_level: Optional[str]
     log_path: str
     not_null_propagation: Optional[str]
-    num_buckets_max: Optional[str]
-    num_buckets_threshold: Optional[str]
     offload_fs_azure_account_key: Optional[str]
     offload_fs_azure_account_name: Optional[str]
     offload_fs_azure_account_domain: Optional[str]
     offload_fs_container: str
     offload_fs_prefix: Optional[str]
     offload_fs_scheme: str
+    offload_staging_format: str
+    offload_transport: str
+    offload_transport_cmd_host: str
+    offload_transport_user: str
+    offload_transport_spark_submit_executable: Optional[str]
+    offload_transport_spark_thrift_host: Optional[str]
+    use_oracle_wallet: bool
 
     def __init__(self, do_not_connect=False, **kwargs):
         """Do not expect to construct directly via __init__.
@@ -334,11 +338,10 @@ class OrchestrationConfig:
         self.not_null_propagation = (
             self.not_null_propagation.upper() if self.not_null_propagation else None
         )
-        self.num_buckets_max = int(self.num_buckets_max or NUM_BUCKETS_FALLBACK)
-        self.num_buckets_threshold = normalise_size_option(
-            self.num_buckets_threshold,
+        self.hash_distribution_threshold = normalise_size_option(
+            self.hash_distribution_threshold,
             binary_sizes=True,
-            strict_name="DEFAULT_BUCKETS_THRESHOLD",
+            strict_name="HASH_DISTRIBUTION_THRESHOLD",
         )
 
     @staticmethod
@@ -434,6 +437,10 @@ class OrchestrationConfig:
                 "google_dataproc_batches_subnet",
                 orchestration_defaults.google_dataproc_batches_subnet_default(),
             ),
+            google_dataproc_batches_ttl=config_dict.get(
+                "google_dataproc_batches_ttl",
+                orchestration_defaults.google_dataproc_batches_ttl_default(),
+            ),
             google_dataproc_batches_version=config_dict.get(
                 "google_dataproc_batches_version",
                 orchestration_defaults.google_dataproc_batches_version_default(),
@@ -482,6 +489,10 @@ class OrchestrationConfig:
             webhdfs_verify_ssl=config_dict.get(
                 "webhdfs_verify_ssl",
                 orchestration_defaults.webhdfs_verify_ssl_default(),
+            ),
+            hash_distribution_threshold=config_dict.get(
+                "hash_distribution_threshold",
+                orchestration_defaults.hash_distribution_threshold_default(),
             ),
             hiveserver2_auth_mechanism=config_dict.get(
                 "hiveserver2_auth_mechanism",
@@ -600,13 +611,6 @@ class OrchestrationConfig:
             not_null_propagation=config_dict.get(
                 "not_null_propagation",
                 orchestration_defaults.not_null_propagation_default(),
-            ),
-            num_buckets_max=config_dict.get(
-                "num_buckets_max", orchestration_defaults.num_buckets_max_default()
-            ),
-            num_buckets_threshold=config_dict.get(
-                "num_buckets_threshold",
-                orchestration_defaults.num_buckets_threshold_default(),
             ),
             offload_fs_azure_account_key=config_dict.get(
                 "offload_fs_azure_account_key",
@@ -909,12 +913,6 @@ class OrchestrationConfig:
             ldap_password_file=config_dict.get(
                 "ldap_password_file",
                 orchestration_defaults.ldap_password_file_default(),
-            ),
-            spark_thrift_host=config_dict.get(
-                "spark_thrift_host", orchestration_defaults.spark_thrift_host_default()
-            ),
-            spark_thrift_port=config_dict.get(
-                "spark_thrift_port", orchestration_defaults.spark_thrift_port_default()
             ),
         )
 

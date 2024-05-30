@@ -2511,30 +2511,19 @@ FROM   %(from_db_table)s%(where)s""" % {
                     "Integral magnitude/scale is valid for NUMERIC: %s/%s"
                     % (integral_magnitude, column.data_scale)
                 )
-                new_data_type = BIGQUERY_TYPE_NUMERIC
                 new_precision = column.data_precision
                 new_scale = column.data_scale
                 if not column.safe_mapping:
-                    # We should round an unsafe mapping up to the max for the data type.
+                    # We should round an unsafe mapping up to the max for NUMERIC.
                     # We can do this by removing the precision and scale settings.
+                    self._debug(
+                        "Removing precision/scale decorators for unsafe NUMERIC mapping"
+                    )
                     new_precision = None
                     new_scale = None
-                    if integral_magnitude > (
-                        29 - decimal_padding_digits
-                    ) or column.data_scale > (9 - decimal_padding_digits):
-                        self._log(
-                            f"Switching unsafe NUMERIC({column.data_precision},{column.data_scale}) mapping to BIGNUMERIC: {column.name}",
-                            detail=VVERBOSE,
-                        )
-                        new_data_type = BIGQUERY_TYPE_BIGNUMERIC
-                    else:
-                        self._log(
-                            f"Removing precision/scale decorators for unsafe NUMERIC mapping: {column.name}",
-                            detail=VVERBOSE,
-                        )
                 return new_column(
                     column,
-                    new_data_type,
+                    BIGQUERY_TYPE_NUMERIC,
                     data_precision=new_precision,
                     data_scale=new_scale,
                     safe_mapping=True,
@@ -2545,9 +2534,8 @@ FROM   %(from_db_table)s%(where)s""" % {
                 if not column.safe_mapping:
                     # We should round an unsafe mapping up to the max for BIGNUMERIC.
                     # We can do this by removing the precision and scale settings.
-                    self._log(
-                        f"Removing precision/scale decorators for unsafe BIGNUMERIC mapping: {column.name}",
-                        detail=VVERBOSE,
+                    self._debug(
+                        "Removing precision/scale decorators for unsafe NUMERIC mapping"
                     )
                     new_precision = None
                     new_scale = None
@@ -2556,7 +2544,7 @@ FROM   %(from_db_table)s%(where)s""" % {
                     BIGQUERY_TYPE_BIGNUMERIC,
                     data_precision=new_precision,
                     data_scale=new_scale,
-                    safe_mapping=True,
+                    safe_mapping=False,
                 )
         elif column.data_type in (GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE):
             return new_column(column, BIGQUERY_TYPE_FLOAT64, safe_mapping=True)

@@ -1,4 +1,4 @@
-# Copyright 2016 The GOE Authors. All rights reserved.
+# Copyright 2024 The GOE Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -123,9 +123,9 @@ def check_type_mapping_offload_columns(
             offload_constants.DBTYPE_SNOWFLAKE,
             offload_constants.DBTYPE_SYNAPSE,
         ]:
-            # This is horrible and will be reversed by "GOE-1718" - simply remove this entire "if" block
+            # This is horrible and will be reversed by issue-180 - simply remove this entire "if" block
             messages.log(
-                "Skipping column COL_BINARY_FLOAT_DOUBLE until GOE-1718 is actioned"
+                "Skipping column COL_BINARY_FLOAT_DOUBLE until issue-180 is actioned"
             )
             continue
         use_overrides = overrides

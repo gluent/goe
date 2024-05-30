@@ -2079,7 +2079,7 @@ class TestBackendBigQueryDataTypeMappings(TestDataTypeMappings):
             ),
             BigQueryColumn(
                 "COL_DEC_10_2_UNSAFE",
-                BIGQUERY_TYPE_NUMERIC,
+                BIGQUERY_TYPE_BIGNUMERIC,
                 data_precision=None,
                 data_scale=None,
             ),

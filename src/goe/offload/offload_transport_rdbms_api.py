@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 # Copyright 2016 The GOE Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +17,18 @@
 
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 from goe.offload.offload_constants import OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED
 from goe.offload.offload_transport_functions import ssh_cmd_prefix
 from goe.util.misc_functions import ansi_c_string_safe
+
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+    from goe.offload.column_metadata import ColumnMetadataInterface
+    from goe.offload.offload_messages import OffloadMessages
+    from goe.offload.offload_source_data import OffloadSourcePartitions
+    from goe.offload.offload_source_table import OffloadSourceTableInterface
 
 
 class OffloadTransportRdbmsApiException(Exception):
@@ -40,10 +46,14 @@ TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_SUBPARTITION = "subpartition"
 TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT = "extent"
 TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_MOD = "mod"
 TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE = "id_range"
+# e.g. Spark native fetch partitioning.
+TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_NATIVE_RANGE = "native_range"
 # TODO Should this have a generic name, e.g. _SYSTEM_SHARD?
 TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_TERADATA_AMP = "amp"
 TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_TERADATA_HASHAMP = "hashamp"
 TRANSPORT_ROW_SOURCE_QUERY_SPLIT_COLUMN = "goe_offload_batch"
+
+TRANSPORT_ROW_SOURCE_QUERY_SPLIT_TYPE_TEXT = "Transport rowsource split type: "
 
 
 ###########################################################################
@@ -60,10 +70,10 @@ class OffloadTransportRdbmsApiInterface(metaclass=ABCMeta):
 
     def __init__(
         self,
-        rdbms_owner,
-        rdbms_table_name,
-        offload_options,
-        messages,
+        rdbms_owner: str,
+        rdbms_table_name: str,
+        offload_options: "OrchestrationConfig",
+        messages: "OffloadMessages",
         dry_run=False,
     ):
         self._rdbms_owner = rdbms_owner
@@ -129,6 +139,18 @@ class OffloadTransportRdbmsApiInterface(metaclass=ABCMeta):
         """Generate a unique(ish) string that can be used to track an RDBMS session"""
 
     @abstractmethod
+    def get_id_column_for_range_splitting(
+        self, rdbms_table: "OffloadSourceTableInterface"
+    ) -> "ColumnMetadataInterface":
+        pass
+
+    @abstractmethod
+    def get_id_range(
+        self, rdbms_col_name: str, predicate_offload_clause: str, partition_chunk=None
+    ) -> tuple:
+        """Function to get the MIN and MAX values for an id column"""
+
+    @abstractmethod
     def get_rdbms_query_cast(
         self,
         column_expression,
@@ -172,28 +194,30 @@ class OffloadTransportRdbmsApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def get_transport_split_type(
         self,
-        partition_chunk,
-        rdbms_table,
-        parallelism,
-        rdbms_partition_type,
-        rdbms_columns,
-        offload_by_subpartition,
-        predicate_offload_clause,
-    ) -> str:
+        partition_chunk: "OffloadSourcePartitions",
+        rdbms_table: "OffloadSourceTableInterface",
+        parallelism: int,
+        rdbms_partition_type: str,
+        offload_by_subpartition: bool,
+        predicate_offload_clause: str,
+        native_range_split_available: bool = False,
+    ) -> tuple:
         """Return a TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_* constant stating the best splitter method for the source."""
 
     @abstractmethod
     def get_transport_row_source_query(
         self,
-        partition_by_prm,
-        rdbms_table,
+        partition_by_prm: str,
+        rdbms_table: "OffloadSourceTableInterface",
         consistent_read,
         parallelism,
         offload_by_subpartition,
         mod_column,
-        predicate_offload_clause,
-        partition_chunk=None,
-        pad=None,
+        predicate_offload_clause: str,
+        partition_chunk: "OffloadSourcePartitions" = None,
+        pad: int = None,
+        id_col_min=None,
+        id_col_max=None,
     ) -> str:
         """Define a frontend query that will retrieve data from a table dividing it by a split method
         such as partition or rowid range.

@@ -920,10 +920,6 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
             db_name, table_name, column_name, project_expression
         )
 
-    def smart_connector_test_command(self, db_name=None, table_name=None):
-        assert db_name and table_name
-        return f"SELECT current_date() FROM {db_name}.{table_name} LIMIT 1"
-
     def sql_median_expression(self, db_name, table_name, column_name):
         """No single Snowflake function for median of any data type so pick to suit column"""
         column = self.get_column(db_name, table_name, column_name)
@@ -1066,10 +1062,6 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
             },
         }
         return extra_cols
-
-    def transient_query_error_identification_strings(self) -> list:
-        """No additional known transient errors on Snowflake"""
-        return self._transient_query_error_identification_global_strings()
 
     def unit_test_query_options(self):
         return {"QUERY_TAG": "'my-tag'"}

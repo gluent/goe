@@ -269,12 +269,7 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
 
     def _transient_query_error_identification_global_strings(self) -> list:
         """A list of non-backend implementation specific strings used to identify exceptions that are worth a retry."""
-        return [
-            # Oracle external table timeout, can happen when backend query does not respond.
-            'smart_connector.sh encountered error "pipe read timeout"',
-            # JDBC connection pool timeout (applies to any backend where we connect via JDBC).
-            "HikariPool-1 - Connection is not available, request timed out",
-        ]
+        return []
 
     ###########################################################################
     # PUBLIC METHODS
@@ -825,9 +820,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def supported_date_based_partition_granularities(self):
         return self._db_api.supported_date_based_partition_granularities()
 
-    def synthetic_bucketing_supported(self):
-        return self._db_api.synthetic_bucketing_supported()
-
     def synthetic_partitioning_supported(self):
         return self._db_api.synthetic_partitioning_supported()
 
@@ -858,43 +850,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
 
     def to_canonical_column(self, backend_column):
         return self._db_api.to_canonical_column(backend_column)
-
-    def transient_error_rerunner(self, run_fn, max_retries=1, pause_seconds=None):
-        """Runs callable run_fn() and, if an exception is thrown, retries if the reason is a transient backend issue.
-        Obviously run_fn() must me idempotent, ideally a read only operation such as a Hybrid Query.
-        """
-        assert callable(run_fn)
-        if pause_seconds is None:
-            pause_seconds = TRANSIENT_QUERY_RERUN_PAUSE
-        for i in range(max_retries + 1):
-            try:
-                return run_fn()
-            except Exception as exc:
-                transient_errors = [
-                    _
-                    for _ in self.transient_query_error_identification_strings()
-                    if _ in str(exc)
-                ]
-                if transient_errors and i < max_retries:
-                    self._log(
-                        "{}, exception: {}".format(
-                            TRANSIENT_QUERY_RERUN_MARKER, str(exc)
-                        ),
-                        detail=VERBOSE,
-                    )
-                    self._log(
-                        "Matched transient error is: {}".format(str(transient_errors)),
-                        detail=VERBOSE,
-                    )
-                    self._log(
-                        "Sleeping for {} seconds before re-run".format(
-                            str(pause_seconds)
-                        ),
-                        detail=VERBOSE,
-                    )
-                    time.sleep(pause_seconds)
-                else:
-                    raise
 
     def story_test_table_extra_col_setup(self):
         """Return story_test_table_extra_col_info so it can be passed into create_table()."""
@@ -1090,12 +1045,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def smart_connector_test_command(self, db_name=None, table_name=None):
-        """Returns a command we can run via smart_connect -iq in order to test it works end to end.
-        db_name/table_name are optional, may be used by some backends, may be ignored by others.
-        """
-
-    @abstractmethod
     def sql_median_expression(self, db_name, table_name, column_name):
         """Some tests use SQL to get the median expression for a particular column, this method allows for backend variations.
         The method returns a string SQL expression with the column name embedded. For example:
@@ -1109,12 +1058,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def story_test_table_extra_col_info(self):
         pass
-
-    @abstractmethod
-    def transient_query_error_identification_strings(self) -> list:
-        """A list of strings used to identify exceptions that are worth a retry, for example BigQuery exception:
-        describeTable: ERROR : 13: Read timed out
-        """
 
     @abstractmethod
     def unit_test_query_options(self):

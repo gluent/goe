@@ -257,7 +257,6 @@ def test_get_transport_split_type_oracle_partitioned(
         messages,
         dry_run=True,
     )
-    rdbms_columns = fake_oracle_table.columns
     predicate_offload_clause = None
     offload_by_subpartition = False
 
@@ -266,7 +265,6 @@ def test_get_transport_split_type_oracle_partitioned(
         fake_oracle_table,
         parallelism,
         fake_oracle_table.partition_type,
-        rdbms_columns,
         offload_by_subpartition,
         predicate_offload_clause,
     )
@@ -342,7 +340,6 @@ def test_get_transport_split_type_oracle_subpartitioned(
         messages,
         dry_run=True,
     )
-    rdbms_columns = fake_oracle_subpartitioned_table.columns
     predicate_offload_clause = None
 
     split_return = api.get_transport_split_type(
@@ -350,7 +347,6 @@ def test_get_transport_split_type_oracle_subpartitioned(
         fake_oracle_subpartitioned_table,
         parallelism,
         fake_oracle_subpartitioned_table.partition_type,
-        rdbms_columns,
         offload_by_subpartition,
         predicate_offload_clause,
     )

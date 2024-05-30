@@ -63,7 +63,6 @@ from goe.connect.connect_transport import (
     test_credential_api_alias,
 )
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
-from goe.offload.offload_constants import DBTYPE_IMPALA
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import ssh_cmd_prefix
 from goe.orchestration import orchestration_constants
@@ -199,22 +198,6 @@ def test_krb_bin(orchestration_config):
     except Exception:
         failure(test_name)
         raise
-
-
-def configured_num_location_files(options, orchestration_config):
-    num_loc_files = (
-        options.num_location_files
-        or orchestration_defaults.num_location_files_default()
-    )
-    num_buckets_max = (
-        orchestration_config.num_buckets_max
-        or orchestration_defaults.num_buckets_max_default()
-    )
-    if orchestration_config.target == DBTYPE_IMPALA:
-        # On Impala present is capped by num_location_files, offload is capped by num_buckets_max
-        return max(num_loc_files, num_buckets_max)
-    else:
-        return num_loc_files
 
 
 def get_environment_file_name(orchestration_config):

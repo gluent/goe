@@ -1984,9 +1984,6 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
             db_name, table_name, column_name, project_expression
         )
 
-    def smart_connector_test_command(self, db_name=None, table_name=None):
-        return "SELECT 123"
-
     def sql_median_expression(self, db_name, table_name, column_name):
         """Synapse PERCENTILE_DISC suits all data types."""
         return (
@@ -2097,10 +2094,6 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
             },
         }
         return extra_cols
-
-    def transient_query_error_identification_strings(self) -> list:
-        """No additional known transient errors on Synapse"""
-        return self._transient_query_error_identification_global_strings()
 
     def unit_test_query_options(self):
         return {"DATEFIRST": 7}

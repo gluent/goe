@@ -103,7 +103,9 @@ def offload_list_as_range_ipa_standard_story_tests(
         messages.log(
             f"Skipping {table_name} partition function tests due to goe_partition_functions_supported() == False"
         )
-        return
+        pytest.skip(
+            f"Skipping {table_name} partition function tests due to goe_partition_functions_supported() == False"
+        )
 
     hv_1 = test_constants.SALES_BASED_LIST_HV_1
     hv_2 = test_constants.SALES_BASED_LIST_HV_2

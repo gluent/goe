@@ -221,7 +221,13 @@ def run_os_cmd(
     for line in proc.stdout:
         line = line.decode()
         output += line
-        messages.log(line.strip(), detail=VVERBOSE)
+        if line and "password" in line:
+            messages.log(
+                "GOE: Not logging stdout line containing token: 'password'",
+                detail=VVERBOSE,
+            )
+        else:
+            messages.log(line.strip(), detail=VVERBOSE)
         if not offload_options.vverbose and not silent:
             write_progress_to_stdout()
     if (
@@ -342,9 +348,9 @@ def transport_and_load_offload_chunk(
         offload_target_table.db_name,
         offload_target_table.table_name,
         chunk_number=chunk_count + 1,
-        offload_partitions=partition_chunk.get_partitions()
-        if partition_chunk
-        else None,
+        offload_partitions=(
+            partition_chunk.get_partitions() if partition_chunk else None
+        ),
         offload_partition_level=offload_source_table.offload_partition_level,
     )
 

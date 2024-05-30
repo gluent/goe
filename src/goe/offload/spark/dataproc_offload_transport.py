@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import math
 import re
 from typing import Union
 
@@ -20,7 +22,7 @@ from goe.offload.factory.offload_transport_rdbms_api_factory import (
     offload_transport_rdbms_api_factory,
 )
 from goe.offload.frontend_api import FRONTEND_TRACE_MODULE
-from goe.offload.offload_messages import VVERBOSE
+from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.offload_transport import (
     OffloadTransportException,
     OffloadTransportSpark,
@@ -38,6 +40,8 @@ from goe.util.misc_functions import write_temp_file
 
 
 GCLOUD_PROPERTY_SEPARATOR = ",GSEP,"
+GCLOUD_BATCHES_STATE_CANCELLED = "CANCELLED"
+GCLOUD_BATCHES_STATE_FAILED = "FAILED"
 
 
 class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
@@ -72,6 +76,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
         self._dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._dataproc_batches_ttl = offload_options.google_dataproc_batches_ttl
         self._dataproc_batches_version = offload_options.google_dataproc_batches_version
 
     ###########################################################################
@@ -94,7 +99,22 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             suffix=suffix,
         )
 
-    def _gcloud_dataproc_command(self) -> list:
+    def _gcloud_dataproc_describe_command(self, batch_name: str) -> list:
+        gcloud_cmd = [
+            OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
+            "dataproc",
+            "batches",
+            "describe",
+            batch_name,
+            "--format=json",
+        ]
+        if self._dataproc_project:
+            gcloud_cmd.append(f"--project={self._dataproc_project}")
+        if self._dataproc_region:
+            gcloud_cmd.append(f"--region={self._dataproc_region}")
+        return gcloud_cmd
+
+    def _gcloud_dataproc_submit_command(self, id: str = None) -> list:
         gcloud_cmd = [
             OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
             "dataproc",
@@ -106,44 +126,31 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             gcloud_cmd.append(f"--project={self._dataproc_project}")
         if self._dataproc_region:
             gcloud_cmd.append(f"--region={self._dataproc_region}")
+        gcloud_cmd.append(f"--batch={id}")
         if self._dataproc_service_account:
             gcloud_cmd.append(f"--service-account={self._dataproc_service_account}")
         if self._dataproc_batches_version:
             gcloud_cmd.append(f"--version={self._dataproc_batches_version}")
         if self._dataproc_batches_subnet:
-            if not self._dataproc_project or not self._dataproc_region:
-                raise OffloadTransportException(
-                    "GOOGLE_DATAPROC_PROJECT and GOOGLE_DATAPROC_REGION are required when using GOOGLE_DATAPROC_BATCHES_SUBNET"
-                )
-            subnet = "/".join(
-                [
-                    "projects",
-                    self._dataproc_project,
-                    "regions",
-                    self._dataproc_region,
-                    "subnetworks",
-                    self._dataproc_batches_subnet,
-                ]
-            )
-            gcloud_cmd.append(f"--subnet={subnet}")
+            gcloud_cmd.append(f"--subnet={self._dataproc_batches_subnet}")
+        if self._dataproc_batches_ttl:
+            gcloud_cmd.append(f"--ttl={self._dataproc_batches_ttl}")
         gcloud_cmd.append(f"--deps-bucket={self._offload_fs_container}")
         return gcloud_cmd
 
-    def _get_batch_name_option(self) -> list:
-        # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
+    def _get_batch_name(self) -> str:
+        """Return a Dataproc Batch name.
+
+        Valid names only accept a simple set of characters and are 4-63 characters in length only.
+        """
         batch_name_root = re.sub(
             r"[^a-zA-Z0-9\-]+", "", self._target_db_name + "-" + self._load_table_name
         )
-        batch_name_opt = [
-            "--batch={}".format(
-                self._get_transport_app_name(
-                    sep="-", ts=True, name_override=batch_name_root
-                ).lower()[:64]
-            )
-        ]
-        return batch_name_opt
+        return self._get_transport_app_name(
+            sep="-", ts=True, name_override=batch_name_root
+        ).lower()[:64]
 
-    def _get_spark_gcloud_command(self, pyspark_body):
+    def _get_spark_gcloud_command(self, pyspark_body, id: str = None):
         """Submit PySpark code via gcloud"""
 
         def cli_safe_the_password(k, v):
@@ -183,7 +190,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             else:
                 remote_spark_jars_csv = spark_listener_jar_remote_path
 
-        gcloud_cmd = self._gcloud_dataproc_command()
+        gcloud_cmd = self._gcloud_dataproc_submit_command(id=id)
 
         spark_config_props, no_log_password = [], []
         [
@@ -204,20 +211,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             )
             no_log_password = [{"item": password_config_to_obscure, "prior": "--conf"}]
 
-        if (
-            "spark.cores.min" not in self._spark_config_properties
-            and self._offload_transport_parallelism
-        ):
-            # If the user has not configured spark.cores.min then default to offload_transport_parallelism + 1
-            # This only applies to Dataproc Serverless and therefore is not injected
-            # into self._spark_config_properties.
-            spark_config_props.extend(
-                [
-                    "spark.cores.min={}".format(
-                        str(self._offload_transport_parallelism + 1)
-                    )
-                ]
-            )
+        spark_config_props.extend(self._tune_dataproc_for_parallelism())
 
         if self._offload_transport_jvm_overrides:
             spark_config_props.extend(
@@ -240,11 +234,9 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             [f"--files={remote_spark_files_csv}"] if remote_spark_files_csv else []
         )
 
-        batch_name_opt = self._get_batch_name_option()
         cmd = (
             gcloud_cmd
             + [options_file_remote_path]
-            + batch_name_opt
             + jars_opt
             + files_opt
             + properties_clause
@@ -260,11 +252,12 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
 
         rows_imported = None
         pyspark_body = self._get_pyspark_body(partition_chunk)
+        batch_name = self._get_batch_name()
         (
             spark_gcloud_cmd,
             no_log_password,
             py_rm_commands,
-        ) = self._get_spark_gcloud_command(pyspark_body)
+        ) = self._get_spark_gcloud_command(pyspark_body, id=batch_name)
 
         self._start_validation_polling_thread()
         rc, cmd_out = self._run_os_cmd(
@@ -273,6 +266,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._stop_validation_polling_thread()
 
         if not self._dry_run:
+            self._verify_batch(batch_name)
             rows_imported = self._get_rows_imported_from_spark_log(cmd_out)
             rows_imported_from_sql_stats = self._rdbms_api.log_sql_stats(
                 self._rdbms_module,
@@ -296,22 +290,106 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._check_rows_imported(rows_imported)
         return rows_imported
 
+    def _tune_dataproc_for_parallelism(self) -> list:
+        """Modify Spark Dataproc settings to cater for Offload parallelism.
+
+        As of 2024-05-01 the default value for spark.executor.cores is 4 and value values are 4, 8 and 16 only.
+        This is specifying cores per executor instance, spark.executor.instances, which defaults to 2.
+
+        Ensures spark.executor.cores covers the requested parallelism when <= 32.
+        Ensures spark.executor.instances covers the requested parallelism when > 32.
+
+        Returns:
+            list: A list of extra Spark properties or an empty list.
+        """
+
+        def executor_cores() -> int:
+            if self._offload_transport_parallelism > 8:
+                return 16
+            elif self._offload_transport_parallelism > 4:
+                return 8
+            else:
+                return None
+
+        def executor_instances() -> int:
+            if self._offload_transport_parallelism <= 32:
+                # With cores at 16 then default of two instances is adequate.
+                return None
+            return math.ceil(self._offload_transport_parallelism / 16)
+
+        if (
+            "spark.executor.cores" not in self._spark_config_properties
+            and "spark.executor.instances" not in self._spark_config_properties
+            and self._offload_transport_parallelism
+        ):
+            # If the user has not configured spark.executor.cores/instances then
+            # increase them from defaults to cater for offload_transport_parallelism.
+            # This only applies to Dataproc Batches and therefore is not injected
+            # into self._spark_config_properties.
+            props = []
+            if executor_cores():
+                props.append(f"spark.executor.cores={executor_cores()}")
+            if executor_instances():
+                props.append(f"spark.executor.instances={executor_instances()}")
+            return props
+        else:
+            return []
+
+    def _verify_batch(self, batch_name: str):
+        """Check for issues/errors in the batch that should trigger us to stop at this point."""
+        describe_cmd = self._gcloud_dataproc_describe_command(batch_name)
+        # Command below is optional because we don't want to fail a job if the describe command fails.
+        # Only if the describe command successfully tells us the batch failed.
+        rc, describe_cmd_output = self._run_os_cmd(
+            self._ssh_cmd_prefix() + describe_cmd, optional=True
+        )
+        if rc == 0 and describe_cmd_output:
+            self._verify_batch_describe_response(describe_cmd_output)
+
+    def _verify_batch_describe_response(self, describe_output: str) -> bool:
+        """Verify a batch based on the output of the describe command.
+
+        Returns:
+            True is we checked the status, False if we were unable to check.
+        """
+        try:
+            reponse_dict = json.loads(describe_output)
+        except Exception as exc:
+            # If we can't decode the output then log it and fall back to submit output checking.
+            self.log(f"Exception describing Dataproc batch: {str(exc)}", detail=VERBOSE)
+            return False
+        state = reponse_dict.get("state")
+        if state and state in [
+            GCLOUD_BATCHES_STATE_CANCELLED,
+            GCLOUD_BATCHES_STATE_FAILED,
+        ]:
+            if state == GCLOUD_BATCHES_STATE_CANCELLED:
+                raise OffloadTransportException(
+                    "Dataproc Batch is incomplete due to TTL, increase GOOGLE_DATAPROC_BATCHES_TTL"
+                )
+            else:
+                raise OffloadTransportException(
+                    f"Dataproc batch failed with state: {state}"
+                )
+
     def _verify_rdbms_connectivity(self):
         """Use a simple canary query for verification test"""
         rdbms_source_query = "(%s) v" % self._rdbms_api.get_rdbms_canary_query()
         pyspark_body = self._get_pyspark_body(canary_query=rdbms_source_query)
         self.log("PySpark: " + pyspark_body, detail=VVERBOSE)
+        batch_name = self._get_batch_name()
         (
             spark_gcloud_cmd,
             no_log_password,
             py_rm_commands,
-        ) = self._get_spark_gcloud_command(pyspark_body)
+        ) = self._get_spark_gcloud_command(pyspark_body, id=batch_name)
         rc, cmd_out = self._run_os_cmd(
             self._ssh_cmd_prefix() + spark_gcloud_cmd, no_log_items=no_log_password
         )
         # Remove any pyspark scripts we created
         if py_rm_commands:
             [self._run_os_cmd(_) for _ in py_rm_commands]
+        self._verify_batch(batch_name)
         # If we got this far then we're in good shape
         return True
 
@@ -396,6 +474,7 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account
         self._dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
+        self._dataproc_batches_ttl = offload_options.google_dataproc_batches_ttl
         self._dataproc_batches_version = offload_options.google_dataproc_batches_version
         self._spark_files_csv = offload_options.offload_transport_spark_files
         self._spark_jars_csv = offload_options.offload_transport_spark_jars
@@ -405,16 +484,12 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
         self._rdbms_table = None
         self._staging_format = None
 
-    def _get_batch_name_option(self) -> list:
+    def _get_batch_name(self) -> str:
+        """Return a Dataproc Batch name for canary check."""
         # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
-        batch_name_opt = [
-            "--batch={}".format(
-                self._get_transport_app_name(
-                    sep="-", ts=True, name_override="canary"
-                ).lower()[:64]
-            )
-        ]
-        return batch_name_opt
+        return self._get_transport_app_name(
+            sep="-", ts=True, name_override="canary"
+        ).lower()[:64]
 
     ###########################################################################
     # PUBLIC METHODS
@@ -427,7 +502,7 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
 class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
     """Submit PySpark to Dataproc via gcloud to transport data."""
 
-    def _gcloud_dataproc_command(self) -> list:
+    def _gcloud_dataproc_submit_command(self, id: str = None) -> list:
         gcloud_cmd = [
             OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
             "dataproc",
@@ -450,8 +525,13 @@ class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
             )
         return gcloud_cmd
 
-    def _get_batch_name_option(self) -> list:
+    def _tune_dataproc_for_parallelism(self) -> list:
+        # No-op when not Dataproc Batches.
         return []
+
+    def _verify_batch(self, batch_name: str):
+        # No-op when not Dataproc Batches.
+        pass
 
 
 class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcloud):

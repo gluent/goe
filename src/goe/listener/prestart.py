@@ -21,9 +21,9 @@ def validate_config():
     """"""
     try:
         # GOE
-        from goe.config.config_checks import check_cli_path  # noqa: WPS433 F401
+        from goe.config.config_file import check_config_path  # noqa: WPS433 F401
 
-        check_cli_path()
+        check_config_path()
     except Exception:
         print(
             "failed to validate configuration.  Please check your installation"

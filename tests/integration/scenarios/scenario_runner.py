@@ -13,11 +13,11 @@
 # limitations under the License.
 
 import inspect
-import os
 import time
 import traceback
 from typing import TYPE_CHECKING
 
+from goe.config.config_file import get_environment_file_path
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.orchestration import orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
@@ -53,12 +53,6 @@ def get_config_overrides(
     if config_dict:
         base_config.update(config_dict)
     return base_config
-
-
-def get_conf_path():
-    offload_home = os.environ.get("OFFLOAD_HOME")
-    assert offload_home, "OFFLOAD_HOME must be set in order to run tests"
-    return os.path.join(offload_home, "conf")
 
 
 def run_offload(
@@ -163,8 +157,7 @@ def create_goe_shell_runner(
 ) -> str:
     """Creates a temporary shell script to run a GOE command and returns the name of the script."""
     tmp_file = get_temp_path(suffix=".sh")
-    conf_dir = get_conf_path()
-    conf_file = os.path.join(conf_dir, "offload.env")
+    conf_file = get_environment_file_path()
     with open(tmp_file, "w") as f:
         f.write("#!/bin/bash\n")
         f.write(f". {conf_file}\n")

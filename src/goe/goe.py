@@ -173,8 +173,6 @@ OFFLOAD_PATTERN_100_0, OFFLOAD_PATTERN_90_10, OFFLOAD_PATTERN_100_10 = list(rang
 
 OFFLOAD_OP_NAME = "offload"
 
-CONFIG_FILE_NAME = "offload.env"
-
 # Used in test to identify specific warnings
 HYBRID_SCHEMA_STEPS_DUE_TO_HWM_CHANGE_MESSAGE_TEXT = (
     "Including post transport steps due to HWM change"
@@ -3005,8 +3003,6 @@ class GOEOptionTypes(Option):
 
 def get_common_options(usage=None):
     opt = OptionParser(usage=usage, option_class=GOEOptionTypes)
-
-    opt.add_option("-c", type="posint", help=SUPPRESS_HELP)
 
     opt.add_option(
         "--version",

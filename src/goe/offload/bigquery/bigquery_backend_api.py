@@ -1804,19 +1804,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         row = self.execute_query_fetch_one("SELECT SESSION_USER()", log_level=None)
         return row[0] if row else None
 
-    def get_view_ddl(
-        self, db_name, view_name, as_list=False, terminate_sql=False, for_replace=False
-    ):
-        # BigQuery TABLES view also contains DDL for views.
-        ddl_str = self._get_table_ddl(db_name, view_name, terminate_sql=terminate_sql)
-        if for_replace:
-            ddl_str = re.sub(r"^CREATE VIEW", "CREATE OR REPLACE VIEW", ddl_str, re.I)
-        self._debug("View DDL: %s" % ddl_str)
-        if as_list:
-            return ddl_str.split("\n")
-        else:
-            return ddl_str
-
     def insert_literal_values(
         self,
         db_name,

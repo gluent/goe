@@ -62,9 +62,8 @@ If using Dataproc Batches to provide Spark:
 ## Install database objects
 To install supporting database objects you need access to a database admin account that can create users, grant them system privileges and create objects in the schemas created. SYSTEM has been used in the example below but this is *not* a necessity:
 ```
-. ${OFFLOAD_HOME}/conf/offload.env
 cd ${OFFLOAD_HOME}/setup
-sqlplus system@${ORA_CONN}
+sqlplus system@yourhost:1521/yoursvc
 @install_offload
 ```
 
@@ -119,9 +118,8 @@ make install-dev-extras
 ```
 
 # Running commands
-Source the correct environment:
+Activate the GOE Python virtual environment:
 ```
-. ${OFFLOAD_HOME}/conf/offload.env
 source ./.venv/bin/activate
 ```
 

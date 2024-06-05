@@ -17,7 +17,6 @@ import time
 import traceback
 from typing import TYPE_CHECKING
 
-from goe.config.config_file import get_environment_file_path
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.orchestration import orchestration_constants
 from goe.orchestration.execution_id import ExecutionId
@@ -157,10 +156,8 @@ def create_goe_shell_runner(
 ) -> str:
     """Creates a temporary shell script to run a GOE command and returns the name of the script."""
     tmp_file = get_temp_path(suffix=".sh")
-    conf_file = get_environment_file_path()
     with open(tmp_file, "w") as f:
         f.write("#!/bin/bash\n")
-        f.write(f". {conf_file}\n")
         if cwd:
             f.write(f"cd {cwd}\n")
         f.write(f"{' '.join(_ for _ in shell_command)}\n")

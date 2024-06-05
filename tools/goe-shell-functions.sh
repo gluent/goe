@@ -85,11 +85,6 @@ function source_goe_env {
         raise_and_exit ${FUNCNAME[0]} 2 "File does not exist: $1/conf/offload.env"
     fi
     export OFFLOAD_HOME=$1
-    . $1/conf/offload.env
-    RETVAL=$?
-    if [[ $RETVAL -gt 0 ]]; then
-        raise_and_exit ${FUNCNAME[0]} $RETVAL
-    fi
 }
 
 # ------------------------------------------------------------------------------

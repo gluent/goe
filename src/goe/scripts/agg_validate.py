@@ -24,8 +24,7 @@ import logging
 import re
 import sys
 
-from goe.config import config_descriptions, orchestration_defaults
-from goe.config.config_file import check_config_path
+from goe.config import config_descriptions, config_file, orchestration_defaults
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_validation import (
     CrossDbValidator,
@@ -257,7 +256,8 @@ def main():
     MAIN ROUTINE
     """
 
-    check_config_path()
+    config_file.check_config_path()
+    config_file.load_env()
 
     args = parse_args()
     init(args)

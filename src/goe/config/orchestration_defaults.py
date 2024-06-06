@@ -237,6 +237,10 @@ def google_dataproc_service_account_default() -> Optional[str]:
     return os.environ.get("GOOGLE_DATAPROC_SERVICE_ACCOUNT")
 
 
+def google_dataproc_workflow_template_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_DATAPROC_WORKFLOW_TEMPLATE")
+
+
 def google_kms_key_name_default() -> Optional[str]:
     return os.environ.get("GOOGLE_KMS_KEY_NAME")
 

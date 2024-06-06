@@ -89,6 +89,7 @@ EXPECTED_CONFIG_ARGS = [
     "google_dataproc_project",
     "google_dataproc_region",
     "google_dataproc_service_account",
+    "google_dataproc_workflow_template",
     "google_kms_key_ring_location",
     "google_kms_key_ring_name",
     "google_kms_key_ring_project",
@@ -261,6 +262,7 @@ class OrchestrationConfig:
     google_dataproc_project: Optional[str]
     google_dataproc_region: Optional[str]
     google_dataproc_service_account: Optional[str]
+    google_dataproc_workflow_template: Optional[str]
     google_kms_key_ring_project: Optional[str]
     google_kms_key_ring_location: Optional[str]
     google_kms_key_ring_name: Optional[str]
@@ -460,6 +462,10 @@ class OrchestrationConfig:
             google_dataproc_service_account=config_dict.get(
                 "google_dataproc_service_account",
                 orchestration_defaults.google_dataproc_service_account_default(),
+            ),
+            google_dataproc_workflow_template=config_dict.get(
+                "google_dataproc_workflow_template",
+                orchestration_defaults.google_dataproc_workflow_template_default(),
             ),
             google_kms_key_ring_location=config_dict.get(
                 "google_kms_key_ring_location",

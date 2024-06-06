@@ -14,13 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_transport import (
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SQOOP,
     OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
     OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
@@ -144,6 +145,27 @@ def offload_transport_factory(
             "Data transport method: OffloadTransportSparkBatchesGcloud", detail=VVERBOSE
         )
         return OffloadTransportSparkBatchesGcloud(
+            offload_source_table,
+            offload_target_table,
+            offload_operation,
+            offload_options,
+            messages,
+            dfs_client,
+            rdbms_columns_override=rdbms_columns_override,
+        )
+    elif (
+        offload_transport_method
+        == OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD
+    ):
+        from goe.offload.spark.dataproc_offload_transport import (
+            OffloadTransportSparkDataprocEphemeralGcloud,
+        )
+
+        messages.log(
+            "Data transport method: OffloadTransportSparkDataprocEphemeralGcloud",
+            detail=VVERBOSE,
+        )
+        return OffloadTransportSparkDataprocEphemeralGcloud(
             offload_source_table,
             offload_target_table,
             offload_operation,

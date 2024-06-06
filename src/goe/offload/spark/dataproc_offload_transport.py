@@ -26,10 +26,10 @@ from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.offload_transport import (
     OffloadTransportException,
     OffloadTransportSpark,
-    FRONTEND_TRACE_MODULE,
     MISSING_ROWS_SPARK_WARNING,
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD,
     OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
     SPARK_OPTIONS_FILE_PREFIX,
     TRANSPORT_CXT_BYTES,
@@ -78,6 +78,9 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         self._dataproc_batches_subnet = offload_options.google_dataproc_batches_subnet
         self._dataproc_batches_ttl = offload_options.google_dataproc_batches_ttl
         self._dataproc_batches_version = offload_options.google_dataproc_batches_version
+        self._dataproc_workflow_template = (
+            offload_options.google_dataproc_workflow_template
+        )
 
     ###########################################################################
     # PRIVATE METHODS
@@ -584,6 +587,117 @@ class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcl
         self._rdbms_action = self._rdbms_api.generate_transport_action()
 
         self._dataproc_cluster = offload_options.google_dataproc_cluster
+        self._dataproc_project = offload_options.google_dataproc_project
+        self._dataproc_region = offload_options.google_dataproc_region
+        self._dataproc_service_account = offload_options.google_dataproc_service_account
+        self._spark_files_csv = offload_options.offload_transport_spark_files
+        self._spark_jars_csv = offload_options.offload_transport_spark_jars
+
+        # The canary is unaware of any tables
+        self._target_table = None
+        self._rdbms_table = None
+        self._staging_format = None
+
+    ###########################################################################
+    # PUBLIC METHODS
+    ###########################################################################
+
+    def ping_source_rdbms(self):
+        return self._verify_rdbms_connectivity()
+
+
+class OffloadTransportSparkDataprocEphemeralGcloud(OffloadTransportSparkBatchesGcloud):
+    """Submit PySpark to Dataproc Ephemeral via gcloud to transport data."""
+
+    def _gcloud_dataproc_submit_command(self, id: str = None) -> list:
+        gcloud_cmd = [
+            OFFLOAD_TRANSPORT_SPARK_GCLOUD_EXECUTABLE,
+            "dataproc",
+            "workflow-templates",
+            "add-job",
+            "pyspark",
+        ]
+        if not self._dataproc_workflow_template:
+            raise OffloadTransportException(
+                "Missing mandatory configuration: GOOGLE_DATAPROC_WORKFLOW_TEMPLATE"
+            )
+        gcloud_cmd.append(f"--workflow-template={self._dataproc_workflow_template}")
+        gcloud_cmd.append(f"--step-id={id}")
+        if self._dataproc_project:
+            gcloud_cmd.append(f"--project={self._dataproc_project}")
+        if self._dataproc_region:
+            gcloud_cmd.append(f"--region={self._dataproc_region}")
+        if self._dataproc_service_account:
+            gcloud_cmd.append(
+                f"--impersonate-service-account={self._dataproc_service_account}"
+            )
+        return gcloud_cmd
+
+    def _tune_dataproc_for_parallelism(self) -> list:
+        # No-op when not Dataproc Batches.
+        return []
+
+    def _verify_batch(self, batch_name: str):
+        # No-op when not Dataproc Batches.
+        pass
+
+
+class OffloadTransportSparkDataprocEphemeralGcloudCanary(
+    OffloadTransportSparkDataprocEphemeralGcloud
+):
+    """Validate Dataproc connectivity"""
+
+    def __init__(self, offload_options, messages):
+        """CONSTRUCTOR
+        This does not call up the stack to parent constructor because we only want a subset of functionality.
+        """
+        self._offload_options = offload_options
+        self._messages = messages
+        self._dry_run = False
+
+        self._offload_transport_method = (
+            OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD
+        )
+
+        self._create_basic_connectivity_attributes(offload_options)
+
+        self._offload_transport_consistent_read = (
+            orchestration_defaults.bool_option_from_string(
+                "OFFLOAD_TRANSPORT_CONSISTENT_READ",
+                orchestration_defaults.offload_transport_consistent_read_default(),
+            )
+        )
+        self._offload_transport_fetch_size = (
+            orchestration_defaults.offload_transport_fetch_size_default()
+        )
+        self._offload_transport_jvm_overrides = (
+            orchestration_defaults.offload_transport_spark_overrides_default()
+        )
+        self._offload_transport_queue_name = (
+            orchestration_defaults.offload_transport_spark_queue_name_default()
+        )
+        self._offload_transport_parallelism = 1
+        self._validation_polling_interval = (
+            orchestration_defaults.offload_transport_validation_polling_interval_default()
+        )
+        self._spark_config_properties = self._prepare_spark_config_properties(
+            orchestration_defaults.offload_transport_spark_properties_default()
+        )
+
+        self._rdbms_api = offload_transport_rdbms_api_factory(
+            "dummy_owner",
+            "dummy_table",
+            self._offload_options,
+            self._messages,
+            dry_run=self._dry_run,
+        )
+
+        self._rdbms_module = FRONTEND_TRACE_MODULE
+        self._rdbms_action = self._rdbms_api.generate_transport_action()
+
+        self._dataproc_workflow_template = (
+            offload_options.google_dataproc_workflow_template
+        )
         self._dataproc_project = offload_options.google_dataproc_project
         self._dataproc_region = offload_options.google_dataproc_region
         self._dataproc_service_account = offload_options.google_dataproc_service_account

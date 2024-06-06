@@ -116,6 +116,9 @@ OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT = "SPARK_SUBMIT"
 OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY = "SPARK_LIVY"
 OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD = "SPARK_DATAPROC_GCLOUD"
 OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD = "SPARK_BATCHES_GCLOUD"
+OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD = (
+    "SPARK_DATAPROC_EPHEMERAL_GCLOUD"
+)
 VALID_OFFLOAD_TRANSPORT_METHODS = [
     OFFLOAD_TRANSPORT_METHOD_SQOOP,
     OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
@@ -125,6 +128,7 @@ VALID_OFFLOAD_TRANSPORT_METHODS = [
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD,
 ]
 OFFLOAD_TRANSPORT_SPARK_METHODS = [
     OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
@@ -132,6 +136,7 @@ OFFLOAD_TRANSPORT_SPARK_METHODS = [
     OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD,
 ]
 
 # The rules that contain specific transport methods
@@ -158,6 +163,7 @@ OFFLOAD_TRANSPORT_SQOOP_METHODS = [
 OFFLOAD_TRANSPORT_GCP_METHODS = [
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
     OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+    OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD,
 ]
 
 YARN_TRANSPORT_NAME = "GOE"
@@ -365,6 +371,17 @@ def is_spark_gcloud_dataproc_available(
     )
 
 
+def is_spark_gcloud_dataproc_ephemeral_available(
+    config: "OrchestrationConfig",
+    offload_source_table: "OffloadSourceTableInterface",
+    messages: "OffloadMessages" = None,
+):
+    return bool(
+        config.google_dataproc_workflow_template
+        and is_spark_gcloud_available(config, offload_source_table, messages=messages)
+    )
+
+
 def is_spark_gcloud_batches_available(
     config: "OrchestrationConfig",
     offload_source_table: "OffloadSourceTableInterface",
@@ -563,6 +580,9 @@ def get_offload_transport_method_validation_fns(
             config, offload_source_table, messages=messages
         ),
         OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD: lambda: is_spark_gcloud_dataproc_available(
+            config, offload_source_table, messages=messages
+        ),
+        OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_EPHEMERAL_GCLOUD: lambda: is_spark_gcloud_dataproc_ephemeral_available(
             config, offload_source_table, messages=messages
         ),
         OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT: lambda: is_query_import_available(

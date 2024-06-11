@@ -15,6 +15,10 @@
 import fsspec
 
 
+def is_valid_path_for_logs(path: str):
+    return bool(path and (path.startswith("/") or path.startswith("gs://")))
+
+
 class GOELogFileHandle:
     name: str = None
 
@@ -30,7 +34,7 @@ class GOELogFileHandle:
         self.close()
 
     def _get_fs(self, path: str) -> fsspec.AbstractFileSystem:
-        """Determine filesystem type of a path."""
+        """Get fsspec filesystem for path."""
         if path.startswith("gs://"):
             """Do not pass in the token so that gcsfs will try and get the application
             default credentials from a number of sources. This will raise an exception

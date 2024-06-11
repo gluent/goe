@@ -290,41 +290,6 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
             "MSSQL goe_type_mapping_generated_table_col_specs() not yet implemented"
         )
 
-    def host_compare_sql_projection(self, column_list: list) -> str:
-        """Return a SQL projection (CSV of column expressions) used to validate offloaded data.
-        Because of systems variations all date based values must be normalised to:
-            'YYYY-MM-DD HH24:MI:SS.FFF TZH:TZM'.
-        """
-        assert isinstance(column_list, list)
-        projection = []
-        for column in column_list:
-            if column.data_type == MSSQL_TYPE_DATETIMEOFFSET:
-                projection.append(
-                    "REPLACE(CONVERT({},{},127),'Z',' ')".format(
-                        MSSQL_TYPE_VARCHAR, self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            elif column.is_date_based():
-                # CONVERT() style 21:
-                #   yyyy-mm-dd hh:mi:ss.mmm (24h)
-                projection.append(
-                    "CONVERT({},{},21)".format(
-                        MSSQL_TYPE_VARCHAR, self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            elif column.is_number_based():
-                # CONVERT() style 3:
-                #   Always 17 digits. Use for lossless conversion.  With this style, every distinct float
-                #   or real value is guaranteed to convert to a distinct character string.
-                projection.append(
-                    "CONVERT({},{},3)".format(
-                        MSSQL_TYPE_VARCHAR, self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            else:
-                projection.append(self._db_api.enclose_identifier(column.name))
-        return ",".join(projection)
-
     def run_sql_in_file(self, local_path):
         raise NotImplementedError("MSSQL run_sql_in_file() not yet implemented")
 

@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 # Copyright 2016 The GOE Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +57,7 @@ from goe.offload.oracle.oracle_column import (
     ORACLE_TYPE_XMLTYPE,
 )
 from goe.offload.oracle.oracle_offload_source_table import (
-    oracle_version_supports_exadata,
+    oracle_version_is_smart_scan_unsafe,
 )
 from goe.util.misc_functions import id_generator
 
@@ -69,6 +67,7 @@ if TYPE_CHECKING:
     from goe.offload.offload_messages import OffloadMessages
     from goe.offload.offload_source_data import OffloadSourcePartitions
     from goe.offload.offload_source_table import OffloadSourceTableInterface
+
 
 ###########################################################################
 # CONSTANTS
@@ -171,7 +170,7 @@ class OffloadTransportOracleApi(OffloadTransportRdbmsApiInterface):
         if self._fixed_goe_parameters is None:
             # GOE-1375
             ora_conn = self._get_adm_connection()
-            if oracle_version_supports_exadata(ora_conn.version):
+            if oracle_version_is_smart_scan_unsafe(ora_conn.version):
                 self._fixed_goe_parameters = {"CELL_OFFLOAD_PROCESSING": "FALSE"}
             else:
                 self._fixed_goe_parameters = {}

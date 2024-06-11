@@ -158,23 +158,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
                 f"Missing _generated_table_column_definitions entry for: {table_name}"
             )
 
-    def _generated_table_row_count(self, table_name) -> int:
-        """Allows fluctuations in desired row count by frontend. Individual frontends can override."""
-        if table_name == test_constants.GOE_CHARS:
-            return 512
-        elif table_name == test_constants.GOE_TYPE_MAPPING:
-            return 100
-        elif table_name == test_constants.GOE_TYPES:
-            return 10000
-        elif table_name == test_constants.GOE_TYPES_QI:
-            return 100
-        elif table_name == test_constants.GOE_WIDE:
-            return 100
-        else:
-            raise NotImplementedError(
-                f"Missing _generated_table_row_count entry for: {table_name}"
-            )
-
     # Enforced methods/properties
 
     @abstractmethod
@@ -257,43 +240,10 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         sql = self.collect_table_stats_sql_text(schema, table_name)
         return self._db_api.execute_ddl(sql)
 
-    def create_generated_table(
+    def create_type_mapping_table(
         self,
         schema: str,
         table_name: str,
-        ascii_only=False,
-        all_chars_notnull=False,
-        supported_canonical_types=None,
-        backend_max_test_column_count=None,
-    ):
-        """Create and populate a test auto-generated table"""
-        self._log(f"Dropping {schema}.{table_name}")
-        self.drop_table(schema, table_name)
-        self._log(f"Creating {schema}.{table_name}")
-        column_specs = self._generated_table_column_definitions(
-            table_name,
-            ascii_only=ascii_only,
-            all_chars_notnull=all_chars_notnull,
-            supported_canonical_types=supported_canonical_types,
-            backend_max_test_column_count=backend_max_test_column_count,
-        )
-        self._log(
-            "Columns: %s" % str([_["column"].name for _ in column_specs]),
-            detail=VERBOSE,
-        )
-        self._log("Column specs: %s" % str(column_specs), detail=VVERBOSE)
-        self._create_generated_test_table(schema, table_name, column_specs)
-        self._log(f"Populating {schema}.{table_name}")
-        rows = self._generated_table_row_count(table_name)
-        self._log(f"Rows: {rows}", detail=VERBOSE)
-        t = SimpleTimer(f"Populate: {schema}.{table_name}")
-        self._populate_generated_test_table(schema, table_name, column_specs, rows)
-        self._debug(t.show())
-        self.collect_table_stats(schema, table_name)
-
-    def create_goe_type_mapping(
-        self,
-        schema: str,
         ascii_only=False,
         all_chars_notnull=False,
         max_backend_precision=None,
@@ -302,7 +252,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         supported_canonical_types=None,
     ):
         """Create and populate GOE_TYPE_MAPPING"""
-        table_name = test_constants.GOE_TYPE_MAPPING
         self._log(f"Dropping {schema}.{table_name}")
         self.drop_table(schema, table_name)
         self._log(f"Creating {schema}.{table_name}")
@@ -320,7 +269,7 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         self._log("Column specs: %s" % str(column_specs), detail=VVERBOSE)
         self._create_generated_test_table(schema, table_name, column_specs)
         self._log(f"Populating {schema}.{table_name}")
-        rows = self._generated_table_row_count(table_name)
+        rows = 100
         self._log(f"Rows: {rows}", detail=VERBOSE)
         t = SimpleTimer(f"Populate: {schema}.{table_name}")
         self._populate_generated_test_table(
@@ -442,9 +391,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     def get_session_option(self, option_name):
         return self._db_api.get_session_option(option_name)
-
-    def get_view_ddl(self, schema, view_name):
-        return self._db_api.get_object_ddl(schema, view_name, GET_DDL_TYPE_VIEW)
 
     def goe_type_mapping_expected_canonical_cols(
         self, max_backend_precision, max_backend_scale, max_decimal_integral_magnitude
@@ -656,21 +602,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         """Return a list of column specs matching how test.generated_tables expects and a list of column names.
         This is not how we want to pass column specs around but it matches existing code in test.
         Returned lists are sorted by column name.
-        """
-
-    @abstractmethod
-    def host_compare_sql_projection(self, column_list: list) -> str:
-        """Return a SQL projection (CSV of column expressions) used to validate offloaded data.
-        Timestamps:
-            Because some systems do not have canonical dates or have differing scales for time elements all
-            date based values must be normalised to UTC in format:
-                'YYYY-MM-DD HH24:MI:SS.FFF +00:00'
-        Intervals:
-            Some clients do not support interval data types so convert them to string in the validation SQL.
-        Numbers:
-            All numbers need to be strings because:
-                >>> -8461.633 == Decimal('-8461.633')
-                False
         """
 
     @abstractmethod

@@ -1444,7 +1444,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
                     data_scale = 0
 
             integral_type = self._frontend_decimal_to_integral_type(
-                data_precision, data_scale
+                data_precision, data_scale, safe_mapping=column.safe_mapping
             )
             if integral_type:
                 return new_column(

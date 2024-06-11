@@ -71,18 +71,6 @@ def get_bin_path():
     return os.path.join(offload_home, "bin")
 
 
-def get_log_path():
-    offload_home = os.environ.get("OFFLOAD_HOME")
-    assert offload_home, "OFFLOAD_HOME must be set in order to run tests"
-    return os.path.join(offload_home, "log")
-
-
-def get_run_path():
-    offload_home = os.environ.get("OFFLOAD_HOME")
-    assert offload_home, "OFFLOAD_HOME must be set in order to run tests"
-    return os.path.join(offload_home, "run")
-
-
 def command_supports_no_version_check(list_of_args):
     return bool(
         list_of_args[0].endswith("connect") or list_of_args[0].endswith("offload")

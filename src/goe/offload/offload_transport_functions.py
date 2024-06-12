@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 # Copyright 2016 The GOE Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +20,6 @@ import logging
 from getpass import getuser
 import math
 import os
-from re import sub
 from socket import gethostname, getfqdn
 import subprocess
 from subprocess import PIPE, STDOUT
@@ -78,25 +75,23 @@ logger.addHandler(logging.NullHandler())
 ###########################################################################
 
 
-def offload_transport_file_name(name_prefix, extension=""):
+def offload_transport_file_name(name_prefix, extension="") -> str:
     return standard_file_name(name_prefix, extension=extension)
 
 
-def load_db_hdfs_path(load_db_name, offload_options):
+def load_db_hdfs_path(load_db_name: str, config: "OrchestrationConfig") -> str:
     assert load_db_name
-    assert offload_options.hdfs_load
-    return os.path.join(
-        offload_options.hdfs_load, load_db_name + offload_options.hdfs_db_path_suffix
-    )
+    assert config.hdfs_load
+    return os.path.join(config.hdfs_load, load_db_name + config.hdfs_db_path_suffix)
 
 
-def avsc_hdfs_path(load_db_name, schema_filename, offload_options):
-    if offload_options.backend_distribution not in HADOOP_BASED_BACKEND_DISTRIBUTIONS:
+def avsc_hdfs_path(
+    load_db_name: str, schema_filename: str, config: "OrchestrationConfig"
+) -> str:
+    if config.backend_distribution not in HADOOP_BASED_BACKEND_DISTRIBUTIONS:
         # No HDFS in play
         return None
-    return os.path.join(
-        load_db_hdfs_path(load_db_name, offload_options), schema_filename
-    )
+    return os.path.join(load_db_hdfs_path(load_db_name, config), schema_filename)
 
 
 def get_local_staging_path(
@@ -129,7 +124,7 @@ def schema_path(
     return avsc_hdfs_path(load_db_name, schema_filename, config)
 
 
-def ssh_cmd_prefix(ssh_user, host):
+def ssh_cmd_prefix(ssh_user, host) -> list:
     assert ssh_user
     assert host
     if ssh_user == getuser() and host == "localhost":
@@ -137,7 +132,7 @@ def ssh_cmd_prefix(ssh_user, host):
     return ["ssh", "-tq", ssh_user + "@" + host]
 
 
-def scp_to_cmd(user, host, from_path, to_path):
+def scp_to_cmd(user, host, from_path, to_path) -> list:
     if user == getuser() and host == "localhost":
         if to_path[0] != "/":
             to_path = os.path.join(os.environ.get("HOME"), to_path)
@@ -166,7 +161,7 @@ def get_rdbms_connection_for_oracle(
     return ora_conn
 
 
-def credential_provider_path_jvm_override(credential_provider_path):
+def credential_provider_path_jvm_override(credential_provider_path) -> str:
     """return a JVM override clause to point to credential provider file"""
     if not credential_provider_path:
         return ""

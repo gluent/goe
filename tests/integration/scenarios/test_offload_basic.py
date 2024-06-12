@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 import pytest
 
+from goe.filesystem.goe_dfs import gen_fs_uri, OFFLOAD_FS_SCHEME_GS
 from goe.offload.backend_api import IMPALA_NOSHUFFLE_HINT
 from goe.offload.column_metadata import (
     match_table_column,
@@ -67,6 +70,7 @@ from tests.testlib.test_framework.test_functions import (
 
 OFFLOAD_DIM = "STORY_DIM"
 OFFLOAD_FACT = "STORY_FACT"
+GCS_LOG_DIM = "STORY_DIM"
 
 
 @pytest.fixture
@@ -310,9 +314,11 @@ def test_offload_basic_dim(config, schema, data_db):
     # Basic offload of a simple dimension.
     options = {
         "owner_table": schema + "." + OFFLOAD_DIM,
-        "offload_stats_method": offload_constants.OFFLOAD_STATS_METHOD_COPY
-        if copy_stats_available
-        else offload_constants.OFFLOAD_STATS_METHOD_NATIVE,
+        "offload_stats_method": (
+            offload_constants.OFFLOAD_STATS_METHOD_COPY
+            if copy_stats_available
+            else offload_constants.OFFLOAD_STATS_METHOD_NATIVE
+        ),
         "compute_load_table_stats": True,
         "preserve_load_table": True,
         "impala_insert_hint": IMPALA_NOSHUFFLE_HINT,
@@ -610,6 +616,68 @@ def test_offload_basic_fact(config, schema, data_db):
         data_db,
         OFFLOAD_FACT,
         test_constants.SALES_BASED_FACT_HV_4,
+    )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def test_offload_log_path_gcs(config, schema, data_db):
+    id = "test_offload_log_path_gcs"
+    messages = get_test_messages(config, id)
+
+    if config.offload_fs_scheme != OFFLOAD_FS_SCHEME_GS or config.log_path.startswith(
+        "gs:"
+    ):
+        messages.log(f"Skipping {id} because it is unnecessary for current config")
+        pytest.skip(f"Skipping {id} because it is unnecessary for current config")
+
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
+    table_name = GCS_LOG_DIM
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, table_name),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, table_name
+            ),
+        ],
+    )
+
+    # Our config is GCS capable and we are not logging to GCS.
+    # So let's override the log path with one putting the logs in GCS.
+    log_path = gen_fs_uri(
+        os.path.join(config.offload_fs_prefix, "test_logs"),
+        scheme=config.offload_fs_scheme,
+        container=config.offload_fs_container,
+    )
+    messages.log(f"Logging Offload to log_path: {log_path}")
+
+    # Basic offload of a simple dimension.
+    options = {
+        "owner_table": schema + "." + table_name,
+        "reset_backend_table": True,
+        "create_backend_db": True,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        config_overrides={"log_path": log_path},
+        no_messages_override=True,
+    )
+
+    assert standard_dimension_assertion(
+        config, backend_api, messages, repo_client, schema, data_db, table_name
     )
 
     # Connections are being left open, explicitly close them.

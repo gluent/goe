@@ -68,6 +68,7 @@ def run_offload(
     expected_status=True,
     expected_exception_string: str = None,
     config_overrides: dict = None,
+    no_messages_override: bool = False,
 ) -> OffloadMessages:
     execution_id = ExecutionId()
     messages = OffloadMessages.from_options(
@@ -78,11 +79,12 @@ def run_offload(
     )
     try:
         config_overrides = get_config_overrides(config_overrides, orchestration_config)
+        messages_override = None if no_messages_override else messages
         status = OrchestrationRunner(config_overrides=config_overrides).offload(
             option_dict,
             execution_id=execution_id,
-            reuse_log=True,
-            messages_override=messages,
+            reuse_log=(not no_messages_override),
+            messages_override=messages_override,
         )
         if expected_status is not None and status != expected_status:
             raise ScenarioRunnerException(

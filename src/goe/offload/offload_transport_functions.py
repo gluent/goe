@@ -38,6 +38,7 @@ from goe.offload.offload_constants import (
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.orchestration import orchestration_constants
+from goe.util.goe_log_fh import is_gcs_path
 from goe.util.misc_functions import (
     get_os_username,
     obscure_list_items,
@@ -46,6 +47,7 @@ from goe.util.misc_functions import (
 )
 
 if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
     from goe.offload.backend_table import BackendTableInterface
     from goe.offload.offload_messages import OffloadMessages
     from goe.offload.offload_source_data import OffloadSourcePartitions
@@ -97,26 +99,34 @@ def avsc_hdfs_path(load_db_name, schema_filename, offload_options):
     )
 
 
-def schema_paths(
-    target_owner,
-    table_name,
-    load_db_name,
-    offload_options,
-    local_extension_override=None,
-):
+def get_local_staging_path(
+    target_owner: str,
+    table_name: str,
+    config: "OrchestrationConfig",
+    extension: str,
+) -> str:
     owner_table = "%s.%s" % (target_owner, table_name)
-    if local_extension_override:
-        schema_filename = offload_transport_file_name(
-            owner_table, extension=local_extension_override
-        )
-    elif offload_options.offload_staging_format == FILE_STORAGE_FORMAT_AVRO:
+    filename = offload_transport_file_name(owner_table, extension=extension)
+    if is_gcs_path(config.log_path):
+        local_path = "/tmp"
+    else:
+        local_path = config.log_path
+    file_path = os.path.join(local_path, filename)
+    return file_path
+
+
+def schema_path(
+    target_owner: str,
+    table_name: str,
+    load_db_name: str,
+    config: "OrchestrationConfig",
+) -> str:
+    owner_table = "%s.%s" % (target_owner, table_name)
+    if config.offload_staging_format == FILE_STORAGE_FORMAT_AVRO:
         schema_filename = offload_transport_file_name(owner_table, extension=".avsc")
     else:
         schema_filename = offload_transport_file_name(owner_table)
-    local_schema_path = os.path.join(offload_options.log_path, schema_filename)
-    return local_schema_path, avsc_hdfs_path(
-        load_db_name, schema_filename, offload_options
-    )
+    return avsc_hdfs_path(load_db_name, schema_filename, config)
 
 
 def ssh_cmd_prefix(ssh_user, host):

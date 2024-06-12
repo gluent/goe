@@ -15,8 +15,12 @@
 import fsspec
 
 
+def is_gcs_path(path: str):
+    return bool(path and path.startswith("gs://"))
+
+
 def is_valid_path_for_logs(path: str):
-    return bool(path and (path.startswith("/") or path.startswith("gs://")))
+    return bool(path and (path.startswith("/") or is_gcs_path(path)))
 
 
 class GOELogFileHandle:

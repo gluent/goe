@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import fsspec
+from gcsfs.core import GCS_MIN_BLOCK_SIZE
 
 
 def is_gcs_path(path: str):
@@ -26,10 +27,10 @@ def is_valid_path_for_logs(path: str):
 class GOELogFileHandle:
     name: str = None
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, mode="w"):
         self._fs = self._get_fs(path)
         self.name = path
-        self._fh = self._open(path)
+        self._fh = self._open(path, mode=mode)
 
     def __enter__(self):
         return self._fh
@@ -45,7 +46,7 @@ class GOELogFileHandle:
             if it cannot authenticate with GCS.
             https://gcsfs.readthedocs.io/en/latest/api.html#gcsfs.core.GCSFileSystem
             """
-            fs = fsspec.filesystem("gs")
+            fs = fsspec.filesystem("gs", block_size=GCS_MIN_BLOCK_SIZE)
         else:
             fs = fsspec.filesystem("file")
         return fs

@@ -92,7 +92,9 @@ def run_offload(
             )
         if expected_exception_string:
             # We shouldn't get here if we're expecting an exception
-            messages.log("Missing exception containing: %s" % expected_exception_string)
+            parent_messages.log(
+                "Missing exception containing: %s" % expected_exception_string
+            )
             # Can't include exception in error below otherwise we'll end up with a pass
             raise ScenarioRunnerException("offload() did not throw expected exception")
     except Exception as exc:
@@ -100,14 +102,14 @@ def run_offload(
             expected_exception_string
             and expected_exception_string.lower() in str(exc).lower()
         ):
-            messages.log(
+            parent_messages.log(
                 "Test caught expected exception:%s\n%s" % (type(exc), str(exc))
             )
-            messages.log(
+            parent_messages.log(
                 "Ignoring exception containing: %s" % expected_exception_string
             )
         else:
-            messages.log(traceback.format_exc())
+            parent_messages.log(traceback.format_exc())
             raise
     return messages
 

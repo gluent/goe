@@ -107,6 +107,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
         "offload_by_subpartition": True,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -127,6 +128,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
     options = {
         "owner_table": schema + "." + FACT_LIST_RANGE_R,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -147,6 +149,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
     options = {
         "owner_table": schema + "." + FACT_LIST_RANGE_R,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_3,
+        "execute": True,
     }
     run_offload(options, config, messages, expected_exception_string="common boundary")
 
@@ -154,6 +157,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
     options = {
         "owner_table": schema + "." + FACT_LIST_RANGE_R,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_6,
+        "execute": True,
     }
     run_offload(
         options, config, messages, expected_exception_string="--offload-type=FULL"
@@ -163,6 +167,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
     options = {
         "owner_table": schema + "." + FACT_LIST_RANGE_R,
         "offload_type": OFFLOAD_TYPE_FULL,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -184,6 +189,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
     options = {
         "owner_table": schema + "." + FACT_LIST_RANGE_R,
         "offload_type": OFFLOAD_TYPE_INCREMENTAL,
+        "execute": True,
     }
     run_offload(
         options,
@@ -229,6 +235,7 @@ def test_offload_subpart_lr_list(config, schema, data_db):
         "offload_partition_upper_value": 10,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -250,6 +257,7 @@ def test_offload_subpart_lr_list(config, schema, data_db):
         "equal_to_values": ["3"],
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 10,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -303,6 +311,7 @@ def test_offload_subpart_range_range(config, schema, data_db):
         "offload_partition_upper_value": 10,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -326,6 +335,7 @@ def test_offload_subpart_range_range(config, schema, data_db):
         "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "offload_by_subpartition": True,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -377,6 +387,7 @@ def test_offload_subpart_hash_range(config, schema, data_db):
         "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(

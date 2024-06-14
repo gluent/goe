@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 # Copyright 2016 The GOE Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -500,6 +498,8 @@ class OffloadMessages(object):
                 self.log("Done", ansi_code="green")
                 if record_step_delta:
                     self.step_delta(title, td)
+            else:
+                self.step_no_delta(title)
 
             if step_repo_logging(parent_command_type):
                 self._repo_client.end_command_step(
@@ -590,6 +590,13 @@ class OffloadMessages(object):
             self.steps[step]["count"] += 1
         else:
             self.steps[step] = {"seconds": time_delta.total_seconds(), "count": 1}
+
+    def step_no_delta(self, step):
+        """Record a step without any time delta, for non-execture mode."""
+        if step in self.steps:
+            self.steps[step]["count"] += 1
+        else:
+            self.steps[step] = {"seconds": 0, "count": 1}
 
     def log_step_deltas(self, topn=10, detail=VVERBOSE):
         logger.info("log_step_deltas()")
@@ -692,84 +699,9 @@ class OffloadMessagesMixin:
         )
 
 
-def to_message_level(level):
-    """Convert 'level' (i.e. in a form of "Normal") to Offload 'message_level'"""
-    str_levels = dict(
-        list(zip(("quiet", "normal", "verbose", "vverbose"), list(range(-1, 3))))
-    )
-    messages_level = None
-
-    if isinstance(level, str):
-        messages_level = str_levels.get(level.lower(), None)
-    elif isinstance(level, int):
-        messages_level = level if level in list(str_levels.values()) else None
-
-    if messages_level is None:
-        raise OffloadMessagesException("Invalid OffloadMessages level: %s" % level)
-
-    return messages_level
-
-
 def step_title_to_step_id(step_title):
     """Helper function to share logic between this module and goe.py"""
     if step_title:
         return step_title.replace(" ", "_").lower()
     else:
         return None
-
-
-if __name__ == "__main__":
-    # GOE
-    from goe.util.misc_functions import set_goelib_logging
-
-    log_level = sys.argv[-1:][0].upper()
-    if log_level not in ("DEBUG", "INFO", "WARNING", "CRITICAL", "ERROR"):
-        log_level = "CRITICAL"
-
-    set_goelib_logging(log_level)
-
-    log_dir = "/tmp"
-    log_id = "goe_test_log"
-
-    print("NORMAL OffloadMessages")
-    print("=====================================")
-    messages = OffloadMessages(NORMAL)
-    messages.init_log(log_dir, log_id)
-    messages.log("A normal message")
-    messages.log("A verbose message you won't see on screen", VERBOSE)
-    messages.log("Nor this", VVERBOSE)
-    messages.log("More normality")
-    messages.step_delta("Normal Stuff", timedelta(0, 160, 615919))
-    messages.log("Honk honk", ansi_code="red")
-    messages.step_delta("Bad Stuff", timedelta(0, 130, 651717))
-    messages.warning("Honk honk", ansi_code="red")
-    messages.step_delta("Bad Stuff", timedelta(0, 9101, 651717))
-    messages.log_step_deltas()
-    messages.close_log()
-    print("=====================================")
-
-    print("As above but QUIET")
-    print("=====================================")
-    messages = OffloadMessages(QUIET)
-    messages.init_log(log_dir, log_id)
-    messages.log("A normal message")
-    messages.log("A verbose message you won't see on screen", VERBOSE)
-    messages.log("Nor this", VVERBOSE)
-    messages.log("More normality")
-    messages.log("Honk honk", ansi_code="red")
-    messages.warning("Honk honk", ansi_code="red")
-    messages.close_log()
-    print("=====================================")
-
-    print("VERBOSE OffloadMessages")
-    print("=====================================")
-    messages = OffloadMessages(VERBOSE)
-    messages.init_log(log_dir, log_id)
-    messages.log("A normal message")
-    messages.log("A verbose message you will see", VERBOSE)
-    messages.log("But not this", VVERBOSE)
-    messages.log("More normality")
-    messages.log("Honk honk", ansi_code="red")
-    messages.warning("Honk honk", ansi_code="red")
-    messages.close_log()
-    print("=====================================")

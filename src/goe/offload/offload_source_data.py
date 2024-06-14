@@ -2210,10 +2210,8 @@ class OffloadSourceDataIpaRange(OffloadSourceDataInterface):
 
         def more_human_readable_python_hwm(python_hwm):
             # convert to str to remove datatype info and chop off any redundant trailing fractional seconds
-            str_fn = (
-                lambda x: re.sub(r"\.000000$", "", str(x))
-                if type(x) is datetime64
-                else str(x)
+            str_fn = lambda x: (
+                re.sub(r"\.000000$", "", str(x)) if type(x) is datetime64 else str(x)
             )
             return str([str_fn(hv) for hv in python_hwm])
 

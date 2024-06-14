@@ -156,6 +156,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -166,6 +167,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -176,6 +178,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SQOOP,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -186,6 +189,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -196,6 +200,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -206,6 +211,7 @@ def test_identifiers_keyword_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -246,6 +252,7 @@ def test_identifiers_bad_char_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -256,6 +263,7 @@ def test_identifiers_bad_char_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -266,6 +274,7 @@ def test_identifiers_bad_char_column_names(config, schema, data_db):
             "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -304,13 +313,14 @@ def test_identifiers_table_name_case(config, schema, data_db):
         "owner_table": schema + "." + CASE_DIM,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": False,
     }
     log_test_marker(messages, f"{id}1")
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False, "backend_identifier_case": "LOWER"},
+        config_overrides={"backend_identifier_case": "LOWER"},
     )
     assert backend_case_offload_assertion(
         messages, f"{data_db}.{CASE_DIM}".lower(), f"{id}1"
@@ -319,13 +329,14 @@ def test_identifiers_table_name_case(config, schema, data_db):
     options = {
         "owner_table": schema + "." + CASE_DIM.lower(),
         "reset_backend_table": True,
+        "execute": False,
     }
     log_test_marker(messages, f"{id}2")
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False, "backend_identifier_case": "UPPER"},
+        config_overrides={"backend_identifier_case": "UPPER"},
     )
     assert backend_case_offload_assertion(
         messages, f"{data_db}.{CASE_DIM}".upper(), f"{id}2"
@@ -334,13 +345,14 @@ def test_identifiers_table_name_case(config, schema, data_db):
     options = {
         "owner_table": schema.upper() + "." + CASE_DIM.capitalize(),
         "reset_backend_table": True,
+        "execute": False,
     }
     log_test_marker(messages, f"{id}3")
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False, "backend_identifier_case": "NO_MODIFY"},
+        config_overrides={"backend_identifier_case": "NO_MODIFY"},
     )
     assert backend_case_offload_assertion(
         messages, f"{data_db.upper()}.{CASE_DIM.capitalize()}", f"{id}3"
@@ -356,7 +368,7 @@ def test_identifiers_table_name_change_100_0(config, schema, data_db):
     backend_api = get_backend_testing_api(config, messages)
     frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
     repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
+        config, messages, dry_run=False, trace_action=f"repo_client({id})"
     )
 
     # Setup
@@ -381,6 +393,7 @@ def test_identifiers_table_name_change_100_0(config, schema, data_db):
         "target_owner_name": schema + "." + NEW_NAME_DIM2,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -406,6 +419,7 @@ def test_identifiers_table_name_change_100_0(config, schema, data_db):
     # Used to confirm that attempted re-offload exits early and doesn\'t lose sight of previous --target-name.
     options = {
         "owner_table": schema + "." + NEW_NAME_DIM1,
+        "execute": True,
     }
     # Uncomment this test after completing GOE-1461
     # run_offload(
@@ -453,6 +467,7 @@ def test_identifiers_table_name_change_90_10(config, schema, data_db):
         "older_than_date": SALES_BASED_FACT_HV_1,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -476,6 +491,7 @@ def test_identifiers_table_name_change_90_10(config, schema, data_db):
     options = {
         "owner_table": schema + "." + NEW_NAME_FACT1,
         "older_than_date": SALES_BASED_FACT_HV_3,
+        "execute": True,
     }
     # Uncomment this test after completing GOE-1461
     # run_offload(options, config, messages)

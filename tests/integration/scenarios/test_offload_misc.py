@@ -113,9 +113,10 @@ def test_offload_misc_verification_parallel(config, schema, data_db):
         "verify_parallelism": 3,
         "data_sample_pct": 0,
         "reset_backend_table": True,
+        "execute": False,
     }
     log_test_marker(messages, f"{id}1")
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
     assert hint_text_in_log(messages, config, 3, f"{id}1")
 
     # Offload with verification parallelism=1.
@@ -124,9 +125,10 @@ def test_offload_misc_verification_parallel(config, schema, data_db):
         "verify_parallelism": 1,
         "data_sample_pct": 0,
         "reset_backend_table": True,
+        "execute": False,
     }
     log_test_marker(messages, f"{id}2")
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
     assert hint_text_in_log(messages, config, 1, f"{id}2")
 
     # Offload with verification parallelism=0.
@@ -135,9 +137,10 @@ def test_offload_misc_verification_parallel(config, schema, data_db):
         "verify_parallelism": 0,
         "data_sample_pct": 0,
         "reset_backend_table": True,
+        "execute": False,
     }
     log_test_marker(messages, f"{id}3")
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
     assert hint_text_in_log(messages, config, 0, f"{id}3")
 
     # Offload with aggregation verification parallelism=4.
@@ -148,6 +151,7 @@ def test_offload_misc_verification_parallel(config, schema, data_db):
         "data_sample_pct": 0,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     log_test_marker(messages, f"{id}4")
     run_offload(options, config, messages)
@@ -191,6 +195,7 @@ def test_offload_misc_maxvalue_partition(config, schema, data_db):
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -210,6 +215,7 @@ def test_offload_misc_maxvalue_partition(config, schema, data_db):
     # Offloads all partitions from a MAXVALUE fact table but in 90/10, the MAXVALUE partition should be skipped.
     options = {
         "owner_table": schema + "." + MAXVAL_FACT,
+        "execute": True,
     }
     offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -231,6 +237,7 @@ def test_offload_misc_maxvalue_partition(config, schema, data_db):
     options = {
         "owner_table": schema + "." + MAXVAL_FACT,
         "offload_type": OFFLOAD_TYPE_FULL,
+        "execute": True,
     }
     offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(

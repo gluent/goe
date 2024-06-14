@@ -203,8 +203,12 @@ def test_orchestration_runner_offload(config, schema):
         frontend_api.standard_dimension_frontend_ddl(schema, TABLE_NAME),
     )
 
-    params = {"owner_table": f"{schema}.{TABLE_NAME}", "reset_backend_table": True}
-    status = OrchestrationRunner(dry_run=True).offload(params)
+    params = {
+        "owner_table": f"{schema}.{TABLE_NAME}",
+        "reset_backend_table": True,
+        "execute": True,
+    }
+    status = OrchestrationRunner().offload(params)
     assert status
 
 
@@ -228,6 +232,7 @@ def test_orchestration_locks(config, schema):
             params = {
                 "owner_table": f"{schema}.{LOCK_TABLE}",
                 "reset_backend_table": True,
+                "execute": True,
             }
             OrchestrationRunner().offload(params)
 

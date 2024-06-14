@@ -41,6 +41,8 @@ def backend_api_factory(
     if dry_run is None:
         if hasattr(connection_options, "execute"):
             dry_run = bool(not connection_options.execute)
+        elif do_not_connect:
+            dry_run = True
         else:
             dry_run = False
     if backend_type == DBTYPE_HIVE:

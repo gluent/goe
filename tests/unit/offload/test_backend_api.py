@@ -174,21 +174,20 @@ class TestBackendApi(TestCase):
                 pass
 
     def _test_create_database(self):
-        if self.connect_to_backend:
-            try:
-                self.assertIsInstance(self.api.create_database(self.db), list)
-                self.assertIsInstance(
-                    self.api.create_database(self.db, comment="Some comment"), list
-                )
-                self.assertIsInstance(
-                    self.api.create_database(
-                        self.db,
-                        properties={"location": "/some/place", "transient": True},
-                    ),
-                    list,
-                )
-            except NotImplementedError:
-                pass
+        try:
+            self.assertIsInstance(self.api.create_database(self.db), list)
+            self.assertIsInstance(
+                self.api.create_database(self.db, comment="Some comment"), list
+            )
+            self.assertIsInstance(
+                self.api.create_database(
+                    self.db,
+                    properties={"location": "/some/place", "transient": True},
+                ),
+                list,
+            )
+        except NotImplementedError:
+            pass
 
     def _test_create_table(self):
         column_list = [
@@ -1153,6 +1152,12 @@ class TestBackendApi(TestCase):
             self.assertTrue(self.api.table_exists(self.db, self.table) in (True, False))
             self.assertFalse(self.api.table_exists("not_a_db", "not_a_table"))
 
+    def _test_table_has_rows(self):
+        if self.connect_to_backend:
+            self.assertTrue(
+                self.api.table_has_rows(self.db, self.table) in (True, False)
+            )
+
     def _test_target_version(self):
         if self.connect_to_backend:
             # Some backends do not expose a version so we cannot assert on this fn
@@ -1365,6 +1370,7 @@ class TestBackendApi(TestCase):
         self._test_supported_backend_data_types()
         self._test_supported_partition_function_data_types()
         self._test_table_exists()
+        self._test_table_has_rows()
         self._test_target_version()
         self._test_to_backend_literal()
         self._test_transform_encrypt_data_type()

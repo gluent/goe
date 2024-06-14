@@ -375,6 +375,7 @@ OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'"""
         sort_column_names=None,
         without_db_name=False,
         sync=None,
+        with_terminator=False,
     ):
         """Create a table using HiveQL
         See abstract method for more description
@@ -453,6 +454,8 @@ OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'"""
             "location_clause": location_clause,
             "table_prop_clause": table_prop_clause,
         }
+        if with_terminator:
+            sql += ";"
 
         return self.execute_ddl(sql, sync=sync)
 

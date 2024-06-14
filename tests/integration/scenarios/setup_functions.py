@@ -12,16 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import TYPE_CHECKING
+
 from goe.offload import offload_transport
 from goe.offload.offload_functions import convert_backend_identifier_case
 from goe.offload.offload_messages import VERBOSE
 
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+    from goe.persistence.orchestration_repo_client import (
+        OrchestrationRepoClientInterface,
+    )
+    from tests.testlib.test_framework.backend_testing_api import (
+        BackendTestingApiInterface,
+    )
+    from tests.testlib.test_framework.frontend_testing_api import (
+        FrontendTestingApiInterface,
+    )
+    from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
+
 
 def drop_backend_test_table(
-    options, backend_api, test_messages, db, table_name, drop_any=False, view=False
+    config: "OrchestrationConfig",
+    backend_api: "BackendTestingApiInterface",
+    test_messages: "OffloadTestMessages",
+    db: str,
+    table_name: str,
+    drop_any=False,
+    view=False,
 ):
     """Convert the db and table name to the correct case before issuing the drop."""
-    db, table_name = convert_backend_identifier_case(options, db, table_name)
+    db, table_name = convert_backend_identifier_case(config, db, table_name)
     if not backend_api.database_exists(db):
         test_messages.log(
             "drop_backend_test_table(%s, %s) DB does not exist" % (db, table_name),
@@ -48,17 +69,30 @@ def drop_backend_test_table(
         backend_api.drop_table(db, table_name, sync=True)
 
 
-def drop_backend_test_load_table(options, backend_api, test_messages, db, table_name):
+def drop_backend_test_load_table(
+    config: "OrchestrationConfig",
+    backend_api: "BackendTestingApiInterface",
+    test_messages: "OffloadTestMessages",
+    db: str,
+    table_name: str,
+):
     if backend_api and not backend_api.load_db_transport_supported():
         return
-    drop_backend_test_table(options, backend_api, test_messages, db, table_name)
+    drop_backend_test_table(config, backend_api, test_messages, db, table_name)
+
+
+def drop_offload_metadata(
+    repo_client: "OrchestrationRepoClientInterface", schema: str, table_name: str
+):
+    """Simple wrapper over drop_offload_metadata() in case we need to catch exceptions in the future."""
+    repo_client.drop_offload_metadata(schema, table_name)
 
 
 def gen_drop_sales_based_fact_partition_ddls(
-    schema,
-    table_name,
+    schema: str,
+    table_name: str,
     hv_string_list,
-    frontend_api,
+    frontend_api: "FrontendTestingApiInterface",
     truncate_instead_of_drop=False,
     dropping_oldest=None,
 ) -> list:
@@ -80,7 +114,10 @@ def gen_drop_sales_based_fact_partition_ddls(
 
 
 def gen_truncate_sales_based_fact_partition_ddls(
-    schema, table_name, hv_string_list, frontend_api
+    schema: str,
+    table_name: str,
+    hv_string_list,
+    frontend_api: "FrontendTestingApiInterface",
 ):
     """hv_string_list in format YYYY-MM-DD"""
     return gen_drop_sales_based_fact_partition_ddls(
@@ -89,7 +126,10 @@ def gen_truncate_sales_based_fact_partition_ddls(
 
 
 def get_sales_based_fact_partition_list(
-    schema, table_name, hv_string_list, frontend_api
+    schema: str,
+    table_name: str,
+    hv_string_list,
+    frontend_api: "FrontendTestingApiInterface",
 ) -> list:
     """Return a list of partitions matching a date high value string, used for SALES based tests
     hv_string_list in format YYYY-MM-DD
@@ -105,14 +145,16 @@ def get_sales_based_fact_partition_list(
     return partitions
 
 
-def no_query_import_transport_method(options, no_table_centric_sqoop=False):
-    if not options:
+def no_query_import_transport_method(
+    config: "OrchestrationConfig", no_table_centric_sqoop=False
+):
+    if not config:
         return offload_transport.OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
-    if offload_transport.is_spark_thrift_available(options, None):
+    if offload_transport.is_spark_thrift_available(config, None):
         return offload_transport.OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT
-    elif offload_transport.is_spark_submit_available(options, None):
+    elif offload_transport.is_spark_submit_available(config, None):
         return offload_transport.OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT
-    elif offload_transport.is_sqoop_available(None, options):
+    elif offload_transport.is_sqoop_available(None, config):
         if no_table_centric_sqoop:
             return offload_transport.OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY
         else:

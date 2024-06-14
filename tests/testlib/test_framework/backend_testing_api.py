@@ -24,7 +24,6 @@ import logging
 import subprocess
 from subprocess import PIPE, STDOUT
 import sys
-import time
 
 from goe.offload.column_metadata import (
     CanonicalColumn,
@@ -97,10 +96,10 @@ TRANSIENT_QUERY_RERUN_PAUSE = 2
 ###########################################################################
 
 
-def subproc_cmd(cmd, opts, messages, cwd=None, env=None):
+def subproc_cmd(cmd, opts, messages, cwd=None, env=None, execute=True):
     messages.log("Shell cmd: " + " ".join(cmd), detail=VVERBOSE)
 
-    if opts.execute:
+    if execute:
         proc = subprocess.Popen(cmd, stdout=PIPE, stderr=STDOUT, cwd=cwd, env=env)
         output = ""
         for line in proc.stdout:

@@ -60,7 +60,6 @@ class SchemaSyncProcessor(object):
         self._repo_client = repo_client
         self._orchestration_options = OrchestrationConfig.from_dict(
             {
-                "execute": options.execute,
                 "verbose": options.verbose,
                 "vverbose": options.vverbose,
             }

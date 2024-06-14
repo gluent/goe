@@ -100,7 +100,6 @@ class SchemaSyncAnalyzer(object):
         self._messages = messages
         self._orchestration_options = OrchestrationConfig.from_dict(
             {
-                "execute": options.execute,
                 "verbose": options.verbose,
                 "vverbose": options.vverbose,
             }

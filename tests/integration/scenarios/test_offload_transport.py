@@ -140,6 +140,7 @@ def simple_offload_test(
         "offload_transport_method": transport_method,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
 
     if transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY:
@@ -170,7 +171,7 @@ def load_table_compression_tests(
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({test_id})"
     )
-    dfs = get_dfs_from_options(config, messages=messages)
+    dfs = get_dfs_from_options(config, messages=messages, dry_run=False)
     backend_name = convert_backend_identifier_case(config, table_name)
 
     # Setup
@@ -198,6 +199,7 @@ def load_table_compression_tests(
         "compress_load_table": False,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -216,6 +218,7 @@ def load_table_compression_tests(
         "preserve_load_table": True,
         "compress_load_table": True,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -265,6 +268,7 @@ def offload_transport_polling_validation_tests(
         "offload_transport_validation_polling_interval": 1,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     log_test_marker(messages, f"{test_id}:1")
     run_offload(options, config, messages)
@@ -278,6 +282,7 @@ def offload_transport_polling_validation_tests(
         "offload_transport_method": transport_method,
         "offload_transport_validation_polling_interval": OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
         "reset_backend_table": True,
+        "execute": True,
     }
     log_test_marker(messages, f"{test_id}:2")
     run_offload(options, config, messages)

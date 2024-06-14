@@ -94,7 +94,7 @@ def offload_data_to_target(
             chunk_count=chunk_count,
             sync=sync,
             offload_predicate=offload_operation.inflight_offload_predicate,
-            dry_run=bool(not offload_options.execute),
+            dry_run=bool(not offload_operation.execute),
         )
 
     if discarded_all_partitions:
@@ -148,7 +148,7 @@ def offload_data_to_target(
                     offload_options,
                     messages,
                 ),
-                execute=offload_options.execute,
+                execute=offload_operation.execute,
                 optional=True,
             )
     else:

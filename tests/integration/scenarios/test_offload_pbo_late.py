@@ -176,6 +176,7 @@ def offload_pbo_late_100_x_tests(
         "ipa_predicate_type": ipa_predicate_type,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -219,6 +220,7 @@ def offload_pbo_late_100_x_tests(
         ),
         "ipa_predicate_type": ipa_predicate_type,
         "offload_type": OFFLOAD_TYPE_INCREMENTAL,
+        "execute": True,
     }
     run_offload(
         options,
@@ -235,6 +237,7 @@ def offload_pbo_late_100_x_tests(
             "column(time_id) = datetime(%s)" % OLD_HV_1
         ),
         "ipa_predicate_type": ipa_predicate_type,
+        "execute": True,
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -349,6 +352,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "offload_partition_granularity": offload_partition_granularity,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -375,6 +379,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(hv_pred),
         "ipa_predicate_type": ipa_predicate_type,
+        "execute": True,
     }
     run_offload(options, config, messages, expected_status=False)
 
@@ -399,6 +404,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "offload_predicate": GenericPredicate(hv_pred),
         "reset_hybrid_view": True,
         "ipa_predicate_type": ipa_predicate_type,
+        "execute": True,
     }
     run_offload(
         options,
@@ -413,6 +419,7 @@ def offload_pbo_late_arriving_std_range_tests(
             "owner_table": schema + "." + table_name,
             "offload_predicate": GenericPredicate(hv_pred),
             "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+            "execute": True,
         }
         run_offload(
             options,
@@ -427,6 +434,7 @@ def offload_pbo_late_arriving_std_range_tests(
             "owner_table": schema + "." + table_name,
             "offload_predicate": GenericPredicate(hv_pred),
             "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_LIST,
+            "execute": True,
         }
         run_offload(
             options,
@@ -440,6 +448,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(hv_pred),
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+        "execute": True,
     }
     run_offload(
         options,
@@ -454,6 +463,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(hv_pred),
         "ipa_predicate_type": ipa_predicate_type,
+        "execute": True,
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -528,7 +538,8 @@ def test_offload_pbo_late_range_90_10(config, schema, data_db):
     )
 
     # TODO do we need to create a test for below 100_10 tests?
-    # offload_pbo_late_100_x_tests(config, backend_api, frontend_api, messages, repo_client, schema, data_db, RANGE_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
+    # offload_pbo_late_100_x_tests(config, backend_api, frontend_api, messages, repo_client, schema,
+    # data_db, RANGE_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
 
     # Connections are being left open, explicitly close them.
     frontend_api.close()

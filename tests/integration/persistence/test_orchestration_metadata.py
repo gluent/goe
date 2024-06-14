@@ -15,8 +15,6 @@
 """ TestOrchestrationMetadata: Unit test library to test orchestration metadata API for configured frontend.
 """
 
-import copy
-
 from unittest import TestCase, main
 
 from goe.orchestration import orchestration_constants
@@ -177,6 +175,8 @@ class TestOrchestrationMetadata(TestCase):
         test_metadata = source_metadata
         test_metadata["OFFLOADED_OWNER"] = new_owner
         test_metadata["OFFLOADED_TABLE"] = new_name
+        # There is a unique key on backend table too:
+        test_metadata["HADOOP_TABLE"] = new_name
         for k, v in test_metadata.items():
             if v is None:
                 # Fill in the blanks with dummy data.

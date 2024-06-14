@@ -613,6 +613,7 @@ class TeradataFrontendApi(FrontendApiInterface):
         arg_list=None,
         log_level=VERBOSE,
         not_when_dry_running=False,
+        commit=False,
     ):
         raise NotImplementedError("execute_function() is not implemented for Teradata")
 

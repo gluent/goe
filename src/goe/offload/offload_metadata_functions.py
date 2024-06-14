@@ -214,7 +214,7 @@ def gen_and_save_offload_metadata(
     messages.offload_step(
         command_steps.STEP_SAVE_METADATA,
         lambda: goe_metadata.save(),
-        execute=config.execute,
+        execute=offload_operation.execute,
     )
     return goe_metadata
 

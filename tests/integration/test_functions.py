@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 def build_current_options():
-    return OrchestrationConfig.from_dict({"verbose": False, "execute": True})
+    return OrchestrationConfig.from_dict({"verbose": False})
 
 
 @lru_cache(maxsize=None)

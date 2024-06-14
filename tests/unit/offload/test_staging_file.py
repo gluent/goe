@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from unittest import TestCase, main
+from unittest import TestCase
 
 from goe.offload.column_metadata import (
     CanonicalColumn,

@@ -209,8 +209,9 @@ def offload_range_ipa_standard_tests(
             "offload_partition_upper_value": upper_value,
             "synthetic_partition_digits": synthetic_partition_digits,
             "reset_backend_table": True,
+            "execute": False,
         }
-        run_offload(options, config, messages, config_overrides={"execute": False})
+        run_offload(options, config, messages)
 
     # RANGE Offload 1st Partition.
     options = {
@@ -222,6 +223,7 @@ def offload_range_ipa_standard_tests(
         "offload_partition_upper_value": upper_value,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -249,6 +251,7 @@ def offload_range_ipa_standard_tests(
         "offload_partition_functions": different_udf,
         "offload_partition_granularity": different_granularity,
         "synthetic_partition_digits": different_partition_digits,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -271,8 +274,9 @@ def offload_range_ipa_standard_tests(
     options = {
         "owner_table": schema + "." + table_name,
         less_than_option: hv_3,
+        "execute": False,
     }
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     # Assert HV is still from prior offload.
     assert sales_based_fact_assertion(
@@ -296,6 +300,7 @@ def offload_range_ipa_standard_tests(
         options = {
             "owner_table": schema + "." + table_name,
             "partition_names_csv": "P4,P5",
+            "execute": True,
         }
         run_offload(
             options,
@@ -310,6 +315,7 @@ def offload_range_ipa_standard_tests(
         "owner_table": schema + "." + table_name,
         offload3_opt_name: offload3_opt_value,
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -331,6 +337,7 @@ def offload_range_ipa_standard_tests(
     options = {
         "owner_table": schema + "." + table_name,
         less_than_option: hv_3,
+        "execute": True,
     }
     # On Teradata we can't test by partition name in previous test so this test will not be a no-op.
     run_offload(
@@ -375,6 +382,7 @@ def offload_range_ipa_standard_tests(
     options = {
         "owner_table": schema + "." + table_name,
         less_than_option: hv_4,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -416,6 +424,7 @@ def offload_range_ipa_standard_tests(
     options = {
         "owner_table": schema + "." + table_name,
         less_than_option: hv_4,
+        "execute": True,
     }
     run_offload(options, config, messages, expected_status=False)
 
@@ -715,6 +724,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
         "offload_partition_granularity": "1",
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -736,6 +746,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
     options = {
         "owner_table": schema + "." + RPA_ALPHA_FACT_TABLE,
         "less_than_value": "u",
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -800,6 +811,7 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -819,6 +831,7 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
         "owner_table": schema + "." + NOSEG_FACT,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_5,
         "max_offload_chunk_count": 1,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(

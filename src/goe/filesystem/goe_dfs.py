@@ -162,13 +162,13 @@ def get_scheme_from_location_uri(dfs_path):
 
 
 def gen_fs_uri(
-    path_prefix,
+    path_prefix: str,
     db_path_suffix=None,
     scheme=None,
     container=None,
     backend_db=None,
     table_name=None,
-):
+) -> str:
     """Generates a file URI
     Note this is not getting an existing URI for an existing db or table, it generates a new one based on inputs
     The return value can be at any of 3 levels:
@@ -210,7 +210,7 @@ def gen_fs_uri(
 
 def gen_load_uri_from_options(
     offload_options, hadoop_db=None, table_name=None, scheme_override=None
-):
+) -> str:
     """Returns a Hadoop file URI based on options config."""
     uri = gen_fs_uri(
         offload_options.hdfs_load,
@@ -250,7 +250,6 @@ class GOEDfs(object, metaclass=ABCMeta):
     @abstractmethod
     def delete(self, dfs_path, recursive=False):
         """Delete a file or directory and contents."""
-        pass
 
     @abstractmethod
     def chmod(self, dfs_path, mode):
@@ -285,19 +284,16 @@ class GOEDfs(object, metaclass=ABCMeta):
         """Generate a URI for the DFS in use, mostly a wrapper for gen_fs_uri() but some DFSs have own specifics.
         Some implementations may format the container, container_override provides a way around that.
         """
-        pass
 
     @abstractmethod
     def mkdir(self, dfs_path):
         """Create an empty directory, some file systems (such as object stores) will not support this and
         will raise NotImplementedError()
         """
-        pass
 
     @abstractmethod
     def read(self, dfs_path, as_str=False):
         """Return the contents of a remote file as bytes unless as_str=True"""
-        pass
 
     @abstractmethod
     def rename(self, hdfs_src_path, hdfs_dst_path):
@@ -318,17 +314,14 @@ class GOEDfs(object, metaclass=ABCMeta):
          'permission': Octal permissions e.g. '755' or '640'
         }
         """
-        pass
 
     @abstractmethod
-    def write(self, dfs_path, data, overwrite=False):
+    def write(self, dfs_path: str, data, overwrite=False):
         """Write some data to a remote file"""
-        pass
 
     @abstractmethod
     def list_dir(self, dfs_path):
         """Return a list of file/directory names within dfs_path"""
-        pass
 
     ###########################################################################
     # PRIVATE METHODS

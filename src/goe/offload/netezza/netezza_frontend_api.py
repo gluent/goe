@@ -358,6 +358,7 @@ class NetezzaFrontendApi(FrontendApiInterface):
         arg_list=None,
         log_level=VERBOSE,
         not_when_dry_running=False,
+        commit=False,
     ):
         raise NotImplementedError("Netezza execute_function not implemented.")
 

@@ -739,6 +739,7 @@ def test_numeric_controls(config, schema, data_db):
         "reset_backend_table": True,
         "decimal_padding_digits": 2,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     nums_assertion(
@@ -760,6 +761,7 @@ def test_numeric_controls(config, schema, data_db):
         "decimal_columns_type_list": ["10,0", "13,9", "15,9", "36,3", "37,3", "38,3"],
         "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
         "decimal_padding_digits": 2,
+        "execute": True,
     }
     run_offload(options, config, messages)
     nums_assertion(
@@ -791,6 +793,7 @@ def test_numeric_controls(config, schema, data_db):
         "decimal_columns_type_list": ["36,3", "37,3", "38,3"],
         "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
         "decimal_padding_digits": 2,
+        "execute": True,
     }
     run_offload(options, config, messages)
     nums_assertion(
@@ -813,6 +816,7 @@ def test_numeric_controls(config, schema, data_db):
             "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
             "reset_backend_table": True,
             "verify_row_count": False,
+            "execute": True,
         }
         log_test_marker(messages, f"{id}:samp1")
         run_offload(options, config, messages)
@@ -827,6 +831,7 @@ def test_numeric_controls(config, schema, data_db):
             "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
             "reset_backend_table": True,
             "verify_row_count": False,
+            "execute": True,
         }
         log_test_marker(messages, f"{id}:samp2")
         run_offload(options, config, messages)
@@ -848,6 +853,7 @@ def test_numeric_controls(config, schema, data_db):
             ],
             "decimal_columns_type_list": ["10,2"],
             "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+            "execute": True,
         }
         run_offload(
             options,
@@ -862,6 +868,7 @@ def test_numeric_controls(config, schema, data_db):
         "decimal_columns_csv_list": [",".join([STORY_TEST_OFFLOAD_NUMS_DEC_36_3])],
         "decimal_columns_type_list": ["100,10"],
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -878,6 +885,7 @@ def test_numeric_controls(config, schema, data_db):
         "decimal_columns_csv_list": [",".join([STORY_TEST_OFFLOAD_NUMS_DEC_36_3])],
         "decimal_columns_type_list": ["10,100"],
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -915,6 +923,7 @@ def test_date_controls(config, schema, data_db):
         "data_sample_pct": 0,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     date_assertion(config, frontend_api, backend_api, messages, data_db, DATE_DIM)
@@ -926,6 +935,7 @@ def test_date_controls(config, schema, data_db):
             "data_sample_pct": 0,
             "date_columns_csv": "dt,ts0,ts6",
             "reset_backend_table": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
         date_assertion(
@@ -944,6 +954,7 @@ def test_date_controls(config, schema, data_db):
         "data_sample_pct": 0,
         "timestamp_tz_columns_csv": "dt,ts0,ts6,ts0tz,ts6tz",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     date_assertion(
@@ -987,6 +998,7 @@ def test_date_sampling(config, schema, data_db):
         "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     samp_date_assertion(config, backend_api, frontend_api, messages, data_db, DATE_SDIM)
@@ -1008,6 +1020,7 @@ def test_date_sampling(config, schema, data_db):
         "allow_nanosecond_timestamp_columns": True,
         "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     samp_date_assertion(
@@ -1039,6 +1052,7 @@ def test_date_sampling(config, schema, data_db):
         "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
         "date_columns_csv": "good_date,good_ts",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     samp_date_assertion(
@@ -1084,6 +1098,7 @@ def test_precision_scale_overflow(config, schema, data_db):
             "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(
             options,
@@ -1110,6 +1125,7 @@ def test_precision_scale_overflow(config, schema, data_db):
             "owner_table": schema + "." + NUM_TOO_BIG_DIM,
             "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
             "reset_backend_table": True,
+            "execute": True,
         }
         run_offload(
             options,
@@ -1124,6 +1140,7 @@ def test_precision_scale_overflow(config, schema, data_db):
             "owner_table": schema + "." + NUM_TOO_BIG_DIM,
             "data_sample_pct": 0,
             "reset_backend_table": True,
+            "execute": True,
         }
         run_offload(
             options,
@@ -1154,6 +1171,7 @@ def test_precision_scale_overflow(config, schema, data_db):
         "reset_backend_table": True,
         "decimal_padding_digits": 0,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -1170,6 +1188,7 @@ def test_precision_scale_overflow(config, schema, data_db):
         "allow_decimal_scale_rounding": True,
         "reset_backend_table": True,
         "decimal_padding_digits": 0,
+        "execute": True,
     }
     run_offload(
         options,
@@ -1219,6 +1238,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "unicode_string_columns_csv": "*_desc",
         "decimal_padding_digits": 0,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     wildcard_assertion(backend_api, data_db, wildcard_dim_be)
@@ -1229,6 +1249,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "reset_backend_table": True,
         "integer_1_columns_csv": "*_id",
         "integer_2_columns_csv": "*id",
+        "execute": True,
     }
     run_offload(
         options,
@@ -1259,6 +1280,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
         "variable_string_columns_csv": "prod_id",
+        "execute": True,
     }
     run_offload(
         options,
@@ -1272,6 +1294,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
         "date_columns_csv": "prod_id",
+        "execute": True,
     }
     run_offload(
         options,
@@ -1285,6 +1308,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
         "integer_8_columns_csv": "TXN_date",
+        "execute": True,
     }
     run_offload(
         options,
@@ -1298,6 +1322,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
         "date_columns_csv": "TXN_DESC",
+        "execute": True,
     }
     run_offload(
         options,
@@ -1311,6 +1336,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
         "timestamp_tz_columns_csv": "TXN_DESC",
+        "execute": True,
     }
     run_offload(
         options,
@@ -1324,6 +1350,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
         "integer_4_columns_csv": "TXN_DESC",
+        "execute": True,
     }
     run_offload(
         options,
@@ -1337,6 +1364,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
         "unicode_string_columns_csv": "PROD_ID",
+        "execute": True,
     }
     run_offload(
         options,
@@ -1351,6 +1379,7 @@ def test_column_controls_column_name_checks(config, schema, data_db, load_db):
         "reset_backend_table": True,
         "unicode_string_columns_csv": "TXN_DESC",
         "skip": ["verify_exported_data"],
+        "execute": True,
     }
     run_offload(
         options,
@@ -1393,6 +1422,7 @@ def test_column_controls_not_null(config, schema, data_db):
         "owner_table": f"{schema}.{NOT_NULL_DIM}",
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -1410,6 +1440,7 @@ def test_column_controls_not_null(config, schema, data_db):
     options = {
         "owner_table": f"{schema}.{NOT_NULL_DIM}",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -1428,6 +1459,7 @@ def test_column_controls_not_null(config, schema, data_db):
         "owner_table": f"{schema}.{NOT_NULL_DIM}",
         "not_null_columns_csv": "DT*",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -1448,12 +1480,12 @@ def test_column_controls_not_null(config, schema, data_db):
         "owner_table": f"{schema}.{NOT_NULL_DIM}",
         "not_null_columns_csv": "not-a-column",
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=UNKNOWN_NOT_NULL_COLUMN_EXCEPTION_TEXT,
     )
 
@@ -1462,6 +1494,7 @@ def test_column_controls_not_null(config, schema, data_db):
         "owner_table": f"{schema}.{NOT_NULL_DIM}",
         "not_null_columns_csv": "With_Nulls",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options,

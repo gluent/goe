@@ -17,8 +17,8 @@
 from goe.offload.column_metadata import (
     get_partition_source_column_names,
 )
+from goe.exceptions import OffloadException
 from goe.offload.offload import (
-    OffloadException,
     get_current_offload_hv,
     get_prior_offloaded_hv,
 )
@@ -113,7 +113,7 @@ def copy_rdbms_stats_to_backend(
             % offload_target_table.backend_db_name()
         )
 
-    dry_run = bool(not offload_options.execute)
+    dry_run = bool(not offload_operation.execute)
     rdbms_tab_stats = offload_source_table.table_stats
     rdbms_col_stats = rdbms_tab_stats["column_stats"]
     tab_stats = {

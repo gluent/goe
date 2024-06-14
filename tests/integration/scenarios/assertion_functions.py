@@ -398,7 +398,12 @@ def load_table_is_compressed(db_name, table_name, config, dfs_client, messages):
         "load_table_is_compressed(%s, %s)" % (db_name, table_name), detail=VERBOSE
     )
     backend_table = backend_table_factory(
-        db_name, table_name, config.target, config, messages
+        db_name,
+        table_name,
+        config.target,
+        config,
+        messages,
+        dry_run=False,
     )
     path = backend_table.get_staging_table_location()
     files = [_ for _ in dfs_client.list_dir(path) if _ and _[0] != "."]

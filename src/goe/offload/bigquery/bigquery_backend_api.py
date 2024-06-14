@@ -1796,19 +1796,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         row = self.execute_query_fetch_one("SELECT SESSION_USER()", log_level=None)
         return row[0] if row else None
 
-    def get_view_ddl(
-        self, db_name, view_name, as_list=False, terminate_sql=False, for_replace=False
-    ):
-        # BigQuery TABLES view also contains DDL for views.
-        ddl_str = self._get_table_ddl(db_name, view_name, terminate_sql=terminate_sql)
-        if for_replace:
-            ddl_str = re.sub(r"^CREATE VIEW", "CREATE OR REPLACE VIEW", ddl_str, re.I)
-        self._debug("View DDL: %s" % ddl_str)
-        if as_list:
-            return ddl_str.split("\n")
-        else:
-            return ddl_str
-
     def insert_literal_values(
         self,
         db_name,
@@ -2331,7 +2318,7 @@ FROM   %(from_db_table)s%(where)s""" % {
     def view_exists(self, db_name, view_name):
         return self._object_exists(db_name, view_name, table_type="VIEW")
 
-    def to_canonical_column(self, column):
+    def to_canonical_column(self, column: BigQueryColumn) -> CanonicalColumn:
         """Translate a BigQuery column to an internal GOE column"""
 
         def new_column(
@@ -2416,7 +2403,9 @@ FROM   %(from_db_table)s%(where)s""" % {
                 "Unsupported backend data type: %s" % column.data_type
             )
 
-    def from_canonical_column(self, column, decimal_padding_digits=0):
+    def from_canonical_column(
+        self, column: CanonicalColumn, decimal_padding_digits=0
+    ) -> BigQueryColumn:
         """Translate an internal GOE column to a BigQuery column."""
 
         def new_column(
@@ -2507,19 +2496,43 @@ FROM   %(from_db_table)s%(where)s""" % {
                     "Integral magnitude/scale is valid for NUMERIC: %s/%s"
                     % (integral_magnitude, column.data_scale)
                 )
+                new_data_type = BIGQUERY_TYPE_NUMERIC
+                new_precision = column.data_precision
+                new_scale = column.data_scale
+                if not column.safe_mapping:
+                    # We should round an unsafe mapping up to the max for NUMERIC.
+                    # We can do this by removing the precision and scale settings.
+                    self._log(
+                        f"Switching unsafe NUMERIC mapping to BIGNUMERIC: {column.name}",
+                        detail=VVERBOSE,
+                    )
+                    new_data_type = BIGQUERY_TYPE_BIGNUMERIC
+                    new_precision = None
+                    new_scale = None
                 return new_column(
                     column,
-                    BIGQUERY_TYPE_NUMERIC,
-                    data_precision=column.data_precision,
-                    data_scale=column.data_scale,
+                    new_data_type,
+                    data_precision=new_precision,
+                    data_scale=new_scale,
                     safe_mapping=True,
                 )
             else:
+                new_precision = column.data_precision
+                new_scale = column.data_scale
+                if not column.safe_mapping:
+                    # We should round an unsafe mapping up to the max for BIGNUMERIC.
+                    # We can do this by removing the precision and scale settings.
+                    self._log(
+                        f"Removing precision/scale decorators for unsafe BIGNUMERIC mapping: {column.name}",
+                        detail=VVERBOSE,
+                    )
+                    new_precision = None
+                    new_scale = None
                 return new_column(
                     column,
                     BIGQUERY_TYPE_BIGNUMERIC,
-                    data_precision=column.data_precision,
-                    data_scale=column.data_scale,
+                    data_precision=new_precision,
+                    data_scale=new_scale,
                     safe_mapping=False,
                 )
         elif column.data_type in (GOE_TYPE_FLOAT, GOE_TYPE_DOUBLE):

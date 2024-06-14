@@ -819,13 +819,6 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
     def backend_test_type_canonical_timestamp_tz(self):
         return HADOOP_TYPE_TIMESTAMP
 
-    def drop_database(self, db_name, cascade=False):
-        assert db_name
-        drop_sql = "DROP DATABASE IF EXISTS %s" % (self.enclose_identifier(db_name))
-        if cascade:
-            drop_sql += " CASCADE"
-        return self.execute_ddl(drop_sql)
-
     def expected_backend_column(
         self, canonical_column, override_used=None, decimal_padding_digits=None
     ):
@@ -1076,30 +1069,6 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
             else:
                 goe_type_mapping_cols.append({"column": backend_column})
         return goe_type_mapping_cols, goe_type_mapping_names
-
-    def host_compare_sql_projection(self, column_list: list) -> str:
-        """Return a SQL projection (CSV of column expressions) used to validate offloaded data.
-        Because of systems variations all date based values must be normalised to:
-            'YYYY-MM-DD HH24:MI:SS.FFF TZH:TZM'.
-        """
-        assert isinstance(column_list, list)
-        projection = []
-        for column in column_list:
-            if column.is_date_based():
-                projection.append(
-                    "concat(from_unixtime(unix_timestamp(({}, 'yyyy-MM-dd HH:mm:ss.sss'),' +00:00'".format(
-                        self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            elif column.is_number_based():
-                projection.append(
-                    "CAST({} AS STRING)".format(
-                        self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            else:
-                projection.append(self._db_api.enclose_identifier(column.name))
-        return ",".join(projection)
 
     def load_table_fs_scheme_is_correct(self, load_db, table_name):
         """Hadoop load tables should always be in HDFS"""

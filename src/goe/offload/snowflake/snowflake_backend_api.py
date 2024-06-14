@@ -1565,27 +1565,6 @@ class BackendSnowflakeApi(BackendApiInterface):
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return row[0] if row else None
 
-    def get_view_ddl(
-        self, db_name, view_name, as_list=False, terminate_sql=False, for_replace=False
-    ):
-        try:
-            return self._get_snowflake_ddl(
-                db_name,
-                view_name,
-                "VIEW",
-                as_list=as_list,
-                terminate_sql=terminate_sql,
-                for_replace=for_replace,
-            )
-        except snowflake.connector.ProgrammingError as exc:
-            if "not exist" in str(exc):
-                raise BackendApiException(
-                    "View does not exist for DDL retrieval: %s.%s"
-                    % (db_name, view_name)
-                )
-            else:
-                raise
-
     def insert_literal_values(
         self,
         db_name,

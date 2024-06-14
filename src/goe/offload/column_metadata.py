@@ -191,7 +191,7 @@ def get_partition_source_column_names(column_list, conv_fn=None):
         return [partition_info(_).source_column_name for _ in columns or []]
 
 
-def is_safe_mapping(prior_safe_mapping, new_safe_mapping):
+def is_safe_mapping(prior_safe_mapping, new_safe_mapping) -> bool:
     """Ensure we don't overwrite an unsafe mapping with a safe one."""
     if new_safe_mapping is None:
         # No action

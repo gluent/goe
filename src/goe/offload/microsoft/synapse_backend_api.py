@@ -1987,26 +1987,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return row[0] if row else None
 
-    def get_view_ddl(
-        self, db_name, view_name, as_list=False, terminate_sql=False, for_replace=False
-    ):
-        """for_replace is not supported because OR ALTER clause invalid on Synapse Analytics"""
-        sql = "SELECT definition FROM sys.sql_modules WHERE object_id = OBJECT_ID(?)"
-        row = self.execute_query_fetch_one(
-            sql, query_params=[f"{db_name}.{view_name}"], log_level=VVERBOSE
-        )
-        if not row:
-            raise BackendApiException(
-                "View does not exist for DDL retrieval: %s.%s" % (db_name, view_name)
-            )
-        ddl = row[0]
-        if not terminate_sql:
-            ddl = ddl.strip(";")
-        if as_list:
-            return ddl.split("\n")
-        else:
-            return ddl
-
     def insert_literal_values(
         self,
         db_name,

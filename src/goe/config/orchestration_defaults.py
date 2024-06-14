@@ -283,7 +283,7 @@ def log_path_default():
 
 
 def max_offload_chunk_size_default():
-    return os.environ.get("MAX_OFFLOAD_CHUNK_SIZE") or "2G"
+    return os.environ.get("MAX_OFFLOAD_CHUNK_SIZE") or "16G"
 
 
 def max_offload_chunk_count_default():

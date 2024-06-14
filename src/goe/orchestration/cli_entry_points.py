@@ -16,47 +16,65 @@
 Functions used as entry points for Orchestration CLI commands.
 """
 
+import sys
+
 from goe.goe import (
+    get_log_fh,
+    get_log_fh_name,
     init,
     init_log,
-    get_log_fh,
     log,
+    log_command_line,
+    log_close,
+    log_timestamp,
     normalise_options,
+    version,
     OFFLOAD_OP_NAME,
     verbose,
 )
-from goe.orchestration.orchestration_runner import OrchestrationRunner
 from goe.config.orchestration_config import OrchestrationConfig
+from goe.orchestration.orchestration_runner import OrchestrationRunner
+from goe.util.goe_log import log_exception
 
 
 def offload_by_cli(options, messages_override=None):
     """
-    The offload CLI script is an enry point for multiple actions, this function directs the work based on options.
-    Actions we may call:
-        Offload
-        Incremental Update Setup/Clean Up
-        Incremental Update Extraction
-        Incremental Update Compaction
-    messages_override: Only present so tests can access messages object.
+    CLI entrypoint for Offload.
+
+    messages_override: Only used during testing to access messages object.
     """
-    if not get_log_fh():
-        init(options)
-        init_log("offload_%s" % options.owner_table)
+    init(options)
+    init_log("offload_%s" % options.owner_table)
 
-    options.operation_name = OFFLOAD_OP_NAME
-    normalise_options(options)
+    try:
+        log("")
+        log("Offload v%s" % version(), ansi_code="underline")
+        log("Log file: %s" % get_log_fh_name())
+        log("")
+        log_command_line()
 
-    config_overrides = {
-        "execute": options.execute,
-        "verbose": options.verbose,
-        "vverbose": options.vverbose,
-        "offload_transport_dsn": options.offload_transport_dsn,
-        "error_on_token": options.error_on_token,
-    }
-    config = OrchestrationConfig.from_dict(config_overrides)
+        options.operation_name = OFFLOAD_OP_NAME
+        normalise_options(options)
 
-    config.log_connectivity_messages(lambda m: log(m, detail=verbose))
+        config_overrides = {
+            "execute": options.execute,
+            "verbose": options.verbose,
+            "vverbose": options.vverbose,
+            "offload_transport_dsn": options.offload_transport_dsn,
+            "error_on_token": options.error_on_token,
+        }
+        config = OrchestrationConfig.from_dict(config_overrides)
 
-    OrchestrationRunner(config_overrides=config_overrides).offload(
-        options, reuse_log=True, messages_override=messages_override
-    )
+        config.log_connectivity_messages(lambda m: log(m, detail=verbose))
+
+        OrchestrationRunner(config_overrides=config_overrides).offload(
+            options, reuse_log=True, messages_override=messages_override
+        )
+
+        log_close()
+    except Exception as exc:
+        log("Exception caught at top-level", ansi_code="red")
+        log_timestamp()
+        log_exception(exc, log_fh=get_log_fh(), options=options)
+        log_close()
+        sys.exit(1)

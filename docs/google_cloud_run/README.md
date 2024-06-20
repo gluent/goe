@@ -39,6 +39,8 @@ For example:
 scp goe-node:/opt/goe/offload/conf/offload.env ./
 ```
 
+It is recommended to set OFFLOAD_LOGDIR to a Google Cloud Storage location in your `offload.env` file.
+
 ### Submit the Build
 
 ```

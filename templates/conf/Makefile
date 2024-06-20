@@ -47,7 +47,7 @@ $(TARGET_CONF_DIR)/oracle-snowflake-offload.env.template: $(TARGET_CONF_DIR) off
 	tail -n +$(LICENCE_LENGTH) offload.env.template.oracle >> $(TARGET_CONF_DIR)/oracle-snowflake-offload.env.template
 	tail -n +$(LICENCE_LENGTH) offload.env.template.snowflake >> $(TARGET_CONF_DIR)/oracle-snowflake-offload.env.template
 	tail -n +$(LICENCE_LENGTH) offload.env.template.listener >> $(TARGET_CONF_DIR)/oracle-snowflake-offload.env.template
-	sed -i 's/^export OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=/export OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=spark-submit/' \
+	sed -i 's/^OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=/OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=spark-submit/' \
 			$(TARGET_CONF_DIR)/oracle-snowflake-offload.env.template
 
 $(TARGET_CONF_DIR)/oracle-synapse-offload.env.template: $(TARGET_CONF_DIR) offload.env.template.common offload.env.template.oracle offload.env.template.synapse offload.env.template.listener
@@ -73,7 +73,7 @@ $(TARGET_CONF_DIR)/teradata-snowflake-offload.env.template: $(TARGET_CONF_DIR) o
 	tail -n +$(LICENCE_LENGTH) offload.env.template.teradata >> $(TARGET_CONF_DIR)/teradata-snowflake-offload.env.template
 	tail -n +$(LICENCE_LENGTH) offload.env.template.snowflake >> $(TARGET_CONF_DIR)/teradata-snowflake-offload.env.template
 	tail -n +$(LICENCE_LENGTH) offload.env.template.listener >> $(TARGET_CONF_DIR)/teradata-snowflake-offload.env.template
-	sed -i 's/^export OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=/export OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=spark-submit/' \
+	sed -i 's/^OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=/OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=spark-submit/' \
 			$(TARGET_CONF_DIR)/teradata-snowflake-offload.env.template
 
 $(TARGET_CONF_DIR)/teradata-synapse-offload.env.template: $(TARGET_CONF_DIR) offload.env.template.common offload.env.template.teradata offload.env.template.synapse
@@ -81,7 +81,7 @@ $(TARGET_CONF_DIR)/teradata-synapse-offload.env.template: $(TARGET_CONF_DIR) off
 	tail -n +$(LICENCE_LENGTH) offload.env.template.teradata >> $(TARGET_CONF_DIR)/teradata-synapse-offload.env.template
 	tail -n +$(LICENCE_LENGTH) offload.env.template.synapse >> $(TARGET_CONF_DIR)/teradata-synapse-offload.env.template
 	tail -n +$(LICENCE_LENGTH) offload.env.template.listener >> $(TARGET_CONF_DIR)/teradata-synapse-offload.env.template
-	sed -i 's/^export OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=/export OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=spark-submit/' \
+	sed -i 's/^OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=/OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE=spark-submit/' \
 			$(TARGET_CONF_DIR)/teradata-synapse-offload.env.template
 
 $(TARGET_CONF_DIR):

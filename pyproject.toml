@@ -59,6 +59,9 @@ dependencies = [
     "google-cloud-bigquery",
     "google-cloud-kms",
 
+    # Env loading
+    "python-dotenv",
+
     # GOE Listener packages
     "fastapi==0.77.0",
     "uvicorn==0.17.6",

@@ -236,6 +236,9 @@ def test_ida_predicate_render_to_sql_dim(config, schema, data_db):
             )
             assert backend_sql == expected_sql
 
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
 
 def test_ida_predicate_render_to_sql_fact(config, schema):
     id = "test_ida_predicate_render_to_sql"
@@ -273,3 +276,6 @@ def test_ida_predicate_render_to_sql_fact(config, schema):
                 for p in binds:
                     assert p.param_name in expected_binds
                     assert p.param_value == expected_binds[p.param_name]
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()

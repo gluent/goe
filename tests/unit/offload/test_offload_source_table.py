@@ -38,6 +38,7 @@ from goe.offload.oracle.oracle_column import (
     ORACLE_TYPE_TIMESTAMP,
     ORACLE_TYPE_VARCHAR2,
 )
+from goe.offload.oracle import oracle_offload_source_table
 from tests.unit.test_functions import (
     build_mock_options,
     optional_netezza_dependency_exception,
@@ -252,3 +253,18 @@ class TestTeradataOffloadSourceTable(TestOffloadSourceTable):
 
     def test_all_non_connecting_teradata_tests(self):
         self._run_all_tests()
+
+
+def test_oracle_version_is_smart_scan_unsafe():
+    assert isinstance(
+        oracle_offload_source_table.oracle_version_is_smart_scan_unsafe(
+            oracle_offload_source_table.ORACLE_VERSION_WITH_CELL_OFFLOAD_PROCESSING
+        ),
+        bool,
+    )
+    assert oracle_offload_source_table.oracle_version_is_smart_scan_unsafe(
+        oracle_offload_source_table.ORACLE_VERSION_WITH_CELL_OFFLOAD_PROCESSING
+    )
+    assert not oracle_offload_source_table.oracle_version_is_smart_scan_unsafe(
+        oracle_offload_source_table.ORACLE_VERSION_SAFE_FOR_CELL_OFFLOAD_PROCESSING
+    )

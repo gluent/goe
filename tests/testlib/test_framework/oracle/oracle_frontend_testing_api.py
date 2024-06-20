@@ -1482,48 +1482,6 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                 goe_type_mapping_cols.append(frontend_column.data_type)
         return goe_type_mapping_cols, goe_type_mapping_names
 
-    def host_compare_sql_projection(self, column_list: list) -> str:
-        """Return a SQL projection (CSV of column expressions) used to validate offloaded data.
-        Because of systems variations all date based values must be normalised to UTC in format:
-            'YYYY-MM-DD HH24:MI:SS.FFF +00:00'
-        """
-        assert isinstance(column_list, list)
-        projection = []
-        for column in column_list:
-            if column.data_type == ORACLE_TYPE_TIMESTAMP_TZ:
-                projection.append(
-                    "TO_CHAR({} AT TIME ZONE '+00:00', 'YYYY-MM-DD HH24:MI:SS.FF3 TZH:TZM')".format(
-                        self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            elif column.is_date_based():
-                projection.append(
-                    "TO_CHAR({}, 'YYYY-MM-DD HH24:MI:SS.FF3 TZH:TZM')".format(
-                        self._db_api.enclose_identifier(column.name)
-                    )
-                )
-            elif column.is_number_based():
-                if column.is_nan_capable():
-                    # NaN and inf break the TM9 format
-                    projection.append(
-                        "TO_CHAR({})".format(
-                            self._db_api.enclose_identifier(column.name)
-                        )
-                    )
-                else:
-                    projection.append(
-                        "TO_CHAR({},'TM9')".format(
-                            self._db_api.enclose_identifier(column.name)
-                        )
-                    )
-            elif column.is_interval():
-                projection.append(
-                    "TO_CHAR({})".format(self._db_api.enclose_identifier(column.name))
-                )
-            else:
-                projection.append(self._db_api.enclose_identifier(column.name))
-        return ",".join(projection)
-
     def lobs_support_minus_operator(self):
         return False
 

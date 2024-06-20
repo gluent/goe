@@ -14,7 +14,7 @@
 
 [project]
 name = "goe"
-version = "1.0.4-dev"
+version = "1.0.5-dev"
 readme = "README.md"
 requires-python = ">=3.7"
 maintainers = [
@@ -46,6 +46,7 @@ dependencies = [
     "urllib3",
 
     # For Cloud storage
+    "fsspec[gcs]",
     "google-cloud-storage",
     "boto3",
     "azure-common",
@@ -61,7 +62,7 @@ dependencies = [
     # GOE Listener packages
     "fastapi==0.77.0",
     "uvicorn==0.17.6",
-    "redis==4.3.1",
+    "redis==4.4.4",
     "gunicorn==20.1.0",
     "brotli==1.0.9",
     "tenacity==8.0.1",

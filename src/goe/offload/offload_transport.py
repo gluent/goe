@@ -65,7 +65,7 @@ from goe.offload.offload_transport_functions import (
     running_as_same_user_and_host,
     scp_to_cmd,
     ssh_cmd_prefix,
-    schema_paths,
+    get_local_staging_path,
 )
 from goe.offload.offload_transport_rdbms_api import (
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_ID_RANGE,
@@ -2755,18 +2755,19 @@ class OffloadTransportQueryImport(OffloadTransport):
         # Not applicable to Query Import
         return None
 
-    def _query_import_to_local_fs(self, partition_chunk=None):
-        """Query Import is not partition aware therefore partition_chunk is ignored"""
+    def _query_import_to_local_fs(self, partition_chunk=None) -> tuple:
+        """Execute Query Import transport.
+
+        Query Import is not partition aware therefore partition_chunk is ignored"""
 
         if self._nothing_to_do(partition_chunk):
             return 0
 
-        local_staging_path, _ = schema_paths(
+        local_staging_path = get_local_staging_path(
             self._target_owner,
             self._target_table_name,
-            self._load_db_name,
             self._offload_options,
-            local_extension_override="." + self._staging_format.lower(),
+            "." + self._staging_format.lower(),
         )
         dfs_load_path = os.path.join(
             self._staging_table_location, "part-m-00000." + self._staging_format.lower()

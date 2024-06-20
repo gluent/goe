@@ -816,15 +816,6 @@ class TestBackendApi(TestCase):
         if self.connect_to_backend:
             self.assertIsNotNone(self.api.get_user_name())
 
-    def _test_get_view_ddl(self):
-        if self.connect_to_backend:
-            try:
-                # We do not have any known backend views to check so expect an exception,
-                # this is just a code syntax shakedown.
-                self.assertIsInstance(self.api.get_view_ddl(self.db, "not-a-view"), str)
-            except BackendApiException:
-                pass
-
     def _test_google_kms_key_ring_unit(self):
         if not self.connect_to_backend:
             return
@@ -1342,7 +1333,6 @@ class TestBackendApi(TestCase):
             self._test_get_user_name()
         except NotImplementedError:
             pass
-        self._test_get_view_ddl()
         self._test_identifier_contains_invalid_characters()
         self._test_insert_literal_values()
         self._test_is_nan_sql_expression()

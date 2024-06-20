@@ -16,16 +16,13 @@
 
 import sys
 
-from goe.config import config_checks, config_file
+from goe.config import config_file
 from goe.goe import (
     get_options,
     OFFLOAD_OP_NAME,
 )
 from goe.offload.offload import OffloadOptionError, get_offload_options
 from goe.orchestration.cli_entry_points import offload_by_cli
-
-
-config_checks.check_cli_path()
 
 
 if __name__ == "__main__":

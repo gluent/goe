@@ -61,6 +61,7 @@ def run_offload(
     expected_status=True,
     expected_exception_string: str = None,
     config_overrides: dict = None,
+    no_messages_override: bool = False,
 ) -> OffloadMessages:
     execution_id = ExecutionId()
     messages = OffloadMessages.from_options(
@@ -71,11 +72,12 @@ def run_offload(
     )
     try:
         config_overrides = get_config_overrides(config_overrides, orchestration_config)
+        messages_override = None if no_messages_override else messages
         status = OrchestrationRunner(config_overrides=config_overrides).offload(
             option_dict,
             execution_id=execution_id,
-            reuse_log=True,
-            messages_override=messages,
+            reuse_log=(not no_messages_override),
+            messages_override=messages_override,
         )
         if expected_status is not None and status != expected_status:
             raise ScenarioRunnerException(
@@ -83,7 +85,9 @@ def run_offload(
             )
         if expected_exception_string:
             # We shouldn't get here if we're expecting an exception
-            messages.log("Missing exception containing: %s" % expected_exception_string)
+            parent_messages.log(
+                "Missing exception containing: %s" % expected_exception_string
+            )
             # Can't include exception in error below otherwise we'll end up with a pass
             raise ScenarioRunnerException("offload() did not throw expected exception")
     except Exception as exc:
@@ -91,14 +95,14 @@ def run_offload(
             expected_exception_string
             and expected_exception_string.lower() in str(exc).lower()
         ):
-            messages.log(
+            parent_messages.log(
                 "Test caught expected exception:%s\n%s" % (type(exc), str(exc))
             )
-            messages.log(
+            parent_messages.log(
                 "Ignoring exception containing: %s" % expected_exception_string
             )
         else:
-            messages.log(traceback.format_exc())
+            parent_messages.log(traceback.format_exc())
             raise
     return messages
 

@@ -92,17 +92,6 @@ class TestFrontendTestingApi(TestCase):
         self.assertIsInstance(return_value[0], list)
         self.assertIsInstance(return_value[1], list)
 
-    def _test_host_compare_sql_projection(self):
-        cols = [
-            self.test_api.gen_column_object(
-                "col1", data_type=self.test_api.test_type_canonical_date()
-            ),
-            self.test_api.gen_column_object(
-                "col2", data_type=self.test_api.test_type_canonical_int_8()
-            ),
-        ]
-        self.assertIsInstance(self.test_api.host_compare_sql_projection(cols), str)
-
     def _test_test_type_canonical_date(self):
         self.assertIsInstance(self.test_api.test_type_canonical_date(), str)
 
@@ -121,7 +110,6 @@ class TestFrontendTestingApi(TestCase):
         self._test_drop_table()
         self._test_expected_sales_offload_predicates()
         self._test_goe_type_mapping_generated_table_col_specs()
-        self._test_host_compare_sql_projection()
         self._test_test_type_canonical_date()
         self._test_test_type_canonical_decimal()
         self._test_test_type_canonical_int_8()

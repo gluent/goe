@@ -18,19 +18,17 @@
     Allows us to share code but also keep scripts trim and healthy.
 """
 
-import re
+from contextlib import contextmanager
 
 from goe.goe import (
     get_log_fh_name,
     log as offload_log,
     normal,
-    verbose,
-    vverbose,
 )
-from goe.offload.column_metadata import match_table_column
 from goe.offload.offload_constants import DBTYPE_ORACLE
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
-from goe.offload.offload_messages import OffloadMessages, VERBOSE
+from goe.offload.offload_messages import OffloadMessages
+from goe.util.goe_log_fh import GOELogFileHandle
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )
@@ -61,10 +59,28 @@ def get_frontend_testing_api(config, messages, trace_action=None):
     )
 
 
+@contextmanager
+def get_frontend_testing_api_ctx(config, messages, trace_action=None):
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=trace_action)
+    try:
+        yield frontend_api
+    finally:
+        frontend_api.close()
+
+
 def get_test_messages(config, test_id, execution_id=None):
     messages = OffloadMessages(execution_id=execution_id)
     messages.init_log(config.log_path, test_id)
     return OffloadTestMessages(messages)
+
+
+@contextmanager
+def get_test_messages_ctx(config, test_id, execution_id=None):
+    messages = get_test_messages(config, test_id, execution_id=execution_id)
+    try:
+        yield messages
+    finally:
+        messages.close_log()
 
 
 def get_data_db_for_schema(schema, config):
@@ -84,15 +100,15 @@ def get_lines_from_log(
     # We can't log search_text otherwise we put the very thing we are searching for in the log
     start_found = False if search_from_text else True
     matches = []
-    lf = open(log_file, "r")
-    for line in lf:
-        if not start_found:
-            start_found = search_from_text in line
-        else:
-            if search_text in line:
-                matches.append(line)
-                if max_matches and len(matches) >= max_matches:
-                    return matches
+    with GOELogFileHandle(log_file, mode="r") as lf:
+        for line in lf:
+            if not start_found:
+                start_found = search_from_text in line
+            else:
+                if search_text in line:
+                    matches.append(line)
+                    if max_matches and len(matches) >= max_matches:
+                        return matches
     return matches
 
 
@@ -125,133 +141,6 @@ def goe_wide_max_columns(frontend_api, backend_api_or_count):
 def log(line: str, detail: int = normal, ansi_code=None):
     """Write log entry but without Redis interaction."""
     offload_log(line, detail=detail, ansi_code=ansi_code, redis_publish=False)
-
-
-def test_data_host_compare_no_hybrid_schema(
-    test,
-    frontend_schema,
-    frontend_table_name,
-    backend_schema,
-    backend_table_name,
-    frontend_api,
-    backend_api,
-    column_csv=None,
-):
-    """Compare data in a CSV of columns or all columns of a table when there is no hybrid schema.
-    We load frontend and backend data into Python sets and use minus operator.
-    Because of variations in data types returned by the assorted frontend/backend clients all
-    date based columns are converted to strings in SQL.
-    """
-
-    def fix_numeric_variations(v, column):
-        """Convert any values like '.123' or '-.123' to '0.123' or '-0.123'"""
-        if column.is_number_based() and isinstance(v, str):
-            if v.startswith("-."):
-                return "-0.{}".format(v[2:])
-            elif v.startswith("."):
-                return "0.{}".format(v[1:])
-            elif v and v.lower() == "nan":
-                return "NaN"
-            elif v and v.lower() == "inf":
-                return "Inf"
-            elif v and v.lower() == "-inf":
-                return "-Inf"
-            else:
-                return v
-        else:
-            return v
-
-    def preprocess_data(data, columns):
-        new_data = [
-            fix_numeric_variations(d, col)
-            for row in data
-            for d, col in zip(row, columns)
-        ]
-        return set(new_data)
-
-    fe_owner_table = frontend_api.enclose_object_reference(
-        frontend_schema, frontend_table_name
-    )
-    be_owner_table = backend_api.enclose_object_reference(
-        backend_schema, backend_table_name
-    )
-    fe_columns = frontend_api.get_columns(frontend_schema, frontend_table_name)
-    fe_id_column = match_table_column("ID", fe_columns)
-    be_columns = backend_api.get_columns(backend_schema, backend_table_name)
-    be_id_column = match_table_column("ID", be_columns)
-
-    if column_csv:
-        # We've been asked to verify specific columns
-        fe_columns = [match_table_column(_, fe_columns) for _ in column_csv.split()]
-
-    # Validate the columns one at a time otherwise it is too hard to unpick which ones have problems
-    for validation_column in fe_columns:
-        if validation_column.is_nan_capable():
-            # TODO For the moment it is proving too difficult to validate float/double data
-            #      The results coming back from different systems are sometimes rounded, sometimes in scientific
-            #      notation. Plus NaN/Inf/-Inf handling is problematic. For now I've excluded from validation.
-            continue
-
-        log("Checking {}".format(validation_column.name), detail=verbose)
-        fe_validation_columns = [validation_column]
-        be_validation_columns = [match_table_column(validation_column.name, be_columns)]
-        if validation_column.name.upper() != "ID":
-            # Always include ID column to help us locate issues
-            fe_validation_columns = [fe_id_column] + fe_validation_columns
-            be_validation_columns = [be_id_column] + be_validation_columns
-
-        fe_projection = frontend_api.host_compare_sql_projection(fe_validation_columns)
-        be_projection = backend_api.host_compare_sql_projection(be_validation_columns)
-        frontend_sql = f"SELECT {fe_projection} FROM {fe_owner_table}"
-        backend_sql = f"SELECT {be_projection} FROM {be_owner_table}"
-        frontend_data = preprocess_data(
-            frontend_api.execute_query_fetch_all(frontend_sql, log_level=VERBOSE),
-            fe_validation_columns,
-        )
-        backend_data = preprocess_data(
-            backend_api.execute_query_fetch_all(backend_sql, log_level=VERBOSE),
-            be_validation_columns,
-        )
-        base_minus_backend = list(frontend_data - backend_data)
-        backend_minus_base = list(backend_data - frontend_data)
-        if base_minus_backend != [] or backend_minus_base != []:
-            # Extra logging to help diagnose mismatches
-            log(
-                "Base minus backend count: %s" % len(base_minus_backend), detail=verbose
-            )
-            log(
-                "Backend minus base count: %s" % len(backend_minus_base), detail=verbose
-            )
-            log(
-                "Base minus backend (first 10 rows only): %s"
-                % str(sorted(base_minus_backend)[:11]),
-                detail=vverbose,
-            )
-            log(
-                "Backend minus base (first 10 rows only): %s"
-                % str(sorted(backend_minus_base)[:11]),
-                detail=vverbose,
-            )
-        test.assertEqual(
-            base_minus_backend,
-            [],
-            "Extra "
-            + frontend_schema
-            + " results (cf "
-            + backend_schema
-            + ") for SQL:\n"
-            + frontend_sql,
-        )
-        test.assertEqual(
-            backend_minus_base,
-            [],
-            "Extra "
-            + backend_schema
-            + " results (cf "
-            + frontend_schema
-            + ") for SQL:\n"
-            + backend_sql,
-        )
 
 
 def text_in_events(messages, message_token):

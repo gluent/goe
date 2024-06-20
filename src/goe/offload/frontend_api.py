@@ -813,19 +813,6 @@ class FrontendApiInterface(metaclass=ABCMeta):
             remap_schema=remap_schema,
         )
 
-    def get_view_ddl(
-        self, schema, view_name, as_list=False, terminate_sql=False, remap_schema=None
-    ):
-        """Return CREATE VIEW DDL as a string (or a list of strings split on CR if as_list=True)"""
-        return self.get_object_ddl(
-            schema,
-            view_name,
-            GET_DDL_TYPE_VIEW,
-            as_list=as_list,
-            terminate_sql=terminate_sql,
-            remap_schema=remap_schema,
-        )
-
     ###########################################################################
     # PUBLIC CAPABILITY METHODS
     ###########################################################################

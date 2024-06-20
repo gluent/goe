@@ -14,6 +14,8 @@
 
 """Wrapper over OffloadMessages that has useful methods for inspecting the messages or log."""
 
+from goe.util.goe_log_fh import GOELogFileHandle
+
 
 class OffloadTestMessages:
     def __init__(self, messages):
@@ -41,15 +43,15 @@ class OffloadTestMessages:
             return []
         start_found = bool(not search_from_text)
         matches = []
-        lf = open(log_file, "r")
-        for line in lf:
-            if not start_found:
-                start_found = search_from_text in line
-            else:
-                if search_text in line:
-                    matches.append(line)
-                    if max_matches and len(matches) >= max_matches:
-                        return matches
+        with GOELogFileHandle(log_file, mode="r") as lf:
+            for line in lf:
+                if not start_found:
+                    start_found = search_from_text in line
+                else:
+                    if search_text in line:
+                        matches.append(line)
+                        if max_matches and len(matches) >= max_matches:
+                            return matches
         return matches
 
     def get_line_from_log(self, search_text, search_from_text="") -> str:
@@ -64,6 +66,9 @@ class OffloadTestMessages:
     ###########################################################################
     # PASSTHROUGH PUBLIC METHODS
     ###########################################################################
+
+    def close_log(self, *args, **kwargs):
+        return self._messages.close_log(*args, **kwargs)
 
     def debug(self, *args, **kwargs):
         return self._messages.debug(*args, **kwargs)

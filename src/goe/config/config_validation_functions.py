@@ -59,6 +59,7 @@ from goe.offload.offload_transport import (
     VALID_OFFLOAD_TRANSPORTS,
     VALID_SPARK_SUBMIT_EXECUTABLES,
 )
+from goe.util.goe_log_fh import is_valid_path_for_logs
 from goe.util.misc_functions import human_size_to_bytes
 from goe.util.password_tools import PasswordTools
 
@@ -132,6 +133,11 @@ def normalise_db_prefix_and_paths(options, frontend_api=None):
         )
         options.load_db_name_pattern = (
             options.db_name_prefix.lower() + "_" + options.load_db_name_pattern
+        )
+
+    if not is_valid_path_for_logs(options.log_path):
+        raise OrchestrationConfigException(
+            f"Invalid value for OFFLOAD_LOGDIR: {options.log_path}"
         )
 
 

@@ -463,6 +463,21 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
                 data_precision=9,
                 data_scale=0,
             ),
+            # NUMBER(*) but sampled as NUMBER(n)
+            OracleColumn(
+                "COL_NUMBER_15_UNSAFE",
+                ORACLE_TYPE_NUMBER,
+                data_precision=15,
+                data_scale=0,
+                safe_mapping=False,
+            ),
+            OracleColumn(
+                "COL_NUMBER_17_UNSAFE",
+                ORACLE_TYPE_NUMBER,
+                data_precision=17,
+                data_scale=0,
+                safe_mapping=False,
+            ),
             # NUMBER(18)
             OracleColumn(
                 "COL_NUMBER_18",
@@ -578,6 +593,18 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
             CanonicalColumn("COL_NUMBER_2", GOE_TYPE_INTEGER_1),
             CanonicalColumn("COL_NUMBER_4", GOE_TYPE_INTEGER_2),
             CanonicalColumn("COL_NUMBER_9", GOE_TYPE_INTEGER_4),
+            CanonicalColumn(
+                "COL_NUMBER_15_UNSAFE",
+                GOE_TYPE_INTEGER_8,
+                data_precision=15,
+                data_scale=0,
+                safe_mapping=False,
+            ),
+            CanonicalColumn(
+                "COL_NUMBER_17_UNSAFE",
+                GOE_TYPE_INTEGER_38,
+                safe_mapping=False,
+            ),
             CanonicalColumn("COL_NUMBER_18", GOE_TYPE_INTEGER_8),
             CanonicalColumn("COL_NUMBER_38", GOE_TYPE_INTEGER_38),
             CanonicalColumn("COL_NUMBER_NO_P_S", GOE_TYPE_DECIMAL),

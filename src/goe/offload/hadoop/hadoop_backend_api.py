@@ -1269,18 +1269,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" % {
         hive_stats = self._get_hive_stats_table(db_name, table_name)
         return hive_stats.table_partitions()
 
-    def get_view_ddl(
-        self, db_name, view_name, as_list=False, terminate_sql=False, for_replace=False
-    ):
-        # HiveTable.get_table_ddl supports views
-        return self.get_table_ddl(
-            db_name,
-            view_name,
-            as_list=as_list,
-            terminate_sql=terminate_sql,
-            for_replace=for_replace,
-        )
-
     def insert_literal_values(
         self,
         db_name,

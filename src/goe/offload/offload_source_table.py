@@ -145,9 +145,11 @@ class RdbmsPartition:
                 self.partition_position,
                 self.subpartition_count,
                 self.subpartition_name,
-                ",".join(n for n in self.subpartition_names)
-                if self.subpartition_names is not None
-                else None,
+                (
+                    ",".join(n for n in self.subpartition_names)
+                    if self.subpartition_names is not None
+                    else None
+                ),
                 self.subpartition_position,
                 self.high_values_csv,
                 self.high_values_python,
@@ -264,7 +266,9 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
         """
         return True
 
-    def _frontend_decimal_to_integral_type(self, data_precision, data_scale):
+    def _frontend_decimal_to_integral_type(
+        self, data_precision, data_scale, safe_mapping=True
+    ):
         if data_scale == 0:
             # Integral numbers
             if 1 <= (data_precision or 0) <= 2:
@@ -273,6 +277,13 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
                 return GOE_TYPE_INTEGER_2
             elif 5 <= (data_precision or 0) <= 9:
                 return GOE_TYPE_INTEGER_4
+            elif (17 <= (data_precision or 0) <= 18) and not safe_mapping:
+                # An unsafe mapping predicted a precision right on the edge of INT_8, round up to next threshold.
+                self._log(
+                    f"Switching unsafe INT8({data_precision}) mapping to INT38",
+                    detail=VVERBOSE,
+                )
+                return GOE_TYPE_INTEGER_38
             elif 10 <= (data_precision or 0) <= 18:
                 return GOE_TYPE_INTEGER_8
             elif 19 <= (data_precision or 0) <= 38:

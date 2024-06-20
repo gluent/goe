@@ -91,7 +91,11 @@ from goe.offload.offload_source_table import (
     OFFLOAD_PARTITION_TYPE_RANGE,
     OFFLOAD_PARTITION_TYPE_LIST,
 )
-from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
+from goe.offload.offload_messages import (
+    OffloadMessages,
+    VERBOSE,
+    VVERBOSE,
+)
 from goe.offload.offload_metadata_functions import gen_and_save_offload_metadata
 from goe.offload.offload_validation import (
     BackendCountValidator,
@@ -158,6 +162,7 @@ from goe.data_governance.hadoop_data_governance import (
     is_valid_data_governance_tag,
 )
 
+from goe.util.goe_log_fh import GOELogFileHandle
 from goe.util.misc_functions import (
     all_int_chars,
     csv_split,
@@ -356,6 +361,11 @@ def log_command_line(detail=vverbose):
     log("Command line:", detail=detail, redis_publish=False)
     log(" ".join(sys.argv), detail=detail, redis_publish=False)
     log("", detail=detail, redis_publish=False)
+
+
+def log_close():
+    global log_fh
+    log_fh.close()
 
 
 def ora_single_item_query(opts, qry, ora_conn=None, params={}):
@@ -1201,7 +1211,7 @@ def init_log(log_name):
 
     current_log_name = standard_log_name(log_name)
     log_path = os.path.join(options.log_path, current_log_name)
-    log_fh = open(log_path, "w")
+    log_fh = GOELogFileHandle(log_path)
 
     if hasattr(options, "dev_log") and options.dev_log:
         # Set tool (debug instrumentation) logging

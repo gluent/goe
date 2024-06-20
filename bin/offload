@@ -16,22 +16,16 @@
 
 import sys
 
-from goe.config import config_file
+from goe.config import config_checks, config_file
 from goe.goe import (
-    get_log_fh_name,
     get_options,
-    init,
-    init_log,
-    log,
-    log_command_line,
-    log_timestamp,
-    version,
     OFFLOAD_OP_NAME,
-    get_log_fh,
 )
 from goe.offload.offload import OffloadOptionError, get_offload_options
 from goe.orchestration.cli_entry_points import offload_by_cli
-from goe.util.goe_log import log_exception
+
+
+config_checks.check_cli_path()
 
 
 if __name__ == "__main__":
@@ -41,26 +35,10 @@ if __name__ == "__main__":
         config_file.load_env()
         opt = get_options(operation_name=OFFLOAD_OP_NAME)
         get_offload_options(opt)
-        options, args = opt.parse_args()
-        init(options)
-        init_log("offload_%s" % options.owner_table)
-
-        log("")
-        log("Offload v%s" % version(), ansi_code="underline")
-        log("Log file: %s" % get_log_fh_name())
-        log("")
-        log_command_line()
-
+        options, _ = opt.parse_args()
         offload_by_cli(options)
 
     except OffloadOptionError as exc:
-        log("Option error: %s" % exc, ansi_code="red")
-        log("")
+        print("Option error: %s\n" % exc)
         opt.print_help()
-        sys.exit(1)
-
-    except Exception as exc:
-        log("Exception caught at top-level", ansi_code="red")
-        log_timestamp()
-        log_exception(exc, log_fh=get_log_fh(), options=options)
         sys.exit(1)

@@ -595,6 +595,13 @@ class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcl
         self._rdbms_table = None
         self._staging_format = None
 
+    def _get_batch_name(self) -> str:
+        """Return a Dataproc Batch name for canary check."""
+        # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
+        return self._get_transport_app_name(
+            sep="-", ts=True, name_override="canary"
+        ).lower()[:64]
+
     ###########################################################################
     # PUBLIC METHODS
     ###########################################################################

@@ -1802,11 +1802,10 @@ class BackendTableInterface(metaclass=ABCMeta):
             sync=True,
         )
 
-    def create_load_db(self, location=None, with_terminator=False) -> list:
+    def create_load_db(self, with_terminator=False) -> list:
+        """Generic code to create a load database, individual backends may have overrides."""
         if self._db_api.load_db_transport_supported():
-            return self._create_load_db(
-                location=location, with_terminator=with_terminator
-            )
+            return self._create_load_db(with_terminator=with_terminator)
         else:
             return []
 

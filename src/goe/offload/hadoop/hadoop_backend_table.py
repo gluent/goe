@@ -825,6 +825,16 @@ FROM %s.%s""" % (
             with_terminator=with_terminator,
         )
 
+    def create_load_db(self, with_terminator=False) -> list:
+        """Create a load database."""
+        if self._db_api.load_db_transport_supported():
+            return self._create_load_db(
+                location=self._get_load_db_hdfs_dir(),
+                with_terminator=with_terminator,
+            )
+        else:
+            return []
+
     def default_udf_db_name(self):
         """By default we support UDF_DB but on Hadoop we use 'default' as a fall back"""
         return self._udf_db or "default"

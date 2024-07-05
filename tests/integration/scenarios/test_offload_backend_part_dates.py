@@ -20,6 +20,10 @@ from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
 )
+from goe.offload.operation.partition_controls import (
+    MISSING_PARTITION_GRANULARITY_EXCEPTION_TEXT,
+    PARTITION_BY_STRING_NOT_SUPPORTED_EXCEPTION_TEXT,
+)
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
@@ -29,6 +33,7 @@ from tests.integration.scenarios.assertion_functions import (
     sales_based_fact_assertion,
     synthetic_part_col_name,
 )
+from tests.integration.scenarios import scenario_constants
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
     run_setup,
@@ -52,12 +57,13 @@ if TYPE_CHECKING:
     from testlib.test_framework.offload_test_messages import OffloadTestMessages
 
 
-OFFLOAD_FACT_DATE_Y = "BPART_FACT_DATE_Y"
-OFFLOAD_FACT_DATE_M = "BPART_FACT_DATE_M"
-OFFLOAD_FACT_DATE_D = "BPART_FACT_DATE_D"
-OFFLOAD_FACT_TSTZ_Y = "BPART_FACT_TSTZ_Y"
-OFFLOAD_FACT_TSTZ_M = "BPART_FACT_TSTZ_M"
-OFFLOAD_FACT_TSTZ_D = "BPART_FACT_TSTZ_D"
+FACT_DATE_Y = "BPART_FACT_DATE_Y"
+FACT_DATE_M = "BPART_FACT_DATE_M"
+FACT_DATE_D = "BPART_FACT_DATE_D"
+FACT_TSTZ_Y = "BPART_FACT_TSTZ_Y"
+FACT_TSTZ_M = "BPART_FACT_TSTZ_M"
+FACT_TSTZ_D = "BPART_FACT_TSTZ_D"
+FACT_DATE_STR = "BPART_FACT_DATE_STR"
 
 
 @pytest.fixture
@@ -243,7 +249,7 @@ def test_offload_backend_part_fact_as_date_year(config, schema, data_db):
             config,
             schema,
             data_db,
-            OFFLOAD_FACT_DATE_Y,
+            FACT_DATE_Y,
             frontend_api,
             backend_api,
             messages,
@@ -270,7 +276,7 @@ def test_offload_backend_part_fact_as_date_month(config, schema, data_db):
             config,
             schema,
             data_db,
-            OFFLOAD_FACT_DATE_M,
+            FACT_DATE_M,
             frontend_api,
             backend_api,
             messages,
@@ -297,7 +303,7 @@ def test_offload_backend_part_fact_as_date_day(config, schema, data_db):
             config,
             schema,
             data_db,
-            OFFLOAD_FACT_DATE_D,
+            FACT_DATE_D,
             frontend_api,
             backend_api,
             messages,
@@ -325,7 +331,7 @@ def test_offload_backend_part_fact_as_tstz_year(config, schema, data_db):
             config,
             schema,
             data_db,
-            OFFLOAD_FACT_TSTZ_Y,
+            FACT_TSTZ_Y,
             frontend_api,
             backend_api,
             messages,
@@ -352,7 +358,7 @@ def test_offload_backend_part_fact_as_tstz_month(config, schema, data_db):
             config,
             schema,
             data_db,
-            OFFLOAD_FACT_TSTZ_M,
+            FACT_TSTZ_M,
             frontend_api,
             backend_api,
             messages,
@@ -379,7 +385,7 @@ def test_offload_backend_part_fact_as_tstz_day(config, schema, data_db):
             config,
             schema,
             data_db,
-            OFFLOAD_FACT_TSTZ_D,
+            FACT_TSTZ_D,
             frontend_api,
             backend_api,
             messages,
@@ -387,3 +393,99 @@ def test_offload_backend_part_fact_as_tstz_day(config, schema, data_db):
             "tstz",
             offload_constants.PART_COL_GRANULARITY_DAY,
         )
+
+
+def partition_by_string_supported_exception(backend_api, exception_text=None):
+    if backend_api.partition_by_string_supported():
+        return exception_text
+    else:
+        return PARTITION_BY_STRING_NOT_SUPPORTED_EXCEPTION_TEXT
+
+
+def test_offload_backend_part_date_as_str(config, schema, data_db):
+    id = "test_offload_backend_part_date_as_str"
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
+        table_name = FACT_DATE_STR
+
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+                schema, table_name, simple_partition_names=True
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, table_name
+            ),
+        )
+        # Offload 1st partition with TIME_ID as a STRING in backend with date based granularity rather than string based.
+        # Expect to fail.
+        options = {
+            "owner_table": schema + "." + table_name,
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
+            "variable_string_columns_csv": "time_id",
+            "reset_backend_table": True,
+            "create_backend_db": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=partition_by_string_supported_exception(
+                backend_api, MISSING_PARTITION_GRANULARITY_EXCEPTION_TEXT
+            ),
+        )
+
+        # Offload 1st partition with TIME_ID as a STRING in backend.
+        # We have assertion for backends that support this and an expected exception for those that do not.
+        options = {
+            "owner_table": schema + "." + table_name,
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
+            "variable_string_columns_csv": "time_id",
+            "offload_partition_granularity": "4",
+            "reset_backend_table": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=partition_by_string_supported_exception(
+                backend_api
+            ),
+        )
+        if not partition_by_string_supported_exception(backend_api):
+            assert sales_based_fact_assertion(
+                config,
+                backend_api,
+                frontend_api,
+                messages,
+                repo_client,
+                schema,
+                data_db,
+                table_name,
+                test_constants.SALES_BASED_FACT_HV_1,
+                check_backend_rowcount=True,
+                offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+            )
+            assert backend_column_exists(
+                backend_api,
+                data_db,
+                table_name,
+                "time_id",
+                backend_api.backend_test_type_canonical_string(),
+            )
+            assert backend_column_exists(
+                backend_api,
+                data_db,
+                table_name,
+                "gl_part_4_time_id",
+                backend_api.backend_test_type_canonical_string(),
+            )

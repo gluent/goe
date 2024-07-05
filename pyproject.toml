@@ -14,7 +14,7 @@
 
 [project]
 name = "goe"
-version = "1.0.5-dev"
+version = "1.0.6-dev"
 readme = "README.md"
 requires-python = ">=3.7"
 maintainers = [
@@ -46,6 +46,7 @@ dependencies = [
     "urllib3",
 
     # For Cloud storage
+    "fsspec[gcs]",
     "google-cloud-storage",
     "boto3",
     "azure-common",
@@ -57,6 +58,9 @@ dependencies = [
     # For BigQuery backend
     "google-cloud-bigquery",
     "google-cloud-kms",
+
+    # Env loading
+    "python-dotenv",
 
     # GOE Listener packages
     "fastapi==0.77.0",

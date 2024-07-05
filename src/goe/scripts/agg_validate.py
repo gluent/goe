@@ -24,7 +24,7 @@ import logging
 import re
 import sys
 
-from goe.config import config_descriptions, orchestration_defaults
+from goe.config import config_descriptions, config_file, orchestration_defaults
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_validation import (
     CrossDbValidator,
@@ -39,11 +39,11 @@ from goe.util.misc_functions import (
     is_number,
     is_pos_int,
     parse_python_from_string,
-    check_offload_env,
 )
-from goe.util.goe_log import step, log_exception
+from goe.util.goe_log import log_exception
 
 from goe.offload.offload_messages import OffloadMessages
+from goe.orchestration import command_steps
 
 from goe.goe import (
     get_options_from_list,
@@ -132,12 +132,10 @@ def validate_table(args, messages):
             return False
 
     return (
-        step(
-            "Validating table: %s.%s" % (args.owner, args.table_name),
+        messages.offload_step(
+            command_steps.STEP_VALIDATE_DATA,
             step_fn,
             execute=args.execute,
-            options=args,
-            messages=messages,
         )
         or False
     )
@@ -257,7 +255,8 @@ def main():
     MAIN ROUTINE
     """
 
-    check_offload_env()
+    config_file.check_config_path()
+    config_file.load_env()
 
     args = parse_args()
     init(args)

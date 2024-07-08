@@ -39,8 +39,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -71,18 +71,6 @@ def get_bin_path():
     return os.path.join(offload_home, "bin")
 
 
-def get_log_path():
-    offload_home = os.environ.get("OFFLOAD_HOME")
-    assert offload_home, "OFFLOAD_HOME must be set in order to run tests"
-    return os.path.join(offload_home, "log")
-
-
-def get_run_path():
-    offload_home = os.environ.get("OFFLOAD_HOME")
-    assert offload_home, "OFFLOAD_HOME must be set in order to run tests"
-    return os.path.join(offload_home, "run")
-
-
 def command_supports_no_version_check(list_of_args):
     return bool(
         list_of_args[0].endswith("connect") or list_of_args[0].endswith("offload")
@@ -102,187 +90,193 @@ def goe_shell_command(list_of_args):
 
 def test_cli_connect(config):
     id = "test_cli_connect"
-    messages = get_test_messages(config, id)
-    bin_path = get_bin_path()
+    with get_test_messages_ctx(config, id) as messages:
+        bin_path = get_bin_path()
 
-    run_shell_cmd(
-        config, messages, goe_shell_command([os.path.join(bin_path, "connect"), "-h"])
-    )
+        run_shell_cmd(
+            config,
+            messages,
+            goe_shell_command([os.path.join(bin_path, "connect"), "-h"]),
+        )
 
-    run_shell_cmd(
-        config, messages, goe_shell_command([os.path.join(bin_path, "connect")])
-    )
+        run_shell_cmd(
+            config, messages, goe_shell_command([os.path.join(bin_path, "connect")])
+        )
 
 
 def test_cli_offload_opts(config):
     id = "test_cli_offload_opts"
-    messages = get_test_messages(config, id)
-    bin_path = get_bin_path()
+    with get_test_messages_ctx(config, id) as messages:
+        bin_path = get_bin_path()
 
-    run_shell_cmd(
-        config, messages, goe_shell_command([os.path.join(bin_path, "offload"), "-h"])
-    )
+        run_shell_cmd(
+            config,
+            messages,
+            goe_shell_command([os.path.join(bin_path, "offload"), "-h"]),
+        )
 
-    run_shell_cmd(
-        config,
-        messages,
-        goe_shell_command([os.path.join(bin_path, "offload"), "--version"]),
-    )
+        run_shell_cmd(
+            config,
+            messages,
+            goe_shell_command([os.path.join(bin_path, "offload"), "--version"]),
+        )
 
 
 def test_cli_offload_full(config, schema, data_db):
     id = "test_cli_offload_full"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
-    bin_path = get_bin_path()
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        bin_path = get_bin_path()
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, CLI_DIM),
-        python_fns=lambda: drop_backend_test_table(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, CLI_DIM),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, CLI_DIM
+            ),
+        )
+
+        assert not backend_table_exists(config, backend_api, messages, data_db, CLI_DIM)
+
+        # Non-execute mode
+        run_shell_cmd(
+            config,
+            messages,
+            goe_shell_command(
+                [
+                    os.path.join(bin_path, "offload"),
+                    "-t",
+                    schema + "." + CLI_DIM,
+                    "--reset-backend-table",
+                ]
+            ),
+        )
+
+        assert not backend_table_exists(
             config, backend_api, messages, data_db, CLI_DIM
-        ),
-    )
+        ), "The backend table should NOT exist"
 
-    assert not backend_table_exists(config, backend_api, messages, data_db, CLI_DIM)
+        # Execute mode
+        run_shell_cmd(
+            config,
+            messages,
+            goe_shell_command(
+                [
+                    os.path.join(bin_path, "offload"),
+                    "-t",
+                    schema + "." + CLI_DIM,
+                    "-x",
+                    "--reset-backend-table",
+                    "--create-backend-db",
+                ]
+            ),
+        )
 
-    # Non-execute mode
-    run_shell_cmd(
-        config,
-        messages,
-        goe_shell_command(
-            [
-                os.path.join(bin_path, "offload"),
-                "-t",
-                schema + "." + CLI_DIM,
-                "--reset-backend-table",
-            ]
-        ),
-    )
+        assert backend_table_exists(
+            config, backend_api, messages, data_db, CLI_DIM
+        ), "The backend table should exist"
 
-    assert not backend_table_exists(
-        config, backend_api, messages, data_db, CLI_DIM
-    ), "The backend table should NOT exist"
+        # Execute mode with many options
+        run_shell_cmd(
+            config,
+            messages,
+            goe_shell_command(
+                [
+                    os.path.join(bin_path, "offload"),
+                    "-t",
+                    schema + "." + CLI_DIM,
+                    "-x",
+                    "--force",
+                    "--reset-backend-table",
+                    "--reset-backend-table",
+                    "--skip-steps=xyz",
+                    "--allow-decimal-scale-rounding",
+                    "--allow-floating-point-conversions",
+                    "--allow-nanosecond-timestamp-columns",
+                    "--compress-load-table",
+                    "--data-sample-parallelism=2",
+                    "--max-offload-chunk-count=4",
+                    "--offload-fs-scheme={}".format(
+                        orchestration_defaults.offload_fs_scheme_default()
+                    ),
+                    "--no-verify",
+                ]
+            ),
+        )
 
-    # Execute mode
-    run_shell_cmd(
-        config,
-        messages,
-        goe_shell_command(
-            [
-                os.path.join(bin_path, "offload"),
-                "-t",
-                schema + "." + CLI_DIM,
-                "-x",
-                "--reset-backend-table",
-                "--create-backend-db",
-            ]
-        ),
-    )
-
-    assert backend_table_exists(
-        config, backend_api, messages, data_db, CLI_DIM
-    ), "The backend table should exist"
-
-    # Execute mode with many options
-    run_shell_cmd(
-        config,
-        messages,
-        goe_shell_command(
-            [
-                os.path.join(bin_path, "offload"),
-                "-t",
-                schema + "." + CLI_DIM,
-                "-x",
-                "--force",
-                "--reset-backend-table",
-                "--reset-backend-table",
-                "--skip-steps=xyz",
-                "--allow-decimal-scale-rounding",
-                "--allow-floating-point-conversions",
-                "--allow-nanosecond-timestamp-columns",
-                "--compress-load-table",
-                "--data-sample-parallelism=2",
-                "--max-offload-chunk-count=4",
-                "--offload-fs-scheme={}".format(
-                    orchestration_defaults.offload_fs_scheme_default()
-                ),
-                "--no-verify",
-            ]
-        ),
-    )
-
-    assert backend_table_exists(
-        config, backend_api, messages, data_db, CLI_DIM
-    ), "The backend table should exist"
+        assert backend_table_exists(
+            config, backend_api, messages, data_db, CLI_DIM
+        ), "The backend table should exist"
 
 
 def test_cli_offload_rpa(config, schema, data_db):
     id = "test_cli_offload_rpa"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
-    bin_path = get_bin_path()
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        bin_path = get_bin_path()
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, CLI_FACT, simple_partition_names=True
-        ),
-        python_fns=lambda: drop_backend_test_table(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+                schema, CLI_FACT, simple_partition_names=True
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, CLI_FACT
+            ),
+        )
+
+        assert not backend_table_exists(
             config, backend_api, messages, data_db, CLI_FACT
-        ),
-    )
+        ), "The backend table should NOT exist"
 
-    assert not backend_table_exists(
-        config, backend_api, messages, data_db, CLI_FACT
-    ), "The backend table should NOT exist"
+        run_shell_cmd(
+            config,
+            messages,
+            goe_shell_command(
+                [
+                    os.path.join(bin_path, "offload"),
+                    "-t",
+                    schema + "." + CLI_FACT,
+                    "-x",
+                    f"--older-than-date={test_constants.SALES_BASED_FACT_HV_2}",
+                    "--reset-backend-table",
+                    "--create-backend-db",
+                ]
+            ),
+        )
 
-    run_shell_cmd(
-        config,
-        messages,
-        goe_shell_command(
-            [
-                os.path.join(bin_path, "offload"),
-                "-t",
-                schema + "." + CLI_FACT,
-                "-x",
-                f"--older-than-date={test_constants.SALES_BASED_FACT_HV_2}",
-                "--reset-backend-table",
-                "--create-backend-db",
-            ]
-        ),
-    )
+        assert backend_table_exists(
+            config, backend_api, messages, data_db, CLI_FACT
+        ), "The backend table should exist"
 
-    assert backend_table_exists(
-        config, backend_api, messages, data_db, CLI_FACT
-    ), "The backend table should exist"
+        run_shell_cmd(
+            config,
+            messages,
+            goe_shell_command(
+                [
+                    os.path.join(bin_path, "offload"),
+                    "-t",
+                    schema + "." + CLI_FACT,
+                    "-x",
+                    "-v",
+                    f"--older-than-date={test_constants.SALES_BASED_FACT_HV_3}",
+                    "--reset-backend-table",
+                ]
+            ),
+        )
 
-    run_shell_cmd(
-        config,
-        messages,
-        goe_shell_command(
-            [
-                os.path.join(bin_path, "offload"),
-                "-t",
-                schema + "." + CLI_FACT,
-                "-x",
-                "-v",
-                f"--older-than-date={test_constants.SALES_BASED_FACT_HV_3}",
-                "--reset-backend-table",
-            ]
-        ),
-    )
-
-    assert backend_table_exists(
-        config, backend_api, messages, data_db, CLI_FACT
-    ), "The backend table should exist"
+        assert backend_table_exists(
+            config, backend_api, messages, data_db, CLI_FACT
+        ), "The backend table should exist"

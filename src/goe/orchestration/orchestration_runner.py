@@ -503,6 +503,9 @@ class OrchestrationRunner:
             self._command_fail(command_id, exc, repo_client)
             repo_client.close(force=True)
             raise
+        finally:
+            if not reuse_log:
+                self._messages.close_log()
 
         return status
 

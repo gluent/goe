@@ -30,6 +30,7 @@ import orjson
 # GOE
 from goe.orchestration import orchestration_constants
 from goe.orchestration.command_steps import STEP_TITLES, step_title
+from goe.util.goe_log_fh import GOELogFileHandle
 from goe.util.misc_functions import standard_log_name
 from goe.util.redis_tools import cache
 from goe.orchestration import command_steps
@@ -240,7 +241,7 @@ class OffloadMessages(object):
         current_log_name = standard_log_name(log_name)
         log_path = os.path.join(log_dir, current_log_name)
         logger.debug("log_path: %s" % log_path)
-        self._log_fh = open(log_path, "w")
+        self._log_fh = GOELogFileHandle(log_path)
 
     def close_log(self):
         if self._log_fh:

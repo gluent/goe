@@ -17,7 +17,7 @@ SHELL := /bin/bash
 TARGET_DIR=target/offload
 
 OFFLOAD_VERSION=$(shell cat version)
-GOE_WHEEL="goe-$(shell echo $(OFFLOAD_VERSION) | tr 'A-Z-' 'a-z.')0-py3-none-any.whl"
+GOE_WHEEL=goe-$(shell echo $(OFFLOAD_VERSION) | tr 'A-Z-' 'a-z.')0-py3-none-any.whl
 
 BUILD=$(strip $(shell git rev-parse --short HEAD))
 

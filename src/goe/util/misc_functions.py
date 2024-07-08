@@ -336,18 +336,6 @@ def get_option(options, name, repl=None):
     return getattr(options, name) if (options and hasattr(options, name)) else repl
 
 
-def check_offload_env():
-    """Check offload environment,
-    i.e. OFFLOAD_HOME is set correctly
-    """
-    if not os.environ.get("OFFLOAD_HOME"):
-        print("OFFLOAD_HOME environment variable missing")
-        print(
-            "You should source environment variables first, eg: . ../conf/offload.env"
-        )
-        sys.exit(1)
-
-
 def str_floatlike(maybe_float):
     """Remove unnecessary 0s from the float or 'float like string'
     Warning: Relies on str() conversion for floats, which truncates floats

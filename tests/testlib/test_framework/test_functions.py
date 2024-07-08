@@ -18,19 +18,17 @@
     Allows us to share code but also keep scripts trim and healthy.
 """
 
-import re
+from contextlib import contextmanager
 
 from goe.goe import (
     get_log_fh_name,
     log as offload_log,
     normal,
-    verbose,
-    vverbose,
 )
-from goe.offload.column_metadata import match_table_column
 from goe.offload.offload_constants import DBTYPE_ORACLE
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
-from goe.offload.offload_messages import OffloadMessages, VERBOSE
+from goe.offload.offload_messages import OffloadMessages
+from goe.util.goe_log_fh import GOELogFileHandle
 from tests.testlib.test_framework.factory.backend_testing_api_factory import (
     backend_testing_api_factory,
 )
@@ -52,10 +50,32 @@ def get_frontend_testing_api(config, messages, trace_action=None):
     )
 
 
+@contextmanager
+def get_frontend_testing_api_ctx(config, messages, trace_action=None):
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=trace_action)
+    try:
+        yield frontend_api
+    finally:
+        frontend_api.close()
+
+
 def get_test_messages(config, test_id, execution_id=None):
     messages = OffloadMessages(execution_id=execution_id)
     messages.init_log(config.log_path, test_id)
     return OffloadTestMessages(messages)
+
+
+@contextmanager
+def get_test_messages_ctx(config, test_id, execution_id=None):
+    messages = get_test_messages(config, test_id, execution_id=execution_id)
+    try:
+        yield messages
+    finally:
+        messages.close_log()
+
+
+def get_data_db_for_schema(schema, config):
+    return convert_backend_identifier_case(config, data_db_name(schema, config))
 
 
 def get_lines_from_log(
@@ -71,15 +91,15 @@ def get_lines_from_log(
     # We can't log search_text otherwise we put the very thing we are searching for in the log
     start_found = False if search_from_text else True
     matches = []
-    lf = open(log_file, "r")
-    for line in lf:
-        if not start_found:
-            start_found = search_from_text in line
-        else:
-            if search_text in line:
-                matches.append(line)
-                if max_matches and len(matches) >= max_matches:
-                    return matches
+    with GOELogFileHandle(log_file, mode="r") as lf:
+        for line in lf:
+            if not start_found:
+                start_found = search_from_text in line
+            else:
+                if search_text in line:
+                    matches.append(line)
+                    if max_matches and len(matches) >= max_matches:
+                        return matches
     return matches
 
 

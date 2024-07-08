@@ -22,7 +22,7 @@
 import logging
 from typing import Optional
 
-from goe.config import orchestration_defaults
+from goe.config import config_file, orchestration_defaults
 from goe.config.config_validation_functions import (
     OrchestrationConfigException,
     check_offload_fs_scheme_supported_in_backend,
@@ -347,12 +347,15 @@ class OrchestrationConfig:
         return OrchestrationConfig.from_dict({}, do_not_connect=do_not_connect)
 
     @staticmethod
-    def from_dict(config_dict, do_not_connect=False):
+    def from_dict(config_dict: dict, do_not_connect=False):
         assert isinstance(config_dict, dict)
         unexpected_keys = [k for k in config_dict if k not in EXPECTED_CONFIG_ARGS]
         assert not unexpected_keys, (
             "Unexpected OrchestrationConfig keys: %s" % unexpected_keys
         )
+        # Load environment for defaults.
+        config_file.load_env()
+        # Build config from config_dict.
         return OrchestrationConfig(
             do_not_connect=do_not_connect,
             ansi=config_dict.get("ansi", orchestration_defaults.ansi_default()),

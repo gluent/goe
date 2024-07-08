@@ -51,7 +51,7 @@ from goe.offload.offload_constants import (
     OFFLOAD_STATS_METHOD_HISTORY,
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
-from goe.offload.offload_transport_functions import load_db_hdfs_path, schema_paths
+from goe.offload.offload_transport_functions import load_db_hdfs_path, schema_path
 from goe.offload.backend_table import (
     BackendTableInterface,
     TYPICAL_DATE_GRANULARITY_TERMS,
@@ -167,7 +167,7 @@ class BackendHadoopTable(BackendTableInterface):
             self._hive_optimize_sort_dynamic_partition = None
 
         if self._target_owner:
-            _, self._avro_schema_hdfs_path = schema_paths(
+            self._avro_schema_hdfs_path = schema_path(
                 self._target_owner,
                 self.table_name,
                 self._load_db_name,

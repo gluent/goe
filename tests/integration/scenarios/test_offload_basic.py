@@ -938,6 +938,7 @@ def test_offload_log_path_gcs(config, schema, data_db):
             "owner_table": schema + "." + table_name,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(
             options,

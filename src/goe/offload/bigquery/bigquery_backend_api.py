@@ -338,6 +338,18 @@ class BackendBigQueryApi(BackendApiInterface):
             table_prop_clause = ""
         return table_prop_clause
 
+    def _default_job_config(
+        self, query_options: dict = None
+    ) -> bigquery.QueryJobConfig:
+        """All connections are normalized to UTC to match data extractions."""
+        if query_options and "use_legacy_sql" in query_options:
+            # No time_zone manipulation for legacy_sql.
+            return bigquery.QueryJobConfig()
+        else:
+            return bigquery.QueryJobConfig(
+                connection_properties=[bigquery.ConnectionProperty("time_zone", "UTC")]
+            )
+
     def _execute_ddl_or_dml(
         self,
         sql,
@@ -354,7 +366,7 @@ class BackendBigQueryApi(BackendApiInterface):
         assert sql
         assert isinstance(sql, (str, list))
         return_list = []
-        job_config = bigquery.QueryJobConfig()
+        job_config = self._default_job_config(query_options=query_options)
         self._add_query_options_to_job_config(query_options, job_config)
         sqls = [sql] if isinstance(sql, str) else sql
         for i, run_sql in enumerate(sqls):
@@ -395,7 +407,7 @@ class BackendBigQueryApi(BackendApiInterface):
         """
         default_config_white_list = ["maximum_bytes_billed", "use_query_cache"]
         if self._global_session_parameters:
-            job_config = bigquery.job.QueryJobConfig()
+            job_config = self._default_job_config()
             self._log("Setting global session options:", detail=log_level)
             for k, v in [
                 (str(k).lower(), v) for k, v in self._global_session_parameters.items()
@@ -450,7 +462,7 @@ class BackendBigQueryApi(BackendApiInterface):
 
         t1 = datetime.now().replace(microsecond=0)
 
-        job_config = bigquery.QueryJobConfig()
+        job_config = self._default_job_config(query_options=query_options)
         self._add_kms_key_to_job_config(job_config)
         self._add_query_options_to_job_config(query_options, job_config)
         self._add_query_params_to_job_config(query_params, job_config)
@@ -756,7 +768,9 @@ class BackendBigQueryApi(BackendApiInterface):
         except NotFound:
             return False
 
-    def _add_query_options_to_job_config(self, query_options, job_config):
+    def _add_query_options_to_job_config(
+        self, query_options: dict, job_config: bigquery.QueryJobConfig
+    ):
         """Convert query_options dict to QueryJobConfig attribute."""
         if query_options:
             assert isinstance(query_options, dict)
@@ -764,7 +778,7 @@ class BackendBigQueryApi(BackendApiInterface):
                 setattr(job_config, k, v)
                 self._log("Setting job session option: %s=%s" % (k, v), detail=VVERBOSE)
 
-    def _table_is_partitioned(self, db_name, table_name):
+    def _table_is_partitioned(self, db_name: str, table_name: str):
         """BigQuery specific helper to identify if a table is partitioned"""
         assert db_name and table_name
         table = self._get_bq_table(db_name, table_name)

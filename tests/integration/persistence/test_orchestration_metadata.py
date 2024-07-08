@@ -15,8 +15,6 @@
 """ TestOrchestrationMetadata: Unit test library to test orchestration metadata API for configured frontend.
 """
 
-import copy
-
 from unittest import TestCase, main
 
 from goe.orchestration import orchestration_constants
@@ -149,10 +147,6 @@ EXAMPLE_STORY_PBO_R_INTRA_METADATA_DICT = {
     "OFFLOAD_PARTITION_FUNCTIONS": None,
     "COMMAND_EXECUTION": "UUID",
 }
-
-
-class TestOrchestrationMetadataException(Exception):
-    pass
 
 
 class TestOrchestrationMetadata(TestCase):

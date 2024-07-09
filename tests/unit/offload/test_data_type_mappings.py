@@ -123,28 +123,6 @@ from goe.offload.microsoft.mssql_column import (
     MSSQL_TYPE_VARBINARY,
     MSSQL_TYPE_IMAGE,
 )
-from goe.offload.netezza.netezza_column import (
-    NetezzaColumn,
-    NETEZZA_TYPE_BIGINT,
-    NETEZZA_TYPE_INTEGER,
-    NETEZZA_TYPE_SMALLINT,
-    NETEZZA_TYPE_BYTEINT,
-    NETEZZA_TYPE_DOUBLE_PRECISION,
-    NETEZZA_TYPE_REAL,
-    NETEZZA_TYPE_NUMERIC,
-    NETEZZA_TYPE_TIME,
-    NETEZZA_TYPE_TIMESTAMP,
-    NETEZZA_TYPE_DATE,
-    NETEZZA_TYPE_CHARACTER_VARYING,
-    NETEZZA_TYPE_CHARACTER,
-    NETEZZA_TYPE_NATIONAL_CHARACTER_VARYING,
-    NETEZZA_TYPE_NATIONAL_CHARACTER,
-    NETEZZA_TYPE_BOOLEAN,
-    NETEZZA_TYPE_TIME_WITH_TIME_ZONE,
-    NETEZZA_TYPE_BINARY_VARYING,
-    NETEZZA_TYPE_ST_GEOMETRY,
-)
-from goe.offload.netezza.netezza_offload_source_table import NetezzaSourceTable
 from goe.offload.oracle.oracle_column import (
     OracleColumn,
     ORACLE_TYPE_CHAR,
@@ -224,12 +202,10 @@ from goe.offload.hadoop.hadoop_column import (
 from tests.unit.test_functions import (
     build_mock_options,
     optional_hadoop_dependency_exception,
-    optional_netezza_dependency_exception,
     optional_snowflake_dependency_exception,
     optional_sql_server_dependency_exception,
     optional_synapse_dependency_exception,
     FAKE_MSSQL_ENV,
-    FAKE_NETEZZA_ENV,
     FAKE_ORACLE_BQ_ENV,
     FAKE_ORACLE_HIVE_ENV,
     FAKE_ORACLE_IMPALA_ENV,
@@ -1430,203 +1406,6 @@ class TestMSSQLDataTypeMappings(TestDataTypeMappings):
     #         MSSQLColumn('COL_FIXED_STR', MSSQL_TYPE_CHAR, data_length=10),
     #         ...
     #         MSSQLColumn('COL_BOOLEAN', MSSQL_TYPE_BIT),
-    #     ]
-    #     self.validate_source_vs_expected_columns(canonical_columns, expected_columns)
-
-    #     for source_column in canonical_columns:
-    #         expected_column = match_table_column(source_column.name, expected_columns)
-    #         assert expected_column
-    #         new_column = self.test_table_object.from_canonical_column(source_column)
-    #         self.column_assertions(new_column, expected_column)
-
-
-class TestNetezzaDataTypeMappings(TestDataTypeMappings):
-    def setUp(self):
-        self.options = build_mock_options(FAKE_NETEZZA_ENV)
-        messages = OffloadMessages()
-        try:
-            self.test_table_object = NetezzaSourceTable(
-                "no_user",
-                "no_table",
-                self.options,
-                messages,
-                dry_run=True,
-                do_not_connect=True,
-            )
-        except ModuleNotFoundError as e:
-            if optional_netezza_dependency_exception(e):
-                self.test_table_object = None
-            else:
-                raise
-
-    def _get_rdbms_source_columns(self):
-        return [
-            NetezzaColumn("COL_BOOLEAN", NETEZZA_TYPE_BOOLEAN),
-            NetezzaColumn(
-                "COL_CHARACTER",
-                NETEZZA_TYPE_CHARACTER,
-                char_length=100,
-                data_length=100,
-            ),
-            NetezzaColumn(
-                "COL_NCHARACTER",
-                NETEZZA_TYPE_NATIONAL_CHARACTER,
-                char_length=100,
-                data_length=200,
-            ),
-            NetezzaColumn(
-                "COL_CHARACTERV",
-                NETEZZA_TYPE_CHARACTER_VARYING,
-                char_length=100,
-                data_length=100,
-            ),
-            NetezzaColumn(
-                "COL_NCHARACTERV",
-                NETEZZA_TYPE_NATIONAL_CHARACTER_VARYING,
-                char_length=100,
-                data_length=200,
-            ),
-            NetezzaColumn("COL_BINARY", NETEZZA_TYPE_BINARY_VARYING, data_length=5000),
-            NetezzaColumn("COL_ST_GEOMETRY", NETEZZA_TYPE_ST_GEOMETRY, data_length=50),
-            NetezzaColumn(
-                "COL_NUMERIC_2",
-                NETEZZA_TYPE_NUMERIC,
-                char_length=0,
-                data_length=4,
-                data_precision=2,
-                data_scale=0,
-            ),
-            NetezzaColumn(
-                "COL_NUMERIC_4",
-                NETEZZA_TYPE_NUMERIC,
-                char_length=0,
-                data_length=4,
-                data_precision=4,
-                data_scale=0,
-            ),
-            NetezzaColumn(
-                "COL_NUMERIC_9",
-                NETEZZA_TYPE_NUMERIC,
-                char_length=0,
-                data_length=4,
-                data_precision=9,
-                data_scale=0,
-            ),
-            NetezzaColumn(
-                "COL_NUMERIC_18",
-                NETEZZA_TYPE_NUMERIC,
-                char_length=0,
-                data_length=8,
-                data_precision=18,
-                data_scale=0,
-            ),
-            NetezzaColumn(
-                "COL_NUMERIC_38",
-                NETEZZA_TYPE_NUMERIC,
-                char_length=0,
-                data_length=16,
-                data_precision=38,
-                data_scale=0,
-            ),
-            NetezzaColumn(
-                "COL_NUMERIC_10_2",
-                NETEZZA_TYPE_NUMERIC,
-                char_length=0,
-                data_length=16,
-                data_precision=10,
-                data_scale=2,
-            ),
-            NetezzaColumn("COL_BYTEINT", NETEZZA_TYPE_BYTEINT, data_length=1),
-            NetezzaColumn("COL_SMALLINT", NETEZZA_TYPE_SMALLINT, data_length=2),
-            NetezzaColumn("COL_INTEGER", NETEZZA_TYPE_INTEGER, data_length=4),
-            NetezzaColumn("COL_BIGINT", NETEZZA_TYPE_BIGINT, data_length=8),
-            NetezzaColumn("COL_REAL", NETEZZA_TYPE_REAL, data_length=4),
-            NetezzaColumn("COL_DOUBLE", NETEZZA_TYPE_DOUBLE_PRECISION, data_length=8),
-            NetezzaColumn("COL_DATE", NETEZZA_TYPE_DATE),
-            NetezzaColumn("COL_TIME", NETEZZA_TYPE_TIME),
-            NetezzaColumn("COL_TIMESTAMP", NETEZZA_TYPE_TIMESTAMP),
-            # NetezzaColumn('COL_INTERVAL', NETEZZA_TYPE_INTERVAL),
-            NetezzaColumn("COL_TIME_TZ", NETEZZA_TYPE_TIME_WITH_TIME_ZONE),
-        ]
-
-    ###########################################################
-    # RDBMS -> Formatted data type
-    ###########################################################
-
-    def test_netezza_format_data_type(self):
-        for source_column in self._get_rdbms_source_columns():
-            try:
-                # Not testing the output but at least testing no unexpected exceptions
-                self.assertIsNotNone(source_column.format_data_type())
-                # Check string "None" is not in the formatted type
-                self.assertNotIn(
-                    "None", source_column.format_data_type(), source_column.name
-                )
-            except NotImplementedError:
-                pass
-
-    ###########################################################
-    # RDBMS -> Canonical
-    ###########################################################
-
-    def test_netezza_to_canonical(self):
-        if not self.test_table_object:
-            return
-
-        source_columns = self._get_rdbms_source_columns()
-        # Expected outcomes of source_columns when converted to canonical
-        expected_columns = [
-            CanonicalColumn("COL_BOOLEAN", GOE_TYPE_BOOLEAN),
-            CanonicalColumn("COL_CHARACTER", GOE_TYPE_FIXED_STRING, data_length=100),
-            CanonicalColumn("COL_NCHARACTER", GOE_TYPE_FIXED_STRING, data_length=200),
-            CanonicalColumn(
-                "COL_CHARACTERV", GOE_TYPE_VARIABLE_STRING, data_length=100
-            ),
-            CanonicalColumn(
-                "COL_NCHARACTERV", GOE_TYPE_VARIABLE_STRING, data_length=200
-            ),
-            CanonicalColumn("COL_BINARY", GOE_TYPE_BINARY, data_length=5000),
-            CanonicalColumn("COL_ST_GEOMETRY", GOE_TYPE_BINARY, data_length=50),
-            CanonicalColumn("COL_NUMERIC_2", GOE_TYPE_INTEGER_1),
-            CanonicalColumn("COL_NUMERIC_4", GOE_TYPE_INTEGER_2),
-            CanonicalColumn("COL_NUMERIC_9", GOE_TYPE_INTEGER_4),
-            CanonicalColumn("COL_NUMERIC_18", GOE_TYPE_INTEGER_8),
-            CanonicalColumn("COL_NUMERIC_38", GOE_TYPE_INTEGER_38),
-            CanonicalColumn(
-                "COL_NUMERIC_10_2", GOE_TYPE_DECIMAL, data_precision=10, data_scale=2
-            ),
-            CanonicalColumn("COL_BYTEINT", GOE_TYPE_INTEGER_1),
-            CanonicalColumn("COL_SMALLINT", GOE_TYPE_INTEGER_2),
-            CanonicalColumn("COL_INTEGER", GOE_TYPE_INTEGER_4),
-            CanonicalColumn("COL_BIGINT", GOE_TYPE_INTEGER_8),
-            CanonicalColumn("COL_REAL", GOE_TYPE_FLOAT),
-            CanonicalColumn("COL_DOUBLE", GOE_TYPE_DOUBLE),
-            CanonicalColumn("COL_DATE", GOE_TYPE_DATE),
-            CanonicalColumn("COL_TIME", GOE_TYPE_TIME),
-            CanonicalColumn("COL_TIMESTAMP", GOE_TYPE_TIMESTAMP),
-            # CanonicalColumn('COL_INTERVAL', GOE_TYPE_INTERVAL),
-            CanonicalColumn("COL_TIME_TZ", GOE_TYPE_TIMESTAMP_TZ),
-        ]
-        self.validate_source_vs_expected_columns(source_columns, expected_columns)
-
-        for source_column in source_columns:
-            expected_column = match_table_column(source_column.name, expected_columns)
-            assert expected_column
-            canonical_column = self.test_table_object.to_canonical_column(source_column)
-            self.column_assertions(canonical_column, expected_column)
-
-    ###########################################################
-    # Canonical -> RDBMS
-    ###########################################################
-
-    # Present to Netezza is not currently supported
-    # def test_canonical_to_netezza(self):
-    #     canonical_columns = self.canonical_columns()
-    #     # Expected outcomes of source_columns when converted to RDBMS
-    #     expected_columns = [
-    #         MSSQLColumn('COL_FIXED_STR', NETEZZA_TYPE_CHARACTER, data_length=10),
-    #         ...
-    #         MSSQLColumn('COL_BOOLEAN', NETEZZA_TYPE_BOLLEAN),
     #     ]
     #     self.validate_source_vs_expected_columns(canonical_columns, expected_columns)
 

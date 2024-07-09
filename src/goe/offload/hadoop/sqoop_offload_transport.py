@@ -23,14 +23,12 @@ from goe.offload.frontend_api import FRONTEND_TRACE_MODULE
 from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
     DBTYPE_ORACLE,
-    DBTYPE_NETEZZA,
     FILE_STORAGE_FORMAT_AVRO,
 )
-from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_transport import (
     OffloadTransportException,
     OffloadTransport,
-    FRONTEND_TRACE_MODULE,
     OFFLOAD_TRANSPORT_METHOD_SQOOP,
     OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
     TRANSPORT_CXT_BYTES,
@@ -78,7 +76,7 @@ class OffloadTransportStandardSqoop(OffloadTransport):
             rdbms_columns_override=rdbms_columns_override,
         )
 
-        if offload_options.db_type in (DBTYPE_MSSQL, DBTYPE_NETEZZA):
+        if offload_options.db_type == DBTYPE_MSSQL:
             if len(offload_source_table.get_primary_key_columns()) == 1:
                 messages.warning(
                     "Downgrading Sqoop parallelism for %s table without a singleton primary key"

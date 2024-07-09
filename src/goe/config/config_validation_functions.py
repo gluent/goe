@@ -48,7 +48,6 @@ from goe.offload.offload_constants import (
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
     DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
@@ -437,8 +436,6 @@ def normalise_offload_transport_config(options, exc_cls=OrchestrationConfigExcep
             options.offload_transport_dsn = options.mssql_dsn
         elif options.db_type == DBTYPE_ORACLE:
             options.offload_transport_dsn = options.oracle_dsn
-        elif options.db_type == DBTYPE_NETEZZA:
-            options.offload_transport_dsn = options.netezza_dsn
         elif options.db_type == DBTYPE_TERADATA:
             options.offload_transport_dsn = options.teradata_server
 
@@ -463,8 +460,6 @@ def normalise_rdbms_options(options, exc_cls=OrchestrationConfigException):
         normalise_mssql_options(options, exc_cls=exc_cls)
     elif options.db_type == DBTYPE_ORACLE:
         normalise_rdbms_oracle_options(options, exc_cls=exc_cls)
-    elif options.db_type == DBTYPE_NETEZZA:
-        normalise_netezza_options(options, exc_cls=exc_cls)
     elif options.db_type == DBTYPE_TERADATA:
         normalise_teradata_options(options, exc_cls=exc_cls)
 
@@ -524,23 +519,6 @@ def normalise_mssql_options(options, exc_cls=OrchestrationConfigException):
     options.rdbms_app_user = options.mssql_app_user
     options.rdbms_app_pass = options.mssql_app_pass
     options.rdbms_dsn = options.mssql_dsn
-    options.ora_adm_user = None
-    options.ora_adm_pass = None
-    options.ora_repo_user = None
-    options.sqoop_password_file = None
-
-
-def normalise_netezza_options(options, exc_cls=OrchestrationConfigException):
-    if (
-        not options.netezza_app_user
-        or not options.netezza_app_pass
-        or not options.netezza_dsn
-    ):
-        raise exc_cls("IBM Netezza connection options required")
-
-    options.rdbms_app_user = options.netezza_app_user
-    options.rdbms_app_pass = options.netezza_app_pass
-    options.rdbms_dsn = options.netezza_dsn
     options.ora_adm_user = None
     options.ora_adm_pass = None
     options.ora_repo_user = None

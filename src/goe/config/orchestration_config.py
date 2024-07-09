@@ -40,7 +40,6 @@ from goe.config.config_validation_functions import (
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
@@ -131,9 +130,6 @@ EXPECTED_CONFIG_ARGS = [
     "mssql_dsn",
     "mssql_app_user",
     "mssql_app_pass",
-    "netezza_dsn",
-    "netezza_app_user",
-    "netezza_app_pass",
     "not_null_propagation",
     "offload_fs_container",
     "offload_fs_prefix",
@@ -597,15 +593,6 @@ class OrchestrationConfig:
             mssql_dsn=config_dict.get(
                 "mssql_dsn", orchestration_defaults.mssql_dsn_default()
             ),
-            netezza_app_user=config_dict.get(
-                "netezza_app_user", orchestration_defaults.netezza_app_user_default()
-            ),
-            netezza_app_pass=config_dict.get(
-                "netezza_app_pass", orchestration_defaults.netezza_app_pass_default()
-            ),
-            netezza_dsn=config_dict.get(
-                "netezza_dsn", orchestration_defaults.netezza_dsn_default()
-            ),
             not_null_propagation=config_dict.get(
                 "not_null_propagation",
                 orchestration_defaults.not_null_propagation_default(),
@@ -966,11 +953,6 @@ class OrchestrationConfig:
             log_fn(
                 "Connecting to Microsoft SQL Server as %s (%s)"
                 % (self.mssql_app_user, self.mssql_dsn)
-            )
-        elif self.db_type == DBTYPE_NETEZZA:
-            log_fn(
-                "Connecting to IBM Netezza as %s (%s)"
-                % (self.netezza_app_user, self.netezza_dsn)
             )
         elif self.db_type == DBTYPE_TERADATA:
             log_fn(

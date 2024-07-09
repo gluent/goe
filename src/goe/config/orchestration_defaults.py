@@ -34,7 +34,6 @@ from goe.offload.offload_constants import (
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
     DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     FILE_STORAGE_FORMAT_AVRO,
@@ -192,7 +191,6 @@ def frontend_db_type_default():
     ).lower()
     if frontend_distro in [
         DBTYPE_MSSQL,
-        DBTYPE_NETEZZA,
         DBTYPE_ORACLE,
         DBTYPE_TERADATA,
     ]:
@@ -648,23 +646,6 @@ def mssql_app_pass_default():
 
 def mssql_dsn_default():
     return os.environ.get("MSSQL_CONN")
-
-
-###########################################################################
-# FRONTEND Netezza DEFAULTS
-###########################################################################
-
-
-def netezza_app_user_default():
-    return os.environ.get("NETEZZA_APP_USER")
-
-
-def netezza_app_pass_default():
-    return os.environ.get("NETEZZA_APP_PASS")
-
-
-def netezza_dsn_default():
-    return os.environ.get("NETEZZA_CONN")
 
 
 ###########################################################################

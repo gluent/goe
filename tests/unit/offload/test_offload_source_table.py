@@ -19,7 +19,6 @@ from numpy import datetime64
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
 )
 from goe.offload.offload_messages import OffloadMessages
@@ -27,10 +26,6 @@ from goe.offload.microsoft.mssql_column import (
     MSSQL_TYPE_BIGINT,
     MSSQL_TYPE_DATETIME,
     MSSQL_TYPE_VARCHAR,
-)
-from goe.offload.netezza.netezza_column import (
-    NETEZZA_TYPE_BIGINT,
-    NETEZZA_TYPE_TIMESTAMP,
 )
 from goe.offload.oracle.oracle_column import (
     ORACLE_TYPE_DATE,
@@ -41,11 +36,9 @@ from goe.offload.oracle.oracle_column import (
 from goe.offload.oracle import oracle_offload_source_table
 from tests.unit.test_functions import (
     build_mock_options,
-    optional_netezza_dependency_exception,
     optional_sql_server_dependency_exception,
     optional_teradata_dependency_exception,
     FAKE_MSSQL_ENV,
-    FAKE_NETEZZA_ENV,
     FAKE_ORACLE_ENV,
     FAKE_TERADATA_ENV,
 )
@@ -174,18 +167,6 @@ class TestOffloadSourceTable(TestCase):
                 self.api.to_rdbms_literal_with_sql_conv_fn("Hello", MSSQL_TYPE_VARCHAR)
             except NotImplementedError:
                 pass
-        elif self.config.db_type == DBTYPE_NETEZZA:
-            try:
-                self.api.to_rdbms_literal_with_sql_conv_fn(123, NETEZZA_TYPE_BIGINT)
-                self.api.to_rdbms_literal_with_sql_conv_fn(
-                    self.api.min_datetime_value(), NETEZZA_TYPE_TIMESTAMP
-                )
-                self.api.to_rdbms_literal_with_sql_conv_fn(
-                    datetime64(self.api.min_datetime_value()), NETEZZA_TYPE_TIMESTAMP
-                )
-                self.api.to_rdbms_literal_with_sql_conv_fn("Hello", MSSQL_TYPE_VARCHAR)
-            except NotImplementedError:
-                pass
 
     def _run_all_tests(self):
         if not self.api:
@@ -226,19 +207,6 @@ class TestMSSQLOffloadSourceTable(TestOffloadSourceTable):
                 raise
 
     def test_all_non_connecting_mssql_tests(self):
-        self._run_all_tests()
-
-
-class TestNetezzaOffloadSourceTable(TestOffloadSourceTable):
-    def setUp(self):
-        self.config = self._get_mock_config(FAKE_NETEZZA_ENV)
-        try:
-            super(TestNetezzaOffloadSourceTable, self).setUp()
-        except ModuleNotFoundError as e:
-            if not optional_netezza_dependency_exception(e):
-                raise
-
-    def test_all_non_connecting_netezza_tests(self):
         self._run_all_tests()
 
 

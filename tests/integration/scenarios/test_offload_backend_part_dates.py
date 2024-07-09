@@ -187,6 +187,7 @@ def fact_as_date_tests(
         "offload_partition_granularity": backend_granularity,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -434,6 +435,7 @@ def test_offload_backend_part_date_as_str(config, schema, data_db):
             "variable_string_columns_csv": "time_id",
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(
             options,
@@ -452,6 +454,7 @@ def test_offload_backend_part_date_as_str(config, schema, data_db):
             "variable_string_columns_csv": "time_id",
             "offload_partition_granularity": "4",
             "reset_backend_table": True,
+            "execute": True,
         }
         run_offload(
             options,

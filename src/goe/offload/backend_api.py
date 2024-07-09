@@ -351,10 +351,9 @@ class BackendApiInterface(metaclass=ABCMeta):
             for _ in column_list
         ]
         max_name = max(len(_[0]) for _ in sql_cols)
-        max_type = max(len(_[1]) for _ in sql_cols)
-        col_template = f"%-{max_name}s %-{max_type}s %s"
+        col_template = f"%-{max_name}s %s%s"
         return "    " + "\n,   ".join(
-            [col_template % (_[0], _[1], _[2]) for _ in sql_cols]
+            [col_template % (_[0], _[1], f" {_[2]}" if _[2] else "") for _ in sql_cols]
         )
 
     def _create_table_column_nn_clause_common(
@@ -1154,21 +1153,13 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         """
 
     @abstractmethod
-    def create_database(self, db_name, comment=None, properties=None):
+    def create_database(
+        self, db_name, comment=None, properties=None, with_terminator=False
+    ):
         """Create a backend database or equivalent container for tables (such as dataset or schema).
         properties: An optional dictionary to pass information to different backends, e.g.:
                     properties={"location": "us-west"}
                     Enables a BackendTable implementation to pass implementation specifics to BackendApi
-        """
-
-    @abstractmethod
-    def create_sequence_table(self, db_name, table_name):
-        """Create an empty options.sequence_table_name appropriate for the backend
-        options.sequence_table_name is tricky to deal with because we can leave the db part out,
-        e.g. both of these are valid:
-            options.sequence_table_name = 'udf_db.my_sequence_table
-            options.sequence_table_name = 'my_sequence_table
-        This function needs to cater for that
         """
 
     @abstractmethod
@@ -1185,6 +1176,7 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         sort_column_names=None,
         without_db_name=False,
         sync=None,
+        with_terminator=False,
     ):
         """Create a table and cater for backend specific details, we need to pass all parameters even if they
         don't apply to certain backends but some may be ignored depending on the system involved:
@@ -1839,8 +1831,12 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def table_exists(self, db_name, table_name):
-        pass
+    def table_exists(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table exists or not."""
+
+    @abstractmethod
+    def table_has_rows(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table has rows or not."""
 
     @abstractmethod
     def target_version(self):

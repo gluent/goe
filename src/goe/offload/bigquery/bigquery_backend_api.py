@@ -269,52 +269,34 @@ class BackendBigQueryApi(BackendApiInterface):
             )
 
     def _create_external_table(
-        self, db_name, table_name, column_list, storage_format, location=None
-    ):
-        """Create a BigQuery external table using the API"""
+        self,
+        db_name,
+        table_name,
+        storage_format,
+        location=None,
+        with_terminator=False,
+    ) -> list:
+        """Create a BigQuery external table using SQL"""
         assert db_name
         assert table_name
-        if storage_format not in [
-            FILE_STORAGE_FORMAT_AVRO,
-            FILE_STORAGE_FORMAT_PARQUET,
-        ]:
-            assert column_list
-        assert valid_column_list(column_list), (
-            "Incorrectly formed column_list: %s" % column_list
-        )
         assert storage_format in (
             FILE_STORAGE_FORMAT_AVRO,
-            FILE_STORAGE_FORMAT_BIGTABLE,
             FILE_STORAGE_FORMAT_PARQUET,
-        )
+        ), f"Unsupported staging format: {storage_format}"
         assert location
 
-        if storage_format in [FILE_STORAGE_FORMAT_AVRO, FILE_STORAGE_FORMAT_PARQUET]:
-            # In BigQuery Avro/Parquet external table are to be created over existing files, no schema can be specified
-            column_spec = None
-        else:
-            column_spec = [
-                bigquery.SchemaField(
-                    _.name,
-                    _.format_data_type(),
-                    mode="NULLABLE" if _.nullable else "REQUIRED",
-                )
-                for _ in column_list
-            ]
-
-        new_table = bigquery.Table(
-            self._bq_table_id(db_name, table_name), schema=column_spec
+        sql = """CREATE EXTERNAL TABLE {db_table}
+OPTIONS (format ='{format}',
+         uris = ['{location}'],
+         description = 'GOE staging table');
+""".format(
+            db_table=self.enclose_object_reference(db_name, table_name),
+            format=storage_format,
+            location=location,
         )
-
-        external_config = bigquery.ExternalConfig(storage_format)
-        external_config.source_uris = [location]
-        new_table.external_data_configuration = external_config
-
-        log_cmd = pprint.pformat(new_table.to_api_repr())
-        self._log("BigQuery call: %s" % log_cmd, detail=VERBOSE)
-        if not self._dry_run:
-            created_table = self._client.create_table(new_table)
-        return [log_cmd]
+        if with_terminator:
+            sql += ";"
+        return self.execute_ddl(sql)
 
     def _create_table_properties_clause(self, table_properties):
         """Build OPTIONS clause for CREATE TABLE statements from table_properties dict. Add kms key details (if set)"""
@@ -960,8 +942,11 @@ class BackendBigQueryApi(BackendApiInterface):
     ):
         raise NotImplementedError("Compute statistics does not apply for BigQuery")
 
-    def create_database(self, db_name, comment=None, properties=None):
-        """Use the BigQuery API to create a dataset.
+    def create_database(
+        self, db_name, comment=None, properties=None, with_terminator=False
+    ):
+        """Create a BigQuery dataset using SQL.
+
         properties: Allows properties["location"] to specify a BigQuery location, e.g. "us-west"
         """
         assert db_name
@@ -975,22 +960,21 @@ class BackendBigQueryApi(BackendApiInterface):
                 "Dataset already exists, not attempting to create: %s" % db_name,
                 detail=VVERBOSE,
             )
-        new_dataset = bigquery.Dataset(self._bq_dataset_id(db_name))
-        log_cmd = "create_dataset(%s" % self._bq_dataset_id(db_name)
+            return []
+        sql = "CREATE SCHEMA {}".format(
+            self.enclose_identifier(self._bq_dataset_id(db_name))
+        )
+        options = []
         if comment:
-            log_cmd += ", description='%s'" % comment
-            new_dataset.description = comment
+            options.append(f"description='{comment}'")
         if properties and properties.get("location"):
-            log_cmd += ", location=%s" % properties["location"]
-            new_dataset.location = properties["location"]
-        log_cmd += ")"
-        self._log("BigQuery call: %s" % log_cmd, detail=VERBOSE)
-        if not self._dry_run:
-            self._client.create_dataset(new_dataset)
-        return [log_cmd]
-
-    def create_sequence_table(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for BigQuery")
+            options.append("location='{}'".format(properties["location"]))
+        if options:
+            sql += " OPTIONS({})".format(",".join(options))
+        if with_terminator:
+            sql += ";"
+        cmds = self.execute_ddl(sql)
+        return cmds
 
     def create_table(
         self,
@@ -1005,8 +989,10 @@ class BackendBigQueryApi(BackendApiInterface):
         sort_column_names=None,
         without_db_name=False,
         sync=None,
+        with_terminator=False,
     ):
-        """Create a BigQuery table
+        """Create a BigQuery table.
+
         sort_column_names: Only applicable for partitioned tables
         storage_format: Only used for external table otherwise FILE_STORAGE_FORMAT_BIGTABLE
         location: Only used for external table
@@ -1015,7 +1001,11 @@ class BackendBigQueryApi(BackendApiInterface):
         """
         if external:
             return self._create_external_table(
-                db_name, table_name, column_list, storage_format, location=location
+                db_name,
+                table_name,
+                storage_format,
+                location=location,
+                with_terminator=with_terminator,
             )
 
         # Normal (non-external) table
@@ -1027,6 +1017,8 @@ class BackendBigQueryApi(BackendApiInterface):
             table_properties=table_properties,
             sort_column_names=sort_column_names,
         )
+        if with_terminator:
+            sql += ";"
         cmds = self.execute_ddl(sql, sync=sync)
 
         # Check table was created with KMS encryption if requested
@@ -2192,8 +2184,14 @@ FROM   %(from_db_table)s%(where)s""" % {
     def table_distribution(self, db_name, table_name):
         return None
 
-    def table_exists(self, db_name, table_name):
+    def table_exists(self, db_name: str, table_name: str) -> bool:
         return self._object_exists(db_name, table_name, table_type="TABLE")
+
+    def table_has_rows(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table has rows or not."""
+        sql = f"SELECT 1 FROM {self.enclose_object_reference(db_name, table_name)} LIMIT 1"
+        row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
+        return bool(row)
 
     def target_version(self):
         """No version available via SQL or API for BigQuery"""

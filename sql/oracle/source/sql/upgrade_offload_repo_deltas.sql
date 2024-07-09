@@ -60,6 +60,7 @@ begin
 
     -- Follow this pattern for each repo version file in sequence...
     check_version(v_current_version, '1.0.0');
+    check_version(v_current_version, '1.0.4');
 
 end;
 /

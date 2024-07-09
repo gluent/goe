@@ -145,12 +145,12 @@ def offload_list_as_range_ipa_standard_story_tests(
         less_than_option: hv_1,
         "offload_partition_functions": udf,
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=offload_constants.IPA_PREDICATE_TYPE_EXCEPTION_TEXT,
     )
 
@@ -160,12 +160,12 @@ def offload_list_as_range_ipa_standard_story_tests(
         less_than_option: hv_1,
         "offload_partition_functions": udf,
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_status=False,
     )
 
@@ -178,6 +178,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -206,6 +207,7 @@ def offload_list_as_range_ipa_standard_story_tests(
     options = {
         "owner_table": schema + "." + table_name,
         less_than_option: hv_3,
+        "execute": True,
     }
     run_offload(
         options,
@@ -233,6 +235,7 @@ def offload_list_as_range_ipa_standard_story_tests(
     options = {
         "owner_table": schema + "." + table_name,
         "equal_to_values": hv_4,
+        "execute": True,
     }
     run_offload(
         options,
@@ -247,6 +250,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_4
         + ","
         + test_constants.SALES_BASED_LIST_PNAME_5,
+        "execute": True,
     }
     run_offload(
         options,
@@ -259,6 +263,7 @@ def offload_list_as_range_ipa_standard_story_tests(
     options = {
         "owner_table": schema + "." + table_name,
         "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_4,
+        "execute": True,
     }
     run_offload(
         options,
@@ -285,6 +290,7 @@ def offload_list_as_range_ipa_standard_story_tests(
     options = {
         "owner_table": schema + "." + table_name,
         less_than_option: hv_4,
+        "execute": True,
     }
     run_offload(
         options,
@@ -315,6 +321,7 @@ def offload_list_as_range_ipa_standard_story_tests(
     options = {
         "owner_table": schema + "." + table_name,
         less_than_option: hv_5,
+        "execute": True,
     }
     run_offload(
         options,
@@ -585,6 +592,7 @@ def test_offload_list_rpa_subpart(config, schema, data_db):
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 10,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(
         options,

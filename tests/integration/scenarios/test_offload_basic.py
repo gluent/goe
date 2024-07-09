@@ -28,11 +28,14 @@ from goe.offload.offload_functions import (
     data_db_name,
     load_db_name,
 )
+from goe.offload.offload_messages import FORCED_EXCEPTION_TEXT
 from goe.offload.offload_metadata_functions import (
     INCREMENTAL_PREDICATE_TYPE_LIST,
     INCREMENTAL_PREDICATE_TYPE_RANGE,
 )
 from goe.offload.offload_source_data import MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE
+from goe.orchestration import command_steps
+from goe.orchestration.command_steps import step_title
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
@@ -45,6 +48,7 @@ from tests.integration.scenarios.assertion_functions import (
     sales_based_fact_assertion,
     standard_dimension_assertion,
     text_in_events,
+    text_in_messages,
 )
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
@@ -53,6 +57,7 @@ from tests.integration.scenarios.scenario_runner import (
 from tests.integration.scenarios.setup_functions import (
     drop_backend_test_load_table,
     drop_backend_test_table,
+    drop_offload_metadata,
     gen_truncate_sales_based_fact_partition_ddls,
     partition_columns_if_supported,
 )
@@ -71,7 +76,10 @@ from tests.testlib.test_framework.test_functions import (
 
 
 OFFLOAD_DIM = "STORY_DIM"
+OFFLOAD_DIM2 = "STORY_EXISTS_DIM"
+OFFLOAD_DIM3 = "STORY_EXISTS_META_DIM"
 OFFLOAD_FACT = "STORY_FACT"
+OFFLOAD_FACT2 = "STORY_EXISTS_FACT"
 GCS_LOG_DIM = "STORY_DIM"
 
 
@@ -277,7 +285,8 @@ def test_offload_basic_dim(config, schema, data_db):
         config, messages, trace_action=f"repo_client({id})"
     )
 
-    backend_name = convert_backend_identifier_case(config, OFFLOAD_DIM)
+    test_table = OFFLOAD_DIM
+    backend_name = convert_backend_identifier_case(config, test_table)
     copy_stats_available = backend_api.table_stats_set_supported()
 
     # Setup
@@ -286,36 +295,38 @@ def test_offload_basic_dim(config, schema, data_db):
         backend_api,
         config,
         messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, OFFLOAD_DIM),
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, test_table),
         python_fns=[
             lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, OFFLOAD_DIM
+                config, backend_api, messages, data_db, test_table
             ),
             lambda: drop_backend_test_load_table(
-                config, backend_api, messages, load_db, OFFLOAD_DIM
+                config, backend_api, messages, load_db, test_table
             ),
+            lambda: drop_offload_metadata(repo_client, schema, test_table),
         ],
     )
     # Frontend API is not used for anything else so let's close it.
     frontend_api.close()
 
-    assert not backend_table_exists(config, backend_api, messages, data_db, OFFLOAD_DIM)
-    assert not backend_table_exists(config, backend_api, messages, load_db, OFFLOAD_DIM)
+    assert not backend_table_exists(config, backend_api, messages, data_db, test_table)
+    assert not backend_table_exists(config, backend_api, messages, load_db, test_table)
 
     # Basic verification mode offload of a simple dimension.
     options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
+        "owner_table": schema + "." + test_table,
         "reset_backend_table": True,
+        "execute": False,
     }
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     assert not backend_table_exists(
-        config, backend_api, messages, data_db, OFFLOAD_DIM
+        config, backend_api, messages, data_db, test_table
     ), "Backend table should NOT exist"
 
     # Basic offload of a simple dimension.
     options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
+        "owner_table": schema + "." + test_table,
         "offload_stats_method": (
             offload_constants.OFFLOAD_STATS_METHOD_COPY
             if copy_stats_available
@@ -326,28 +337,35 @@ def test_offload_basic_dim(config, schema, data_db):
         "impala_insert_hint": IMPALA_NOSHUFFLE_HINT,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
     assert backend_table_exists(
-        config, backend_api, messages, load_db, OFFLOAD_DIM
+        config, backend_api, messages, load_db, test_table
     ), "Backend load table should exist"
     assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, OFFLOAD_DIM
+        config, backend_api, messages, repo_client, schema, data_db, test_table
     )
 
     # Attempt to re-offload, expect to fail.
     options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
+        "owner_table": schema + "." + test_table,
+        "execute": True,
     }
-    run_offload(options, config, messages, expected_status=False)
+    offload_messages = run_offload(options, config, messages, expected_status=False)
+    assert text_in_messages(
+        offload_messages,
+        offload_constants.TARGET_HAS_DATA_MESSAGE_TEMPLATE % (data_db, backend_name),
+    )
 
     # Reset offload the dimension adding backend partitioning (if supported).
     options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
+        "owner_table": schema + "." + test_table,
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 1000,
         "reset_backend_table": True,
+        "execute": True,
     }
     if backend_api.partition_by_column_supported():
         if backend_api.max_partition_columns() == 1:
@@ -367,13 +385,13 @@ def test_offload_basic_dim(config, schema, data_db):
     run_offload(options, config, messages)
 
     assert backend_table_exists(
-        config, backend_api, messages, data_db, OFFLOAD_DIM
+        config, backend_api, messages, data_db, test_table
     ), "Backend table should exist"
     assert not backend_table_exists(
-        config, backend_api, messages, load_db, OFFLOAD_DIM
+        config, backend_api, messages, load_db, test_table
     ), "Backend load table should NOT exist"
     assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, OFFLOAD_DIM
+        config, backend_api, messages, repo_client, schema, data_db, test_table
     )
     assert offload_basic_dim_assertion(backend_api, messages, data_db, backend_name)
     # Connections are being left open, explicitly close them.
@@ -389,7 +407,8 @@ def test_offload_basic_fact(config, schema, data_db):
         config, messages, trace_action=f"repo_client({id})"
     )
 
-    backend_name = convert_backend_identifier_case(config, OFFLOAD_FACT)
+    test_table = OFFLOAD_FACT
+    backend_name = convert_backend_identifier_case(config, test_table)
 
     # Setup
     run_setup(
@@ -398,65 +417,69 @@ def test_offload_basic_fact(config, schema, data_db):
         config,
         messages,
         frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, OFFLOAD_FACT, simple_partition_names=True
+            schema, test_table, simple_partition_names=True
         ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, OFFLOAD_FACT
-        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, test_table
+            ),
+            lambda: drop_offload_metadata(repo_client, schema, test_table),
+        ],
     )
 
     assert not backend_table_exists(
-        config, backend_api, messages, data_db, OFFLOAD_FACT
+        config, backend_api, messages, data_db, test_table
     ), "The backend table should NOT exist"
 
     # Non-Execute offload of first partition with basic options.
     options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
+        "owner_table": schema + "." + test_table,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
         "reset_backend_table": True,
+        "execute": False,
     }
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     assert not backend_table_exists(
-        config, backend_api, messages, data_db, OFFLOAD_FACT
+        config, backend_api, messages, data_db, test_table
     ), "The backend table should NOT exist"
 
     # Offload of RANGE requesting LIST.
     options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
+        "owner_table": schema + "." + test_table,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_LIST,
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=offload_constants.IPA_PREDICATE_TYPE_FILTER_EXCEPTION_TEXT,
     )
 
     assert not backend_table_exists(
-        config, backend_api, messages, data_db, OFFLOAD_FACT
+        config, backend_api, messages, data_db, test_table
     ), "The backend table should NOT exist"
 
     if config.db_type != offload_constants.DBTYPE_TERADATA:
         # Offloads only empty partitions. Ensure 0 rows in backend.
         options = {
-            "owner_table": schema + "." + OFFLOAD_FACT,
+            "owner_table": schema + "." + test_table,
             "older_than_date": test_constants.SALES_BASED_FACT_PRE_HV,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
         assert backend_table_exists(
-            config, backend_api, messages, data_db, OFFLOAD_FACT
+            config, backend_api, messages, data_db, test_table
         ), "Backend table should exist"
         assert (
-            backend_table_count(config, backend_api, messages, data_db, OFFLOAD_FACT)
-            == 0
+            backend_table_count(config, backend_api, messages, data_db, test_table) == 0
         ), "Backend table should be empty"
 
     # Non-Execute offload of first partition with advanced options.
@@ -466,7 +489,7 @@ def test_offload_basic_fact(config, schema, data_db):
         else offload_constants.OFFLOAD_STATS_METHOD_NATIVE
     )
     options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
+        "owner_table": schema + "." + test_table,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
         "integer_2_columns_csv": "channel_id",
@@ -476,6 +499,7 @@ def test_offload_basic_fact(config, schema, data_db):
         "offload_stats_method": offload_stats_method,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": False,
     }
     if backend_api.partition_by_column_supported():
         if config.target == offload_constants.DBTYPE_BIGQUERY:
@@ -492,11 +516,12 @@ def test_offload_basic_fact(config, schema, data_db):
                     + ",1",
                 }
             )
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     # Offload some partitions from a fact table.
     # The fact is partitioned by multiple columns (if possible) with appropriate granularity.
     # We use COPY stats on this initial offload, also specify some specific data types.
+    options["execute"] = True
     run_offload(options, config, messages)
 
     assert sales_based_fact_assertion(
@@ -507,7 +532,7 @@ def test_offload_basic_fact(config, schema, data_db):
         repo_client,
         schema,
         data_db,
-        OFFLOAD_FACT,
+        test_table,
         test_constants.SALES_BASED_FACT_HV_1,
         check_backend_rowcount=True,
     )
@@ -517,10 +542,11 @@ def test_offload_basic_fact(config, schema, data_db):
 
     # Incremental Offload of Fact - Non-Execute.
     options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
+        "owner_table": schema + "." + test_table,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+        "execute": False,
     }
-    run_offload(options, config, messages, config_overrides={"execute": False})
+    run_offload(options, config, messages)
 
     assert offload_basic_fact_1st_incr_assertion(
         config, backend_api, messages, data_db, backend_name
@@ -528,8 +554,9 @@ def test_offload_basic_fact(config, schema, data_db):
 
     # Offloads next partition from fact table.
     options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
+        "owner_table": schema + "." + test_table,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -540,7 +567,7 @@ def test_offload_basic_fact(config, schema, data_db):
         repo_client,
         schema,
         data_db,
-        OFFLOAD_FACT,
+        test_table,
         test_constants.SALES_BASED_FACT_HV_2,
     )
 
@@ -554,13 +581,13 @@ def test_offload_basic_fact(config, schema, data_db):
         repo_client,
         schema,
         data_db,
-        OFFLOAD_FACT,
+        test_table,
         test_constants.SALES_BASED_FACT_HV_2,
     )
 
     # Offloads next partition with dodgy settings, offload will override these with sensible options.
     options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
+        "owner_table": schema + "." + test_table,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_3,
         "integer_1_columns_csv": "cust_id,channel_id,prod_id",
         "offload_partition_granularity": 100,
@@ -570,6 +597,7 @@ def test_offload_basic_fact(config, schema, data_db):
             backend_api, "promo_id"
         ),
         "synthetic_partition_digits": 5,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -580,7 +608,7 @@ def test_offload_basic_fact(config, schema, data_db):
         repo_client,
         schema,
         data_db,
-        OFFLOAD_FACT,
+        test_table,
         test_constants.SALES_BASED_FACT_HV_3,
     )
     assert offload_basic_fact_2nd_incr_assertion(
@@ -594,14 +622,15 @@ def test_offload_basic_fact(config, schema, data_db):
         config,
         messages,
         frontend_sqls=gen_truncate_sales_based_fact_partition_ddls(
-            schema, OFFLOAD_FACT, [test_constants.SALES_BASED_FACT_HV_4], frontend_api
+            schema, test_table, [test_constants.SALES_BASED_FACT_HV_4], frontend_api
         ),
     )
 
     # Offloads next partition from fact table after all offloaded partitions have been truncated.
     options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
+        "owner_table": schema + "." + test_table,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -615,9 +644,248 @@ def test_offload_basic_fact(config, schema, data_db):
         repo_client,
         schema,
         data_db,
-        OFFLOAD_FACT,
+        test_table,
         test_constants.SALES_BASED_FACT_HV_4,
     )
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def test_offload_dim_to_existing_table_no_metadata(config, schema, data_db):
+    id = "test_offload_dim_to_existing_table_no_metadata"
+    messages = get_test_messages(config, id)
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
+
+    test_table = OFFLOAD_DIM2
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, test_table),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, test_table
+            ),
+            lambda: drop_offload_metadata(repo_client, schema, test_table),
+        ],
+    )
+
+    # Offload the table to create the backend table but exit before doing anything else.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "error_after_step": step_title(command_steps.STEP_CREATE_TABLE),
+        "reset_backend_table": True,
+        "execute": True,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=FORCED_EXCEPTION_TEXT,
+    )
+
+    assert (
+        backend_table_count(config, backend_api, messages, data_db, test_table) == 0
+    ), "Backend table should be empty"
+
+    # Now we can attempt to offload to a pre-created empty backend table, this should succeed.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "execute": True,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+    )
+
+    # If we try the offload again it should fail because the table has contents.
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_status=False,
+    )
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def test_offload_dim_to_existing_table_with_metadata(config, schema, data_db):
+    id = "test_offload_dim_to_existing_table_with_metadata"
+    messages = get_test_messages(config, id)
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
+
+    test_table = OFFLOAD_DIM3
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+            schema, test_table, empty=True
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, test_table
+            ),
+            lambda: drop_offload_metadata(repo_client, schema, test_table),
+        ],
+    )
+
+    # Offload the empty table.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "reset_backend_table": True,
+        "create_backend_db": True,
+        "execute": True,
+    }
+    run_offload(options, config, messages)
+
+    assert backend_table_exists(
+        config, backend_api, messages, data_db, test_table
+    ), "Backend table should exist"
+    assert (
+        backend_table_count(config, backend_api, messages, data_db, test_table) == 0
+    ), "Backend table should be empty"
+
+    # Recreate the table but this time with data.
+    # Do not drop the metadata.
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+            schema,
+            test_table,
+        ),
+    )
+
+    # Attempt to offload to the empty table - expect this to fail.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "execute": True,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=(
+            offload_constants.METADATA_EMPTY_TABLE_EXCEPTION_TEMPLATE
+            % (schema.upper(), test_table.upper())
+        ),
+    )
+
+    assert (
+        backend_table_count(config, backend_api, messages, data_db, test_table) == 0
+    ), "Backend table should be empty"
+
+    # Offload to the empty table.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "reuse_backend_table": True,
+        "execute": True,
+    }
+    run_offload(options, config, messages)
+
+    assert (
+        backend_table_count(config, backend_api, messages, data_db, test_table) > 0
+    ), "Backend table should NOT be empty"
+
+    # Re-try should do nothing, even with reuse option.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "reuse_backend_table": True,
+        "execute": True,
+    }
+    run_offload(options, config, messages, expected_status=False)
+
+    # Connections are being left open, explicitly close them.
+    frontend_api.close()
+
+
+def test_offload_fact_to_existing_table_no_metadata(config, schema, data_db):
+    id = "test_offload_fact_to_existing_table_no_metadata"
+    messages = get_test_messages(config, id)
+    backend_api = get_backend_testing_api(config, messages)
+    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    repo_client = orchestration_repo_client_factory(
+        config, messages, trace_action=f"repo_client({id})"
+    )
+
+    test_table = OFFLOAD_FACT2
+
+    # Setup
+    run_setup(
+        frontend_api,
+        backend_api,
+        config,
+        messages,
+        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+            schema, test_table, simple_partition_names=True
+        ),
+        python_fns=[
+            lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, test_table
+            ),
+            lambda: drop_offload_metadata(repo_client, schema, test_table),
+        ],
+    )
+
+    # Offload the table to create the backend table but exit before doing anything else.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
+        "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
+        "error_after_step": step_title(command_steps.STEP_CREATE_TABLE),
+        "reset_backend_table": True,
+        "execute": True,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_exception_string=FORCED_EXCEPTION_TEXT,
+    )
+    assert (
+        backend_table_count(config, backend_api, messages, data_db, test_table) == 0
+    ), "Backend table should be empty"
+
+    # Now we can attempt to offload to a pre-created empty backend table, this should succeed.
+    options = {
+        "owner_table": schema + "." + test_table,
+        "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
+        "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
+        "execute": True,
+    }
+    run_offload(
+        options,
+        config,
+        messages,
+    )
+
+    # If we try the offload again it should fail because the table has metadata.
+    run_offload(
+        options,
+        config,
+        messages,
+        expected_status=False,
+    )
+
     # Connections are being left open, explicitly close them.
     frontend_api.close()
 
@@ -670,6 +938,7 @@ def test_offload_log_path_gcs(config, schema, data_db):
             "owner_table": schema + "." + table_name,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(
             options,

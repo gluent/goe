@@ -692,7 +692,9 @@ class BackendSnowflakeApi(BackendApiInterface):
         """No manual controls of stats on Snowflake"""
         raise NotImplementedError("Compute statistics does not apply for Snowflake")
 
-    def create_database(self, db_name, comment=None, properties=None):
+    def create_database(
+        self, db_name, comment=None, properties=None, with_terminator=False
+    ):
         """Create a Snowflake schema which is a database in GOE terminology.
         properties["transient"]: Can be used to create a transient schema if value is truthy.
         """
@@ -719,10 +721,9 @@ class BackendSnowflakeApi(BackendApiInterface):
             retention_clause,
             comment_clause,
         )
+        if with_terminator:
+            sql += ";"
         return self.execute_ddl(sql)
-
-    def create_sequence_table(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for Snowflake")
 
     def create_table(
         self,
@@ -737,6 +738,7 @@ class BackendSnowflakeApi(BackendApiInterface):
         sort_column_names=None,
         without_db_name=False,
         sync=None,
+        with_terminator=False,
     ):
         """Create a Snowflake table
         partition_column_names: Not supported on Snowflake
@@ -788,6 +790,8 @@ class BackendSnowflakeApi(BackendApiInterface):
                 "sort_by_clause": sort_by_clause,
             }
         )
+        if with_terminator:
+            sql += ";"
         return self.execute_ddl(sql, sync=sync)
 
     def create_view(
@@ -1928,7 +1932,7 @@ class BackendSnowflakeApi(BackendApiInterface):
     def table_distribution(self, db_name, table_name):
         return None
 
-    def table_exists(self, db_name, table_name):
+    def table_exists(self, db_name: str, table_name: str) -> bool:
         """Return True/False if a table exists using SHOW TABLES.
         DESCRIBE TABLE/SHOW TABLES are much faster than using INFORMATION_SCHEMA but both have problems:
         SHOW TABLES is has case-insensitive LIKE and IN clauses plus throws exceptions if the schema doesn't exist.
@@ -1966,6 +1970,12 @@ class BackendSnowflakeApi(BackendApiInterface):
             else:
                 raise
         return False
+
+    def table_has_rows(self, db_name: str, table_name: str) -> bool:
+        """Return bool depending whether the table has rows or not."""
+        sql = f"SELECT 1 FROM {self.enclose_object_reference(db_name, table_name)} LIMIT 1"
+        row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
+        return bool(row)
 
     def target_version(self):
         """Return version of the backend SQL engine in x.y.z format that can be used by GOEVersion().

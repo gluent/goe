@@ -713,7 +713,9 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
     def _sudo_hdfs_dfs(self, hdfs_dfs_options):
         cmd = ["/usr/bin/sudo", "-u", "hdfs", "hdfs", "dfs"] + hdfs_dfs_options
         self._log("sudo_hdfs_dfs: %s" % cmd, detail=VERBOSE)
-        returncode, output = subproc_cmd(cmd, self._connection_options, self._messages)
+        returncode, output = subproc_cmd(
+            cmd, self._connection_options, self._messages, execute=(not self._dry_run)
+        )
         if returncode != 0:
             self._log("Non-zero response: %s" % output)
             return False
@@ -1127,12 +1129,12 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
     def story_test_offload_nums_expected_backend_types(self, sampling_enabled=True):
         non_sampled_type = self.gen_default_numeric_column("x").format_data_type()
         return {
-            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: "decimal(18,6)"
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: HADOOP_TYPE_BIGINT
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: (
+                "decimal(18,6)" if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: (
+                HADOOP_TYPE_BIGINT if sampling_enabled else non_sampled_type
+            ),
             STORY_TEST_OFFLOAD_NUMS_NUM_4: HADOOP_TYPE_BIGINT,
             STORY_TEST_OFFLOAD_NUMS_NUM_18: HADOOP_TYPE_BIGINT,
             STORY_TEST_OFFLOAD_NUMS_NUM_19: "decimal(38,0)",
@@ -1143,24 +1145,24 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
             STORY_TEST_OFFLOAD_NUMS_NUM_STAR_4: "decimal(38,4)",
             STORY_TEST_OFFLOAD_NUMS_NUM_3_5: "decimal(18,8)",
             STORY_TEST_OFFLOAD_NUMS_NUM_10_M5: HADOOP_TYPE_BIGINT,
-            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: "decimal(18,2)"
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_13_9: "decimal(18,12)"
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_15_9: "decimal(38,12)"
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_36_3: "decimal(38,4)"
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_37_3: "decimal(38,4)"
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: "decimal(38,3)"
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: (
+                "decimal(18,2)" if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_13_9: (
+                "decimal(18,12)" if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_15_9: (
+                "decimal(38,12)" if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_36_3: (
+                "decimal(38,4)" if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_37_3: (
+                "decimal(38,4)" if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: (
+                "decimal(38,3)" if sampling_enabled else non_sampled_type
+            ),
         }
 
     def story_test_table_extra_col_info(self):

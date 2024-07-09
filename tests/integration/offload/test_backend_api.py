@@ -14,8 +14,8 @@
 
 from unittest import main
 
+from goe.exceptions import OffloadException
 from goe.offload.factory.backend_api_factory import backend_api_factory
-from goe.offload.offload import OffloadException
 from goe.offload.offload_constants import DBTYPE_SPARK
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
@@ -95,6 +95,7 @@ class TestCurrentBackendApi(TestBackendApi):
                 {
                     "owner_table": self.schema + "." + self.table,
                     "create_backend_db": True,
+                    "execute": True,
                 }
             )
         except OffloadException:
@@ -104,6 +105,7 @@ class TestCurrentBackendApi(TestBackendApi):
                     "owner_table": self.schema + "." + self.table,
                     "reset_backend_table": True,
                     "create_backend_db": True,
+                    "execute": True,
                 }
             )
 
@@ -118,13 +120,19 @@ class TestCurrentBackendApi(TestBackendApi):
         )
         # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
         try:
-            run_offload({"owner_table": self.schema + "." + self.part_table})
+            run_offload(
+                {
+                    "owner_table": self.schema + "." + self.part_table,
+                    "execute": True,
+                },
+            )
         except OffloadException:
             # If this one fails then we let the exception bubble up.
             run_offload(
                 {
                     "owner_table": self.schema + "." + self.part_table,
                     "reset_backend_table": True,
+                    "execute": True,
                 }
             )
 

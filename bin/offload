@@ -17,11 +17,12 @@
 import sys
 
 from goe.config import config_file
+from goe.exceptions import OffloadOptionError
 from goe.goe import (
     get_options,
     OFFLOAD_OP_NAME,
 )
-from goe.offload.offload import OffloadOptionError, get_offload_options
+from goe.offload.offload import get_offload_options
 from goe.orchestration.cli_entry_points import offload_by_cli
 
 

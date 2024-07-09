@@ -208,12 +208,12 @@ def data_governance_auto_property_defaults(
     """
     property_defaults = {}
     now = datetime.datetime.now().replace(microsecond=0)
-    property_defaults[
-        DATA_GOVERNANCE_DYNAMIC_PROPERTY_INITIAL_OPERATION_DATETIME
-    ] = now.isoformat()
-    property_defaults[
-        DATA_GOVERNANCE_DYNAMIC_PROPERTY_LATEST_OPERATION_DATETIME
-    ] = now.isoformat()
+    property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_INITIAL_OPERATION_DATETIME] = (
+        now.isoformat()
+    )
+    property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_LATEST_OPERATION_DATETIME] = (
+        now.isoformat()
+    )
     if source_rdbms_object:
         property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_SOURCE_RDBMS_OBJECT] = (
             "%s.%s.%s" % (rdbms_name, rdbms_schema, source_rdbms_object)
@@ -223,9 +223,9 @@ def data_governance_auto_property_defaults(
             "%s.%s.%s" % (rdbms_name, rdbms_schema, target_rdbms_object)
         ).upper()
     if goe_object_type:
-        property_defaults[
-            DATA_GOVERNANCE_DYNAMIC_PROPERTY_GOE_OBJECT_TYPE
-        ] = goe_object_type
+        property_defaults[DATA_GOVERNANCE_DYNAMIC_PROPERTY_GOE_OBJECT_TYPE] = (
+            goe_object_type
+        )
     property_defaults = filter_properties_by_goe_object_type(
         property_defaults, goe_object_type
     )
@@ -436,8 +436,8 @@ def data_governance_register_new_db(
 def data_governance_register_new_db_step(
     hadoop_db, data_gov_client, messages, goe_object_type, options=None
 ):
-    opts_execute = options.execute if options else True
     if data_gov_client:
+        opts_execute = options.execute if options else True
 
         def step_fn():
             data_governance_register_new_db(
@@ -463,8 +463,8 @@ def data_governance_register_new_object_step(
     renaming_from_object_name=None,
     dg_object_type=None,
 ):
-    opts_execute = options.execute if options else True
     if data_gov_client:
+        opts_execute = options.execute if options else True
 
         def step_fn():
             data_governance_register_new_object(
@@ -526,8 +526,8 @@ def data_governance_register_new_view_step(
 def data_governance_update_metadata_step(
     hadoop_db, hadoop_object_name, data_gov_client, messages, options=None
 ):
-    opts_execute = options.execute if options else True
     if data_gov_client:
+        opts_execute = options.execute if options else True
 
         def step_fn():
             data_governance_update_metadata(
@@ -550,8 +550,8 @@ def data_governance_register_new_multi_db_step(
     """
     assert hadoop_db_list
     assert type(hadoop_db_list) is list
-    opts_execute = options.execute if options else True
     if data_gov_client:
+        opts_execute = options.execute if options else True
 
         def step_fn():
             for hadoop_db, goe_object_type in hadoop_db_list:

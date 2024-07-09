@@ -308,12 +308,12 @@ def test_offload_pbo_exceptions(config, schema, data_db):
         ),
         "offload_predicate_modify_hybrid_view": False,
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=PREDICATE_TYPE_NO_MODIFY_HV_EXCEPTION_TEXT,
     )
 
@@ -323,12 +323,12 @@ def test_offload_pbo_exceptions(config, schema, data_db):
         "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
         "older_than_date": "2012-01-01",
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
     )
 
@@ -338,12 +338,12 @@ def test_offload_pbo_exceptions(config, schema, data_db):
         "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
         "offload_type": OFFLOAD_TYPE_FULL,
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
     )
 
@@ -354,12 +354,12 @@ def test_offload_pbo_exceptions(config, schema, data_db):
         "owner_table": schema + "." + EXC_TABLE,
         "offload_predicate": GenericPredicate('column(not_a_column) = string("NOPE")'),
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string="Unable to resolve column",
     )
 
@@ -370,12 +370,12 @@ def test_offload_pbo_exceptions(config, schema, data_db):
             'column(txn_desc) = string("No such data")'
         ),
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_status=False,
     )
 
@@ -412,12 +412,12 @@ def test_offload_pbo_dim(config, schema, data_db):
         "owner_table": schema + "." + DIM_TABLE,
         "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
     )
     assert not backend_table_exists(config, backend_api, messages, data_db, DIM_TABLE)
 
@@ -427,6 +427,7 @@ def test_offload_pbo_dim(config, schema, data_db):
         "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
@@ -464,6 +465,7 @@ def test_offload_pbo_dim(config, schema, data_db):
         "owner_table": schema + "." + DIM_TABLE,
         "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
         "verify_row_count": "aggregate",
+        "execute": True,
     }
     run_offload(
         options,
@@ -487,6 +489,7 @@ def test_offload_pbo_dim(config, schema, data_db):
     options = {
         "owner_table": schema + "." + DIM_TABLE,
         "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
+        "execute": True,
     }
     run_offload(
         options,
@@ -501,6 +504,7 @@ def test_offload_pbo_dim(config, schema, data_db):
     #    "owner_table": schema + "." + DIM_TABLE,
     #    "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
     #    "force": True,
+    #    "execute": True,
     # }
     # run_offload(
     #    options,
@@ -529,6 +533,7 @@ def test_offload_pbo_dim(config, schema, data_db):
         "owner_table": schema + "." + DIM_TABLE,
         "offload_predicate": GenericPredicate('column(txn_desc) = string("GHI")'),
         "reset_hybrid_view": True,
+        "execute": True,
     }
     messages.log(f"{id}:2", detail=VVERBOSE)
     run_offload(
@@ -601,6 +606,7 @@ def test_offload_pbo_unicode(config, schema, data_db):
         ),
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
@@ -634,6 +640,7 @@ def test_offload_pbo_unicode(config, schema, data_db):
         "offload_predicate": GenericPredicate(
             '((column(data) = string("%s")))' % UCODE_VALUE2
         ),
+        "execute": True,
     }
     messages.log(f"{id}:2", detail=VVERBOSE)
     run_offload(
@@ -695,6 +702,7 @@ def test_offload_pbo_char_pad(config, schema, data_db):
         "offload_predicate": GenericPredicate('(column(data) = string("a  "))'),
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
@@ -726,6 +734,7 @@ def test_offload_pbo_char_pad(config, schema, data_db):
     options = {
         "owner_table": schema + "." + CHAR_TABLE,
         "offload_predicate": GenericPredicate('(column(data) = string("a  "))'),
+        "execute": True,
     }
     run_offload(
         options,
@@ -769,6 +778,7 @@ def test_offload_pbo_ts(config, schema, data_db):
         "allow_nanosecond_timestamp_columns": True,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
@@ -834,13 +844,13 @@ def test_offload_pbo_range(config, schema, data_db):
         ),
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
         "reset_backend_table": True,
+        "execute": False,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
     )
 
@@ -856,6 +866,7 @@ def test_offload_pbo_range(config, schema, data_db):
         ),
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -893,6 +904,7 @@ def test_offload_pbo_range(config, schema, data_db):
         "offload_predicate": GenericPredicate(
             "column(time_id) = datetime(%s)" % test_constants.SALES_BASED_FACT_HV_1
         ),
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert pbo_assertion(
@@ -917,6 +929,7 @@ def test_offload_pbo_range(config, schema, data_db):
     options = {
         "owner_table": schema + "." + RANGE_TABLE,
         "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
+        "execute": True,
     }
     run_offload(
         options,
@@ -934,6 +947,7 @@ def test_offload_pbo_range(config, schema, data_db):
             % test_constants.SALES_BASED_FACT_HV_4
         ),
         "offload_type": OFFLOAD_TYPE_FULL,
+        "execute": True,
     }
     run_offload(
         options,
@@ -986,6 +1000,7 @@ def test_offload_pbo_list(config, schema, data_db):
         "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -996,6 +1011,7 @@ def test_offload_pbo_list(config, schema, data_db):
             "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(3)))"
             % (test_constants.SALES_BASED_FACT_HV_1)
         ),
+        "execute": True,
     }
     run_offload(
         options,
@@ -1012,6 +1028,7 @@ def test_offload_pbo_list(config, schema, data_db):
             % (test_constants.SALES_BASED_FACT_HV_1)
         ),
         "reset_backend_table": True,
+        "execute": True,
     }
     messages.log(f"{id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -1044,6 +1061,7 @@ def test_offload_pbo_list(config, schema, data_db):
     options = {
         "owner_table": "%s.%s" % (schema, LIST_TABLE),
         "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
+        "execute": True,
     }
     run_offload(
         options,
@@ -1059,6 +1077,7 @@ def test_offload_pbo_list(config, schema, data_db):
             "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(4)))"
             % (test_constants.SALES_BASED_FACT_HV_1)
         ),
+        "execute": True,
     }
     messages.log(f"{id}:2", detail=VVERBOSE)
     run_offload(options, config, messages)

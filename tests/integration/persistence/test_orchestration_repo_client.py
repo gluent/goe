@@ -48,7 +48,7 @@ class TestOrchestrationRepoClient(TestCase):
         Tests a command is if launched from the CLI. Pretends to offload a multi chunk partitioned table.
         """
         # execute=True because we want to actually insert and update the repo records for this test.
-        config = OrchestrationConfig.from_dict({"verbose": False, "execute": True})
+        config = OrchestrationConfig.from_dict({"verbose": False})
         execution_id = ExecutionId()
         messages = get_test_messages(
             config, "test_orchestration_command_logging_cli", execution_id=execution_id
@@ -56,6 +56,7 @@ class TestOrchestrationRepoClient(TestCase):
         client = orchestration_repo_client_factory(
             config,
             messages,
+            dry_run=False,
             trace_action="repo_client(test_orchestration_command_logging_cli)",
         )
 
@@ -181,7 +182,7 @@ class TestOrchestrationRepoClient(TestCase):
         Tests a command is if launched from an API. Pretends to offload a non-partitioned table.
         """
         # execute=True because we want to actually insert and update the repo records for this test.
-        config = OrchestrationConfig.from_dict({"verbose": False, "execute": True})
+        config = OrchestrationConfig.from_dict({"verbose": False})
         execution_id = ExecutionId()
         messages = get_test_messages(
             config, "test_orchestration_command_logging_api", execution_id=execution_id
@@ -189,6 +190,7 @@ class TestOrchestrationRepoClient(TestCase):
         client = orchestration_repo_client_factory(
             config,
             messages,
+            dry_run=False,
             trace_action="repo_client(test_orchestration_command_logging_api)",
         )
         # Start an API based Offload

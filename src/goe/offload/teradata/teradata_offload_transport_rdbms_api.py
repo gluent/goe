@@ -215,7 +215,6 @@ class OffloadTransportTeradataApi(OffloadTransportRdbmsApiInterface):
         nan_values_as_null=False,
     ):
         """Returns an expression suitable for reading a specific column from the RDBMS table"""
-        self.debug("get_rdbms_query_cast()")
         ff_scale = self._get_ts_ff_scale(max_ts_scale)
         cast_expression = column_expression
         if rdbms_column.data_type == TERADATA_TYPE_TIMESTAMP_TZ:

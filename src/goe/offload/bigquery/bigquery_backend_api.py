@@ -1116,7 +1116,7 @@ FROM   %(from_tables)s%(where_clause)s""" % {
         return label.capitalize() if initcap else label
 
     def default_date_based_partition_granularity(self):
-        return PART_COL_GRANULARITY_DAY
+        return PART_COL_GRANULARITY_MONTH
 
     def default_storage_compression(self, user_requested_codec, user_requested_format):
         if user_requested_codec in ["HIGH", "MED", "NONE", None]:

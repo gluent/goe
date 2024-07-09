@@ -113,6 +113,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -139,6 +140,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
         "owner_table": schema + "." + OFFLOAD_DIM,
         "bucket_hash_col": "prod_id",
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -164,6 +166,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
     options = {
         "owner_table": schema + "." + OFFLOAD_DIM,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(
         options,

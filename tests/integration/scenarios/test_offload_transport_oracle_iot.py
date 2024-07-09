@@ -179,6 +179,7 @@ def iot_num_dim_tests(
         "offload_transport_method": transport_method,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     log_test_marker(messages, test_id)
     run_offload(options, config, messages)
@@ -234,6 +235,7 @@ def iot_str_dim_tests(
         "offload_transport_method": transport_method,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     log_test_marker(messages, test_id)
     run_offload(options, config, messages)
@@ -289,6 +291,7 @@ def iot_ts_dim_tests(
         "offload_transport_method": transport_method,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     log_test_marker(messages, test_id)
     run_offload(options, config, messages)

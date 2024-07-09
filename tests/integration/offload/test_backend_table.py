@@ -24,6 +24,7 @@ import decimal
 import logging
 from unittest import TestCase, main
 
+from goe.exceptions import OffloadException
 from goe.goe import OffloadOperation
 from goe.offload.column_metadata import (
     CanonicalColumn,
@@ -34,7 +35,6 @@ from goe.offload.column_metadata import (
     GOE_TYPE_INTEGER_8,
 )
 from goe.offload.factory.backend_table_factory import backend_table_factory
-from goe.offload.offload import OffloadException
 from goe.offload.offload_constants import DBTYPE_IMPALA
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
@@ -148,6 +148,7 @@ class TestCurrentBackendTable(TestCase):
                 {
                     "owner_table": self.schema + "." + FACT_NAME,
                     "create_backend_db": True,
+                    "execute": True,
                 }
             )
         except OffloadException:
@@ -157,6 +158,7 @@ class TestCurrentBackendTable(TestCase):
                     "owner_table": self.schema + "." + FACT_NAME,
                     "reset_backend_table": True,
                     "create_backend_db": True,
+                    "execute": True,
                 }
             )
 
@@ -430,6 +432,9 @@ class TestCurrentBackendTable(TestCase):
         else:
             self.assertFalse(cols)
 
+    def _test_has_rows(self):
+        self.assertTrue(self.api.has_rows())
+
     def _test_get_staging_table_location(self):
         try:
             self.api.get_staging_table_location()
@@ -615,6 +620,7 @@ class TestCurrentBackendTable(TestCase):
         self._test_get_default_location()
         self._test_get_partition_columns()
         self._test_get_staging_table_location()
+        self._test_has_rows()
         self._test_result_cache_area_exists()
         self._test_setup_result_cache_area()
         self._test_setup_staging_area()

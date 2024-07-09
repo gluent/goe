@@ -21,6 +21,7 @@
 """
 
 import logging
+from typing import TYPE_CHECKING
 
 from google.cloud import bigquery
 
@@ -55,6 +56,9 @@ from goe.offload.staging.parquet.parquet_column import (
     PARQUET_TYPE_INT64,
 )
 
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+
 
 ###############################################################################
 # CONSTANTS
@@ -75,10 +79,10 @@ class BackendBigQueryTable(BackendTableInterface):
 
     def __init__(
         self,
-        db_name,
-        table_name,
-        backend_type,
-        orchestration_options,
+        db_name: str,
+        table_name: str,
+        backend_type: str,
+        orchestration_options: "OrchestrationConfig",
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
@@ -118,7 +122,7 @@ class BackendBigQueryTable(BackendTableInterface):
     # PRIVATE METHODS
     ###########################################################################
 
-    def _create_load_table(self, staging_file):
+    def _create_load_table(self, staging_file, with_terminator=False) -> list:
         """Create the staging/load table in BigQuery
         Defining a URI for location is tricky. Initially we had *.avro but Avro files written by Spark ThriftServer
         didn't match. Restrictions on the URI:
@@ -142,7 +146,7 @@ class BackendBigQueryTable(BackendTableInterface):
         """
         no_columns = no_partition_cols = []
         load_table_location = "%s/part*" % (self.get_staging_table_location())
-        self._db_api.create_table(
+        return self._db_api.create_table(
             self._load_db_name,
             self._load_table_name,
             no_columns,
@@ -150,6 +154,7 @@ class BackendBigQueryTable(BackendTableInterface):
             storage_format=staging_file.file_format,
             location=load_table_location,
             external=True,
+            with_terminator=with_terminator,
         )
 
     def _drop_load_table(self, sync=None):
@@ -469,7 +474,7 @@ class BackendBigQueryTable(BackendTableInterface):
         """Do nothing on BigQuery"""
         pass
 
-    def create_backend_table(self):
+    def create_backend_table(self, with_terminator=False) -> list:
         """Create a table in BigQuery based on object state.
         Creating a new table may change our world view so the function drops state if in execute mode.
         If dry_run then we leave state in place to allow other operations to preview.
@@ -481,15 +486,27 @@ class BackendBigQueryTable(BackendTableInterface):
             self.get_columns(),
             partition_column_names,
             sort_column_names=self._sort_columns,
+            with_terminator=with_terminator,
         )
         if not self._dry_run:
             self._drop_state()
         return cmds
 
-    def create_db(self):
+    def create_db(self, with_terminator=False) -> list:
         return self._create_final_db(
-            location=self._orchestration_config.bigquery_dataset_location
+            location=self._orchestration_config.bigquery_dataset_location,
+            with_terminator=with_terminator,
         )
+
+    def create_load_db(self, with_terminator=False) -> list:
+        """Create a load database."""
+        if self._db_api.load_db_transport_supported():
+            return self._create_load_db(
+                location=self._orchestration_config.bigquery_dataset_location,
+                with_terminator=with_terminator,
+            )
+        else:
+            return []
 
     def default_udf_db_name(self):
         """By default we support UDF_DB but on BigQuery we use the data db as a fall back"""

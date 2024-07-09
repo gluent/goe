@@ -38,15 +38,6 @@ from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
 from tests.testlib.test_framework.offload_test_messages import OffloadTestMessages
 
 
-def get_backend_db_table_name_from_metadata(hybrid_schema, hybrid_view, repo_client):
-    """Use metadata to get correct case for db name/table, returned as a tuple"""
-    hybrid_metadata = repo_client.get_offload_metadata(hybrid_schema, hybrid_view)
-    assert (
-        hybrid_metadata
-    ), f"Missing hybrid metadata for: {hybrid_schema}.{hybrid_view}"
-    return hybrid_metadata.backend_owner, hybrid_metadata.backend_table
-
-
 def get_backend_testing_api(config, messages, no_caching=True):
     return backend_testing_api_factory(
         config.target, config, messages, dry_run=False, no_caching=no_caching

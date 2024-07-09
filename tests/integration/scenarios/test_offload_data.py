@@ -440,12 +440,12 @@ def test_offload_data_nan_inf_not_supported(config, schema, data_db):
         "owner_table": schema + "." + NAN_TABLE,
         "allow_floating_point_conversions": False,
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_status=False,
     )
 
@@ -455,6 +455,7 @@ def test_offload_data_nan_inf_not_supported(config, schema, data_db):
         "allow_floating_point_conversions": True,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -504,6 +505,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
         "less_than_value": "2030-01-02",
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -530,6 +532,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
             if backend_api.sql_microsecond_predicate_supported()
             else orchestration_defaults.verify_row_count_default()
         ),
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -551,6 +554,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
     options = {
         "owner_table": schema + "." + US_FACT,
         "less_than_value": "2030-01-03",
+        "execute": True,
     }
     run_offload(options, config, messages, expected_status=False)
 
@@ -566,7 +570,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
 
     if not frontend_api.nanoseconds_supported():
         messages.log(f"Skipping {id} on frontend system")
-        pytest.skip(f"Skipping {id} on rontend system")
+        pytest.skip(f"Skipping {id} on frontend system")
 
     backend_api = get_backend_testing_api(config, messages)
     repo_client = orchestration_repo_client_factory(
@@ -597,6 +601,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
             "allow_nanosecond_timestamp_columns": False,
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages, expected_status=False)
 
@@ -607,6 +612,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
             "less_than_value": "2030-01-02",
             "verify_row_count": False,
             "reset_backend_table": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
     else:
@@ -616,6 +622,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
             "less_than_value": "2030-01-02",
             "reset_backend_table": True,
             "create_backend_db": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
         assert sales_based_fact_assertion(
@@ -642,6 +649,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
                 if backend_api.sql_microsecond_predicate_supported()
                 else orchestration_defaults.verify_row_count_default()
             ),
+            "execute": True,
         }
         run_offload(options, config, messages)
         assert sales_based_fact_assertion(
@@ -703,6 +711,7 @@ def test_offload_data_oracle_xmltype(config, schema, data_db):
         "owner_table": schema + "." + XMLTYPE_TABLE,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -717,6 +726,7 @@ def test_offload_data_oracle_xmltype(config, schema, data_db):
                 config, no_table_centric_sqoop=True
             ),
             "reset_backend_table": True,
+            "execute": True,
         }
         run_offload(options, config, messages)
 
@@ -760,6 +770,7 @@ def test_offload_data_nulls_qi(config, schema, data_db):
         "allow_floating_point_conversions": True,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -809,6 +820,7 @@ def test_offload_data_nulls_no_qi(config, schema, data_db):
         "allow_floating_point_conversions": True,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -875,6 +887,7 @@ def test_offload_data_large_decimals_lpa(config, schema, data_db):
         ),
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -901,6 +914,7 @@ def test_offload_data_large_decimals_lpa(config, schema, data_db):
         "owner_table": schema + "." + LPA_LARGE_NUMS,
         "partition_names_csv": "P_2",
         "offload_transport_method": no_query_import_transport_method(config),
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -927,6 +941,7 @@ def test_offload_data_large_decimals_lpa(config, schema, data_db):
         "owner_table": schema + "." + LPA_LARGE_NUMS,
         "partition_names_csv": "P_3",
         "offload_transport_method": no_query_import_transport_method(config),
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert offload_lpa_fact_assertion(
@@ -1005,6 +1020,7 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
         ),
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -1031,6 +1047,7 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
         "owner_table": schema + "." + RPA_LARGE_NUMS,
         "partition_names_csv": "P_2",
         "offload_transport_method": no_query_import_transport_method(config),
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -1052,6 +1069,7 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
         "owner_table": schema + "." + RPA_LARGE_NUMS,
         "partition_names_csv": "P_3",
         "offload_transport_method": no_query_import_transport_method(config),
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(

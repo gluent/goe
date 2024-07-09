@@ -122,6 +122,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             "offload_repo.delete_offload_metadata",
             arg_list=[frontend_owner, frontend_name],
             not_when_dry_running=True,
+            commit=True,
         )
 
     def _get_metadata(self, frontend_owner: str, frontend_name: str) -> dict:
@@ -204,16 +205,18 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             OFFLOADED_OWNER: metadata_obj.FRONTEND_OBJECT_OWNER,
             OFFLOADED_TABLE: metadata_obj.FRONTEND_OBJECT_NAME,
             INCREMENTAL_KEY: metadata_obj.OFFLOAD_KEY or None,
-            INCREMENTAL_HIGH_VALUE: metadata_obj.OFFLOAD_HIGH_VALUE.read()
-            if metadata_obj.OFFLOAD_HIGH_VALUE
-            else None,
+            INCREMENTAL_HIGH_VALUE: (
+                metadata_obj.OFFLOAD_HIGH_VALUE.read()
+                if metadata_obj.OFFLOAD_HIGH_VALUE
+                else None
+            ),
             INCREMENTAL_RANGE: metadata_obj.OFFLOAD_RANGE_TYPE or None,
             INCREMENTAL_PREDICATE_TYPE: metadata_obj.OFFLOAD_PREDICATE_TYPE or None,
-            INCREMENTAL_PREDICATE_VALUE: json.loads(
-                metadata_obj.OFFLOAD_PREDICATE_VALUE.read()
-            )
-            if metadata_obj.OFFLOAD_PREDICATE_VALUE
-            else None,
+            INCREMENTAL_PREDICATE_VALUE: (
+                json.loads(metadata_obj.OFFLOAD_PREDICATE_VALUE.read())
+                if metadata_obj.OFFLOAD_PREDICATE_VALUE
+                else None
+            ),
             OFFLOAD_BUCKET_COLUMN: metadata_obj.OFFLOAD_HASH_COLUMN or None,
             OFFLOAD_SORT_COLUMNS: metadata_obj.OFFLOAD_SORT_COLUMNS or None,
             OFFLOAD_SNAPSHOT: metadata_obj.OFFLOAD_SNAPSHOT or None,
@@ -264,6 +267,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             "offload_repo.save_offload_metadata",
             arg_list=[frontend_owner, frontend_name, ora_metadata],
             not_when_dry_running=True,
+            commit=True,
         )
         # FrontendApi logging won't show metadata values due to being in an Oracle type. So we log it here for
         # benefit of support.

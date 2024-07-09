@@ -48,8 +48,9 @@ class SystemService(object):
     def get_repo(
         config: OrchestrationConfig, messages: OffloadMessages
     ) -> OrchestrationRepoClientInterface:
+        # TODO We need to find another way of setting dry_run below.
         return orchestration_repo_client_factory(
-            config, messages, dry_run=bool(not config.execute)
+            config, messages, dry_run=False  # bool(not config.execute)
         )
 
     def generate_listener_group_id(self) -> UUID3:

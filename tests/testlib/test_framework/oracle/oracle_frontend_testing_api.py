@@ -2239,49 +2239,70 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             return bool(row[0] == "NO")
 
     def standard_dimension_frontend_ddl(
-        self, schema: str, table_name: str, extra_col_tuples: Optional[list] = None
+        self,
+        schema: str,
+        table_name: str,
+        extra_col_tuples: Optional[list] = None,
+        empty: bool = False,
     ) -> list:
         extra_cols = ""
         if extra_col_tuples:
             extra_cols = "," + ",".join(
                 "{} AS {}".format(_[0], _[1]) for _ in extra_col_tuples
             )
-        subquery = dedent(
-            f"""\
-            SELECT CAST(1 AS NUMBER(15))          AS id
-            ,      CAST(2 AS NUMBER(4))           AS prod_id
-            ,      CAST(20121031 AS NUMBER(8))    AS txn_day
-            ,      DATE'2012-10-31'               AS txn_date
-            ,      CAST(TIMESTAMP'2012-10-31 01:15:00' AS TIMESTAMP(3)) AS txn_time
-            ,      CAST(17.5 AS NUMBER(10,2))     AS txn_rate
-            ,      CAST('ABC' AS VARCHAR(50))     AS txn_desc
-            ,      CAST('ABC' AS CHAR(3))         AS txn_code
-            {extra_cols}
-            FROM dual
-            UNION ALL
-            SELECT CAST(2 AS NUMBER(15))          AS id
-            ,      CAST(3 AS NUMBER(4))           AS prod_id
-            ,      CAST(20121031 AS NUMBER(8))    AS txn_day
-            ,      DATE'2012-10-31'               AS txn_date
-            ,      CAST(TIMESTAMP'2012-10-31 02:15:00' AS TIMESTAMP(3)) AS txn_time
-            ,      CAST(20 AS NUMBER(10,2))       AS txn_rate
-            ,      CAST('DEF' AS VARCHAR(50))     AS txn_desc
-            ,      CAST('DEF' AS CHAR(3))         AS txn_code
-            {extra_cols}
-            FROM dual
-            UNION ALL
-            SELECT CAST(3 AS NUMBER(15))          AS id
-            ,      CAST(4 AS NUMBER(4))           AS prod_id
-            ,      CAST(20121031 AS NUMBER(8))    AS txn_day
-            ,      DATE'2012-10-31'               AS txn_date
-            ,      CAST(TIMESTAMP'2012-10-31 03:15:00' AS TIMESTAMP(3)) AS txn_time
-            ,      CAST(10.55 AS NUMBER(10,2))    AS txn_rate
-            ,      CAST('GHI' AS VARCHAR(50))     AS txn_desc
-            ,      CAST('GHI' AS CHAR(3))         AS txn_code
-            {extra_cols}
-            FROM dual
-            """
-        )
+        if empty:
+            subquery = dedent(
+                f"""\
+                SELECT CAST(1 AS NUMBER(15))          AS id
+                ,      CAST(2 AS NUMBER(4))           AS prod_id
+                ,      CAST(20121031 AS NUMBER(8))    AS txn_day
+                ,      DATE'2012-10-31'               AS txn_date
+                ,      CAST(TIMESTAMP'2012-10-31 01:15:00' AS TIMESTAMP(3)) AS txn_time
+                ,      CAST(17.5 AS NUMBER(10,2))     AS txn_rate
+                ,      CAST('ABC' AS VARCHAR(50))     AS txn_desc
+                ,      CAST('ABC' AS CHAR(3))         AS txn_code
+                {extra_cols}
+                FROM dual
+                WHERE 1 = 2
+                """
+            )
+        else:
+            subquery = dedent(
+                f"""\
+                SELECT CAST(1 AS NUMBER(15))          AS id
+                ,      CAST(2 AS NUMBER(4))           AS prod_id
+                ,      CAST(20121031 AS NUMBER(8))    AS txn_day
+                ,      DATE'2012-10-31'               AS txn_date
+                ,      CAST(TIMESTAMP'2012-10-31 01:15:00' AS TIMESTAMP(3)) AS txn_time
+                ,      CAST(17.5 AS NUMBER(10,2))     AS txn_rate
+                ,      CAST('ABC' AS VARCHAR(50))     AS txn_desc
+                ,      CAST('ABC' AS CHAR(3))         AS txn_code
+                {extra_cols}
+                FROM dual
+                UNION ALL
+                SELECT CAST(2 AS NUMBER(15))          AS id
+                ,      CAST(3 AS NUMBER(4))           AS prod_id
+                ,      CAST(20121031 AS NUMBER(8))    AS txn_day
+                ,      DATE'2012-10-31'               AS txn_date
+                ,      CAST(TIMESTAMP'2012-10-31 02:15:00' AS TIMESTAMP(3)) AS txn_time
+                ,      CAST(20 AS NUMBER(10,2))       AS txn_rate
+                ,      CAST('DEF' AS VARCHAR(50))     AS txn_desc
+                ,      CAST('DEF' AS CHAR(3))         AS txn_code
+                {extra_cols}
+                FROM dual
+                UNION ALL
+                SELECT CAST(3 AS NUMBER(15))          AS id
+                ,      CAST(4 AS NUMBER(4))           AS prod_id
+                ,      CAST(20121031 AS NUMBER(8))    AS txn_day
+                ,      DATE'2012-10-31'               AS txn_date
+                ,      CAST(TIMESTAMP'2012-10-31 03:15:00' AS TIMESTAMP(3)) AS txn_time
+                ,      CAST(10.55 AS NUMBER(10,2))    AS txn_rate
+                ,      CAST('GHI' AS VARCHAR(50))     AS txn_desc
+                ,      CAST('GHI' AS CHAR(3))         AS txn_code
+                {extra_cols}
+                FROM dual
+                """
+            )
         return self.gen_ctas_from_subquery(
             schema, table_name, subquery, with_stats_collection=True
         )

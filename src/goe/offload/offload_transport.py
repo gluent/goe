@@ -734,7 +734,7 @@ class OffloadTransport(object, metaclass=ABCMeta):
         self._messages = messages
         self._dfs_client = dfs_client
         self._backend_dfs = self._dfs_client.backend_dfs
-        self._dry_run = bool(not offload_options.execute)
+        self._dry_run = bool(not offload_operation.execute)
         # Details of the source of the offload
         self._rdbms_owner = offload_source_table.owner
         self._rdbms_table_name = offload_source_table.table_name
@@ -1369,7 +1369,7 @@ FROM (%(row_source_subquery)s) %(table_alias)s) v2""" % {
             return None
 
         self.debug("Logging contents of URI: %s" % self._staging_table_location)
-        if not self._offload_options.execute:
+        if self._dry_run:
             return None
 
         try:
@@ -2277,9 +2277,7 @@ FROM   %(temp_vw_name)s""" % {
             return row_count
 
         return self._messages.offload_step(
-            command_steps.STEP_STAGING_TRANSPORT,
-            step_fn,
-            execute=self._offload_options.execute,
+            command_steps.STEP_STAGING_TRANSPORT, step_fn, execute=(not self._dry_run)
         )
 
     def ping_source_rdbms(self):
@@ -2633,9 +2631,7 @@ class OffloadTransportSparkSubmit(OffloadTransportSpark):
             return row_count
 
         return self._messages.offload_step(
-            command_steps.STEP_STAGING_TRANSPORT,
-            step_fn,
-            execute=self._offload_options.execute,
+            command_steps.STEP_STAGING_TRANSPORT, step_fn, execute=(not self._dry_run)
         )
 
     def ping_source_rdbms(self):
@@ -2872,9 +2868,7 @@ class OffloadTransportQueryImport(OffloadTransport):
                 return rows_imported
 
         rows_imported = self._messages.offload_step(
-            command_steps.STEP_STAGING_TRANSPORT,
-            step_fn,
-            execute=self._offload_options.execute,
+            command_steps.STEP_STAGING_TRANSPORT, step_fn, execute=(not self._dry_run)
         )
         return rows_imported
 

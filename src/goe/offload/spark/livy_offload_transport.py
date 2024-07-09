@@ -126,9 +126,11 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
             if log_msg != last_log_msg:
                 self._messages.log_timestamp(detail=VVERBOSE)
                 self.log(
-                    "\n".join(_ for _ in log_msg)
-                    if isinstance(log_msg, list)
-                    else str(log_msg),
+                    (
+                        "\n".join(_ for _ in log_msg)
+                        if isinstance(log_msg, list)
+                        else str(log_msg)
+                    ),
                     detail=VVERBOSE,
                 )
             return log_msg
@@ -458,7 +460,7 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
         return self._messages.offload_step(
             command_steps.STEP_STAGING_TRANSPORT,
             step_fn,
-            execute=self._offload_options.execute,
+            execute=(not self._dry_run),
         )
 
     def ping_source_rdbms(self):
@@ -492,7 +494,9 @@ class OffloadTransportSparkLivyCanary(OffloadTransportSparkLivy):
         self._idle_session_timeout = 30
 
         self._dfs_client = get_dfs_from_options(
-            self._offload_options, messages=self._messages
+            self._offload_options,
+            messages=self._messages,
+            dry_run=self._dry_run,
         )
         self._backend_dfs = self._dfs_client.backend_dfs
 

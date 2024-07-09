@@ -145,6 +145,7 @@ def offload_pbo_intra_day_std_range_tests(
         "ipa_predicate_type": ipa_and_predicate_type,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(
         options,
@@ -158,6 +159,7 @@ def offload_pbo_intra_day_std_range_tests(
         "owner_table": schema + "." + table_name,
         "older_than_date": hv_1,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -181,6 +183,7 @@ def offload_pbo_intra_day_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate("(column(channel_id) = numeric(2))"),
         "ipa_predicate_type": ipa_and_predicate_type,
+        "execute": True,
     }
     run_offload(
         options,
@@ -193,6 +196,7 @@ def offload_pbo_intra_day_std_range_tests(
     options = {
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "2")),
+        "execute": True,
     }
     run_offload(
         options,
@@ -207,12 +211,12 @@ def offload_pbo_intra_day_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "2")),
         "ipa_predicate_type": ipa_and_predicate_type,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
     )
 
     # Offload 1st predicate on top of HV_1 which will switch table to ..._AND_PREDICATE.
@@ -220,6 +224,7 @@ def offload_pbo_intra_day_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "2")),
         "ipa_predicate_type": ipa_and_predicate_type,
+        "execute": True,
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -262,6 +267,7 @@ def offload_pbo_intra_day_std_range_tests(
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "2")),
         "ipa_predicate_type": ipa_and_predicate_type,
         "offload_type": OFFLOAD_TYPE_FULL,
+        "execute": True,
     }
     run_offload(
         options,
@@ -276,6 +282,7 @@ def offload_pbo_intra_day_std_range_tests(
         "offload_predicate": GenericPredicate(
             gen_pred(hv_pred, hv_1, hv_2, ["3", "4"])
         ),
+        "execute": True,
     }
     messages.log(f"{test_id}:2", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -316,6 +323,7 @@ def offload_pbo_intra_day_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate_modify_hybrid_view": False,
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "5")),
+        "execute": True,
     }
     messages.log(f"{test_id}:3", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -357,6 +365,7 @@ def offload_pbo_intra_day_std_range_tests(
         "reset_hybrid_view": True,
         "offload_predicate": GenericPredicate(gen_pred(hv_pred, hv_1, hv_2, "1")),
         "ipa_predicate_type": ipa_and_predicate_type,
+        "execute": True,
     }
     messages.log(f"{test_id}:4", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -397,6 +406,7 @@ def offload_pbo_intra_day_std_range_tests(
     options = {
         "owner_table": schema + "." + table_name,
         "older_than_date": hv_2,
+        "execute": True,
     }
     # Disabled until issue-99 is fixed.
     # messages.log(f"{test_id}:5", detail=VVERBOSE)
@@ -517,9 +527,6 @@ def test_offload_pbo_intra_list(config, schema, data_db):
     frontend_api = get_frontend_testing_api(
         config, messages, trace_action=f"ftest_api({id})"
     )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
 
     # Setup
     run_setup(
@@ -546,6 +553,7 @@ def test_offload_pbo_intra_list(config, schema, data_db):
         "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -556,6 +564,7 @@ def test_offload_pbo_intra_list(config, schema, data_db):
             "(column(time_id) = datetime(%s)) and (column(channel_id) = numeric(3))"
             % test_constants.SALES_BASED_FACT_HV_3
         ),
+        "execute": True,
     }
     run_offload(
         options,

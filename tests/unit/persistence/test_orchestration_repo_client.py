@@ -30,10 +30,6 @@ from goe.orchestration.execution_id import ExecutionId
 GB = 1024**3
 
 
-class TestOrchestrationRepoClientException(Exception):
-    pass
-
-
 class TestOrchestrationRepoClient(TestCase):
     """
     TestOrchestrationRepoClient: Unit test Orchestration Repo client library.

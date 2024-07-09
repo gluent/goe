@@ -363,7 +363,6 @@ FROM  (
         for_spark: Spark fails to process TS WITH LOCAL TIME ZONE and INTERVALs so we convert to character in the DB.
         for_qi: Allows different behaviour for Query Import.
         """
-        self.debug("get_rdbms_query_cast()")
         ff_scale = self._get_ts_ff_scale(max_ts_scale)
         cast_expression = column_expression
         if rdbms_column.data_type == ORACLE_TYPE_TIMESTAMP_LOCAL_TZ:

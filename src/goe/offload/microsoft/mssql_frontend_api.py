@@ -407,6 +407,7 @@ class MSSQLFrontendApi(FrontendApiInterface):
         arg_list=None,
         log_level=VERBOSE,
         not_when_dry_running=False,
+        commit=False,
     ):
         raise NotImplementedError("MSSQL execute_function not implemented.")
 

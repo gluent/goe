@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 # Copyright 2016 The GOE Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -501,6 +499,8 @@ class OffloadMessages(object):
                 self.log("Done", ansi_code="green")
                 if record_step_delta:
                     self.step_delta(title, td)
+            else:
+                self.step_no_delta(title)
 
             if step_repo_logging(parent_command_type):
                 self._repo_client.end_command_step(
@@ -591,6 +591,13 @@ class OffloadMessages(object):
             self.steps[step]["count"] += 1
         else:
             self.steps[step] = {"seconds": time_delta.total_seconds(), "count": 1}
+
+    def step_no_delta(self, step):
+        """Record a step without any time delta, for non-execture mode."""
+        if step in self.steps:
+            self.steps[step]["count"] += 1
+        else:
+            self.steps[step] = {"seconds": 0, "count": 1}
 
     def log_step_deltas(self, topn=10, detail=VVERBOSE):
         logger.info("log_step_deltas()")
@@ -691,24 +698,6 @@ class OffloadMessagesMixin:
             lambda: partial(messages.log, detail=VVERBOSE),
             lambda: ext_logger.info,
         )
-
-
-def to_message_level(level):
-    """Convert 'level' (i.e. in a form of "Normal") to Offload 'message_level'"""
-    str_levels = dict(
-        list(zip(("quiet", "normal", "verbose", "vverbose"), list(range(-1, 3))))
-    )
-    messages_level = None
-
-    if isinstance(level, str):
-        messages_level = str_levels.get(level.lower(), None)
-    elif isinstance(level, int):
-        messages_level = level if level in list(str_levels.values()) else None
-
-    if messages_level is None:
-        raise OffloadMessagesException("Invalid OffloadMessages level: %s" % level)
-
-    return messages_level
 
 
 def step_title_to_step_id(step_title):

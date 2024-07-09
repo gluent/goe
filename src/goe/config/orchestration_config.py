@@ -22,7 +22,7 @@
 import logging
 from typing import Optional
 
-from goe.config import orchestration_defaults
+from goe.config import config_file, orchestration_defaults
 from goe.config.config_validation_functions import (
     OrchestrationConfigException,
     check_offload_fs_scheme_supported_in_backend,
@@ -79,7 +79,6 @@ EXPECTED_CONFIG_ARGS = [
     "data_governance_auto_tags_csv",
     "data_governance_auto_properties_csv",
     "dev_log_level",
-    "execute",
     "error_on_token",
     "frontend_odbc_driver_name",
     "google_dataproc_batches_subnet",
@@ -252,7 +251,6 @@ class OrchestrationConfig:
     db_type: str
     dev_log_level: str
     error_on_token: Optional[str]
-    execute: bool
     frontend_odbc_driver_name: Optional[str]
     google_dataproc_batches_subnet: Optional[str]
     google_dataproc_batches_ttl: Optional[str]
@@ -349,12 +347,15 @@ class OrchestrationConfig:
         return OrchestrationConfig.from_dict({}, do_not_connect=do_not_connect)
 
     @staticmethod
-    def from_dict(config_dict, do_not_connect=False):
+    def from_dict(config_dict: dict, do_not_connect=False):
         assert isinstance(config_dict, dict)
         unexpected_keys = [k for k in config_dict if k not in EXPECTED_CONFIG_ARGS]
         assert not unexpected_keys, (
             "Unexpected OrchestrationConfig keys: %s" % unexpected_keys
         )
+        # Load environment for defaults.
+        config_file.load_env()
+        # Build config from config_dict.
         return OrchestrationConfig(
             do_not_connect=do_not_connect,
             ansi=config_dict.get("ansi", orchestration_defaults.ansi_default()),
@@ -426,9 +427,6 @@ class OrchestrationConfig:
                 "dev_log_level", orchestration_defaults.dev_log_level_default()
             ),
             error_on_token=config_dict.get("error_on_token"),
-            execute=config_dict.get(
-                "execute", orchestration_defaults.execute_default()
-            ),
             frontend_odbc_driver_name=config_dict.get(
                 "frontend_odbc_driver_name",
                 orchestration_defaults.frontend_odbc_driver_name_default(),

@@ -15,28 +15,15 @@
 from datetime import datetime
 from optparse import SUPPRESS_HELP
 import os
-import re
 import subprocess
 import sys
 import traceback
 from typing import Optional
 
 from getpass import getuser
-from goe.goe import (
-    get_common_options,
-    get_log_fh,
-    get_log_fh_name,
-    init,
-    init_log,
-    log_command_line,
-    log_timestamp,
-    version,
-    OptionValueError,
-    verbose,
-    CONFIG_FILE_NAME,
-)
+
 from goe.config.orchestration_config import OrchestrationConfig
-from goe.config import orchestration_defaults
+from goe.config import config_file, orchestration_defaults
 from goe.connect.connect_backend import (
     is_hadoop_environment,
     run_backend_tests,
@@ -63,6 +50,18 @@ from goe.connect.connect_transport import (
     test_credential_api_alias,
 )
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
+from goe.goe import (
+    get_common_options,
+    get_log_fh,
+    get_log_fh_name,
+    init,
+    init_log,
+    log_command_line,
+    log_timestamp,
+    version,
+    OptionValueError,
+    verbose,
+)
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import ssh_cmd_prefix
 from goe.orchestration import orchestration_constants
@@ -206,11 +205,9 @@ def get_environment_file_name(orchestration_config):
         backend_id = "hadoop"
     else:
         backend_id = orchestration_config.target.lower()
-    return "-".join([frontend_id, backend_id, CONFIG_FILE_NAME + ".template"])
-
-
-def get_environment_file_path():
-    return os.path.join(os.environ.get("OFFLOAD_HOME"), "conf", CONFIG_FILE_NAME)
+    return "-".join(
+        [frontend_id, backend_id, config_file.CONFIG_FILE_NAME + ".template"]
+    )
 
 
 def get_template_file_path(orchestration_config):
@@ -222,7 +219,7 @@ def test_conf_perms():
     test_name = "Configuration file permissions"
     test_header(test_name)
     hint = "Expected permissions are 640"
-    environment_file = get_environment_file_path()
+    environment_file = config_file.get_environment_file_path()
     perms = oct(os.stat(environment_file).st_mode & 0o777)
     # Removing oct prefix deemed safe for display only.
     detail("%s has permissions: %s" % (environment_file, perms[2:]))
@@ -310,8 +307,9 @@ def dict_from_environment_file(environment_file):
     d = {}
     with open(environment_file) as f:
         for line in f:
-            if re.match("^(#.*e|e)xport(.*)", line):
-                (k, v) = re.sub("^(#.*e|e)xport ", "", line).split("=", 1)[0], line
+            kv = config_file.env_key_value_pair(line)
+            if kv:
+                k, v = kv
                 d[k] = v
     return d
 
@@ -396,7 +394,8 @@ def check_environment(options, orchestration_config):
     section_header("Configuration")
 
     check_offload_env(
-        get_environment_file_path(), get_template_file_path(orchestration_config)
+        config_file.get_environment_file_path(),
+        get_template_file_path(orchestration_config),
     )
     test_conf_perms()
 
@@ -448,7 +447,7 @@ def check_environment(options, orchestration_config):
 def test_offload_fs_container(orchestration_config, messages):
     test_name = "Offload filesystem container"
     test_header(test_name)
-    dfs_client = get_dfs_from_options(orchestration_config, messages)
+    dfs_client = get_dfs_from_options(orchestration_config, messages, dry_run=False)
     display_uri = dfs_client.gen_uri(
         orchestration_config.offload_fs_scheme,
         orchestration_config.offload_fs_container,
@@ -467,7 +466,6 @@ def test_offload_fs_container(orchestration_config, messages):
 
 def get_config_with_connect_overrides(connect_options):
     override_dict = {
-        "execute": True,
         "verbose": connect_options.verbose,
         "hive_timeout_s": CONNECT_HIVE_TIMEOUT_S,
     }
@@ -515,6 +513,7 @@ def get_connect_opts():
 def connect():
     options = None
     try:
+        config_file.load_env()
         opt = get_connect_opts()
         options, args = opt.parse_args()
 
@@ -540,7 +539,7 @@ def connect():
 
         if options.upgrade_environment_file:
             upgrade_environment_file(
-                get_environment_file_path(),
+                config_file.get_environment_file_path(),
                 get_template_file_path(orchestration_config),
             )
         else:

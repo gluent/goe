@@ -207,12 +207,12 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
             "owner_table": schema + "." + DIM_NUM,
             "offload_partition_functions": "anything",
             "reset_backend_table": True,
+            "execute": False,
         }
         run_offload(
             options,
             config,
             messages,
-            config_overrides={"execute": False},
             expected_exception_string=PARTITION_FUNCTIONS_NOT_SUPPORTED_EXCEPTION_TEXT,
         )
 
@@ -242,12 +242,12 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=PARTITION_FUNCTION_ARG_COUNT_EXCEPTION_TEXT,
     )
 
@@ -257,7 +257,6 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=PARTITION_FUNCTION_ARG_COUNT_EXCEPTION_TEXT,
     )
 
@@ -267,7 +266,6 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=PARTITION_FUNCTION_DOES_NOT_EXIST_EXCEPTION_TEXT,
     )
 
@@ -281,7 +279,6 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=PARTITION_FUNCTION_ARG_TYPE_EXCEPTION_TEXT,
     )
 
@@ -293,12 +290,12 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         "offload_partition_granularity": "M",
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=PARTITION_FUNCTION_ARG_TYPE_EXCEPTION_TEXT,
     )
 
@@ -309,12 +306,12 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         "offload_partition_columns": "TXN_DATE",
         "offload_partition_granularity": "M",
         "reset_backend_table": True,
+        "execute": False,
     }
     run_offload(
         options,
         config,
         messages,
-        config_overrides={"execute": False},
         expected_exception_string=PARTITION_FUNCTIONS_ELEMENT_EXCEPTION_TEXT,
     )
 
@@ -367,6 +364,7 @@ def test_offload_part_fn_num(config, schema, data_db):
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert standard_dimension_assertion(
@@ -395,6 +393,7 @@ def test_offload_part_fn_num(config, schema, data_db):
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert standard_dimension_assertion(
@@ -460,6 +459,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert standard_dimension_assertion(
@@ -487,6 +487,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
         "offload_partition_lower_value": 0,
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert standard_dimension_assertion(
@@ -555,6 +556,7 @@ def test_offload_part_fn_str(config, schema, data_db):
         "offload_partition_upper_value": 5000,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert standard_dimension_assertion(

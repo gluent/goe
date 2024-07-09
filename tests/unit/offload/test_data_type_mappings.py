@@ -392,7 +392,12 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
         self.options = build_mock_options(FAKE_ORACLE_BQ_ENV)
         messages = OffloadMessages()
         self.test_table_object = OracleSourceTable(
-            "no_user", "no_table", self.options, messages, do_not_connect=True
+            "no_user",
+            "no_table",
+            self.options,
+            messages,
+            dry_run=True,
+            do_not_connect=True,
         )
 
     def _get_rdbms_source_columns(self):
@@ -714,6 +719,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
             DBTYPE_BIGQUERY,
             self.options,
             OffloadMessages(),
+            dry_run=True,
             do_not_connect=True,
         )
         backend_columns = [
@@ -749,6 +755,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
                 DBTYPE_HIVE,
                 self.options,
                 OffloadMessages(),
+                dry_run=True,
                 do_not_connect=True,
             )
         except ModuleNotFoundError as e:
@@ -818,6 +825,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
                 DBTYPE_IMPALA,
                 self.options,
                 OffloadMessages(),
+                dry_run=True,
                 do_not_connect=True,
             )
         except ModuleNotFoundError as e:
@@ -885,6 +893,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
                 DBTYPE_SNOWFLAKE,
                 self.options,
                 OffloadMessages(),
+                dry_run=True,
                 do_not_connect=True,
             )
         except ModuleNotFoundError as e:
@@ -966,6 +975,7 @@ class TestOracleDataTypeMappings(TestDataTypeMappings):
                 DBTYPE_SYNAPSE,
                 self.options,
                 OffloadMessages(),
+                dry_run=True,
                 do_not_connect=True,
             )
         except ModuleNotFoundError as e:
@@ -1167,7 +1177,12 @@ class TestMSSQLDataTypeMappings(TestDataTypeMappings):
         messages = OffloadMessages()
         try:
             self.test_table_object = MSSQLSourceTable(
-                "no_user", "no_table", self.options, messages, do_not_connect=True
+                "no_user",
+                "no_table",
+                self.options,
+                messages,
+                dry_run=True,
+                do_not_connect=True,
             )
         except ModuleNotFoundError as e:
             if optional_sql_server_dependency_exception(e):
@@ -1431,7 +1446,12 @@ class TestNetezzaDataTypeMappings(TestDataTypeMappings):
         messages = OffloadMessages()
         try:
             self.test_table_object = NetezzaSourceTable(
-                "no_user", "no_table", self.options, messages, do_not_connect=True
+                "no_user",
+                "no_table",
+                self.options,
+                messages,
+                dry_run=True,
+                do_not_connect=True,
             )
         except ModuleNotFoundError as e:
             if optional_netezza_dependency_exception(e):
@@ -1623,7 +1643,11 @@ class TestBackendHiveDataTypeMappings(TestDataTypeMappings):
         messages = OffloadMessages()
         try:
             self.test_api = backend_api_factory(
-                self.options.target, self.options, messages, do_not_connect=True
+                self.options.target,
+                self.options,
+                messages,
+                dry_run=True,
+                do_not_connect=True,
             )
         except ModuleNotFoundError as e:
             if optional_hadoop_dependency_exception(e):
@@ -1808,7 +1832,11 @@ class TestBackendImpalaDataTypeMappings(TestDataTypeMappings):
         messages = OffloadMessages()
         try:
             self.test_api = backend_api_factory(
-                self.options.target, self.options, messages, do_not_connect=True
+                self.options.target,
+                self.options,
+                messages,
+                dry_run=True,
+                do_not_connect=True,
             )
         except ModuleNotFoundError as e:
             if optional_hadoop_dependency_exception(e):
@@ -1981,7 +2009,11 @@ class TestBackendBigQueryDataTypeMappings(TestDataTypeMappings):
         self.options = build_mock_options(FAKE_ORACLE_BQ_ENV)
         messages = OffloadMessages()
         self.test_api = backend_api_factory(
-            self.options.target, self.options, messages, do_not_connect=True
+            self.options.target,
+            self.options,
+            messages,
+            dry_run=True,
+            do_not_connect=True,
         )
 
     def _get_bigquery_source_columns(self):
@@ -2415,7 +2447,11 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
         messages = OffloadMessages()
         try:
             self.test_api = backend_api_factory(
-                self.options.target, self.options, messages, do_not_connect=True
+                self.options.target,
+                self.options,
+                messages,
+                dry_run=True,
+                do_not_connect=True,
             )
         except ModuleNotFoundError as e:
             if optional_snowflake_dependency_exception(e):
@@ -2601,7 +2637,11 @@ class TestBackendSynapseDataTypeMappings(TestDataTypeMappings):
         messages = OffloadMessages()
         try:
             self.test_api = backend_api_factory(
-                self.options.target, self.options, messages, do_not_connect=True
+                self.options.target,
+                self.options,
+                messages,
+                dry_run=True,
+                do_not_connect=True,
             )
         except ModuleNotFoundError as e:
             if optional_synapse_dependency_exception(e):

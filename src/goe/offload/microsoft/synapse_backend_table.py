@@ -141,7 +141,7 @@ class BackendSynapseTable(BackendTableInterface):
             self._load_db_name, self._load_table_name, for_columns=True
         )
 
-    def _create_load_table(self, staging_file):
+    def _create_load_table(self, staging_file, with_terminator=False) -> list:
         no_partition_cols = []
         self._db_api.create_table(
             self._load_db_name,
@@ -162,6 +162,7 @@ class BackendSynapseTable(BackendTableInterface):
                 ),
             },
             sync=True,
+            with_terminator=with_terminator,
         )
 
     def _drop_load_table(self, sync=None):
@@ -433,7 +434,7 @@ class BackendSynapseTable(BackendTableInterface):
     def compute_final_table_stats(self, incremental_stats, materialized_join=False):
         return self._db_api.compute_stats(self.db_name, self.table_name)
 
-    def create_backend_table(self):
+    def create_backend_table(self, with_terminator=False) -> list:
         """Create a table in Synapse based on object state.
         For efficiency, we compute backend stats immediately after table creation to initialise empty stats
         objects on each column. These will be updated using a single table level command after the final load.
@@ -454,6 +455,7 @@ class BackendSynapseTable(BackendTableInterface):
             no_partition_columns,
             table_properties=table_properties,
             sort_column_names=self._sort_columns,
+            with_terminator=with_terminator,
         )
         if (
             self._offload_stats_method
@@ -469,8 +471,8 @@ class BackendSynapseTable(BackendTableInterface):
             self._drop_state()
         return cmds
 
-    def create_db(self):
-        cmds = self._create_final_db()
+    def create_db(self, with_terminator=False):
+        cmds = self._create_final_db(with_terminator=with_terminator)
         return cmds
 
     def derive_unicode_string_columns(self, as_csv=False):

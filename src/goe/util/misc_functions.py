@@ -23,7 +23,7 @@ import getpass
 import inspect
 import logging
 import math
-import os, os.path
+import os
 import random
 import re
 import string
@@ -144,7 +144,7 @@ def parse_python_from_string(value):
         # datetime ?
         try:
             value = parser.parse(value)
-        except ValueError as e:
+        except ValueError:
             pass
 
     return value
@@ -216,7 +216,7 @@ def is_number(s):
     try:
         float(s)
         return True
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return False
 
 
@@ -226,6 +226,8 @@ def is_pos_int(val, allow_zero=False):
     try:
         n = int(val)
         if n < lower_bound:
+            return False
+        if decimal.Decimal(val) != n:
             return False
         return True
     except (TypeError, ValueError):
@@ -332,18 +334,6 @@ def get_option(options, name, repl=None):
     Similar behavior to: dict.get()
     """
     return getattr(options, name) if (options and hasattr(options, name)) else repl
-
-
-def check_offload_env():
-    """Check offload environment,
-    i.e. OFFLOAD_HOME is set correctly
-    """
-    if not os.environ.get("OFFLOAD_HOME"):
-        print("OFFLOAD_HOME environment variable missing")
-        print(
-            "You should source environment variables first, eg: . ../conf/offload.env"
-        )
-        sys.exit(1)
 
 
 def str_floatlike(maybe_float):
@@ -533,17 +523,16 @@ def human_size_to_bytes(size, binary_sizes=True):
 
 # not used tempfile.mkstemp for get_temp_path/write_temp_file as sometimes
 # want to generate a file name to use remotely or fully control the random section
-def get_temp_path(tmp_dir="/tmp", prefix="goe_tmp_", suffix=""):
+def get_temp_path(tmp_dir: str = "/tmp", prefix: str = "goe_tmp_", suffix: str = ""):
     suffix_str = (".%s" % suffix.lstrip(".")) if suffix else ""
-    return "%s/%s%s%s" % (tmp_dir, prefix, str(uuid.uuid4()), suffix_str)
+    return os.path.join(tmp_dir, "%s%s%s" % (prefix, str(uuid.uuid4()), suffix_str))
 
 
-def write_temp_file(data, prefix="goe_tmp_", suffix=""):
-    """writes some data to a temporary file and returns the path to the file"""
+def write_temp_file(data, prefix: str = "goe_tmp_", suffix: str = ""):
+    """Writes some data to a temporary file and returns the path to the file"""
     tmp_path = get_temp_path(prefix=prefix, suffix=suffix)
-    fh = open(tmp_path, "w")
-    fh.write(data)
-    fh.close()
+    with open(tmp_path, "w") as fh:
+        fh.write(data)
     return tmp_path
 
 

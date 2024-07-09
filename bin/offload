@@ -14,24 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import sys
 
-from goe.config.config_checks import check_cli_path
+from goe.config import config_file
+from goe.exceptions import OffloadOptionError
 from goe.goe import (
     get_options,
     OFFLOAD_OP_NAME,
 )
-from goe.offload.offload import OffloadOptionError, get_offload_options
+from goe.offload.offload import get_offload_options
 from goe.orchestration.cli_entry_points import offload_by_cli
 
 
-check_cli_path()
-
-
 if __name__ == "__main__":
+    config_file.check_config_path()
     options = None
     try:
+        config_file.load_env()
         opt = get_options(operation_name=OFFLOAD_OP_NAME)
         get_offload_options(opt)
         options, _ = opt.parse_args()

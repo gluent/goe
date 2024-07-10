@@ -39,7 +39,6 @@ from goe.offload.offload_constants import (
     BACKEND_DISTRO_GCP,
     DBTYPE_MSSQL,
     DBTYPE_ORACLE,
-    DBTYPE_NETEZZA,
     DBTYPE_SPARK,
     DBTYPE_SYNAPSE,
     DBTYPE_TERADATA,
@@ -663,8 +662,6 @@ def choose_offload_transport_method(
             % config.offload_transport
         )
     elif config.db_type == DBTYPE_MSSQL:
-        return OFFLOAD_TRANSPORT_METHOD_SQOOP
-    elif config.db_type == DBTYPE_NETEZZA:
         return OFFLOAD_TRANSPORT_METHOD_SQOOP
     else:
         raise OffloadTransportException("Unsupported DB type: %s" % config.db_type)

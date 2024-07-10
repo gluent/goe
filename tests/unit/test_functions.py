@@ -55,14 +55,6 @@ FAKE_MSSQL_ENV = {
 }
 FAKE_MSSQL_ENV.update(FAKE_COMMON_ENV)
 
-FAKE_NETEZZA_ENV = {
-    "FRONTEND_DISTRIBUTION": "NETEZZA",
-    "NETEZZA_CONN": "c",
-    "NETEZZA_APP_USER": "a",
-    "NETEZZA_APP_PASS": "b",
-}
-FAKE_NETEZZA_ENV.update(FAKE_COMMON_ENV)
-
 FAKE_ORACLE_ENV = {
     "FRONTEND_DISTRIBUTION": "ORACLE",
     "ORA_CONN": "hostname:1521/service",
@@ -298,10 +290,6 @@ FAKE_ORACLE_LIST_RANGE_PARTITIONS = [
 
 def optional_hadoop_dependency_exception(e: Exception) -> bool:
     return any(_ in str(e) for _ in ["hdfs", "impala", "requests_kerberos"])
-
-
-def optional_netezza_dependency_exception(e: Exception) -> bool:
-    return "pyodbc" in str(e)
 
 
 def optional_sql_server_dependency_exception(e: Exception) -> bool:

@@ -24,7 +24,6 @@ from goe.offload.offload_source_data import (
     OffloadSourcePartition,
     OffloadSourcePartitions,
 )
-from goe.offload.offload_source_table import OFFLOAD_PARTITION_TYPE_RANGE
 from goe.offload.offload_transport_rdbms_api import (
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_EXTENT,
     TRANSPORT_ROW_SOURCE_QUERY_SPLIT_BY_PARTITION,
@@ -35,7 +34,6 @@ from tests.unit.test_functions import (
     build_fake_oracle_table,
     build_fake_oracle_subpartitioned_table,
     FAKE_MSSQL_ENV,
-    FAKE_NETEZZA_ENV,
     FAKE_ORACLE_ENV,
     FAKE_TERADATA_ENV,
     FAKE_ORACLE_PARTITIONS,
@@ -87,17 +85,6 @@ def non_connecting_tests(api):
 def test_mssql_ot_rdbms_api(messages):
     """Simple check that we can instantiate the MSSQL API"""
     config = build_mock_options(FAKE_MSSQL_ENV)
-    rdbms_owner = "SH_TEST"
-    rdbms_table = "SALES"
-    api = offload_transport_rdbms_api_factory(
-        rdbms_owner, rdbms_table, config, messages, dry_run=True
-    )
-    non_connecting_tests(api)
-
-
-def test_netezza_ot_rdbms_api(messages):
-    """Simple check that we can instantiate the Netezza API"""
-    config = build_mock_options(FAKE_NETEZZA_ENV)
     rdbms_owner = "SH_TEST"
     rdbms_table = "SALES"
     api = offload_transport_rdbms_api_factory(

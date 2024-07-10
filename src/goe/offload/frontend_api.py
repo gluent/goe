@@ -403,7 +403,7 @@ class FrontendApiInterface(metaclass=ABCMeta):
     def get_columns(self, schema, table_name):
         """Get a list of frontend column objects in the order they are stored by the frontend.
         Example might be:
-            [NetezzaColumn(...), NetezzaColumn(...)]
+            [OracleColumn(...), OracleColumn(...)]
         """
 
     @abstractmethod

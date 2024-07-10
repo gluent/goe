@@ -361,18 +361,6 @@ class TestMSSQLFrontendApi(TestFrontendApi):
         self._run_all_tests()
 
 
-# class TestNetezzaFrontendApi(TestFrontendApi):
-#
-#     def setUp(self):
-#         self.connect_to_frontend = False
-#         self.db_type = DBTYPE_NETEZZA
-#         self.config = self._get_mock_config(FAKE_NETEZZA_ENV)
-#         super().setUp()
-#
-#     def test_all_non_connecting_netezza_tests(self):
-#         self._run_all_tests()
-
-
 class TestOracleFrontendApi(TestFrontendApi):
     def setUp(self):
         self.connect_to_frontend = False

@@ -17,7 +17,6 @@
 from contextlib import contextmanager
 from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
 )
@@ -43,19 +42,6 @@ def frontend_api_factory(
         from goe.offload.microsoft.mssql_frontend_api import MSSQLFrontendApi
 
         return MSSQLFrontendApi(
-            connection_options,
-            frontend_type,
-            messages,
-            conn_user_override=conn_user_override,
-            existing_connection=existing_connection,
-            dry_run=dry_run,
-            do_not_connect=do_not_connect,
-            trace_action=trace_action,
-        )
-    elif frontend_type == DBTYPE_NETEZZA:
-        from goe.offload.netezza.netezza_frontend_api import NetezzaFrontendApi
-
-        return NetezzaFrontendApi(
             connection_options,
             frontend_type,
             messages,

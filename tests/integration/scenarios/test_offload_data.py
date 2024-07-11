@@ -45,8 +45,8 @@ from tests.integration.test_functions import (
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -160,7 +160,8 @@ def gen_fractional_second_partition_table_ddl(
                     "fractional_0s": fractional_0s,
                 },
                 """INSERT INTO %(schema)s.%(table)s (id, cat, dt, ts)
-              SELECT ROWNUM,1,TO_DATE('2001-01-01','YYYY-MM-DD'),TIMESTAMP' 2030-01-02 00:00:00.%(fractional_0s)s2'-(NUMTODSINTERVAL(ROWNUM, 'SECOND')/1e%(scale)s)
+              SELECT ROWNUM,1,TO_DATE('2001-01-01','YYYY-MM-DD')
+              ,      TIMESTAMP' 2030-01-02 00:00:00.%(fractional_0s)s2'-(NUMTODSINTERVAL(ROWNUM, 'SECOND')/1e%(scale)s)
               FROM dual CONNECT BY ROWNUM <= 4"""
                 % {
                     "schema": schema,
@@ -401,224 +402,104 @@ def gen_large_num_create_ddl(
 def test_offload_data_nan_inf_not_supported(config, schema, data_db):
     """Tests Offload with Nan and Inf values when the backend system does not support them."""
     id = "test_offload_data_nan_inf_not_supported"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        if not frontend_api.nan_supported():
+            messages.log(
+                f"Skipping {id} because NaN values are not supported for this frontend system"
+            )
+            pytest.skip(
+                f"Skipping {id} because NaN values are not supported for this frontend system"
+            )
 
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    if not frontend_api.nan_supported():
-        messages.log(
-            f"Skipping {id} because NaN values are not supported for this frontend system"
+        backend_api = get_backend_testing_api(config, messages)
+        if backend_api.nan_supported():
+            messages.log(
+                f"Skipping {id} because NaN values are supported for this backend system"
+            )
+            pytest.skip(
+                f"Skipping {id} because NaN values are supported for this backend system"
+            )
+
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_nan_table_ddl(frontend_api, schema, NAN_TABLE),
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, NAN_TABLE
+                ),
+            ],
         )
-        pytest.skip(
-            f"Skipping {id} because NaN values are not supported for this frontend system"
+
+        # Fails to offload Nan and Inf values to a backend system that doesn't support it without allow_floating_point_conversions.
+        options = {
+            "owner_table": schema + "." + NAN_TABLE,
+            "allow_floating_point_conversions": False,
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_status=False,
         )
 
-    backend_api = get_backend_testing_api(config, messages)
-    if backend_api.nan_supported():
-        messages.log(
-            f"Skipping {id} because NaN values are supported for this backend system"
+        # Offload Nan and Inf values even when the backend doesn't support them.
+        options = {
+            "owner_table": schema + "." + NAN_TABLE,
+            "allow_floating_point_conversions": True,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+
+        assert no_nan_assertions(
+            options, schema, data_db, frontend_api, backend_api, messages
         )
-        pytest.skip(
-            f"Skipping {id} because NaN values are supported for this backend system"
-        )
-
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_nan_table_ddl(frontend_api, schema, NAN_TABLE),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, NAN_TABLE
-            ),
-        ],
-    )
-
-    # Fails to offload Nan and Inf values to a backend system that doesn't support it without allow_floating_point_conversions.
-    options = {
-        "owner_table": schema + "." + NAN_TABLE,
-        "allow_floating_point_conversions": False,
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_status=False,
-    )
-
-    # Offload Nan and Inf values even when the backend doesn't support them.
-    options = {
-        "owner_table": schema + "." + NAN_TABLE,
-        "allow_floating_point_conversions": True,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-
-    assert no_nan_assertions(
-        options, schema, data_db, frontend_api, backend_api, messages
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
 
 
 def test_offload_data_partition_by_microsecond(config, schema, data_db):
     """Tests Offload of a microsecond partitioned fact."""
     id = "test_offload_data_partition_by_microsecond"
-    messages = get_test_messages(config, id)
 
     if config.db_type == offload_constants.DBTYPE_TERADATA:
-        messages.log(f"Skipping {id} on Teradata")
         pytest.skip(f"Skipping {id} on Teradata")
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-    frontend_datetime = frontend_api.test_type_canonical_timestamp()
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
+        frontend_datetime = frontend_api.test_type_canonical_timestamp()
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_fractional_second_partition_table_ddl(
-            config, frontend_api, schema, US_FACT, 6
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, US_FACT
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_fractional_second_partition_table_ddl(
+                config, frontend_api, schema, US_FACT, 6
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, US_FACT
+                ),
+            ],
+        )
 
-    # Offload first partition from a microsecond partitioned table.
-    options = {
-        "owner_table": schema + "." + US_FACT,
-        "less_than_value": "2030-01-02",
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        US_FACT,
-        "2030-01-02",
-        incremental_key="TS",
-        incremental_key_type=frontend_datetime,
-        check_backend_rowcount=True,
-    )
-
-    # Offload second partition from a microsecond partitioned table.
-    options = {
-        "owner_table": schema + "." + US_FACT,
-        "less_than_value": "2030-01-03",
-        "verify_row_count": (
-            "aggregate"
-            if backend_api.sql_microsecond_predicate_supported()
-            else orchestration_defaults.verify_row_count_default()
-        ),
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        US_FACT,
-        "2030-01-02 00:00:00.000003000",
-        incremental_key="TS",
-        incremental_key_type=frontend_datetime,
-        check_backend_rowcount=True,
-    )
-
-    # No-op offload of microsecond partitioned table.
-    options = {
-        "owner_table": schema + "." + US_FACT,
-        "less_than_value": "2030-01-03",
-        "execute": True,
-    }
-    run_offload(options, config, messages, expected_status=False)
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
-
-
-def test_offload_data_partition_by_nanosecond(config, schema, data_db):
-    """Tests Offload of a nanosecond partitioned table."""
-    id = "test_offload_data_partition_by_nanosecond"
-    messages = get_test_messages(config, id)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-
-    if not frontend_api.nanoseconds_supported():
-        messages.log(f"Skipping {id} on frontend system")
-        pytest.skip(f"Skipping {id} on frontend system")
-
-    backend_api = get_backend_testing_api(config, messages)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-    frontend_datetime = frontend_api.test_type_canonical_timestamp()
-
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_fractional_second_partition_table_ddl(
-            config, frontend_api, schema, NS_FACT, 9
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, NS_FACT
-            ),
-        ],
-    )
-
-    if not backend_api.nanoseconds_supported():
-        # Fails to offload nanosecond partitioned table to a backend system that doesn't support it.
+        # Offload first partition from a microsecond partitioned table.
         options = {
-            "owner_table": schema + "." + NS_FACT,
-            "allow_nanosecond_timestamp_columns": False,
-            "reset_backend_table": True,
-            "create_backend_db": True,
-            "execute": True,
-        }
-        run_offload(options, config, messages, expected_status=False)
-
-        # Successfully offload nanosecond partitioned table to a backend system that doesn't support it.
-        options = {
-            "owner_table": schema + "." + NS_FACT,
-            "allow_nanosecond_timestamp_columns": True,
-            "less_than_value": "2030-01-02",
-            "verify_row_count": False,
-            "reset_backend_table": True,
-            "execute": True,
-        }
-        run_offload(options, config, messages)
-    else:
-        # Offload first partition from a nanosecond partitioned table.
-        options = {
-            "owner_table": schema + "." + NS_FACT,
+            "owner_table": schema + "." + US_FACT,
             "less_than_value": "2030-01-02",
             "reset_backend_table": True,
             "create_backend_db": True,
@@ -633,16 +514,16 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
             repo_client,
             schema,
             data_db,
-            NS_FACT,
+            US_FACT,
             "2030-01-02",
             incremental_key="TS",
             incremental_key_type=frontend_datetime,
+            check_backend_rowcount=True,
         )
 
-        # Offload second partition from a nanosecond partitioned table.
-        # Also test aggregation verification method works.
+        # Offload second partition from a microsecond partitioned table.
         options = {
-            "owner_table": schema + "." + NS_FACT,
+            "owner_table": schema + "." + US_FACT,
             "less_than_value": "2030-01-03",
             "verify_row_count": (
                 "aggregate"
@@ -660,428 +541,534 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
             repo_client,
             schema,
             data_db,
-            NS_FACT,
-            "2030-01-02",
+            US_FACT,
+            "2030-01-02 00:00:00.000003000",
             incremental_key="TS",
             incremental_key_type=frontend_datetime,
+            check_backend_rowcount=True,
         )
 
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # No-op offload of microsecond partitioned table.
+        options = {
+            "owner_table": schema + "." + US_FACT,
+            "less_than_value": "2030-01-03",
+            "execute": True,
+        }
+        run_offload(options, config, messages, expected_status=False)
+
+
+def test_offload_data_partition_by_nanosecond(config, schema, data_db):
+    """Tests Offload of a nanosecond partitioned table."""
+    id = "test_offload_data_partition_by_nanosecond"
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        if not frontend_api.nanoseconds_supported():
+            pytest.skip(f"Skipping {id} on frontend system")
+
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
+        frontend_datetime = frontend_api.test_type_canonical_timestamp()
+
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_fractional_second_partition_table_ddl(
+                config, frontend_api, schema, NS_FACT, 9
+            ),
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, NS_FACT
+                ),
+            ],
+        )
+
+        if not backend_api.nanoseconds_supported():
+            # Fails to offload nanosecond partitioned table to a backend system that doesn't support it.
+            options = {
+                "owner_table": schema + "." + NS_FACT,
+                "allow_nanosecond_timestamp_columns": False,
+                "reset_backend_table": True,
+                "create_backend_db": True,
+                "execute": True,
+            }
+            run_offload(options, config, messages, expected_status=False)
+
+            # Successfully offload nanosecond partitioned table to a backend system that doesn't support it.
+            options = {
+                "owner_table": schema + "." + NS_FACT,
+                "allow_nanosecond_timestamp_columns": True,
+                "less_than_value": "2030-01-02",
+                "verify_row_count": False,
+                "reset_backend_table": True,
+                "execute": True,
+            }
+            run_offload(options, config, messages)
+        else:
+            # Offload first partition from a nanosecond partitioned table.
+            options = {
+                "owner_table": schema + "." + NS_FACT,
+                "less_than_value": "2030-01-02",
+                "reset_backend_table": True,
+                "create_backend_db": True,
+                "execute": True,
+            }
+            run_offload(options, config, messages)
+            assert sales_based_fact_assertion(
+                config,
+                backend_api,
+                frontend_api,
+                messages,
+                repo_client,
+                schema,
+                data_db,
+                NS_FACT,
+                "2030-01-02",
+                incremental_key="TS",
+                incremental_key_type=frontend_datetime,
+            )
+
+            # Offload second partition from a nanosecond partitioned table.
+            # Also test aggregation verification method works.
+            options = {
+                "owner_table": schema + "." + NS_FACT,
+                "less_than_value": "2030-01-03",
+                "verify_row_count": (
+                    "aggregate"
+                    if backend_api.sql_microsecond_predicate_supported()
+                    else orchestration_defaults.verify_row_count_default()
+                ),
+                "execute": True,
+            }
+            run_offload(options, config, messages)
+            assert sales_based_fact_assertion(
+                config,
+                backend_api,
+                frontend_api,
+                messages,
+                repo_client,
+                schema,
+                data_db,
+                NS_FACT,
+                "2030-01-02",
+                incremental_key="TS",
+                incremental_key_type=frontend_datetime,
+            )
 
 
 def test_offload_data_oracle_xmltype(config, schema, data_db):
     """Tests Offload of Oracle XMLTYPE."""
     id = "test_offload_data_oracle_xmltype"
-    messages = get_test_messages(config, id)
 
     if config.db_type != offload_constants.DBTYPE_ORACLE:
-        messages.log(f"Skipping {id} on frontend system: {config.db_type}")
         pytest.skip(f"Skipping {id} on frontend system: {config.db_type}")
 
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    backend_api = get_backend_testing_api(config, messages)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=[
-            "DROP TABLE %(schema)s.%(table)s"
-            % {"schema": schema, "table": XMLTYPE_TABLE},
-            """CREATE TABLE %(schema)s.%(table)s
-                           (id NUMBER(8), data XMLTYPE)"""
-            % {"schema": schema, "table": XMLTYPE_TABLE},
-            """INSERT INTO %(schema)s.%(table)s (id, data)
-                           SELECT ROWNUM, SYS_XMLGEN(table_name) FROM all_tables WHERE ROWNUM <= 10"""
-            % {"schema": schema, "table": XMLTYPE_TABLE},
-            frontend_api.collect_table_stats_sql_text(schema, XMLTYPE_TABLE),
-        ],
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, XMLTYPE_TABLE
-            ),
-        ],
-    )
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=[
+                "DROP TABLE %(schema)s.%(table)s"
+                % {"schema": schema, "table": XMLTYPE_TABLE},
+                """CREATE TABLE %(schema)s.%(table)s
+                            (id NUMBER(8), data XMLTYPE)"""
+                % {"schema": schema, "table": XMLTYPE_TABLE},
+                """INSERT INTO %(schema)s.%(table)s (id, data)
+                            SELECT ROWNUM, SYS_XMLGEN(table_name) FROM all_tables WHERE ROWNUM <= 10"""
+                % {"schema": schema, "table": XMLTYPE_TABLE},
+                frontend_api.collect_table_stats_sql_text(schema, XMLTYPE_TABLE),
+            ],
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, XMLTYPE_TABLE
+                ),
+            ],
+        )
 
-    # Offload XMLTYPE (Query Import).
-    options = {
-        "owner_table": schema + "." + XMLTYPE_TABLE,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-
-    if (
-        no_query_import_transport_method(config)
-        != OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
-    ):
-        # Offload XMLTYPE (no Query Import).
+        # Offload XMLTYPE (Query Import).
         options = {
             "owner_table": schema + "." + XMLTYPE_TABLE,
-            "offload_transport_method": no_query_import_transport_method(
-                config, no_table_centric_sqoop=True
-            ),
             "reset_backend_table": True,
+            "create_backend_db": True,
             "execute": True,
         }
         run_offload(options, config, messages)
 
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        if (
+            no_query_import_transport_method(config)
+            != OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
+        ):
+            # Offload XMLTYPE (no Query Import).
+            options = {
+                "owner_table": schema + "." + XMLTYPE_TABLE,
+                "offload_transport_method": no_query_import_transport_method(
+                    config, no_table_centric_sqoop=True
+                ),
+                "reset_backend_table": True,
+                "execute": True,
+            }
+            run_offload(options, config, messages)
 
 
 def test_offload_data_nulls_qi(config, schema, data_db):
     """Tests Offload of NULLs in all data types with Query Import."""
     id = "test_offload_data_nulls_qi"
 
-    messages = get_test_messages(config, id)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    backend_api = get_backend_testing_api(config, messages)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_offload_nulls_create_ddl(
-            schema,
-            NULLS_TABLE1,
-            backend_api,
+        # Setup
+        run_setup(
             frontend_api,
+            backend_api,
             config,
-            to_allow_query_import=True,
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, NULLS_TABLE1
+            messages,
+            frontend_sqls=gen_offload_nulls_create_ddl(
+                schema,
+                NULLS_TABLE1,
+                backend_api,
+                frontend_api,
+                config,
+                to_allow_query_import=True,
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, NULLS_TABLE1
+                ),
+            ],
+        )
 
-    # Offload with Query Import.
-    options = {
-        "owner_table": schema + "." + NULLS_TABLE1,
-        "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
-        "allow_floating_point_conversions": True,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload with Query Import.
+        options = {
+            "owner_table": schema + "." + NULLS_TABLE1,
+            "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+            "allow_floating_point_conversions": True,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
 
 
 def test_offload_data_nulls_no_qi(config, schema, data_db):
     """Tests Offload of NULLs in all data types with Spark or Sqoop."""
     id = "test_offload_data_nulls_no_qi"
-    messages = get_test_messages(config, id)
 
     if (
         no_query_import_transport_method(config)
         == OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
     ):
-        messages.log(f"Skipping {id} because only Query Import is configured")
         pytest.skip(f"Skipping {id} because only Query Import is configured")
 
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    backend_api = get_backend_testing_api(config, messages)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_offload_nulls_create_ddl(
-            schema,
-            NULLS_TABLE2,
-            backend_api,
+        # Setup
+        run_setup(
             frontend_api,
+            backend_api,
             config,
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, NULLS_TABLE2
+            messages,
+            frontend_sqls=gen_offload_nulls_create_ddl(
+                schema,
+                NULLS_TABLE2,
+                backend_api,
+                frontend_api,
+                config,
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, NULLS_TABLE2
+                ),
+            ],
+        )
 
-    # Offload with Query Import.
-    options = {
-        "owner_table": schema + "." + NULLS_TABLE2,
-        "offload_transport_method": no_query_import_transport_method(config),
-        "allow_floating_point_conversions": True,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload with Query Import.
+        options = {
+            "owner_table": schema + "." + NULLS_TABLE2,
+            "offload_transport_method": no_query_import_transport_method(config),
+            "allow_floating_point_conversions": True,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
 
 
 def test_offload_data_large_decimals_lpa(config, schema, data_db):
     """Tests Offload list-partition-append with extreme numeric partition values."""
     id = "test_offload_data_large_decimals_lpa"
-
-    messages = get_test_messages(config, id)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-
-    if not frontend_api.goe_lpa_supported():
-        messages.log(f"Skipping {id} because frontend_api.goe_lpa_supported() == false")
-        pytest.skip(f"Skipping {id} because frontend_api.goe_lpa_supported() == false")
-
-    partition_keys_larger_than_bigint_valid = bool(
-        config.db_type != offload_constants.DBTYPE_TERADATA
-    )
-
-    if not partition_keys_larger_than_bigint_valid:
-        messages.log(
-            f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
-        )
-        pytest.skip(
-            f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
-        )
-
-    backend_api = get_backend_testing_api(config, messages)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_large_num_create_ddl(
-            schema, LPA_LARGE_NUMS, config, backend_api, frontend_api
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LPA_LARGE_NUMS
-            ),
-        ],
-    )
-
-    # Offload 1st partition.
-    options = {
-        "owner_table": schema + "." + LPA_LARGE_NUMS,
-        "partition_names_csv": "P_1",
-        "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
-        "offload_partition_granularity": "1".ljust(
-            get_max_decimal_magnitude(backend_api), "0"
-        ),
-        "offload_partition_lower_value": "-"
-        + "9".ljust(get_max_decimal_magnitude(backend_api), "9"),
-        "offload_partition_upper_value": "9".ljust(
-            get_max_decimal_magnitude(backend_api), "9"
-        ),
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_LARGE_NUMS,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [
-            (
-                "1"
-                if goe1938_vulnerable_test(config)
-                else "-" + gen_large_num_list_part_literal(backend_api)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        if not frontend_api.goe_lpa_supported():
+            pytest.skip(
+                f"Skipping {id} because frontend_api.goe_lpa_supported() == false"
             )
-        ],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
 
-    # Offload 2nd partition.
-    # Without Query Import if availabe.
-    options = {
-        "owner_table": schema + "." + LPA_LARGE_NUMS,
-        "partition_names_csv": "P_2",
-        "offload_transport_method": no_query_import_transport_method(config),
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_LARGE_NUMS,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [
-            (
-                "1"
-                if goe1938_vulnerable_test(config)
-                else "-" + gen_large_num_list_part_literal(backend_api)
-            ),
-            gen_large_num_list_part_literal(backend_api),
-        ],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        partition_keys_larger_than_bigint_valid = bool(
+            config.db_type != offload_constants.DBTYPE_TERADATA
+        )
 
-    # Offload 3nd partition, partition literal all 9s.
-    options = {
-        "owner_table": schema + "." + LPA_LARGE_NUMS,
-        "partition_names_csv": "P_3",
-        "offload_transport_method": no_query_import_transport_method(config),
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_LARGE_NUMS,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [
-            (
-                "1"
-                if goe1938_vulnerable_test(config)
-                else "-" + gen_large_num_list_part_literal(backend_api)
+        if not partition_keys_larger_than_bigint_valid:
+            messages.log(
+                f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
+            )
+            pytest.skip(
+                f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
+            )
+
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
+
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_large_num_create_ddl(
+                schema, LPA_LARGE_NUMS, config, backend_api, frontend_api
             ),
-            gen_large_num_list_part_literal(backend_api),
-            gen_large_num_list_part_literal(backend_api, all_nines=True),
-        ],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LPA_LARGE_NUMS
+                ),
+            ],
+        )
+
+        # Offload 1st partition.
+        options = {
+            "owner_table": schema + "." + LPA_LARGE_NUMS,
+            "partition_names_csv": "P_1",
+            "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+            "offload_partition_granularity": "1".ljust(
+                get_max_decimal_magnitude(backend_api), "0"
+            ),
+            "offload_partition_lower_value": "-"
+            + "9".ljust(get_max_decimal_magnitude(backend_api), "9"),
+            "offload_partition_upper_value": "9".ljust(
+                get_max_decimal_magnitude(backend_api), "9"
+            ),
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_LARGE_NUMS,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [
+                (
+                    "1"
+                    if goe1938_vulnerable_test(config)
+                    else "-" + gen_large_num_list_part_literal(backend_api)
+                )
+            ],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
+
+        # Offload 2nd partition.
+        # Without Query Import if availabe.
+        options = {
+            "owner_table": schema + "." + LPA_LARGE_NUMS,
+            "partition_names_csv": "P_2",
+            "offload_transport_method": no_query_import_transport_method(config),
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_LARGE_NUMS,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [
+                (
+                    "1"
+                    if goe1938_vulnerable_test(config)
+                    else "-" + gen_large_num_list_part_literal(backend_api)
+                ),
+                gen_large_num_list_part_literal(backend_api),
+            ],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
+
+        # Offload 3nd partition, partition literal all 9s.
+        options = {
+            "owner_table": schema + "." + LPA_LARGE_NUMS,
+            "partition_names_csv": "P_3",
+            "offload_transport_method": no_query_import_transport_method(config),
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_LARGE_NUMS,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [
+                (
+                    "1"
+                    if goe1938_vulnerable_test(config)
+                    else "-" + gen_large_num_list_part_literal(backend_api)
+                ),
+                gen_large_num_list_part_literal(backend_api),
+                gen_large_num_list_part_literal(backend_api, all_nines=True),
+            ],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
 
 def test_offload_data_large_decimals_rpa(config, schema, data_db):
     """Tests Offload range-partition-append with extreme numeric partition values."""
     id = "test_offload_data_large_decimals_rpa"
-
-    messages = get_test_messages(config, id)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-
-    partition_keys_larger_than_bigint_valid = bool(
-        config.db_type != offload_constants.DBTYPE_TERADATA
-    )
-
-    if not partition_keys_larger_than_bigint_valid:
-        messages.log(
-            f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
-        )
-        pytest.skip(
-            f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        partition_keys_larger_than_bigint_valid = bool(
+            config.db_type != offload_constants.DBTYPE_TERADATA
         )
 
-    backend_api = get_backend_testing_api(config, messages)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+        if not partition_keys_larger_than_bigint_valid:
+            messages.log(
+                f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
+            )
+            pytest.skip(
+                f"Skipping {id} because partition_keys_larger_than_bigint_valid == false"
+            )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_large_num_create_ddl(
-            schema, RPA_LARGE_NUMS, config, backend_api, frontend_api, part_type="RANGE"
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, RPA_LARGE_NUMS
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
+
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_large_num_create_ddl(
+                schema,
+                RPA_LARGE_NUMS,
+                config,
+                backend_api,
+                frontend_api,
+                part_type="RANGE",
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, RPA_LARGE_NUMS
+                ),
+            ],
+        )
 
-    # Offload 1st partition.
-    options = {
-        "owner_table": schema + "." + RPA_LARGE_NUMS,
-        "partition_names_csv": "P_1",
-        "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
-        "offload_partition_granularity": "1".ljust(
-            get_max_decimal_magnitude(backend_api), "0"
-        ),
-        "offload_partition_lower_value": "-"
-        + "9".ljust(get_max_decimal_magnitude(backend_api), "9"),
-        "offload_partition_upper_value": "9".ljust(
-            get_max_decimal_magnitude(backend_api), "9"
-        ),
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        RPA_LARGE_NUMS,
-        (
-            "1"
-            if goe1938_vulnerable_test(config)
-            else ("-" + gen_large_num_list_part_literal(backend_api))
-        ),
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
-        incremental_key="part_col",
-    )
+        # Offload 1st partition.
+        options = {
+            "owner_table": schema + "." + RPA_LARGE_NUMS,
+            "partition_names_csv": "P_1",
+            "offload_transport_method": OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+            "offload_partition_granularity": "1".ljust(
+                get_max_decimal_magnitude(backend_api), "0"
+            ),
+            "offload_partition_lower_value": "-"
+            + "9".ljust(get_max_decimal_magnitude(backend_api), "9"),
+            "offload_partition_upper_value": "9".ljust(
+                get_max_decimal_magnitude(backend_api), "9"
+            ),
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sales_based_fact_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            RPA_LARGE_NUMS,
+            (
+                "1"
+                if goe1938_vulnerable_test(config)
+                else ("-" + gen_large_num_list_part_literal(backend_api))
+            ),
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+            incremental_key="part_col",
+        )
 
-    # Offload 2nd partition.
-    # Without Query Import if availabe.
-    options = {
-        "owner_table": schema + "." + RPA_LARGE_NUMS,
-        "partition_names_csv": "P_2",
-        "offload_transport_method": no_query_import_transport_method(config),
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        RPA_LARGE_NUMS,
-        gen_large_num_list_part_literal(backend_api),
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
-        incremental_key="part_col",
-    )
+        # Offload 2nd partition.
+        # Without Query Import if availabe.
+        options = {
+            "owner_table": schema + "." + RPA_LARGE_NUMS,
+            "partition_names_csv": "P_2",
+            "offload_transport_method": no_query_import_transport_method(config),
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sales_based_fact_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            RPA_LARGE_NUMS,
+            gen_large_num_list_part_literal(backend_api),
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+            incremental_key="part_col",
+        )
 
-    # Offload 3rd partition, HWM all 9s.
-    options = {
-        "owner_table": schema + "." + RPA_LARGE_NUMS,
-        "partition_names_csv": "P_3",
-        "offload_transport_method": no_query_import_transport_method(config),
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        RPA_LARGE_NUMS,
-        gen_large_num_list_part_literal(backend_api, all_nines=True),
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
-        incremental_key="part_col",
-    )
+        # Offload 3rd partition, HWM all 9s.
+        options = {
+            "owner_table": schema + "." + RPA_LARGE_NUMS,
+            "partition_names_csv": "P_3",
+            "offload_transport_method": no_query_import_transport_method(config),
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sales_based_fact_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            RPA_LARGE_NUMS,
+            gen_large_num_list_part_literal(backend_api, all_nines=True),
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+            incremental_key="part_col",
+        )

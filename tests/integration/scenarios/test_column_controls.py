@@ -97,8 +97,8 @@ from tests.testlib.test_framework.backend_testing_api import (
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -289,8 +289,6 @@ def num_overflow_setup_frontend_ddl(
         )
     elif config.db_type == offload_constants.DBTYPE_TERADATA:
         subquery = "SELECT 1 AS id, CAST(%s AS NUMBER(38)) AS num" % (
-            schema,
-            table_name,
             "123".ljust(38, "0"),
         )
     else:
@@ -711,229 +709,267 @@ def offload_not_null_assertion(
 
 def test_numeric_controls(config, schema, data_db):
     id = "test_numeric_controls"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    max_decimal_precision = backend_api.max_decimal_precision() if backend_api else None
-    max_decimal_scale = backend_api.max_decimal_scale() if backend_api else None
+        max_decimal_precision = (
+            backend_api.max_decimal_precision() if backend_api else None
+        )
+        max_decimal_scale = backend_api.max_decimal_scale() if backend_api else None
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=nums_setup_frontend_ddl(
-            frontend_api, backend_api, config, schema, NUMS_DIM
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, NUMS_DIM
-        ),
-    )
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=nums_setup_frontend_ddl(
+                frontend_api, backend_api, config, schema, NUMS_DIM
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, NUMS_DIM
+            ),
+        )
 
-    # Offload table with assorted number columns with number detection disabled, offloads to defaults.
-    options = {
-        "owner_table": schema + "." + NUMS_DIM,
-        "data_sample_pct": 0,
-        "reset_backend_table": True,
-        "decimal_padding_digits": 2,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    nums_assertion(
-        config, frontend_api, backend_api, messages, data_db, NUMS_DIM, detect=False
-    )
+        # Offload table with assorted number columns with number detection disabled, offloads to defaults.
+        options = {
+            "owner_table": schema + "." + NUMS_DIM,
+            "data_sample_pct": 0,
+            "reset_backend_table": True,
+            "decimal_padding_digits": 2,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        nums_assertion(
+            config, frontend_api, backend_api, messages, data_db, NUMS_DIM, detect=False
+        )
 
-    # Query Import Offload with assorted number columns with number detection enabled and type overrides.
-    options = {
-        "owner_table": schema + "." + NUMS_DIM,
-        "reset_backend_table": True,
-        "decimal_columns_csv_list": [
-            STORY_TEST_OFFLOAD_NUMS_DEC_10_0,
-            STORY_TEST_OFFLOAD_NUMS_DEC_13_9,
-            STORY_TEST_OFFLOAD_NUMS_DEC_15_9,
-            STORY_TEST_OFFLOAD_NUMS_DEC_36_3,
-            STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
-            STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
-        ],
-        "decimal_columns_type_list": ["10,0", "13,9", "15,9", "36,3", "37,3", "38,3"],
-        "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
-        "decimal_padding_digits": 2,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    nums_assertion(
-        config, frontend_api, backend_api, messages, data_db, NUMS_DIM, detect=True
-    )
-
-    if (
-        no_query_import_transport_method(config)
-        != OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
-    ):
-        # Offload table with assorted number columns with number detection enabled and type overrides.
-        options["offload_transport_method"] = no_query_import_transport_method(config)
+        # Query Import Offload with assorted number columns with number detection enabled and type overrides.
+        options = {
+            "owner_table": schema + "." + NUMS_DIM,
+            "reset_backend_table": True,
+            "decimal_columns_csv_list": [
+                STORY_TEST_OFFLOAD_NUMS_DEC_10_0,
+                STORY_TEST_OFFLOAD_NUMS_DEC_13_9,
+                STORY_TEST_OFFLOAD_NUMS_DEC_15_9,
+                STORY_TEST_OFFLOAD_NUMS_DEC_36_3,
+                STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
+                STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
+            ],
+            "decimal_columns_type_list": [
+                "10,0",
+                "13,9",
+                "15,9",
+                "36,3",
+                "37,3",
+                "38,3",
+            ],
+            "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+            "decimal_padding_digits": 2,
+            "execute": True,
+        }
         run_offload(options, config, messages)
         nums_assertion(
             config, frontend_api, backend_api, messages, data_db, NUMS_DIM, detect=True
         )
 
-    # Offload table with assorted number columns with number detection for sampling.
-    # Check the DEC_ columns have correct precision/scale.
-    # Still use options for dec_36_3, dec_37_3, dec_38_3 just so the test passes.
-    options = {
-        "owner_table": schema + "." + NUMS_DIM,
-        "reset_backend_table": True,
-        "decimal_columns_csv_list": [
-            STORY_TEST_OFFLOAD_NUMS_DEC_36_3,
-            STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
-            STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
-        ],
-        "decimal_columns_type_list": ["36,3", "37,3", "38,3"],
-        "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
-        "decimal_padding_digits": 2,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    nums_assertion(
-        config,
-        frontend_api,
-        backend_api,
-        messages,
-        data_db,
-        NUMS_DIM,
-        detect=True,
-        check_dec_10_0=False,
-    )
+        if (
+            no_query_import_transport_method(config)
+            != OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
+        ):
+            # Offload table with assorted number columns with number detection enabled and type overrides.
+            options["offload_transport_method"] = no_query_import_transport_method(
+                config
+            )
+            run_offload(options, config, messages)
+            nums_assertion(
+                config,
+                frontend_api,
+                backend_api,
+                messages,
+                data_db,
+                NUMS_DIM,
+                detect=True,
+            )
 
-    # Offload Dimension With Parallel Sampling=0.
-    # Runs with --no-verify to remove risk of verification having a PARALLEL hint.
-    if config.db_type == offload_constants.DBTYPE_ORACLE:
-        options = {
-            "owner_table": schema + "." + NUMS_DIM,
-            "data_sample_parallelism": 0,
-            "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
-            "reset_backend_table": True,
-            "verify_row_count": False,
-            "execute": True,
-        }
-        log_test_marker(messages, f"{id}:samp1")
-        run_offload(options, config, messages)
-        assert hint_text_in_log(messages, config, 0, f"{id}:samp1")
-
-    # Offload Dimension With Parallel Sampling=3.
-    # Runs with --no-verify to remove risk of verification having a PARALLEL hint.
-    if config.db_type == offload_constants.DBTYPE_ORACLE:
-        options = {
-            "owner_table": schema + "." + NUMS_DIM,
-            "data_sample_parallelism": 3,
-            "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
-            "reset_backend_table": True,
-            "verify_row_count": False,
-            "execute": True,
-        }
-        log_test_marker(messages, f"{id}:samp2")
-        run_offload(options, config, messages)
-        assert hint_text_in_log(messages, config, 3, f"{id}:samp2")
-
-    # Offload Dimension with number overflow (expect to fail).
-    if config.target not in [offload_constants.DBTYPE_BIGQUERY]:
+        # Offload table with assorted number columns with number detection for sampling.
+        # Check the DEC_ columns have correct precision/scale.
+        # Still use options for dec_36_3, dec_37_3, dec_38_3 just so the test passes.
         options = {
             "owner_table": schema + "." + NUMS_DIM,
             "reset_backend_table": True,
             "decimal_columns_csv_list": [
-                ",".join(
-                    [
-                        STORY_TEST_OFFLOAD_NUMS_DEC_36_3,
-                        STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
-                        STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
-                    ]
-                )
+                STORY_TEST_OFFLOAD_NUMS_DEC_36_3,
+                STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
+                STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
             ],
-            "decimal_columns_type_list": ["10,2"],
+            "decimal_columns_type_list": ["36,3", "37,3", "38,3"],
             "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+            "decimal_padding_digits": 2,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        nums_assertion(
+            config,
+            frontend_api,
+            backend_api,
+            messages,
+            data_db,
+            NUMS_DIM,
+            detect=True,
+            check_dec_10_0=False,
+        )
+
+        # Offload Dimension With Parallel Sampling=0.
+        # Runs with --no-verify to remove risk of verification having a PARALLEL hint.
+        if config.db_type == offload_constants.DBTYPE_ORACLE:
+            options = {
+                "owner_table": schema + "." + NUMS_DIM,
+                "data_sample_parallelism": 0,
+                "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+                "reset_backend_table": True,
+                "verify_row_count": False,
+                "execute": True,
+            }
+            log_test_marker(messages, f"{id}:samp1")
+            run_offload(options, config, messages)
+            assert hint_text_in_log(messages, config, 0, f"{id}:samp1")
+
+        # Offload Dimension With Parallel Sampling=3.
+        # Runs with --no-verify to remove risk of verification having a PARALLEL hint.
+        if config.db_type == offload_constants.DBTYPE_ORACLE:
+            options = {
+                "owner_table": schema + "." + NUMS_DIM,
+                "data_sample_parallelism": 3,
+                "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+                "reset_backend_table": True,
+                "verify_row_count": False,
+                "execute": True,
+            }
+            log_test_marker(messages, f"{id}:samp2")
+            run_offload(options, config, messages)
+            assert hint_text_in_log(messages, config, 3, f"{id}:samp2")
+
+        # Offload Dimension with number overflow (expect to fail).
+        if config.target not in [offload_constants.DBTYPE_BIGQUERY]:
+            options = {
+                "owner_table": schema + "." + NUMS_DIM,
+                "reset_backend_table": True,
+                "decimal_columns_csv_list": [
+                    ",".join(
+                        [
+                            STORY_TEST_OFFLOAD_NUMS_DEC_36_3,
+                            STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
+                            STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
+                        ]
+                    )
+                ],
+                "decimal_columns_type_list": ["10,2"],
+                "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+                "execute": True,
+            }
+            run_offload(
+                options,
+                config,
+                messages,
+                expected_exception_string=cast_validation_exception_text(backend_api),
+            )
+
+        # Offload table with bad precision (expect to fail).
+        options = {
+            "owner_table": schema + "." + NUMS_DIM,
+            "decimal_columns_csv_list": [",".join([STORY_TEST_OFFLOAD_NUMS_DEC_36_3])],
+            "decimal_columns_type_list": ["100,10"],
+            "reset_backend_table": True,
             "execute": True,
         }
         run_offload(
             options,
             config,
             messages,
-            expected_exception_string=cast_validation_exception_text(backend_api),
+            expected_exception_string=DECIMAL_COL_TYPE_SYNTAX_TEMPLATE.format(
+                p=max_decimal_precision, s=max_decimal_scale
+            ),
         )
 
-    # Offload table with bad precision (expect to fail).
-    options = {
-        "owner_table": schema + "." + NUMS_DIM,
-        "decimal_columns_csv_list": [",".join([STORY_TEST_OFFLOAD_NUMS_DEC_36_3])],
-        "decimal_columns_type_list": ["100,10"],
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=DECIMAL_COL_TYPE_SYNTAX_TEMPLATE.format(
-            p=max_decimal_precision, s=max_decimal_scale
-        ),
-    )
-
-    # Offload table with bad scale (expect to fail).
-    options = {
-        "owner_table": schema + "." + NUMS_DIM,
-        "decimal_columns_csv_list": [",".join([STORY_TEST_OFFLOAD_NUMS_DEC_36_3])],
-        "decimal_columns_type_list": ["10,100"],
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=DECIMAL_COL_TYPE_SYNTAX_TEMPLATE.format(
-            p=max_decimal_precision, s=max_decimal_scale
-        ),
-    )
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload table with bad scale (expect to fail).
+        options = {
+            "owner_table": schema + "." + NUMS_DIM,
+            "decimal_columns_csv_list": [",".join([STORY_TEST_OFFLOAD_NUMS_DEC_36_3])],
+            "decimal_columns_type_list": ["10,100"],
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=DECIMAL_COL_TYPE_SYNTAX_TEMPLATE.format(
+                p=max_decimal_precision, s=max_decimal_scale
+            ),
+        )
 
 
 def test_date_controls(config, schema, data_db):
     id = "test_date_controls"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=dates_setup_frontend_ddl(frontend_api, config, schema, DATE_DIM),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, DATE_DIM
-        ),
-    )
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=dates_setup_frontend_ddl(
+                frontend_api, config, schema, DATE_DIM
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, DATE_DIM
+            ),
+        )
 
-    # Offload dimension with dates to defaults.
-    options = {
-        "owner_table": schema + "." + DATE_DIM,
-        "data_sample_pct": 0,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    date_assertion(config, frontend_api, backend_api, messages, data_db, DATE_DIM)
-
-    if backend_api.canonical_date_supported():
-        # Offload dimension with dates forced to canonical DATE.
+        # Offload dimension with dates to defaults.
         options = {
             "owner_table": schema + "." + DATE_DIM,
             "data_sample_pct": 0,
-            "date_columns_csv": "dt,ts0,ts6",
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        date_assertion(config, frontend_api, backend_api, messages, data_db, DATE_DIM)
+
+        if backend_api.canonical_date_supported():
+            # Offload dimension with dates forced to canonical DATE.
+            options = {
+                "owner_table": schema + "." + DATE_DIM,
+                "data_sample_pct": 0,
+                "date_columns_csv": "dt,ts0,ts6",
+                "reset_backend_table": True,
+                "execute": True,
+            }
+            run_offload(options, config, messages)
+            date_assertion(
+                config,
+                frontend_api,
+                backend_api,
+                messages,
+                data_db,
+                DATE_DIM,
+                forced_to_date=True,
+            )
+
+        # Offload dimension with dates forced to canonical TIMESTAMP_TZ.
+        options = {
+            "owner_table": schema + "." + DATE_DIM,
+            "data_sample_pct": 0,
+            "timestamp_tz_columns_csv": "dt,ts0,ts6,ts0tz,ts6tz",
             "reset_backend_table": True,
             "execute": True,
         }
@@ -945,157 +981,465 @@ def test_date_controls(config, schema, data_db):
             messages,
             data_db,
             DATE_DIM,
-            forced_to_date=True,
+            forced_to_tstz=True,
         )
-
-    # Offload dimension with dates forced to canonical TIMESTAMP_TZ.
-    options = {
-        "owner_table": schema + "." + DATE_DIM,
-        "data_sample_pct": 0,
-        "timestamp_tz_columns_csv": "dt,ts0,ts6,ts0tz,ts6tz",
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    date_assertion(
-        config,
-        frontend_api,
-        backend_api,
-        messages,
-        data_db,
-        DATE_DIM,
-        forced_to_tstz=True,
-    )
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
 
 
 def test_date_sampling(config, schema, data_db):
     id = "test_date_sampling"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Create Dimension containing dates that need sampling.
-    # TODO nj@2018-06-13 cannot test bad TZ values due to GOE-1102, uncomment bad_tstz/bad_tsltz during GOE-1102
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=samp_dates_setup_frontend_ddl(
-            frontend_api, config, schema, DATE_SDIM
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, DATE_SDIM
-        ),
-    )
-
-    # Offload Dimension containing bad dates with stats, detection should be done from stats.
-    options = {
-        "owner_table": schema + "." + DATE_SDIM,
-        "allow_nanosecond_timestamp_columns": True,
-        "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    samp_date_assertion(config, backend_api, frontend_api, messages, data_db, DATE_SDIM)
-
-    # Remove stats from DATE_SDIM.
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=[
-            frontend_api.remove_table_stats_sql_text(schema.upper(), DATE_SDIM.upper())
-        ],
-    )
-
-    # Offload Dimension containing bad dates without stats, detection should be done using SQL.
-    options = {
-        "owner_table": schema + "." + DATE_SDIM,
-        "allow_nanosecond_timestamp_columns": True,
-        "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    samp_date_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        data_db,
-        DATE_SDIM,
-        from_stats=False,
-    )
-
-    # We've had cases where stats appear between prior test and next one, so drop stats again here to be sure.
-    # Remove stats from DATE_SDIM.
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=[
-            frontend_api.remove_table_stats_sql_text(schema.upper(), DATE_SDIM.upper())
-        ],
-    )
-
-    # Offload Dimension containing dates and influence canonical type using --date-columns.
-    options = {
-        "owner_table": schema + "." + DATE_SDIM,
-        "allow_nanosecond_timestamp_columns": True,
-        "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
-        "date_columns_csv": "good_date,good_ts",
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    samp_date_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        data_db,
-        DATE_SDIM,
-        from_stats=False,
-        good_as_date=True,
-    )
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
-
-
-def test_precision_scale_overflow(config, schema, data_db):
-    id = "test_precision_scale_overflow"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-
-    if backend_api.max_decimal_integral_magnitude() < 38:
-        # Create a table with data that is too big for the backend and no dbms_stats call.
-        # Without optimizer stats sampling we should still catch the bad value.
-        # Setup
+        # Create Dimension containing dates that need sampling.
+        # TODO nj@2018-06-13 cannot test bad TZ values due to GOE-1102, uncomment bad_tstz/bad_tsltz during GOE-1102
         run_setup(
             frontend_api,
             backend_api,
             config,
             messages,
-            frontend_sqls=num_overflow_setup_frontend_ddl(
-                frontend_api, config, schema, NUM_TOO_BIG_DIM, with_stats=False
+            frontend_sqls=samp_dates_setup_frontend_ddl(
+                frontend_api, config, schema, DATE_SDIM
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, DATE_SDIM
+            ),
+        )
+
+        # Offload Dimension containing bad dates with stats, detection should be done from stats.
+        options = {
+            "owner_table": schema + "." + DATE_SDIM,
+            "allow_nanosecond_timestamp_columns": True,
+            "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        samp_date_assertion(
+            config, backend_api, frontend_api, messages, data_db, DATE_SDIM
+        )
+
+        # Remove stats from DATE_SDIM.
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=[
+                frontend_api.remove_table_stats_sql_text(
+                    schema.upper(), DATE_SDIM.upper()
+                )
+            ],
+        )
+
+        # Offload Dimension containing bad dates without stats, detection should be done using SQL.
+        options = {
+            "owner_table": schema + "." + DATE_SDIM,
+            "allow_nanosecond_timestamp_columns": True,
+            "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        samp_date_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            data_db,
+            DATE_SDIM,
+            from_stats=False,
+        )
+
+        # We've had cases where stats appear between prior test and next one, so drop stats again here to be sure.
+        # Remove stats from DATE_SDIM.
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=[
+                frontend_api.remove_table_stats_sql_text(
+                    schema.upper(), DATE_SDIM.upper()
+                )
+            ],
+        )
+
+        # Offload Dimension containing dates and influence canonical type using --date-columns.
+        options = {
+            "owner_table": schema + "." + DATE_SDIM,
+            "allow_nanosecond_timestamp_columns": True,
+            "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+            "date_columns_csv": "good_date,good_ts",
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        samp_date_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            data_db,
+            DATE_SDIM,
+            from_stats=False,
+            good_as_date=True,
+        )
+
+
+def test_precision_scale_overflow(config, schema, data_db):
+    id = "test_precision_scale_overflow"
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+
+        if backend_api.max_decimal_integral_magnitude() < 38:
+            # Create a table with data that is too big for the backend and no dbms_stats call.
+            # Without optimizer stats sampling we should still catch the bad value.
+            # Setup
+            run_setup(
+                frontend_api,
+                backend_api,
+                config,
+                messages,
+                frontend_sqls=num_overflow_setup_frontend_ddl(
+                    frontend_api, config, schema, NUM_TOO_BIG_DIM, with_stats=False
+                ),
+                python_fns=lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, NUM_TOO_BIG_DIM
+                ),
+            )
+
+            # Offload NUM_TOO_BIG_DIM with number overflow (expect to fail).
+            options = {
+                "owner_table": schema + "." + NUM_TOO_BIG_DIM,
+                "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+                "reset_backend_table": True,
+                "create_backend_db": True,
+                "execute": True,
+            }
+            run_offload(
+                options,
+                config,
+                messages,
+                expected_exception_string=COLUMNS_FAILED_SAMPLING_EXCEPTION_TEXT,
+            )
+
+            # Collect Stats On NUM_TOO_BIG_DIM
+            run_setup(
+                frontend_api,
+                backend_api,
+                config,
+                messages,
+                frontend_sqls=[
+                    frontend_api.collect_table_stats_sql_text(
+                        schema.upper(), NUM_TOO_BIG_DIM.upper()
+                    )
+                ],
+            )
+
+            # Offload NUM_TOO_BIG_DIM with number overflow (expect to fail).
+            options = {
+                "owner_table": schema + "." + NUM_TOO_BIG_DIM,
+                "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+                "reset_backend_table": True,
+                "execute": True,
+            }
+            run_offload(
+                options,
+                config,
+                messages,
+                expected_exception_string=COLUMNS_FAILED_SAMPLING_EXCEPTION_TEXT,
+            )
+
+            # Offload NUM_TOO_BIG_DIM with number overflow (expect to fail).
+            # Disable sampling, we will see CAST validation catch the problem data instead.
+            options = {
+                "owner_table": schema + "." + NUM_TOO_BIG_DIM,
+                "data_sample_pct": 0,
+                "reset_backend_table": True,
+                "execute": True,
+            }
+            run_offload(
+                options,
+                config,
+                messages,
+                expected_exception_string=CAST_VALIDATION_EXCEPTION_TEXT,
+            )
+
+        # Create the table with scale that is too big for backend table
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=num_scale_overflow_setup_frontend_ddl(
+                frontend_api, config, schema, NUM_TOO_BIG_DIM
             ),
             python_fns=lambda: drop_backend_test_table(
                 config, backend_api, messages, data_db, NUM_TOO_BIG_DIM
             ),
         )
 
-        # Offload NUM_TOO_BIG_DIM with number overflow (expect to fail).
+        # Offload NUM_TOO_BIG_DIM with scale overflow based on backend column spec (expect to fail).
         options = {
             "owner_table": schema + "." + NUM_TOO_BIG_DIM,
-            "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+            "decimal_columns_csv_list": ["num"],
+            "decimal_columns_type_list": ["20,5"],
+            "reset_backend_table": True,
+            "decimal_padding_digits": 0,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=DATA_VALIDATION_SCALE_EXCEPTION_TEXT,
+        )
+
+        # Offload NUM_TOO_BIG_DIM with scale overflow based on backend column spec.
+        options = {
+            "owner_table": schema + "." + NUM_TOO_BIG_DIM,
+            "decimal_columns_csv_list": ["num"],
+            "decimal_columns_type_list": ["20,5"],
+            "allow_decimal_scale_rounding": True,
+            "reset_backend_table": True,
+            "decimal_padding_digits": 0,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+
+
+def test_column_controls_column_name_checks(config, schema, data_db, load_db):
+    id = "test_column_controls_column_name_checks"
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+
+        wildcard_dim_be, offload_dim_be = convert_backend_identifier_case(
+            config, WILDCARD_DIM, OFFLOAD_DIM
+        )
+
+        # Create table with column name patterns as discussed in GOE-1670.
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=wildcard_setup_frontend_ddl(
+                frontend_api, config, schema, WILDCARD_DIM
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, WILDCARD_DIM
+            ),
+        )
+
+        # Offload with wildcards in data type controls.
+        options = {
+            "owner_table": schema + "." + WILDCARD_DIM,
+            "reset_backend_table": True,
+            "integer_1_columns_csv": "*_id",
+            "integer_2_columns_csv": "*_year,*_QTR",
+            "integer_4_columns_csv": "*_month",
+            "integer_8_columns_csv": "*_day",
+            "date_columns_csv": "*_date",
+            "double_columns_csv": "*_rate",
+            "decimal_columns_csv_list": ["*amt"],
+            "decimal_columns_type_list": ["12,3"],
+            "unicode_string_columns_csv": "*_desc",
+            "decimal_padding_digits": 0,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        wildcard_assertion(backend_api, data_db, wildcard_dim_be)
+
+        # Offload with overlapping wildcards in data type controls (expect to fail).
+        options = {
+            "owner_table": schema + "." + WILDCARD_DIM,
+            "reset_backend_table": True,
+            "integer_1_columns_csv": "*_id",
+            "integer_2_columns_csv": "*id",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT,
+        )
+
+        # Setup OFFLOAD_DIM
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, OFFLOAD_DIM
+            ),
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, OFFLOAD_DIM
+                ),
+                lambda: drop_backend_test_load_table(
+                    config, backend_api, messages, load_db, OFFLOAD_DIM
+                ),
+            ],
+        )
+
+        # Offload with number column as string (expect to fail).
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "variable_string_columns_csv": "prod_id",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+        )
+
+        # Offload with number column as date (expect to fail)',
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "date_columns_csv": "prod_id",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+        )
+
+        # Offload Dimension with date column as number (expect to fail)
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "integer_8_columns_csv": "TXN_date",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+        )
+
+        # Offload Dimension with string column as date (expect to fail)',
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "date_columns_csv": "TXN_DESC",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+        )
+
+        # Offload Dimension with string column as time zoned date (expect to fail)',
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "timestamp_tz_columns_csv": "TXN_DESC",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+        )
+
+        # Offload Dimension with string column as number (expect to fail)',
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "integer_4_columns_csv": "TXN_DESC",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+        )
+
+        # Offload Dimension with number column as unicode string (expect to fail)',
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "unicode_string_columns_csv": "PROD_ID",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
+        )
+
+        # Offload Dimension with string column as unicode string.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "unicode_string_columns_csv": "TXN_DESC",
+            "skip": ["verify_exported_data"],
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert unicode_assertion(
+            backend_api, data_db, offload_dim_be, {"TXN_DESC": GOE_TYPE_VARIABLE_STRING}
+        )
+
+
+def test_column_controls_not_null(config, schema, data_db):
+    id = "test_column_controls_not_null"
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+
+        if not backend_api.not_null_column_supported():
+            messages.log(
+                f"Skipping {id} for backend that does not support NOT NULL columns"
+            )
+            return
+
+        # Create table with column name patterns as discussed in GOE-1670.
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_not_null_table_ddl(config, schema, NOT_NULL_DIM),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, NOT_NULL_DIM
+            ),
+        )
+        # Ensure NOT NULL is propagated to backend automatically.
+        options = {
+            "owner_table": f"{schema}.{NOT_NULL_DIM}",
             "reset_backend_table": True,
             "create_backend_db": True,
             "execute": True,
@@ -1104,26 +1448,71 @@ def test_precision_scale_overflow(config, schema, data_db):
             options,
             config,
             messages,
-            expected_exception_string=COLUMNS_FAILED_SAMPLING_EXCEPTION_TEXT,
+            config_overrides={
+                "not_null_propagation": offload_constants.NOT_NULL_PROPAGATION_AUTO
+            },
+        )
+        assert offload_not_null_assertion(
+            data_db, NOT_NULL_DIM, config, backend_api, messages
         )
 
-        # Collect Stats On NUM_TOO_BIG_DIM
-        run_setup(
-            frontend_api,
+        # Ensure NOT NULL is not propagated to backend if config dictates it should not be.
+        options = {
+            "owner_table": f"{schema}.{NOT_NULL_DIM}",
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            config_overrides={
+                "not_null_propagation": offload_constants.NOT_NULL_PROPAGATION_NONE
+            },
+        )
+        assert offload_not_null_assertion(
+            data_db, NOT_NULL_DIM, config, backend_api, messages, not_null_col_list=[]
+        )
+
+        # Ensure NOT NULL is not propagated to backend if --not-null-columns option dictates it should be.
+        options = {
+            "owner_table": f"{schema}.{NOT_NULL_DIM}",
+            "not_null_columns_csv": "DT*",
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert offload_not_null_assertion(
+            data_db,
+            NOT_NULL_DIM,
+            config,
             backend_api,
-            config,
             messages,
-            frontend_sqls=[
-                frontend_api.collect_table_stats_sql_text(
-                    schema.upper(), NUM_TOO_BIG_DIM.upper()
-                )
-            ],
+            not_null_col_list=["DT", "DT_NN"],
         )
 
-        # Offload NUM_TOO_BIG_DIM with number overflow (expect to fail).
+        # Attempt offload With Invalid --not-null-columns.
         options = {
-            "owner_table": schema + "." + NUM_TOO_BIG_DIM,
-            "data_sample_pct": DATA_SAMPLE_SIZE_AUTO,
+            "owner_table": f"{schema}.{NOT_NULL_DIM}",
+            "not_null_columns_csv": "not-a-column",
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=UNKNOWN_NOT_NULL_COLUMN_EXCEPTION_TEXT,
+        )
+
+        # Offload NOT NULL with NULLs in column.
+        options = {
+            "owner_table": f"{schema}.{NOT_NULL_DIM}",
+            "not_null_columns_csv": "With_Nulls",
             "reset_backend_table": True,
             "execute": True,
         }
@@ -1131,377 +1520,5 @@ def test_precision_scale_overflow(config, schema, data_db):
             options,
             config,
             messages,
-            expected_exception_string=COLUMNS_FAILED_SAMPLING_EXCEPTION_TEXT,
+            expected_exception_string=DATA_VALIDATION_NOT_NULL_EXCEPTION_TEXT,
         )
-
-        # Offload NUM_TOO_BIG_DIM with number overflow (expect to fail).
-        # Disable sampling, we will see CAST validation catch the problem data instead.
-        options = {
-            "owner_table": schema + "." + NUM_TOO_BIG_DIM,
-            "data_sample_pct": 0,
-            "reset_backend_table": True,
-            "execute": True,
-        }
-        run_offload(
-            options,
-            config,
-            messages,
-            expected_exception_string=CAST_VALIDATION_EXCEPTION_TEXT,
-        )
-
-    # Create the table with scale that is too big for backend table
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=num_scale_overflow_setup_frontend_ddl(
-            frontend_api, config, schema, NUM_TOO_BIG_DIM
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, NUM_TOO_BIG_DIM
-        ),
-    )
-
-    # Offload NUM_TOO_BIG_DIM with scale overflow based on backend column spec (expect to fail).
-    options = {
-        "owner_table": schema + "." + NUM_TOO_BIG_DIM,
-        "decimal_columns_csv_list": ["num"],
-        "decimal_columns_type_list": ["20,5"],
-        "reset_backend_table": True,
-        "decimal_padding_digits": 0,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=DATA_VALIDATION_SCALE_EXCEPTION_TEXT,
-    )
-
-    # Offload NUM_TOO_BIG_DIM with scale overflow based on backend column spec.
-    options = {
-        "owner_table": schema + "." + NUM_TOO_BIG_DIM,
-        "decimal_columns_csv_list": ["num"],
-        "decimal_columns_type_list": ["20,5"],
-        "allow_decimal_scale_rounding": True,
-        "reset_backend_table": True,
-        "decimal_padding_digits": 0,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
-
-
-def test_column_controls_column_name_checks(config, schema, data_db, load_db):
-    id = "test_column_controls_column_name_checks"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-
-    wildcard_dim_be, offload_dim_be = convert_backend_identifier_case(
-        config, WILDCARD_DIM, OFFLOAD_DIM
-    )
-
-    # Create table with column name patterns as discussed in GOE-1670.
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=wildcard_setup_frontend_ddl(
-            frontend_api, config, schema, WILDCARD_DIM
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, WILDCARD_DIM
-        ),
-    )
-
-    # Offload with wildcards in data type controls.
-    options = {
-        "owner_table": schema + "." + WILDCARD_DIM,
-        "reset_backend_table": True,
-        "integer_1_columns_csv": "*_id",
-        "integer_2_columns_csv": "*_year,*_QTR",
-        "integer_4_columns_csv": "*_month",
-        "integer_8_columns_csv": "*_day",
-        "date_columns_csv": "*_date",
-        "double_columns_csv": "*_rate",
-        "decimal_columns_csv_list": ["*amt"],
-        "decimal_columns_type_list": ["12,3"],
-        "unicode_string_columns_csv": "*_desc",
-        "decimal_padding_digits": 0,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    wildcard_assertion(backend_api, data_db, wildcard_dim_be)
-
-    # Offload with overlapping wildcards in data type controls (expect to fail).
-    options = {
-        "owner_table": schema + "." + WILDCARD_DIM,
-        "reset_backend_table": True,
-        "integer_1_columns_csv": "*_id",
-        "integer_2_columns_csv": "*id",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=CONFLICTING_DATA_TYPE_OPTIONS_EXCEPTION_TEXT,
-    )
-
-    # Setup OFFLOAD_DIM
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, OFFLOAD_DIM),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, OFFLOAD_DIM
-            ),
-            lambda: drop_backend_test_load_table(
-                config, backend_api, messages, load_db, OFFLOAD_DIM
-            ),
-        ],
-    )
-
-    # Offload with number column as string (expect to fail).
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "variable_string_columns_csv": "prod_id",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
-    )
-
-    # Offload with number column as date (expect to fail)',
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "date_columns_csv": "prod_id",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
-    )
-
-    # Offload Dimension with date column as number (expect to fail)
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "integer_8_columns_csv": "TXN_date",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
-    )
-
-    # Offload Dimension with string column as date (expect to fail)',
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "date_columns_csv": "TXN_DESC",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
-    )
-
-    # Offload Dimension with string column as time zoned date (expect to fail)',
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "timestamp_tz_columns_csv": "TXN_DESC",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
-    )
-
-    # Offload Dimension with string column as number (expect to fail)',
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "integer_4_columns_csv": "TXN_DESC",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
-    )
-
-    # Offload Dimension with number column as unicode string (expect to fail)',
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "unicode_string_columns_csv": "PROD_ID",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=offload_constants.INVALID_DATA_TYPE_CONVERSION_EXCEPTION_TEXT,
-    )
-
-    # Offload Dimension with string column as unicode string.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "unicode_string_columns_csv": "TXN_DESC",
-        "skip": ["verify_exported_data"],
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert unicode_assertion(
-        backend_api, data_db, offload_dim_be, {"TXN_DESC": GOE_TYPE_VARIABLE_STRING}
-    )
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
-
-
-def test_column_controls_not_null(config, schema, data_db):
-    id = "test_column_controls_not_null"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-
-    if not backend_api.not_null_column_supported():
-        messages.log(
-            f"Skipping {id} for backend that does not support NOT NULL columns"
-        )
-        return
-
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-
-    # Create table with column name patterns as discussed in GOE-1670.
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_not_null_table_ddl(config, schema, NOT_NULL_DIM),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, NOT_NULL_DIM
-        ),
-    )
-    # Ensure NOT NULL is propagated to backend automatically.
-    options = {
-        "owner_table": f"{schema}.{NOT_NULL_DIM}",
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        config_overrides={
-            "not_null_propagation": offload_constants.NOT_NULL_PROPAGATION_AUTO
-        },
-    )
-    assert offload_not_null_assertion(
-        data_db, NOT_NULL_DIM, config, backend_api, messages
-    )
-
-    # Ensure NOT NULL is not propagated to backend if config dictates it should not be.
-    options = {
-        "owner_table": f"{schema}.{NOT_NULL_DIM}",
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        config_overrides={
-            "not_null_propagation": offload_constants.NOT_NULL_PROPAGATION_NONE
-        },
-    )
-    assert offload_not_null_assertion(
-        data_db, NOT_NULL_DIM, config, backend_api, messages, not_null_col_list=[]
-    )
-
-    # Ensure NOT NULL is not propagated to backend if --not-null-columns option dictates it should be.
-    options = {
-        "owner_table": f"{schema}.{NOT_NULL_DIM}",
-        "not_null_columns_csv": "DT*",
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert offload_not_null_assertion(
-        data_db,
-        NOT_NULL_DIM,
-        config,
-        backend_api,
-        messages,
-        not_null_col_list=["DT", "DT_NN"],
-    )
-
-    # Attempt offload With Invalid --not-null-columns.
-    options = {
-        "owner_table": f"{schema}.{NOT_NULL_DIM}",
-        "not_null_columns_csv": "not-a-column",
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=UNKNOWN_NOT_NULL_COLUMN_EXCEPTION_TEXT,
-    )
-
-    # Offload NOT NULL with NULLs in column.
-    options = {
-        "owner_table": f"{schema}.{NOT_NULL_DIM}",
-        "not_null_columns_csv": "With_Nulls",
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=DATA_VALIDATION_NOT_NULL_EXCEPTION_TEXT,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()

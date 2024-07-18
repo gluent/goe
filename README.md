@@ -28,7 +28,7 @@ python3 -m venv .venv && . .venv/bin/activate
 5) Install the GOE Python package:
 ```
 cd $OFFLOAD_HOME
-GOE_WHEEL="goe-$(cat version | tr 'A-Z-' 'a-z.')0-py3-none-any.whl"
+GOE_WHEEL="goe_framework-$(cat version | tr 'A-Z-' 'a-z.')0-py3-none-any.whl"
 python3 -m pip install lib/${GOE_WHEEL}
 ```
 

@@ -25,13 +25,6 @@ from typing import TYPE_CHECKING
 
 from google.cloud import bigquery
 
-from goe.data_governance.hadoop_data_governance import (
-    data_governance_register_new_table_step,
-    get_data_governance_register,
-)
-from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE,
-)
 from goe.offload.bigquery.bigquery_column import (
     BigQueryColumn,
     BIGQUERY_TYPE_DATE,
@@ -86,7 +79,6 @@ class BackendBigQueryTable(BackendTableInterface):
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
-        data_gov_client=None,
         dry_run=False,
         existing_backend_api=None,
         do_not_connect=False,
@@ -100,7 +92,6 @@ class BackendBigQueryTable(BackendTableInterface):
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -587,23 +578,7 @@ class BackendBigQueryTable(BackendTableInterface):
 
     def post_transport_tasks(self, staging_file):
         """On BigQuery we create the load table AFTER creating the Avro datafiles."""
-        (
-            pre_register_data_gov_fn,
-            post_register_data_gov_fn,
-        ) = get_data_governance_register(
-            self._data_gov_client,
-            lambda: data_governance_register_new_table_step(
-                self._load_db_name,
-                self.table_name,
-                self._data_gov_client,
-                self._messages,
-                DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE,
-                self._orchestration_config,
-            ),
-        )
-        pre_register_data_gov_fn()
         self._recreate_load_table(staging_file)
-        post_register_data_gov_fn()
 
     def predicate_has_rows(self, predicate):
         if not self.exists():

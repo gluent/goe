@@ -22,13 +22,6 @@ import random
 import re
 
 from goe.config import orchestration_defaults
-from goe.data_governance.hadoop_data_governance_constants import (
-    SUPPORTED_DATA_GOVERNANCE_BACKENDS,
-)
-from goe.data_governance.hadoop_data_governance import (
-    is_valid_data_governance_tag,
-    is_valid_data_governance_auto_property,
-)
 from goe.filesystem.goe_dfs import (
     AZURE_OFFLOAD_FS_SCHEMES,
     OFFLOAD_FS_SCHEME_MAPRFS,
@@ -186,51 +179,6 @@ def normalise_backend_session_parameters(opts):
             "OFFLOAD_BACKEND_SESSION_PARAMETERS", opts.backend_session_parameters
         )
         opts.backend_session_parameters = json.loads(opts.backend_session_parameters)
-
-
-def normalise_data_governance_config(options):
-    if options.data_governance_api_url:
-        if not options.data_governance_backend:
-            raise OrchestrationConfigException(
-                "DATA_GOVERNANCE_BACKEND is required when connecting to a Data Governance API"
-            )
-        if options.data_governance_backend not in SUPPORTED_DATA_GOVERNANCE_BACKENDS:
-            raise OrchestrationConfigException(
-                "Invalid DATA_GOVERNANCE_BACKEND %s. Valid values are: %s"
-                % (options.data_governance_backend, SUPPORTED_DATA_GOVERNANCE_BACKENDS)
-            )
-        if (
-            options.data_governance_backend == "navigator"
-            and not options.cloudera_navigator_hive_source_id
-        ):
-            raise OrchestrationConfigException(
-                "--cloudera-navigator-hive-source-id is required for Cloudera Navigator integration"
-            )
-
-        tag_list = (
-            options.data_governance_auto_tags_csv.split(",")
-            if options.data_governance_auto_tags_csv
-            else []
-        )
-        invalid_auto_tags = [_ for _ in tag_list if not is_valid_data_governance_tag(_)]
-        if invalid_auto_tags:
-            # Using env var name for exception because the command line option is hidden
-            raise OrchestrationConfigException(
-                "Invalid values for DATA_GOVERNANCE_AUTO_TAGS: %s" % invalid_auto_tags
-            )
-
-        auto_properties = (
-            options.data_governance_auto_properties_csv.split(",")
-            if options.data_governance_auto_properties_csv
-            else []
-        )
-        invalid_auto_props = [
-            _ for _ in auto_properties if not is_valid_data_governance_auto_property(_)
-        ]
-        # TODO nj@2020-01-31 It feels like we should add the lines below but need to investigate/test before we do
-        # if invalid_auto_props:
-        # raise OrchestrationConfigException('Invalid values for DATA_GOVERNANCE_AUTO_PROPERTIES: %s'
-        #                                    % invalid_auto_props)
 
 
 def normalise_filesystem_options(options, exc_cls=OrchestrationConfigException):

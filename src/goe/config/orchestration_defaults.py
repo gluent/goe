@@ -901,45 +901,6 @@ def sqoop_queue_name_default() -> Optional[str]:
     return os.environ.get("SQOOP_QUEUE_NAME")
 
 
-# DATA GOVERNANCE DEFAULTS
-
-
-def data_governance_api_url_default():
-    return os.environ.get("DATA_GOVERNANCE_API_URL")
-
-
-def data_governance_api_user_default():
-    return os.environ.get("DATA_GOVERNANCE_API_USER")
-
-
-def data_governance_api_pass_default():
-    return os.environ.get("DATA_GOVERNANCE_API_PASS")
-
-
-def data_governance_api_backend_default():
-    return os.environ.get("DATA_GOVERNANCE_BACKEND")
-
-
-def cloudera_navigator_hive_source_id_default():
-    return os.environ.get("CLOUDERA_NAVIGATOR_HIVE_SOURCE_ID")
-
-
-def data_governance_auto_tags_default():
-    return os.environ.get("DATA_GOVERNANCE_AUTO_TAGS")
-
-
-def data_governance_custom_tags_default():
-    return os.environ.get("DATA_GOVERNANCE_CUSTOM_TAGS")
-
-
-def data_governance_auto_properties_default():
-    return os.environ.get("DATA_GOVERNANCE_AUTO_PROPERTIES")
-
-
-def data_governance_custom_properties_default():
-    return os.environ.get("DATA_GOVERNANCE_CUSTOM_PROPERTIES")
-
-
 ###########################################################################
 # GOE LISTENER DEFAULTS
 ###########################################################################

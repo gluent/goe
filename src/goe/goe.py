@@ -137,11 +137,6 @@ from goe.persistence.orchestration_metadata import (
     INCREMENTAL_PREDICATE_TYPE_RANGE_AND_PREDICATE,
 )
 
-from goe.data_governance.hadoop_data_governance import (
-    get_hadoop_data_governance_client_from_options,
-    is_valid_data_governance_tag,
-)
-
 from goe.util.goe_log_fh import GOELogFileHandle
 from goe.util.misc_functions import (
     all_int_chars,
@@ -185,8 +180,6 @@ EXPECTED_OFFLOAD_ARGS = [
     "compress_load_table",
     "compute_load_table_stats",
     "create_backend_db",
-    "data_governance_custom_tags_csv",
-    "data_governance_custom_properties",
     "data_sample_parallelism",
     "data_sample_pct",
     "date_columns_csv",
@@ -1105,7 +1098,6 @@ def normalise_options(options, normalise_owner_table=True):
     normalise_offload_predicate_options(options)
     normalise_datatype_control_options(options)
     normalise_stats_options(options, options.target)
-    normalise_data_governance_options(options)
 
 
 def verify_json_option(option_name, option_value):
@@ -1134,23 +1126,6 @@ def verify_json_option(option_name, option_value):
             raise OffloadOptionError(
                 "Invalid JSON value for %s: %s" % (option_name, str(ve))
             )
-
-
-def normalise_data_governance_options(options):
-    tag_list = (
-        options.data_governance_custom_tags_csv.split(",")
-        if options.data_governance_custom_tags_csv
-        else []
-    )
-    invalid_custom_tags = [_ for _ in tag_list if not is_valid_data_governance_tag(_)]
-    if invalid_custom_tags:
-        raise OffloadOptionError(
-            "Invalid values for --data-governance-custom-tags: %s" % invalid_custom_tags
-        )
-
-    verify_json_option(
-        "--data-governance-custom-properties", options.data_governance_custom_properties
-    )
 
 
 def version():
@@ -2225,8 +2200,6 @@ class OffloadOperation(BaseOperation):
             compress_load_table=options.compress_load_table,
             compute_load_table_stats=options.compute_load_table_stats,
             create_backend_db=options.create_backend_db,
-            data_governance_custom_tags_csv=options.data_governance_custom_tags_csv,
-            data_governance_custom_properties=options.data_governance_custom_properties,
             data_sample_parallelism=options.data_sample_parallelism,
             data_sample_pct=options.data_sample_pct,
             date_columns_csv=options.date_columns_csv,
@@ -2346,14 +2319,6 @@ class OffloadOperation(BaseOperation):
             ),
             create_backend_db=operation_dict.get(
                 "create_backend_db", orchestration_defaults.create_backend_db_default()
-            ),
-            data_governance_custom_tags_csv=operation_dict.get(
-                "data_governance_custom_tags_csv",
-                orchestration_defaults.data_governance_custom_tags_default(),
-            ),
-            data_governance_custom_properties=operation_dict.get(
-                "data_governance_custom_properties",
-                orchestration_defaults.data_governance_custom_properties_default(),
             ),
             data_sample_parallelism=operation_dict.get(
                 "data_sample_parallelism",
@@ -2841,13 +2806,6 @@ def offload_table(
     ):
         return False
 
-    data_gov_client = get_data_gov_client(
-        offload_options,
-        messages,
-        offload_operation,
-        rdbms_schema=offload_source_table.owner,
-        source_rdbms_object_name=offload_source_table.table_name,
-    )
     offload_operation.offload_transport_method = choose_offload_transport_method(
         offload_operation, offload_source_table, offload_options, messages
     )
@@ -2859,7 +2817,6 @@ def offload_table(
     offload_target_table.refresh_operational_settings(
         offload_operation,
         rdbms_columns=offload_source_table.columns,
-        data_gov_client=data_gov_client,
     )
 
     if offload_operation.ddl_file:
@@ -2921,7 +2878,6 @@ def offload_table(
         offload_options,
         source_data_client,
         messages,
-        data_gov_client,
     )
     messages.log(
         "%s: %s"
@@ -3014,33 +2970,6 @@ def get_offload_target_table(
 
 def get_synthetic_partition_cols(backend_cols):
     return [col for col in backend_cols if is_synthetic_partition_column(col.name)]
-
-
-def get_data_gov_client(
-    options,
-    messages,
-    execute,
-    rdbms_schema=None,
-    source_rdbms_object_name=None,
-    target_rdbms_object_name=None,
-):
-    if options.data_governance_api_url:
-        data_gov_client = get_hadoop_data_governance_client_from_options(
-            options, messages, dry_run=bool(not execute)
-        )
-        data_gov_client.healthcheck_api()
-        data_gov_client.cache_property_values(
-            auto_tags_csv=options.data_governance_auto_tags_csv,
-            custom_tags_csv=options.data_governance_custom_tags_csv,
-            auto_properties_csv=options.data_governance_auto_properties_csv,
-            custom_properties=options.data_governance_custom_properties,
-            rdbms_name=get_db_unique_name(options),
-            rdbms_schema=rdbms_schema,
-            source_rdbms_object_name=source_rdbms_object_name,
-            target_rdbms_object_name=target_rdbms_object_name,
-        )
-        return data_gov_client
-    return None
 
 
 def check_posint(option, opt, value):
@@ -3202,21 +3131,6 @@ def get_oracle_options(opt):
         help=SUPPRESS_HELP,
     )
     return opt
-
-
-def get_data_governance_options(opt):
-    opt.add_option(
-        "--data-governance-custom-properties",
-        dest="data_governance_custom_properties",
-        default=orchestration_defaults.data_governance_custom_properties_default(),
-        help=SUPPRESS_HELP,
-    )
-    opt.add_option(
-        "--data-governance-custom-tags",
-        dest="data_governance_custom_tags_csv",
-        default=orchestration_defaults.data_governance_custom_tags_default(),
-        help=SUPPRESS_HELP,
-    )
 
 
 def get_options(usage=None, operation_name=None):
@@ -3499,8 +3413,6 @@ def get_options(usage=None, operation_name=None):
         action="append",
         help=SUPPRESS_HELP,
     )
-
-    get_data_governance_options(opt)
 
     return opt
 

@@ -16,8 +16,8 @@ SHELL := /bin/bash
 
 TARGET_DIR=target/offload
 
-OFFLOAD_VERSION=$(shell cat version)
-GOE_WHEEL=goe_framework-$(shell echo $(OFFLOAD_VERSION) | tr 'A-Z-' 'a-z.')0-py3-none-any.whl
+OFFLOAD_VERSION=$(shell sed -rn 's/version = "([a-zA-Z0-9.-]+)"/\1/p' pyproject.toml)
+GOE_WHEEL=goe_framework-$(shell echo $(OFFLOAD_VERSION)-py3-none-any.whl)
 
 BUILD=$(strip $(shell git rev-parse --short HEAD))
 
@@ -64,14 +64,13 @@ install-dev-extras:
 target: python-goe spark-listener offload-env
 	@echo -e "=> \e[92m Building target: $(TARGET_DIR)...\e[0m"
 	mkdir -p $(TARGET_DIR)/bin
-	cp bin/{offload,connect,logmgr,display_goe_env,clean_goe_env,agg_validate} $(TARGET_DIR)/bin
+	cp bin/{offload,connect,logmgr,agg_validate} $(TARGET_DIR)/bin
 	mkdir -p $(TARGET_DIR)/tools
 	cp tools/goe-shell-functions.sh $(TARGET_DIR)/tools
 	rm -rf $(TARGET_DIR)/setup/sql $(TARGET_DIR)/setup/python
 	mkdir -p $(TARGET_DIR)/cache
 	mkdir -p $(TARGET_DIR)/setup/sql && cp -a sql/oracle/source/* $(TARGET_DIR)/setup
 	mkdir -p $(TARGET_DIR)/lib && cp dist/goe_framework-*.whl $(TARGET_DIR)/lib
-	cp version $(TARGET_DIR)
 	cp LICENSE $(TARGET_DIR)
 	cp AUTHORS $(TARGET_DIR)
 	echo "$(OFFLOAD_VERSION) ($(BUILD))" > $(TARGET_DIR)/version_build
@@ -102,7 +101,6 @@ package-spark-standalone: spark-listener
 
 .PHONY: python-goe
 python-goe: python-goe-clean
-	sed -i "s/^version = .*/\Lversion = \"$(OFFLOAD_VERSION)\"/" pyproject.toml
 	python3 -m build
 
 

@@ -14,4 +14,4 @@
 
 import importlib.metadata
 
-__version__ = importlib.metadata.version("goe")
+__version__ = importlib.metadata.version("goe-framework")

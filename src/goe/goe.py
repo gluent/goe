@@ -1154,7 +1154,6 @@ def normalise_data_governance_options(options):
 
 
 def version():
-    """Note that this function is modified in the top level Makefile"""
     with open(
         os.path.join(os.environ.get("OFFLOAD_HOME"), "version_build")
     ) as version_file:
@@ -1169,7 +1168,7 @@ def comp_ver_check(frontend_api):
 
 def version_abort(check_version, frontend_api):
     match, v_goe, v_ora = comp_ver_check(frontend_api)
-    if check_version and not match and "-DEV" not in v_goe:
+    if check_version and not match and ".dev" not in v_goe:
         return True, v_goe, v_ora
     else:
         return False, v_goe, v_ora

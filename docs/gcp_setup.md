@@ -26,14 +26,9 @@ The role names below are used throughput this page but can be changed to suit co
 | Role                | Mandatory | Purpose                                                                         |
 | ------------------- | ----------| ------------------------------------------------------------------------------- |
 | `goe_gcs_role`      |      Y    | Permissions to read/write on the GOE staging bucket.                            |
-| `goe_bq_core_role`  |      Y    | Core permissions to interact with BigQuery, list datsets/tables/etc.            |
-|                     |           | No data read/write permissions.                                                 |
-|                     |           | Will be granted at the project level.                                           |
-| `goe_bq_app_role`   |      Y    | Permissions to read/write data in the final dataset.                            |
-|                     |           | Optionally can include table create/drop permissions.                           |
-|                     |           | Locked down at dataset level.                                                   |
-| `goe_bq_stg_role`   |      Y    | Permissions to read data and create/drop staging tables in the staging dataset. |
-|                     |           | Locked down at dataset level.                                                   |
+| `goe_bq_core_role`  |      Y    | Core permissions to interact with BigQuery, list datsets/tables/etc.<br />No data read/write permissions.<br />Will be granted at the project level. |
+| `goe_bq_app_role`   |      Y    | Permissions to read/write data in the final dataset.<br />Optionally can include table create/drop permissions.<br />Locked down at dataset level. |
+| `goe_bq_stg_role`   |      Y    | Permissions to read data and create/drop staging tables in the staging dataset.<br />Locked down at dataset level. |
 | `goe_dataproc_role` |      N    | Permissions to interact with a permanent Dataproc cluster.                      |
 | `goe_batches_role`  |      N    | Permissions to interact with Dataproc Batches service.                          |
 

@@ -2,11 +2,11 @@
 
 ## Overview
 
-This page details GCP components required to use GOE in your GCP project and recommended minimal privileges.
+This page details Google Cloud components required, with recommended minimal privileges, to use GOE in your GCP project.
 
 ## Service Account
 
-A service account should be provisioned from the GCP project. This service account can be used by any service that will execute GOE commands, for examples bound to a GCE virtual machine.
+A service account should be provisioned from the GCP project. This service account can be used by any service that will execute GOE commands, for example it could be attached to a GCE virtual machine.
 
 ## Cloud Storage Bucket
 
@@ -14,7 +14,7 @@ A cloud storage bucket is required to stage data before ingesting it into BigQue
 
 ## Roles
 
-The role names below are used throughput this page but can be changed to suit company policies. These roles will provide adequate access to stage data in GCP and load it into BigQuery.
+The role names below are used throughput this page but can be changed to suit company policies. These roles will provide adequate access to stage data in cloud storage and load it into BigQuery.
 
 | Role                | Mandatory | Purpose                                                                         |
 | ------------------- | ----------| ------------------------------------------------------------------------------- |
@@ -32,7 +32,7 @@ The role names below are used throughput this page but can be changed to suit co
 
 ## Compute Engine Virtual Machine
 
-To work interactively with GOE you need to be able run commands with appropriate permissions. Rather than downloading service account keys we believe it is better to attach the service account to a VM and run all commands from there.
+To work interactively with GOE you need to be able run commands with appropriate permissions. Rather than downloading service account keys we believe it is better to attach the service account to a GCE virtual machine and run all commands from there.
 
 ## Example Commands
 
@@ -112,7 +112,7 @@ gcloud iam roles update goe_bq_core_role --project ${PROJECT} \
 ```
 
 #### goe_bq_app_role
-Note that the role grant is bound to the target BigQuery dataset, no project wide access is granted. We use `bq` to grant the role because `gcloud` does not support these granular grants.
+Note that the role grant is bound to the target BigQuery dataset, no project wide access is granted. The `bq` utility is used to grant the role because `gcloud` does not support these granular grants.
 
 Also note that the target dataset must be created *before* executing these commands (see [Generating Dataset DDL](#generating-dataset-ddl) for details).
 ```
@@ -142,7 +142,7 @@ gcloud iam roles update goe_bq_app_role --project ${PROJECT} \
 
 
 #### goe_bq_stg_role
-Note that the role grant is bound to the staging BigQuery dataset (which has the same name as the target dataset but with an "_load" suffix), no project wide access is granted. We use `bq` to grant the role because `gcloud` does not support these granular grants.
+Note that the role grant is bound to the staging BigQuery dataset (which has the same name as the target dataset but with an "_load" suffix), no project wide access is granted. The `bq` utility is used to grant the role because `gcloud` does not support these granular grants.
 
 Also note that the staging dataset must be created *before* executing these commands (see [Generating Dataset DDL](#generating-dataset-ddl) for details).
 ```
@@ -161,7 +161,7 @@ TO \"serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com\";
 ```
 
 ## Compute Engine Virtual Machine
-Values supplied below are examples only, changes will likely be required for each user case:
+Values supplied below are examples only, changes will likely be required for each use case:
 ```
 INSTANCE_NAME=goe-node
 ZONE=<instance-zone>

@@ -123,7 +123,7 @@ make install-dev-extras
 ```
 
 # Supporting Infrastructure
-GOE requires access to cloud storage and Spark. For a Google Cloud instalation this is described here: [Google Cloud Platform Setup for a BigQuery Target](docs/gcp_setup.md)
+GOE requires access to cloud storage and Spark. For a Google Cloud installation this is described here: [Google Cloud Platform Setup for a BigQuery Target](docs/gcp_setup.md)
 
 # Running Commands
 Activate the GOE Python virtual environment:

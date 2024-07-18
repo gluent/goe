@@ -14,7 +14,7 @@
 
 [project]
 name = "goe-framework"
-version = "1.0.6-dev"
+version = "1.0.6.dev0"
 readme = "README.md"
 requires-python = ">=3.7"
 maintainers = [

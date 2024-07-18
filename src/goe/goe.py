@@ -1154,7 +1154,6 @@ def normalise_data_governance_options(options):
 
 
 def version():
-    """Note that this function is modified in the top level Makefile"""
     with open(
         os.path.join(os.environ.get("OFFLOAD_HOME"), "version_build")
     ) as version_file:

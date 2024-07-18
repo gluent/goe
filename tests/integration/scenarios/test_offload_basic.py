@@ -897,7 +897,6 @@ def test_offload_log_path_gcs(config, schema, data_db):
             config.offload_fs_scheme != OFFLOAD_FS_SCHEME_GS
             or config.log_path.startswith("gs:")
         ):
-            messages.log(f"Skipping {id} because it is unnecessary for current config")
             pytest.skip(f"Skipping {id} because it is unnecessary for current config")
 
         backend_api = get_backend_testing_api(config, messages)

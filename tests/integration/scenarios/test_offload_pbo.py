@@ -64,8 +64,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -282,829 +282,827 @@ def pbo_assertion(
 def test_offload_pbo_exceptions(config, schema, data_db):
     """Check exceptions are thrown in correct cases."""
     id = "test_offload_pbo_exceptions"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, EXC_TABLE),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, EXC_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, EXC_TABLE
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, EXC_TABLE
+                ),
+            ],
+        )
 
-    # Initial offload with --no-modify-hybrid-view should fail.
-    options = {
-        "owner_table": schema + "." + EXC_TABLE,
-        "offload_predicate": GenericPredicate(
-            'column(prod_subcategory) = string("Camcorders")'
-        ),
-        "offload_predicate_modify_hybrid_view": False,
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PREDICATE_TYPE_NO_MODIFY_HV_EXCEPTION_TEXT,
-    )
+        # Initial offload with --no-modify-hybrid-view should fail.
+        options = {
+            "owner_table": schema + "." + EXC_TABLE,
+            "offload_predicate": GenericPredicate(
+                'column(prod_subcategory) = string("Camcorders")'
+            ),
+            "offload_predicate_modify_hybrid_view": False,
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PREDICATE_TYPE_NO_MODIFY_HV_EXCEPTION_TEXT,
+        )
 
-    # Attempt to offload with partition and predicate identification.
-    options = {
-        "owner_table": schema + "." + EXC_TABLE,
-        "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
-        "older_than_date": "2012-01-01",
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
-    )
+        # Attempt to offload with partition and predicate identification.
+        options = {
+            "owner_table": schema + "." + EXC_TABLE,
+            "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
+            "older_than_date": "2012-01-01",
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=CONFLICTING_DATA_ID_OPTIONS_EXCEPTION_TEXT,
+        )
 
-    # Attempt to offload with offload_type FULL and predicate identification.
-    options = {
-        "owner_table": schema + "." + EXC_TABLE,
-        "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
-        "offload_type": OFFLOAD_TYPE_FULL,
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
-    )
+        # Attempt to offload with offload_type FULL and predicate identification.
+        options = {
+            "owner_table": schema + "." + EXC_TABLE,
+            "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
+            "offload_type": OFFLOAD_TYPE_FULL,
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
+        )
 
-    # Badly formatted predicates should be covered by unit tests so we're testing other types of bad predicate.
+        # Badly formatted predicates should be covered by unit tests so we're testing other types of bad predicate.
 
-    # Offload With Invalid Options: unknown column name.
-    options = {
-        "owner_table": schema + "." + EXC_TABLE,
-        "offload_predicate": GenericPredicate('column(not_a_column) = string("NOPE")'),
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string="Unable to resolve column",
-    )
+        # Offload With Invalid Options: unknown column name.
+        options = {
+            "owner_table": schema + "." + EXC_TABLE,
+            "offload_predicate": GenericPredicate(
+                'column(not_a_column) = string("NOPE")'
+            ),
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string="Unable to resolve column",
+        )
 
-    # Offload with no matching rows.
-    options = {
-        "owner_table": schema + "." + EXC_TABLE,
-        "offload_predicate": GenericPredicate(
-            'column(txn_desc) = string("No such data")'
-        ),
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_status=False,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload with no matching rows.
+        options = {
+            "owner_table": schema + "." + EXC_TABLE,
+            "offload_predicate": GenericPredicate(
+                'column(txn_desc) = string("No such data")'
+            ),
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_status=False,
+        )
 
 
 def test_offload_pbo_dim(config, schema, data_db):
     """Standard PBO on a non-partitioned table."""
     id = "test_offload_pbo_dim"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, DIM_TABLE),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, DIM_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, DIM_TABLE
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, DIM_TABLE
+                ),
+            ],
+        )
 
-    # Verification offload of dimension by predicate.
-    options = {
-        "owner_table": schema + "." + DIM_TABLE,
-        "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert not backend_table_exists(config, backend_api, messages, data_db, DIM_TABLE)
+        # Verification offload of dimension by predicate.
+        options = {
+            "owner_table": schema + "." + DIM_TABLE,
+            "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert not backend_table_exists(
+            config, backend_api, messages, data_db, DIM_TABLE
+        )
 
-    # Offload 1st string predicate of dimension.
-    options = {
-        "owner_table": schema + "." + DIM_TABLE,
-        "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    messages.log(f"{id}:1", detail=VVERBOSE)
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, DIM_TABLE
-    )
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        DIM_TABLE,
-        number_of_predicates=1,
-        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
-        expected_incremental_key="NULL",
-        expected_incremental_range="NULL",
-        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=["ABC"],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        DIM_TABLE,
-        f"{id}:1",
-        "txn_desc = 'ABC'",
-    )
+        # Offload 1st string predicate of dimension.
+        options = {
+            "owner_table": schema + "." + DIM_TABLE,
+            "offload_predicate": GenericPredicate('column(txn_desc) = string("ABC")'),
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        messages.log(f"{id}:1", detail=VVERBOSE)
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert standard_dimension_assertion(
+            config, backend_api, messages, repo_client, schema, data_db, DIM_TABLE
+        )
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            DIM_TABLE,
+            number_of_predicates=1,
+            expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+            expected_incremental_key="NULL",
+            expected_incremental_range="NULL",
+            expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+            values_in_predicate_value_metadata=["ABC"],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            DIM_TABLE,
+            f"{id}:1",
+            "txn_desc = 'ABC'",
+        )
 
-    # Offload 2nd string predicate of dimension.
-    # Also confirm data with aggregate method.
-    options = {
-        "owner_table": schema + "." + DIM_TABLE,
-        "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
-        "verify_row_count": "aggregate",
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        DIM_TABLE,
-        number_of_predicates=2,
-        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
-        expected_incremental_key="NULL",
-        expected_incremental_range="NULL",
-        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=["ABC", "DEF"],
-    )
+        # Offload 2nd string predicate of dimension.
+        # Also confirm data with aggregate method.
+        options = {
+            "owner_table": schema + "." + DIM_TABLE,
+            "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
+            "verify_row_count": "aggregate",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            DIM_TABLE,
+            number_of_predicates=2,
+            expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+            expected_incremental_key="NULL",
+            expected_incremental_range="NULL",
+            expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+            values_in_predicate_value_metadata=["ABC", "DEF"],
+        )
 
-    # Attempt to re-offload same predicate, will return False.
-    options = {
-        "owner_table": schema + "." + DIM_TABLE,
-        "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_status=False,
-    )
+        # Attempt to re-offload same predicate, will return False.
+        options = {
+            "owner_table": schema + "." + DIM_TABLE,
+            "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_status=False,
+        )
 
-    # Re-offload same predicate in force mode, should process successfully but move no data.
-    # TODO this has been commented out until we decide what --force should do, see issue 53.
-    # options = {
-    #    "owner_table": schema + "." + DIM_TABLE,
-    #    "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
-    #    "force": True,
-    #    "execute": True,
-    # }
-    # run_offload(
-    #    options,
-    #    config,
-    #    messages,
-    # )
-    # assert pbo_assertion(
-    #    messages,
-    #    repo_client,
-    #    schema,
-    #    DIM_TABLE,
-    #    number_of_predicates=2,
-    #    expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
-    #    expected_incremental_key="NULL",
-    #    expected_incremental_range="NULL",
-    #    expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-    #    values_in_predicate_value_metadata=["ABC", "DEF"],
-    # )
-    # assert (
-    #    messages_step_executions(messages, step_title(command_steps.STEP_FINAL_LOAD))
-    #    == 0
-    # )
+        # Re-offload same predicate in force mode, should process successfully but move no data.
+        # TODO this has been commented out until we decide what --force should do, see issue 53.
+        # options = {
+        #    "owner_table": schema + "." + DIM_TABLE,
+        #    "offload_predicate": GenericPredicate('column(txn_desc) = string("DEF")'),
+        #    "force": True,
+        #    "execute": True,
+        # }
+        # run_offload(
+        #    options,
+        #    config,
+        #    messages,
+        # )
+        # assert pbo_assertion(
+        #    messages,
+        #    repo_client,
+        #    schema,
+        #    DIM_TABLE,
+        #    number_of_predicates=2,
+        #    expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+        #    expected_incremental_key="NULL",
+        #    expected_incremental_range="NULL",
+        #    expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+        #    values_in_predicate_value_metadata=["ABC", "DEF"],
+        # )
+        # assert (
+        #    messages_step_executions(messages, step_title(command_steps.STEP_FINAL_LOAD))
+        #    == 0
+        # )
 
-    # Offload 3rd predicate of dimension but reset hybrid view.
-    options = {
-        "owner_table": schema + "." + DIM_TABLE,
-        "offload_predicate": GenericPredicate('column(txn_desc) = string("GHI")'),
-        "reset_hybrid_view": True,
-        "execute": True,
-    }
-    messages.log(f"{id}:2", detail=VVERBOSE)
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        DIM_TABLE,
-        number_of_predicates=1,
-        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
-        expected_incremental_key="NULL",
-        expected_incremental_range="NULL",
-        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=["GHI"],
-        values_not_in_predicate_value_metadata=[
-            "ABC",
-            "DEF",
-        ],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        DIM_TABLE,
-        f"{id}:2",
-        "txn_desc = 'GHI'",
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload 3rd predicate of dimension but reset hybrid view.
+        options = {
+            "owner_table": schema + "." + DIM_TABLE,
+            "offload_predicate": GenericPredicate('column(txn_desc) = string("GHI")'),
+            "reset_hybrid_view": True,
+            "execute": True,
+        }
+        messages.log(f"{id}:2", detail=VVERBOSE)
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            DIM_TABLE,
+            number_of_predicates=1,
+            expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+            expected_incremental_key="NULL",
+            expected_incremental_range="NULL",
+            expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+            values_in_predicate_value_metadata=["GHI"],
+            values_not_in_predicate_value_metadata=[
+                "ABC",
+                "DEF",
+            ],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            DIM_TABLE,
+            f"{id}:2",
+            "txn_desc = 'GHI'",
+        )
 
 
 def test_offload_pbo_unicode(config, schema, data_db):
     """PBO testing with unicode data."""
     id = "test_offload_pbo_unicode"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_simple_unicode_dimension_ddl(
-            config, frontend_api, schema, UNICODE_TABLE, UCODE_VALUE1, UCODE_VALUE2
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, UNICODE_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_simple_unicode_dimension_ddl(
+                config, frontend_api, schema, UNICODE_TABLE, UCODE_VALUE1, UCODE_VALUE2
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, UNICODE_TABLE
+                ),
+            ],
+        )
 
-    # Offload 1st unicode predicate of dimension.
-    options = {
-        "owner_table": schema + "." + UNICODE_TABLE,
-        "unicode_string_columns_csv": "data",
-        "offload_predicate": GenericPredicate(
-            '((column(id) = numeric(1)) and (column(data) = string("%s")))'
-            % UCODE_VALUE1
-        ),
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    messages.log(f"{id}:1", detail=VVERBOSE)
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, UNICODE_TABLE
-    )
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        UNICODE_TABLE,
-        number_of_predicates=1,
-        values_in_predicate_value_metadata=[UCODE_VALUE1],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        UNICODE_TABLE,
-        f"{id}:1",
-        "data = '%s'" % UCODE_VALUE1,
-    )
+        # Offload 1st unicode predicate of dimension.
+        options = {
+            "owner_table": schema + "." + UNICODE_TABLE,
+            "unicode_string_columns_csv": "data",
+            "offload_predicate": GenericPredicate(
+                '((column(id) = numeric(1)) and (column(data) = string("%s")))'
+                % UCODE_VALUE1
+            ),
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        messages.log(f"{id}:1", detail=VVERBOSE)
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert standard_dimension_assertion(
+            config, backend_api, messages, repo_client, schema, data_db, UNICODE_TABLE
+        )
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            UNICODE_TABLE,
+            number_of_predicates=1,
+            values_in_predicate_value_metadata=[UCODE_VALUE1],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            UNICODE_TABLE,
+            f"{id}:1",
+            "data = '%s'" % UCODE_VALUE1,
+        )
 
-    # Offload 2nd unicode predicate of dimension.
-    options = {
-        "owner_table": schema + "." + UNICODE_TABLE,
-        "offload_predicate": GenericPredicate(
-            '((column(data) = string("%s")))' % UCODE_VALUE2
-        ),
-        "execute": True,
-    }
-    messages.log(f"{id}:2", detail=VVERBOSE)
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, UNICODE_TABLE
-    )
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        UNICODE_TABLE,
-        number_of_predicates=2,
-        values_in_predicate_value_metadata=[UCODE_VALUE2],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        UNICODE_TABLE,
-        f"{id}:2",
-        "data = '%s'" % UCODE_VALUE2,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload 2nd unicode predicate of dimension.
+        options = {
+            "owner_table": schema + "." + UNICODE_TABLE,
+            "offload_predicate": GenericPredicate(
+                '((column(data) = string("%s")))' % UCODE_VALUE2
+            ),
+            "execute": True,
+        }
+        messages.log(f"{id}:2", detail=VVERBOSE)
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert standard_dimension_assertion(
+            config, backend_api, messages, repo_client, schema, data_db, UNICODE_TABLE
+        )
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            UNICODE_TABLE,
+            number_of_predicates=2,
+            values_in_predicate_value_metadata=[UCODE_VALUE2],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            UNICODE_TABLE,
+            f"{id}:2",
+            "data = '%s'" % UCODE_VALUE2,
+        )
 
 
 def test_offload_pbo_char_pad(config, schema, data_db):
     """PBO testing with CHAR padded column."""
     id = "test_offload_pbo_char_pad"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_char_frontend_ddl(config, frontend_api, schema, CHAR_TABLE),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, CHAR_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_char_frontend_ddl(
+                config, frontend_api, schema, CHAR_TABLE
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, CHAR_TABLE
+                ),
+            ],
+        )
 
-    # Offload 1st CHAR padded predicate of dimension.
-    options = {
-        "owner_table": schema + "." + CHAR_TABLE,
-        "offload_predicate": GenericPredicate('(column(data) = string("a  "))'),
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    messages.log(f"{id}:1", detail=VVERBOSE)
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, CHAR_TABLE
-    )
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        CHAR_TABLE,
-        number_of_predicates=1,
-        values_in_predicate_value_metadata=['("a  ")'],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        CHAR_TABLE,
-        f"{id}:1",
-        "data = 'a  '",
-    )
+        # Offload 1st CHAR padded predicate of dimension.
+        options = {
+            "owner_table": schema + "." + CHAR_TABLE,
+            "offload_predicate": GenericPredicate('(column(data) = string("a  "))'),
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        messages.log(f"{id}:1", detail=VVERBOSE)
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert standard_dimension_assertion(
+            config, backend_api, messages, repo_client, schema, data_db, CHAR_TABLE
+        )
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            CHAR_TABLE,
+            number_of_predicates=1,
+            values_in_predicate_value_metadata=['("a  ")'],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            CHAR_TABLE,
+            f"{id}:1",
+            "data = 'a  '",
+        )
 
-    # Attempt to re-offload same CHAR padded predicate, will return False.
-    options = {
-        "owner_table": schema + "." + CHAR_TABLE,
-        "offload_predicate": GenericPredicate('(column(data) = string("a  "))'),
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_status=False,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Attempt to re-offload same CHAR padded predicate, will return False.
+        options = {
+            "owner_table": schema + "." + CHAR_TABLE,
+            "offload_predicate": GenericPredicate('(column(data) = string("a  "))'),
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_status=False,
+        )
 
 
 def test_offload_pbo_ts(config, schema, data_db):
     """PBO testing with a TIMESTAMP column."""
     id = "test_offload_pbo_ts"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_ts_frontend_ddl(config, frontend_api, schema, TS_TABLE),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, TS_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_ts_frontend_ddl(config, frontend_api, schema, TS_TABLE),
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, TS_TABLE
+                ),
+            ],
+        )
+
+        # Offload 1st TIMESTAMP predicate.
+        options = {
+            "owner_table": schema + "." + TS_TABLE,
+            "offload_predicate": GenericPredicate(
+                "(column(ts) < datetime(2020-02-01))"
             ),
-        ],
-    )
-
-    # Offload 1st TIMESTAMP predicate.
-    options = {
-        "owner_table": schema + "." + TS_TABLE,
-        "offload_predicate": GenericPredicate("(column(ts) < datetime(2020-02-01))"),
-        "allow_nanosecond_timestamp_columns": True,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    messages.log(f"{id}:1", detail=VVERBOSE)
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, TS_TABLE
-    )
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        TS_TABLE,
-        number_of_predicates=1,
-        values_in_predicate_value_metadata=["(2020-02-01)"],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        TS_TABLE,
-        f"{id}:1",
-        "id = 1",
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+            "allow_nanosecond_timestamp_columns": True,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        messages.log(f"{id}:1", detail=VVERBOSE)
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert standard_dimension_assertion(
+            config, backend_api, messages, repo_client, schema, data_db, TS_TABLE
+        )
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            TS_TABLE,
+            number_of_predicates=1,
+            values_in_predicate_value_metadata=["(2020-02-01)"],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            TS_TABLE,
+            f"{id}:1",
+            "id = 1",
+        )
 
 
 def test_offload_pbo_range(config, schema, data_db):
     """PBO testing with a RANGE partitioned table."""
     id = "test_offload_pbo_range"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, RANGE_TABLE, simple_partition_names=True
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, RANGE_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+                schema, RANGE_TABLE, simple_partition_names=True
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, RANGE_TABLE
+                ),
+            ],
+        )
 
-    # Attempt to offload for first time with predicate and "range" predicate type.
-    options = {
-        "owner_table": schema + "." + RANGE_TABLE,
-        "offload_predicate": GenericPredicate(
-            "(column(time_id) = datetime(%s))" % (test_constants.SALES_BASED_FACT_HV_1)
-        ),
-        "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    messages.log(f"{id}:1", detail=VVERBOSE)
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
-    )
+        # Attempt to offload for first time with predicate and "range" predicate type.
+        options = {
+            "owner_table": schema + "." + RANGE_TABLE,
+            "offload_predicate": GenericPredicate(
+                "(column(time_id) = datetime(%s))"
+                % (test_constants.SALES_BASED_FACT_HV_1)
+            ),
+            "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_RANGE,
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        messages.log(f"{id}:1", detail=VVERBOSE)
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=IPA_PREDICATE_TYPE_FIRST_OFFLOAD_EXCEPTION_TEXT,
+        )
 
-    # Offload 1st datetime predicate of RANGE partitioned table.
-    options = {
-        "owner_table": schema + "." + RANGE_TABLE,
-        "offload_predicate": GenericPredicate(
-            "(column(time_id) >= datetime(%s)) and (column(time_id) < datetime(%s))"
-            % (
+        # Offload 1st datetime predicate of RANGE partitioned table.
+        options = {
+            "owner_table": schema + "." + RANGE_TABLE,
+            "offload_predicate": GenericPredicate(
+                "(column(time_id) >= datetime(%s)) and (column(time_id) < datetime(%s))"
+                % (
+                    test_constants.SALES_BASED_FACT_HV_2,
+                    test_constants.SALES_BASED_FACT_HV_3,
+                )
+            ),
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        messages.log(f"{id}:1", detail=VVERBOSE)
+        run_offload(options, config, messages)
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            RANGE_TABLE,
+            number_of_predicates=1,
+            expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+            expected_incremental_key="NULL",
+            expected_incremental_range="NULL",
+            expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+            values_in_predicate_value_metadata=[
                 test_constants.SALES_BASED_FACT_HV_2,
                 test_constants.SALES_BASED_FACT_HV_3,
-            )
-        ),
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    messages.log(f"{id}:1", detail=VVERBOSE)
-    run_offload(options, config, messages)
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        RANGE_TABLE,
-        number_of_predicates=1,
-        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
-        expected_incremental_key="NULL",
-        expected_incremental_range="NULL",
-        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=[
-            test_constants.SALES_BASED_FACT_HV_2,
-            test_constants.SALES_BASED_FACT_HV_3,
-        ],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        RANGE_TABLE,
-        f"{id}:1",
-        "time_id >= %s and time_id < %s"
-        % (
-            const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_2),
-            const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_3),
-        ),
-    )
+            ],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            RANGE_TABLE,
+            f"{id}:1",
+            "time_id >= %s and time_id < %s"
+            % (
+                const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_2),
+                const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_3),
+            ),
+        )
 
-    # Offload 2nd datetime predicate of RANGE partitioned table.
-    options = {
-        "owner_table": schema + "." + RANGE_TABLE,
-        "offload_predicate": GenericPredicate(
-            "column(time_id) = datetime(%s)" % test_constants.SALES_BASED_FACT_HV_1
-        ),
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        RANGE_TABLE,
-        number_of_predicates=2,
-        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
-        expected_incremental_key="NULL",
-        expected_incremental_range="NULL",
-        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=[
-            test_constants.SALES_BASED_FACT_HV_2,
-            test_constants.SALES_BASED_FACT_HV_3,
-            test_constants.SALES_BASED_FACT_HV_1,
-        ],
-    )
+        # Offload 2nd datetime predicate of RANGE partitioned table.
+        options = {
+            "owner_table": schema + "." + RANGE_TABLE,
+            "offload_predicate": GenericPredicate(
+                "column(time_id) = datetime(%s)" % test_constants.SALES_BASED_FACT_HV_1
+            ),
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            RANGE_TABLE,
+            number_of_predicates=2,
+            expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+            expected_incremental_key="NULL",
+            expected_incremental_range="NULL",
+            expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+            values_in_predicate_value_metadata=[
+                test_constants.SALES_BASED_FACT_HV_2,
+                test_constants.SALES_BASED_FACT_HV_3,
+                test_constants.SALES_BASED_FACT_HV_1,
+            ],
+        )
 
-    # Offload With Invalid Options.
-    # Attempt to offload by partition while in PREDICATE mode is not valid.
-    options = {
-        "owner_table": schema + "." + RANGE_TABLE,
-        "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
-    )
+        # Offload With Invalid Options.
+        # Attempt to offload by partition while in PREDICATE mode is not valid.
+        options = {
+            "owner_table": schema + "." + RANGE_TABLE,
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
+        )
 
-    # Offload With Invalid Options.
-    # Attempt to use offload type FULL while in PREDICATE mode is not valid.
-    options = {
-        "owner_table": schema + "." + RANGE_TABLE,
-        "offload_predicate": GenericPredicate(
-            "(column(time_id) = datetime(%s)) and (column(channel_id) = numeric(3))"
-            % test_constants.SALES_BASED_FACT_HV_4
-        ),
-        "offload_type": OFFLOAD_TYPE_FULL,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload With Invalid Options.
+        # Attempt to use offload type FULL while in PREDICATE mode is not valid.
+        options = {
+            "owner_table": schema + "." + RANGE_TABLE,
+            "offload_predicate": GenericPredicate(
+                "(column(time_id) = datetime(%s)) and (column(channel_id) = numeric(3))"
+                % test_constants.SALES_BASED_FACT_HV_4
+            ),
+            "offload_type": OFFLOAD_TYPE_FULL,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PREDICATE_TYPE_OFFLOAD_TYPE_FULL_EXCEPTION_TEXT,
+        )
 
 
 def test_offload_pbo_list(config, schema, data_db):
     """PBO testing with a LIST partitioned table."""
     id = "test_offload_pbo_list"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        if not frontend_api.goe_lpa_supported():
+            pytest.skip(f"Skipping {id} for system/type: {config.db_type}/LIST")
 
-    if not frontend_api.goe_lpa_supported():
-        messages.log(f"Skipping {id} for system/type: {config.db_type}/LIST")
-        pytest.skip(f"Skipping {id} for system/type: {config.db_type}/LIST")
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LIST_TABLE,
+                part_key_type=frontend_api.test_type_canonical_date(),
+                default_partition=True,
+                with_drop=True,
+            ),
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LIST_TABLE
+                ),
+            ],
+        )
+
+        # Offload 1st partition putting table in LIST mode.
+        options = {
+            "owner_table": "%s.%s" % (schema, LIST_TABLE),
+            "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+
+        # Attempt to Offload 1st predicate over LIST IPA table, this is not valid.
+        options = {
+            "owner_table": schema + "." + LIST_TABLE,
+            "offload_predicate": GenericPredicate(
+                "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(3)))"
+                % (test_constants.SALES_BASED_FACT_HV_1)
+            ),
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PREDICATE_TYPE_INCOMPATIBLE_EXCEPTION_TEXT,
+        )
+
+        # Offload 1st predicate over LIST table.
+        options = {
+            "owner_table": schema + "." + LIST_TABLE,
+            "offload_predicate": GenericPredicate(
+                "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(3)))"
+                % (test_constants.SALES_BASED_FACT_HV_1)
+            ),
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        messages.log(f"{id}:1", detail=VVERBOSE)
+        run_offload(options, config, messages)
+        assert pbo_assertion(
+            messages,
+            repo_client,
             schema,
             LIST_TABLE,
-            part_key_type=frontend_api.test_type_canonical_date(),
-            default_partition=True,
-            with_drop=True,
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LIST_TABLE
+            number_of_predicates=1,
+            expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+            expected_incremental_key="NULL",
+            expected_incremental_range="NULL",
+            expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+            values_in_predicate_value_metadata=[
+                test_constants.SALES_BASED_FACT_HV_1,
+                "(3)",
+            ],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            LIST_TABLE,
+            f"{id}:1",
+            "yrmon = %s AND channel_id = 3"
+            % const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_1),
+        )
+
+        # Attempt to offload partition from LIST table while already in PREDICATE mode.
+        options = {
+            "owner_table": "%s.%s" % (schema, LIST_TABLE),
+            "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
+        )
+
+        # Offload 2nd predicate over LIST table.
+        options = {
+            "owner_table": schema + "." + LIST_TABLE,
+            "offload_predicate": GenericPredicate(
+                "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(4)))"
+                % (test_constants.SALES_BASED_FACT_HV_1)
             ),
-        ],
-    )
-
-    # Offload 1st partition putting table in LIST mode.
-    options = {
-        "owner_table": "%s.%s" % (schema, LIST_TABLE),
-        "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-
-    # Attempt to Offload 1st predicate over LIST IPA table, this is not valid.
-    options = {
-        "owner_table": schema + "." + LIST_TABLE,
-        "offload_predicate": GenericPredicate(
-            "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(3)))"
-            % (test_constants.SALES_BASED_FACT_HV_1)
-        ),
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PREDICATE_TYPE_INCOMPATIBLE_EXCEPTION_TEXT,
-    )
-
-    # Offload 1st predicate over LIST table.
-    options = {
-        "owner_table": schema + "." + LIST_TABLE,
-        "offload_predicate": GenericPredicate(
-            "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(3)))"
-            % (test_constants.SALES_BASED_FACT_HV_1)
-        ),
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    messages.log(f"{id}:1", detail=VVERBOSE)
-    run_offload(options, config, messages)
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        LIST_TABLE,
-        number_of_predicates=1,
-        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
-        expected_incremental_key="NULL",
-        expected_incremental_range="NULL",
-        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=[
-            test_constants.SALES_BASED_FACT_HV_1,
-            "(3)",
-        ],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        LIST_TABLE,
-        f"{id}:1",
-        "yrmon = %s AND channel_id = 3"
-        % const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_1),
-    )
-
-    # Attempt to offload partition from LIST table while already in PREDICATE mode.
-    options = {
-        "owner_table": "%s.%s" % (schema, LIST_TABLE),
-        "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=IPA_PREDICATE_TYPE_REQUIRES_PREDICATE_EXCEPTION_TEXT,
-    )
-
-    # Offload 2nd predicate over LIST table.
-    options = {
-        "owner_table": schema + "." + LIST_TABLE,
-        "offload_predicate": GenericPredicate(
-            "((column(yrmon) = datetime(%s)) and (column(channel_id) = numeric(4)))"
-            % (test_constants.SALES_BASED_FACT_HV_1)
-        ),
-        "execute": True,
-    }
-    messages.log(f"{id}:2", detail=VVERBOSE)
-    run_offload(options, config, messages)
-    assert pbo_assertion(
-        messages,
-        repo_client,
-        schema,
-        LIST_TABLE,
-        number_of_predicates=2,
-        expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
-        expected_incremental_key="NULL",
-        expected_incremental_range="NULL",
-        expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
-        values_in_predicate_value_metadata=[
-            test_constants.SALES_BASED_FACT_HV_1,
-            "(4)",
-        ],
-    )
-    assert check_predicate_count_matches_log(
-        frontend_api,
-        messages,
-        schema,
-        LIST_TABLE,
-        f"{id}:2",
-        "yrmon = %s AND channel_id = 4"
-        % const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_1),
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+            "execute": True,
+        }
+        messages.log(f"{id}:2", detail=VVERBOSE)
+        run_offload(options, config, messages)
+        assert pbo_assertion(
+            messages,
+            repo_client,
+            schema,
+            LIST_TABLE,
+            number_of_predicates=2,
+            expected_offload_type=OFFLOAD_TYPE_INCREMENTAL,
+            expected_incremental_key="NULL",
+            expected_incremental_range="NULL",
+            expected_predicate_type=INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+            values_in_predicate_value_metadata=[
+                test_constants.SALES_BASED_FACT_HV_1,
+                "(4)",
+            ],
+        )
+        assert check_predicate_count_matches_log(
+            frontend_api,
+            messages,
+            schema,
+            LIST_TABLE,
+            f"{id}:2",
+            "yrmon = %s AND channel_id = 4"
+            % const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_1),
+        )

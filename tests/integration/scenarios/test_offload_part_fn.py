@@ -62,8 +62,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -181,31 +181,67 @@ def offload_part_fn_assertion(
 
 def test_offload_part_fn_exceptions(config, schema, data_db):
     id = "test_offload_part_fn_exceptions"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
-            schema, DIM_EXC, extra_col_tuples=[("'-123'", "STR_PROD_ID")]
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, DIM_EXC
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, DIM_EXC, extra_col_tuples=[("'-123'", "STR_PROD_ID")]
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, DIM_EXC
+                ),
+            ],
+        )
 
-    if not backend_api.goe_partition_functions_supported():
-        # Offload with partition functions when not supported.
+        if not backend_api.goe_partition_functions_supported():
+            # Offload with partition functions when not supported.
+            options = {
+                "owner_table": schema + "." + DIM_NUM,
+                "offload_partition_functions": "anything",
+                "reset_backend_table": True,
+                "execute": False,
+            }
+            run_offload(
+                options,
+                config,
+                messages,
+                expected_exception_string=PARTITION_FUNCTIONS_NOT_SUPPORTED_EXCEPTION_TEXT,
+            )
+
+            messages.log(
+                f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+            )
+            pytest.skip(
+                f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+            )
+
+        # Create a series of UDFs, some incompatible with GOE, for use throughout these tests.
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            python_fns=create_incompatible_test_bigquery_udf_fns(backend_api, data_db),
+        )
+
+        # Offload with unsupported partition function UDF.
         options = {
-            "owner_table": schema + "." + DIM_NUM,
-            "offload_partition_functions": "anything",
+            "owner_table": schema + "." + DIM_EXC,
+            "offload_partition_functions": NO_ARG_UDF,
+            "integer_8_columns_csv": "prod_id",
+            "offload_partition_columns": "prod_id",
+            "offload_partition_granularity": "10",
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 5000,
             "reset_backend_table": True,
             "execute": False,
         }
@@ -213,371 +249,315 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
             options,
             config,
             messages,
-            expected_exception_string=PARTITION_FUNCTIONS_NOT_SUPPORTED_EXCEPTION_TEXT,
+            expected_exception_string=PARTITION_FUNCTION_ARG_COUNT_EXCEPTION_TEXT,
         )
 
-        messages.log(
-            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+        # Offload with unsupported partition function UDF.
+        options["offload_partition_functions"] = TWO_ARG_UDF
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PARTITION_FUNCTION_ARG_COUNT_EXCEPTION_TEXT,
         )
-        pytest.skip(
-            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+
+        # Offload with non-existent partition function UDF.
+        options["offload_partition_functions"] = INT8_UDF + "-not-real"
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PARTITION_FUNCTION_DOES_NOT_EXIST_EXCEPTION_TEXT,
         )
 
-    # Create a series of UDFs, some incompatible with GOE, for use throughout these tests.
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        python_fns=create_incompatible_test_bigquery_udf_fns(backend_api, data_db),
-    )
+        # Ensure UDF exists before attempting test.
+        backend_api.create_test_partition_functions(data_db, udf=INT8_UDF)
 
-    # Offload with unsupported partition function UDF.
-    options = {
-        "owner_table": schema + "." + DIM_EXC,
-        "offload_partition_functions": NO_ARG_UDF,
-        "integer_8_columns_csv": "prod_id",
-        "offload_partition_columns": "prod_id",
-        "offload_partition_granularity": "10",
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 5000,
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PARTITION_FUNCTION_ARG_COUNT_EXCEPTION_TEXT,
-    )
+        # Offload with STRING input to INT8 partition function.
+        options["offload_partition_columns"] = "TXN_DESC"
+        options["offload_partition_functions"] = INT8_UDF
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PARTITION_FUNCTION_ARG_TYPE_EXCEPTION_TEXT,
+        )
 
-    # Offload with unsupported partition function UDF.
-    options["offload_partition_functions"] = TWO_ARG_UDF
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PARTITION_FUNCTION_ARG_COUNT_EXCEPTION_TEXT,
-    )
+        # Offload with DATE input to partition function.
+        options = {
+            "owner_table": schema + "." + DIM_EXC,
+            "offload_partition_functions": INT8_UDF,
+            "offload_partition_columns": "TXN_DATE",
+            "offload_partition_granularity": "M",
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PARTITION_FUNCTION_ARG_TYPE_EXCEPTION_TEXT,
+        )
 
-    # Offload with non-existent partition function UDF.
-    options["offload_partition_functions"] = INT8_UDF + "-not-real"
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PARTITION_FUNCTION_DOES_NOT_EXIST_EXCEPTION_TEXT,
-    )
-
-    # Ensure UDF exists before attempting test.
-    backend_api.create_test_partition_functions(data_db, udf=INT8_UDF)
-
-    # Offload with STRING input to INT8 partition function.
-    options["offload_partition_columns"] = "TXN_DESC"
-    options["offload_partition_functions"] = INT8_UDF
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PARTITION_FUNCTION_ARG_TYPE_EXCEPTION_TEXT,
-    )
-
-    # Offload with DATE input to partition function.
-    options = {
-        "owner_table": schema + "." + DIM_EXC,
-        "offload_partition_functions": INT8_UDF,
-        "offload_partition_columns": "TXN_DATE",
-        "offload_partition_granularity": "M",
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PARTITION_FUNCTION_ARG_TYPE_EXCEPTION_TEXT,
-    )
-
-    # Offload with too many partition functions.
-    options = {
-        "owner_table": schema + "." + DIM_EXC,
-        "offload_partition_functions": INT8_UDF + "," + INT38_UDF,
-        "offload_partition_columns": "TXN_DATE",
-        "offload_partition_granularity": "M",
-        "reset_backend_table": True,
-        "execute": False,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PARTITION_FUNCTIONS_ELEMENT_EXCEPTION_TEXT,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload with too many partition functions.
+        options = {
+            "owner_table": schema + "." + DIM_EXC,
+            "offload_partition_functions": INT8_UDF + "," + INT38_UDF,
+            "offload_partition_columns": "TXN_DATE",
+            "offload_partition_granularity": "M",
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PARTITION_FUNCTIONS_ELEMENT_EXCEPTION_TEXT,
+        )
 
 
 def test_offload_part_fn_num(config, schema, data_db):
     id = "test_offload_part_fn_num"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        if not backend_api.goe_partition_functions_supported():
+            pytest.skip(
+                f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+            )
 
-    if not backend_api.goe_partition_functions_supported():
-        messages.log(
-            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
         )
-        pytest.skip(
-            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, DIM_NUM),
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, DIM_NUM
+                ),
+            ],
         )
 
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+        backend_api.create_test_partition_functions(data_db, udf=INT8_UDF)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, DIM_NUM),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, DIM_NUM
+        # Offload with db prefixed partition function UDF.
+        options = {
+            "owner_table": schema + "." + DIM_NUM,
+            "integer_8_columns_csv": "prod_id",
+            "offload_partition_columns": "prod_id",
+            "offload_partition_functions": data_db + "." + INT8_UDF,
+            "offload_partition_granularity": "10",
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 5000,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert standard_dimension_assertion(
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            DIM_NUM,
+            partition_functions=expected_udf_metadata(
+                config, data_db, data_db + "." + INT8_UDF
             ),
-        ],
-    )
+        )
+        assert offload_part_fn_assertion(
+            config, backend_api, messages, data_db, DIM_NUM, udf=INT8_UDF
+        )
 
-    backend_api.create_test_partition_functions(data_db, udf=INT8_UDF)
-
-    # Offload with db prefixed partition function UDF.
-    options = {
-        "owner_table": schema + "." + DIM_NUM,
-        "integer_8_columns_csv": "prod_id",
-        "offload_partition_columns": "prod_id",
-        "offload_partition_functions": data_db + "." + INT8_UDF,
-        "offload_partition_granularity": "10",
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 5000,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert standard_dimension_assertion(
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        DIM_NUM,
-        partition_functions=expected_udf_metadata(
-            config, data_db, data_db + "." + INT8_UDF
-        ),
-    )
-    assert offload_part_fn_assertion(
-        config, backend_api, messages, data_db, DIM_NUM, udf=INT8_UDF
-    )
-
-    # Offload with non-prefixed INT64 partition function UDF.
-    options = {
-        "owner_table": schema + "." + DIM_NUM,
-        "integer_8_columns_csv": "prod_id",
-        "offload_partition_columns": "prod_id",
-        "offload_partition_functions": INT8_UDF,
-        "offload_partition_granularity": "10",
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 5000,
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert standard_dimension_assertion(
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        DIM_NUM,
-        partition_functions=expected_udf_metadata(config, data_db, INT8_UDF),
-    )
-    assert offload_part_fn_assertion(
-        config, backend_api, messages, data_db, DIM_NUM, udf=INT8_UDF
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload with non-prefixed INT64 partition function UDF.
+        options = {
+            "owner_table": schema + "." + DIM_NUM,
+            "integer_8_columns_csv": "prod_id",
+            "offload_partition_columns": "prod_id",
+            "offload_partition_functions": INT8_UDF,
+            "offload_partition_granularity": "10",
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 5000,
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert standard_dimension_assertion(
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            DIM_NUM,
+            partition_functions=expected_udf_metadata(config, data_db, INT8_UDF),
+        )
+        assert offload_part_fn_assertion(
+            config, backend_api, messages, data_db, DIM_NUM, udf=INT8_UDF
+        )
 
 
 def test_offload_part_fn_dec(config, schema, data_db):
     id = "test_offload_part_fn_dec"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        if not backend_api.goe_partition_functions_supported():
+            pytest.skip(
+                f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+            )
 
-    if not backend_api.goe_partition_functions_supported():
-        messages.log(
-            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
         )
-        pytest.skip(
-            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, DIM_DEC),
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, DIM_DEC
+                ),
+            ],
         )
 
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+        backend_api.create_test_partition_functions(data_db, udf=[INT38_UDF, DEC19_UDF])
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, DIM_DEC),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, DIM_DEC
-            ),
-        ],
-    )
+        # Offload with a BIGNUMERIC partition function UDF.
+        options = {
+            "owner_table": schema + "." + DIM_DEC,
+            "integer_38_columns_csv": "prod_id",
+            "offload_partition_columns": "prod_id",
+            "offload_partition_functions": INT38_UDF,
+            "offload_partition_granularity": "10",
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 5000,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert standard_dimension_assertion(
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            DIM_DEC,
+            partition_functions=expected_udf_metadata(config, data_db, INT38_UDF),
+        )
+        assert offload_part_fn_assertion(
+            config, backend_api, messages, data_db, DIM_DEC, udf=INT38_UDF
+        )
 
-    backend_api.create_test_partition_functions(data_db, udf=[INT38_UDF, DEC19_UDF])
-
-    # Offload with a BIGNUMERIC partition function UDF.
-    options = {
-        "owner_table": schema + "." + DIM_DEC,
-        "integer_38_columns_csv": "prod_id",
-        "offload_partition_columns": "prod_id",
-        "offload_partition_functions": INT38_UDF,
-        "offload_partition_granularity": "10",
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 5000,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert standard_dimension_assertion(
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        DIM_DEC,
-        partition_functions=expected_udf_metadata(config, data_db, INT38_UDF),
-    )
-    assert offload_part_fn_assertion(
-        config, backend_api, messages, data_db, DIM_DEC, udf=INT38_UDF
-    )
-
-    # Offload with a BIGNUMERIC partition function UDF.
-    options = {
-        "owner_table": schema + "." + DIM_DEC,
-        "decimal_columns_csv_list": ["prod_id"],
-        "decimal_columns_type_list": ["19,0"],
-        "offload_partition_columns": "prod_id",
-        "offload_partition_functions": DEC19_UDF,
-        "offload_partition_granularity": "10",
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 5000,
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert standard_dimension_assertion(
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        DIM_DEC,
-        partition_functions=expected_udf_metadata(config, data_db, DEC19_UDF),
-    )
-    assert offload_part_fn_assertion(
-        config, backend_api, messages, data_db, DIM_DEC, udf=DEC19_UDF
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload with a BIGNUMERIC partition function UDF.
+        options = {
+            "owner_table": schema + "." + DIM_DEC,
+            "decimal_columns_csv_list": ["prod_id"],
+            "decimal_columns_type_list": ["19,0"],
+            "offload_partition_columns": "prod_id",
+            "offload_partition_functions": DEC19_UDF,
+            "offload_partition_granularity": "10",
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 5000,
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert standard_dimension_assertion(
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            DIM_DEC,
+            partition_functions=expected_udf_metadata(config, data_db, DEC19_UDF),
+        )
+        assert offload_part_fn_assertion(
+            config, backend_api, messages, data_db, DIM_DEC, udf=DEC19_UDF
+        )
 
 
 def test_offload_part_fn_str(config, schema, data_db):
     id = "test_offload_part_fn_str"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        if not backend_api.goe_partition_functions_supported():
+            pytest.skip(
+                f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+            )
 
-    if not backend_api.goe_partition_functions_supported():
-        messages.log(
-            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
         )
-        pytest.skip(
-            f"Skipping most of {id} due to goe_partition_functions_supported() == False"
-        )
 
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
-            schema, DIM_STR, extra_col_tuples=[("'-123'", "STR_PROD_ID")]
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, DIM_STR
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, DIM_STR, extra_col_tuples=[("'-123'", "STR_PROD_ID")]
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, DIM_STR
+                ),
+            ],
+        )
 
-    backend_api.create_test_partition_functions(
-        data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING
-    )
+        backend_api.create_test_partition_functions(
+            data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_STRING
+        )
 
-    # Offload with a STRING partition function UDF.
-    options = {
-        "owner_table": schema + "." + DIM_STR,
-        "offload_partition_columns": "str_prod_id",
-        "offload_partition_functions": STRING_UDF,
-        "offload_partition_granularity": "10",
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 5000,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
-    assert standard_dimension_assertion(
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        DIM_STR,
-        partition_functions=expected_udf_metadata(config, data_db, STRING_UDF),
-    )
-    assert offload_part_fn_assertion(
-        config,
-        backend_api,
-        messages,
-        data_db,
-        DIM_STR,
-        source_column="str_prod_id",
-        udf=STRING_UDF,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload with a STRING partition function UDF.
+        options = {
+            "owner_table": schema + "." + DIM_STR,
+            "offload_partition_columns": "str_prod_id",
+            "offload_partition_functions": STRING_UDF,
+            "offload_partition_granularity": "10",
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 5000,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert standard_dimension_assertion(
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            DIM_STR,
+            partition_functions=expected_udf_metadata(config, data_db, STRING_UDF),
+        )
+        assert offload_part_fn_assertion(
+            config,
+            backend_api,
+            messages,
+            data_db,
+            DIM_STR,
+            source_column="str_prod_id",
+            udf=STRING_UDF,
+        )

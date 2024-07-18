@@ -17,7 +17,7 @@ SHELL := /bin/bash
 TARGET_DIR=target/offload
 
 OFFLOAD_VERSION=$(shell cat version)
-GOE_WHEEL=goe-$(shell echo $(OFFLOAD_VERSION) | tr 'A-Z-' 'a-z.')0-py3-none-any.whl
+GOE_WHEEL=goe_framework-$(shell echo $(OFFLOAD_VERSION) | tr 'A-Z-' 'a-z.')0-py3-none-any.whl
 
 BUILD=$(strip $(shell git rev-parse --short HEAD))
 
@@ -70,7 +70,7 @@ target: python-goe spark-listener offload-env
 	rm -rf $(TARGET_DIR)/setup/sql $(TARGET_DIR)/setup/python
 	mkdir -p $(TARGET_DIR)/cache
 	mkdir -p $(TARGET_DIR)/setup/sql && cp -a sql/oracle/source/* $(TARGET_DIR)/setup
-	mkdir -p $(TARGET_DIR)/lib && cp dist/goe-*.whl $(TARGET_DIR)/lib
+	mkdir -p $(TARGET_DIR)/lib && cp dist/goe_framework-*.whl $(TARGET_DIR)/lib
 	cp version $(TARGET_DIR)
 	cp LICENSE $(TARGET_DIR)
 	cp AUTHORS $(TARGET_DIR)

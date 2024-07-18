@@ -58,3 +58,24 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/goe.tar.gz
+
+  pypi-publish:
+    name: Publish release to PyPI
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install --quiet --upgrade pip build setuptools wheel
+      - name: Build package
+        run: |
+          python -m build
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

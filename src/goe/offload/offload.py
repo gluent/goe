@@ -24,9 +24,6 @@ from typing import TYPE_CHECKING
 from goe.config import option_descriptions, orchestration_defaults
 from goe.exceptions import OffloadException
 from goe.filesystem.goe_dfs import VALID_OFFLOAD_FS_SCHEMES
-from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
-)
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
 from goe.offload import offload_constants
 from goe.offload.offload_messages import OffloadMessages, VVERBOSE
@@ -93,11 +90,10 @@ def create_ddl_file_step(
 def create_final_backend_table_step(
     offload_target_table: "BackendTableInterface",
     offload_operation: "OffloadOperation",
-    goe_object_type=DATA_GOVERNANCE_GOE_OBJECT_TYPE_BASE_TABLE,
 ):
     """Create the final backend table."""
     if not offload_target_table.table_exists() or offload_operation.reset_backend_table:
-        offload_target_table.create_backend_table_step(goe_object_type)
+        offload_target_table.create_backend_table_step()
     else:
         check_and_alter_backend_sort_columns(offload_target_table, offload_operation)
 

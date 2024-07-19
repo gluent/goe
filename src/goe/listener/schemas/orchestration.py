@@ -205,22 +205,6 @@ class OffloadOptions(BaseSchema):
         description="Create backend database",
         cli=("--create-backend-db"),
     )
-    # TODO: Deprecated
-    data_governance_custom_properties: Optional[Json] = Field(
-        default=None,
-        title="Data governance custom properties",
-        description="Data governance custom properties",
-        cli=("--data-governance-custom-properties"),
-        no_api=True,
-    )
-    # TODO: Deprecated
-    data_governance_custom_tags_csv: Optional[List[str]] = Field(
-        default=[],
-        title="Data governance custom tags",
-        description="Data governance custom tags",
-        cli=("--data-governance-custom-tags"),
-        no_api=True,
-    )
     data_sample_parallelism: Optional[int] = Field(
         default=0,
         title="Data sample parallelism",

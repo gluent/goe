@@ -28,14 +28,6 @@ import inspect
 import logging
 from typing import Callable, Optional, TYPE_CHECKING
 
-from goe.data_governance.hadoop_data_governance import (
-    data_governance_register_new_db_step,
-    data_governance_register_new_table_step,
-    get_data_governance_register,
-)
-from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_OFFLOAD_DB,
-)
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import VALID_REMOTE_DB_TYPES
 from goe.offload.column_metadata import (
@@ -138,7 +130,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
-        data_gov_client=None,
         dry_run=False,
         existing_backend_api=None,
         do_not_connect=False,
@@ -156,7 +147,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._backend_type = backend_type
         self._messages = messages
         self._hybrid_metadata = hybrid_metadata
-        self._data_gov_client = data_gov_client
         self._dry_run = dry_run
         self._do_not_connect = do_not_connect
         # One day we may split connectivity options from other config
@@ -275,7 +265,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._bucket_hash_col = None
         self.refresh_operational_settings(
             offload_operation=orchestration_operation,
-            data_gov_client=self._data_gov_client,
         )
 
     def __del__(self):
@@ -2184,7 +2173,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         self,
         offload_operation=None,
         rdbms_columns=None,
-        data_gov_client=None,
         staging_columns=None,
     ):
         """This backend table object is created before we have validated/tuned user inputs in offload_operation
@@ -2203,8 +2191,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             )
         if rdbms_columns:
             self.set_final_table_casts(rdbms_columns, staging_columns)
-        if data_gov_client:
-            self.set_data_gov_client(data_gov_client)
 
     def set_column_stats(self, new_column_stats, ndv_cap, num_null_factor):
         self._db_api.set_column_stats(
@@ -2224,9 +2210,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         assert valid_column_list(new_columns)
         self._columns = new_columns
         self._partition_columns = get_partition_columns(new_columns)
-
-    def set_data_gov_client(self, data_gov_client):
-        self._data_gov_client = data_gov_client
 
     def set_final_table_casts(self, rdbms_columns, staging_columns):
         """Set cast expressions in state that are required to convert staged RDBMS data into correct backend data.
@@ -2434,46 +2417,15 @@ class BackendTableInterface(metaclass=ABCMeta):
     def create_backend_db_step(self) -> list:
         executed_commands = []
         if self.create_database_supported() and self._user_requested_create_backend_db:
-            (
-                pre_register_data_gov_fn,
-                post_register_data_gov_fn,
-            ) = get_data_governance_register(
-                self._data_gov_client,
-                lambda: data_governance_register_new_db_step(
-                    self.db_name,
-                    self._data_gov_client,
-                    self._messages,
-                    DATA_GOVERNANCE_GOE_OBJECT_TYPE_OFFLOAD_DB,
-                    self._orchestration_config,
-                ),
-            )
-            pre_register_data_gov_fn()
             executed_commands: list = self._offload_step(
                 command_steps.STEP_CREATE_DB, lambda: self.create_db()
             )
-            post_register_data_gov_fn()
         return executed_commands
 
-    def create_backend_table_step(self, goe_object_type) -> list:
-        (
-            pre_register_data_gov_fn,
-            post_register_data_gov_fn,
-        ) = get_data_governance_register(
-            self._data_gov_client,
-            lambda: data_governance_register_new_table_step(
-                self.db_name,
-                self.table_name,
-                self._data_gov_client,
-                self._messages,
-                goe_object_type,
-                self._orchestration_config,
-            ),
-        )
-        pre_register_data_gov_fn()
+    def create_backend_table_step(self) -> list:
         executed_commands: list = self._offload_step(
             command_steps.STEP_CREATE_TABLE, lambda: self.create_backend_table()
         )
-        post_register_data_gov_fn()
         return executed_commands
 
     def empty_staging_area_step(self, staging_file):

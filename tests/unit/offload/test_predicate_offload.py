@@ -218,7 +218,7 @@ class TestIdaPredicateParse(TestCase):
         self._test_parse_single_string("test' string")
         self._test_parse_single_string('test \\" string')
         self._test_parse_single_string("")
-        self._test_parse_single_string("`~!@#$%^&*()_+-={}[]|\:;?/>.<,0987654321")
+        self._test_parse_single_string("`~!@#$%^&*()_+-={}[]|:;?/>.<,0987654321")
         self._test_parse_single_string("\u00f6")
 
     def test_column_names(self):

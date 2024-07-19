@@ -14,16 +14,13 @@
 
 """data_type_controls: Library of functions used in GOE related to offload transport."""
 
-from goe.data_governance.hadoop_data_governance import (
-    data_governance_update_metadata_step,
-)
 from goe.offload.offload_constants import (
     DBTYPE_HIVE,
     OFFLOAD_STATS_METHOD_COPY,
     OFFLOAD_STATS_METHOD_HISTORY,
     OFFLOAD_STATS_METHOD_NATIVE,
 )
-from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
+from goe.offload.offload_messages import OffloadMessages, VERBOSE
 from goe.offload.offload_transport_functions import transport_and_load_offload_chunk
 from goe.offload.operation.stats_controls import copy_rdbms_stats_to_backend
 from goe.orchestration import command_steps
@@ -54,7 +51,6 @@ def offload_data_to_target(
     offload_options,
     source_data_client,
     messages: OffloadMessages,
-    data_gov_client,
 ):
     """Offloads the data via whatever means is appropriate (including validation steps).
     Returns the number of rows offloaded, None if nothing to do (i.e. non execute mode).
@@ -122,14 +118,6 @@ def offload_data_to_target(
         rows_imported = transport_and_load_offload_chunk_fn()
         if rows_imported and rows_imported >= 0:
             rows_offloaded = rows_imported
-
-    data_governance_update_metadata_step(
-        offload_target_table.db_name,
-        offload_target_table.table_name,
-        data_gov_client,
-        messages,
-        offload_options,
-    )
 
     if offload_operation.offload_stats_method in [
         OFFLOAD_STATS_METHOD_NATIVE,

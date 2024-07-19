@@ -28,7 +28,6 @@ from goe.config.config_validation_functions import (
     check_offload_fs_scheme_supported_in_backend,
     normalise_backend_session_parameters,
     normalise_backend_options,
-    normalise_data_governance_config,
     normalise_db_prefix_and_paths,
     normalise_filesystem_options,
     normalise_listener_options,
@@ -67,16 +66,9 @@ EXPECTED_CONFIG_ARGS = [
     "bigquery_dataset_location",
     "bigquery_dataset_project",
     "ca_cert",
-    "cloudera_navigator_hive_source_id",
     "db_name_pattern",
     "db_name_prefix",
     "db_type",
-    "data_governance_api_url",
-    "data_governance_api_user",
-    "data_governance_api_pass",
-    "data_governance_backend",
-    "data_governance_auto_tags_csv",
-    "data_governance_auto_properties_csv",
     "dev_log_level",
     "error_on_token",
     "frontend_odbc_driver_name",
@@ -311,7 +303,6 @@ class OrchestrationConfig:
         self._do_not_connect = do_not_connect
 
         normalise_backend_session_parameters(self)
-        normalise_data_governance_config(self)
         normalise_filesystem_options(self)
         try:
             normalise_backend_options(self)
@@ -381,34 +372,6 @@ class OrchestrationConfig:
             ),
             ca_cert=config_dict.get(
                 "ca_cert", orchestration_defaults.ca_cert_default()
-            ),
-            cloudera_navigator_hive_source_id=config_dict.get(
-                "cloudera_navigator_hive_source_id",
-                orchestration_defaults.cloudera_navigator_hive_source_id_default(),
-            ),
-            data_governance_api_url=config_dict.get(
-                "data_governance_api_url",
-                orchestration_defaults.data_governance_api_url_default(),
-            ),
-            data_governance_api_user=config_dict.get(
-                "data_governance_api_user",
-                orchestration_defaults.data_governance_api_user_default(),
-            ),
-            data_governance_api_pass=config_dict.get(
-                "data_governance_api_pass",
-                orchestration_defaults.data_governance_api_pass_default(),
-            ),
-            data_governance_backend=config_dict.get(
-                "data_governance_backend",
-                orchestration_defaults.data_governance_api_backend_default(),
-            ),
-            data_governance_auto_tags_csv=config_dict.get(
-                "data_governance_auto_tags_csv",
-                orchestration_defaults.data_governance_auto_tags_default(),
-            ),
-            data_governance_auto_properties_csv=config_dict.get(
-                "data_governance_auto_properties_csv",
-                orchestration_defaults.data_governance_auto_properties_default(),
             ),
             db_name_pattern=config_dict.get(
                 "db_name_pattern", orchestration_defaults.db_name_pattern_default()

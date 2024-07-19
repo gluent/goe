@@ -69,7 +69,6 @@ class BackendImpalaTable(BackendHadoopTable):
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
-        data_gov_client=None,
         dry_run=False,
         existing_backend_api=None,
         do_not_connect=False,
@@ -83,7 +82,6 @@ class BackendImpalaTable(BackendHadoopTable):
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -196,9 +194,9 @@ class BackendImpalaTable(BackendHadoopTable):
             self._user_requested_storage_format == FILE_STORAGE_FORMAT_PARQUET
             and self._user_requested_storage_compression
         ):
-            query_options[
-                "COMPRESSION_CODEC"
-            ] = self._user_requested_storage_compression
+            query_options["COMPRESSION_CODEC"] = (
+                self._user_requested_storage_compression
+            )
         query_options.update(self._disable_decimal_v2_query_option())
         return query_options
 

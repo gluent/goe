@@ -2,19 +2,19 @@
 
 ## Overview
 
-This page details Google Cloud components required, with recommended minimal privileges, to use GOE in your GCP project.
+This page details Google Cloud Platform (GCP) components required, with recommended minimal privileges, to use GOE in your GCP project.
 
 ### Service Account
 
-A service account should be provisioned from the GCP project. This service account can be used by any service that will execute GOE commands, for example it could be attached to a GCE virtual machine.
+A service account should be provisioned from the GCP project. This service account can be used by any service that will execute GOE commands, for example it could be attached to a Google Compute Engine (GCE) virtual machine.
 
 ### Cloud Storage Bucket
 
-A cloud storage bucket is required to stage data before ingesting it into BigQuery. Ensure the bucket is in a location compatible with the target BigQuery dataset.
+A Google Cloud Storage (GCS) bucket is required to stage data before ingesting it into BigQuery. Ensure the bucket is in a location compatible with the target BigQuery dataset.
 
 ### Dataproc (Spark)
 
-For non-trivially sized tables GOE uses Spark to copy data from the source database to cloud storage. In a GCP setting this is likely to be provided by one of two services:
+For tables of a non-trivial size, GOE uses Spark to copy data from the source database to cloud storage. In a GCP setting this is likely to be provided by one of two services:
 
 1. Dataproc Batches
 1. Dataproc
@@ -26,7 +26,7 @@ The role names below are used throughput this page but can be changed to suit co
 | Role                | Mandatory | Purpose                                                                         |
 | ------------------- | ----------| ------------------------------------------------------------------------------- |
 | `goe_gcs_role`      |      Y    | Permissions to read/write on the GOE staging bucket.                            |
-| `goe_bq_core_role`  |      Y    | Core permissions to interact with BigQuery, list datsets/tables/etc.<br />No data read/write permissions.<br />Will be granted at the project level. |
+| `goe_bq_core_role`  |      Y    | Core permissions to interact with BigQuery, list datasets/tables/etc.<br />No data read/write permissions.<br />Will be granted at the project level. |
 | `goe_bq_app_role`   |      Y    | Permissions to read/write data in the final dataset.<br />Optionally can include table create/drop permissions.<br />Locked down at dataset level. |
 | `goe_bq_stg_role`   |      Y    | Permissions to read data and create/drop staging tables in the staging dataset.<br />Locked down at dataset level. |
 | `goe_dataproc_role` |      N    | Permissions to interact with a permanent Dataproc cluster.                      |
@@ -34,17 +34,17 @@ The role names below are used throughput this page but can be changed to suit co
 
 ### Compute Engine Virtual Machine
 
-To work interactively with GOE you need to be able run commands with appropriate permissions. Rather than downloading service account keys we believe it is better to attach the service account to a GCE virtual machine and run all commands from there.
+To work interactively with GOE you need to be able run commands with appropriate permissions. We recommend attaching the service account to a GCE virtual machine and running all GOE commands from the VM. This is preferable to downloading service account keys.
 
-The virtual machine does not need to be heavily resourced; most of the heavy lifting is done by Spark and BigQuery.
+The virtual machine requires limited resources as most of the intensive work is done by Spark and BigQuery.
 
 ## Example Commands
 
-These commands are examples that can be used to create the components described above.
+These examples can be used to create the components described above.
 
 ### Helper Variables
 
-Note the location below must be compatible with the BigQuery dataset location.
+Note that the location below must be compatible with the BigQuery dataset location.
 
 ```
 PROJECT=<your-project>
@@ -132,7 +132,7 @@ gcloud dataproc clusters create ${CLUSTER_NAME} \
 
 #### goe_gcs_role
 
-Note that the role grant is bound to the staging bucket, no project wide access is granted.
+Note that the role grant is bound to the staging bucket. No project-wide access is granted.
 ```
 gcloud iam roles create goe_gcs_role --project ${PROJECT} \
 --title="GOE Cloud Storage Access" \
@@ -164,20 +164,20 @@ gcloud projects add-iam-policy-binding ${PROJECT} \
 --role=projects/${PROJECT}/roles/goe_bq_core_role
 ```
 
-If GOE is permitted to create datasets then add these extra privileges:
+If GOE is permitted to create datasets then add these privileges:
 ```
 gcloud iam roles update goe_bq_core_role --project ${PROJECT} \
 --add-permissions=bigquery.datasets.create
 ```
 
 #### goe_bq_app_role
-Note that the role grant is bound to the target BigQuery dataset, no project wide access is granted. The `bq` utility is used to grant the role because `gcloud` does not support these granular grants.
+Note that the role grant is bound to the target BigQuery dataset. No project-wide access is granted. The `bq` utility is used to grant the role because `gcloud` does not support these granular grants.
 
 Also note that the target dataset must be created *before* executing these commands (see [Generating Dataset DDL](#generating-dataset-ddl) for details).
 ```
 gcloud iam roles create goe_bq_app_role --project ${PROJECT} \
 --title="GOE Data Update Access" \
---description="Grants GOE permissions to read and modify data in an application schema" \
+--description="Grants GOE permissions to read and modify data in an application dataset" \
 --permissions=bigquery.tables.getData,\
 bigquery.tables.updateData \
 --stage=GA
@@ -187,26 +187,26 @@ TO \"serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com\";
 " | bq query --project_id=${PROJECT} --nouse_legacy_sql --location=${LOCATION}
 ```
 
-If GOE is permitted to create tables then add these extra privileges:
+If GOE is permitted to create tables then add these privileges:
 ```
 gcloud iam roles update goe_bq_app_role --project ${PROJECT} \
 --add-permissions=bigquery.tables.create,bigquery.tables.update
 ```
 
-If GOE is permitted to drop tables then add these extra privileges:
+If GOE is permitted to drop tables then add these privileges:
 ```
 gcloud iam roles update goe_bq_app_role --project ${PROJECT} \
 --add-permissions=bigquery.tables.delete
 ```
 
 #### goe_bq_stg_role
-Note that the role grant is bound to the staging BigQuery dataset (which has the same name as the target dataset but with an "_load" suffix), no project wide access is granted. The `bq` utility is used to grant the role because `gcloud` does not support these granular grants.
+Note that the role grant is bound to the staging BigQuery dataset (which has the same name as the target dataset but with a "_load" suffix). No project-wide access is granted. The `bq` utility is used to grant the role because `gcloud` does not support these granular grants.
 
 Also note that the staging dataset must be created *before* executing these commands (see [Generating Dataset DDL](#generating-dataset-ddl) for details).
 ```
 gcloud iam roles create goe_bq_stg_role --project ${PROJECT} \
 --title="GOE Data Staging Access" \
---description="Grants GOE permissions to manage objects in a staging schema" \
+--description="Grants GOE permissions to manage objects in a staging dataset" \
 --permissions=bigquery.tables.create,\
 bigquery.tables.delete,\
 bigquery.tables.getData \
@@ -248,7 +248,7 @@ gcloud projects add-iam-policy-binding ${PROJECT} \
 ```
 
 ## Compute Engine Virtual Machine
-Values supplied below are examples only, changes will likely be required for each use case:
+Values supplied below are examples only. Changes are likely to be required for each use case:
 ```
 INSTANCE_NAME=goe-node
 ZONE=<instance-zone>

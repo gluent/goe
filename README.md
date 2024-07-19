@@ -38,7 +38,7 @@ python3 -m pip install lib/${GOE_WHEEL}
 ```
 
 ## Configuration File
-Create `offload.env` in the Offload Home, this file contains the necessary configuration specific to your environment:
+Create `offload.env` in the Offload Home. This file contains the necessary configuration specific to your environment:
 ```
 cp ${OFFLOAD_HOME}/conf/oracle-bigquery-offload.env.template ${OFFLOAD_HOME}/conf/offload.env
 vi ${OFFLOAD_HOME}/conf/offload.env
@@ -80,7 +80,7 @@ alter user goe_app identified by ...;
 
 # Building a Custom Package
 
-If you want to test with the latest commits that have not yet been included in a Github release you can build a custom package from the repository.
+If you want to test with the latest commits that have not yet been included in a GitHub release you can build a custom package from the repository.
 
 ## Prepare the Host/Cloned Repository
 Debian prerequisites:

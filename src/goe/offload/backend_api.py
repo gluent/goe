@@ -1973,6 +1973,10 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
     def create_database_supported(self):
         return self.is_capability_supported(CAPABILITY_CREATE_DB)
 
+    def default_sort_columns_to_primary_key(self) -> bool:
+        """Does this backend suit clustering on primary key if there's no user specified alternative."""
+        return False
+
     def drop_column_supported(self):
         """Note that there is an Impala override for this"""
         return self.is_capability_supported(CAPABILITY_DROP_COLUMN)

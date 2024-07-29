@@ -44,7 +44,6 @@ if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
     from goe.offload.backend_table import BackendTableInterface
     from goe.offload.offload_messages import OffloadMessages
-    from goe.offload.offload_source_table import OffloadSourceTableInterface
     from goe.persistence.orchestration_repo_client import (
         OrchestrationRepoClientInterface,
     )

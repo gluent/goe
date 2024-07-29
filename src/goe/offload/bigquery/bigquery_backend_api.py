@@ -1118,6 +1118,10 @@ FROM   %(from_tables)s%(where_clause)s""" % {
     def default_date_based_partition_granularity(self):
         return PART_COL_GRANULARITY_MONTH
 
+    def default_sort_columns_to_primary_key(self) -> bool:
+        """Rule of thumb on BigQuery is to cluster by primary key if no better alternative."""
+        return True
+
     def default_storage_compression(self, user_requested_codec, user_requested_format):
         if user_requested_codec in ["HIGH", "MED", "NONE", None]:
             return None

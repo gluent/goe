@@ -2009,13 +2009,12 @@ class BaseOperation(object):
 
     def validate_sort_columns(
         self,
-        rdbms_column_names,
-        messages,
-        offload_options,
+        offload_source_table: OffloadSourceTableInterface,
+        messages: OffloadMessages,
+        offload_options: "OrchestrationConfig",
         backend_cols,
         hybrid_metadata,
         backend_api=None,
-        metadata_refresh=False,
     ):
         """Default sort_columns for storage index benefit if not specified by the user.
         sort_columns_csv: The incoming option string which can be a CSV list of column names or the special token
@@ -2057,10 +2056,9 @@ class BaseOperation(object):
             self.sort_columns = sort_columns_csv_to_sort_columns(
                 self.sort_columns_csv,
                 hybrid_metadata,
-                rdbms_column_names,
+                offload_source_table,
                 backend_cols,
                 backend_api,
-                metadata_refresh,
                 messages,
             )
         finally:
@@ -2621,7 +2619,7 @@ def offload_operation_logic(
                 )
 
     offload_operation.validate_sort_columns(
-        offload_source_table.get_column_names(),
+        offload_source_table,
         messages,
         offload_options,
         offload_target_table.get_columns(),

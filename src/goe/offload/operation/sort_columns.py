@@ -121,7 +121,6 @@ def sort_columns_csv_to_sort_columns(
         elif not hybrid_metadata:
             # First time Offload with default options, we might want to set a default
             # based on the frontend/backend combination.
-            breakpoint()
             if backend_api.default_sort_columns_to_primary_key():
                 sort_columns = offload_source_table.get_primary_key_columns()
     elif sort_columns_csv:

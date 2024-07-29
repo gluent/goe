@@ -60,8 +60,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -432,143 +432,134 @@ def offload_pbo_intra_day_std_range_tests(
 def test_offload_pbo_intra_range(config, schema, data_db):
     """Tests for Intra Day Predicate Based Offload."""
     id = "test_offload_pbo_intra_range"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, RANGE_TABLE_INTRA, simple_partition_names=True
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, RANGE_TABLE_INTRA
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+                schema, RANGE_TABLE_INTRA, simple_partition_names=True
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, RANGE_TABLE_INTRA
+                ),
+            ],
+        )
 
-    offload_pbo_intra_day_std_range_tests(
-        schema,
-        data_db,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        RANGE_TABLE_INTRA,
-        id,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        offload_pbo_intra_day_std_range_tests(
+            schema,
+            data_db,
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            RANGE_TABLE_INTRA,
+            id,
+        )
 
 
 def test_offload_pbo_intra_lar(config, schema, data_db):
     """Tests for intra day predicate based offload on LIST_AS_RANGE table."""
     id = "test_offload_pbo_intra_lar"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
-            schema,
-            LAR_TABLE_INTRA,
-            part_key_type=frontend_api.test_type_canonical_date(),
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LAR_TABLE_INTRA
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LAR_TABLE_INTRA,
+                part_key_type=frontend_api.test_type_canonical_date(),
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LAR_TABLE_INTRA
+                ),
+            ],
+        )
 
-    offload_pbo_intra_day_std_range_tests(
-        schema,
-        data_db,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        LAR_TABLE_INTRA,
-        id,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        offload_pbo_intra_day_std_range_tests(
+            schema,
+            data_db,
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            LAR_TABLE_INTRA,
+            id,
+        )
 
 
 def test_offload_pbo_intra_list(config, schema, data_db):
     """Tests for Intra Day Predicate Based Offload."""
     id = "test_offload_pbo_intra_list_as_range"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
-            schema,
-            LIST_TABLE_INTRA,
-            part_key_type=frontend_api.test_type_canonical_date(),
-            default_partition=True,
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LIST_TABLE_INTRA
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LIST_TABLE_INTRA,
+                part_key_type=frontend_api.test_type_canonical_date(),
+                default_partition=True,
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LIST_TABLE_INTRA
+                ),
+            ],
+        )
 
-    # Offload 1st partition putting table in LIST mode.
-    options = {
-        "owner_table": schema + "." + LIST_TABLE_INTRA,
-        "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(options, config, messages)
+        # Offload 1st partition putting table in LIST mode.
+        options = {
+            "owner_table": schema + "." + LIST_TABLE_INTRA,
+            "equal_to_values": [test_constants.SALES_BASED_FACT_HV_1],
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
 
-    # Intra day is only supported for RANGE/LIST_AS_RANGE - not LIST.
-    options = {
-        "owner_table": schema + "." + LIST_TABLE_INTRA,
-        "offload_predicate": GenericPredicate(
-            "(column(time_id) = datetime(%s)) and (column(channel_id) = numeric(3))"
-            % test_constants.SALES_BASED_FACT_HV_3
-        ),
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=PREDICATE_TYPE_INCOMPATIBLE_EXCEPTION_TEXT,
-    )
+        # Intra day is only supported for RANGE/LIST_AS_RANGE - not LIST.
+        options = {
+            "owner_table": schema + "." + LIST_TABLE_INTRA,
+            "offload_predicate": GenericPredicate(
+                "(column(time_id) = datetime(%s)) and (column(channel_id) = numeric(3))"
+                % test_constants.SALES_BASED_FACT_HV_3
+            ),
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=PREDICATE_TYPE_INCOMPATIBLE_EXCEPTION_TEXT,
+        )

@@ -56,8 +56,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -100,9 +100,6 @@ def offload_list_as_range_ipa_standard_story_tests(
     partition_function=None,
 ):
     if partition_function and not backend_api.goe_partition_functions_supported():
-        messages.log(
-            f"Skipping {table_name} partition function tests due to goe_partition_functions_supported() == False"
-        )
         pytest.skip(
             f"Skipping {table_name} partition function tests due to goe_partition_functions_supported() == False"
         )
@@ -347,273 +344,261 @@ def offload_list_as_range_ipa_standard_story_tests(
 
 def test_offload_list_rpa_num(config, schema, data_db):
     id = "test_offload_list_rpa_num"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LPA_FACT_TABLE_NUM,
+                part_key_type=ORACLE_TYPE_NUMBER,
+                default_partition=True,
+                out_of_sequence=True,
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LPA_FACT_TABLE_NUM
+            ),
+        )
+
+        offload_list_as_range_ipa_standard_story_tests(
             schema,
+            data_db,
             LPA_FACT_TABLE_NUM,
-            part_key_type=ORACLE_TYPE_NUMBER,
-            default_partition=True,
-            out_of_sequence=True,
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, LPA_FACT_TABLE_NUM
-        ),
-    )
-
-    offload_list_as_range_ipa_standard_story_tests(
-        schema,
-        data_db,
-        LPA_FACT_TABLE_NUM,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        ORACLE_TYPE_NUMBER,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            ORACLE_TYPE_NUMBER,
+        )
 
 
 def test_offload_list_rpa_date(config, schema, data_db):
     id = "test_offload_list_rpa_date"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LPA_FACT_TABLE_DATE,
+                part_key_type=ORACLE_TYPE_DATE,
+                default_partition=True,
+                out_of_sequence=True,
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LPA_FACT_TABLE_DATE
+            ),
+        )
+
+        offload_list_as_range_ipa_standard_story_tests(
             schema,
+            data_db,
             LPA_FACT_TABLE_DATE,
-            part_key_type=ORACLE_TYPE_DATE,
-            default_partition=True,
-            out_of_sequence=True,
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, LPA_FACT_TABLE_DATE
-        ),
-    )
-
-    offload_list_as_range_ipa_standard_story_tests(
-        schema,
-        data_db,
-        LPA_FACT_TABLE_DATE,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        ORACLE_TYPE_DATE,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            ORACLE_TYPE_DATE,
+        )
 
 
 def test_offload_list_rpa_timestamp(config, schema, data_db):
     id = "test_offload_list_rpa_timestamp"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LPA_FACT_TABLE_TS,
+                part_key_type=ORACLE_TYPE_TIMESTAMP,
+                default_partition=True,
+                out_of_sequence=True,
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LPA_FACT_TABLE_TS
+            ),
+        )
+
+        offload_list_as_range_ipa_standard_story_tests(
             schema,
+            data_db,
             LPA_FACT_TABLE_TS,
-            part_key_type=ORACLE_TYPE_TIMESTAMP,
-            default_partition=True,
-            out_of_sequence=True,
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, LPA_FACT_TABLE_TS
-        ),
-    )
-
-    offload_list_as_range_ipa_standard_story_tests(
-        schema,
-        data_db,
-        LPA_FACT_TABLE_TS,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        ORACLE_TYPE_TIMESTAMP,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            ORACLE_TYPE_TIMESTAMP,
+        )
 
 
 def test_offload_list_rpa_varchar(config, schema, data_db):
     id = "test_offload_list_rpa_varchar"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LPA_FACT_TABLE_STR,
+                part_key_type=ORACLE_TYPE_VARCHAR2,
+                default_partition=True,
+                out_of_sequence=True,
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LPA_FACT_TABLE_STR
+            ),
+        )
+
+        offload_list_as_range_ipa_standard_story_tests(
             schema,
+            data_db,
             LPA_FACT_TABLE_STR,
-            part_key_type=ORACLE_TYPE_VARCHAR2,
-            default_partition=True,
-            out_of_sequence=True,
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, LPA_FACT_TABLE_STR
-        ),
-    )
-
-    offload_list_as_range_ipa_standard_story_tests(
-        schema,
-        data_db,
-        LPA_FACT_TABLE_STR,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        ORACLE_TYPE_VARCHAR2,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            ORACLE_TYPE_VARCHAR2,
+        )
 
 
 def test_offload_list_rpa_num_udf(config, schema, data_db):
     id = "test_offload_list_rpa_num_udf"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LPA_FACT_TABLE_NUM_UDF,
+                part_key_type=ORACLE_TYPE_NUMBER,
+                default_partition=True,
+                out_of_sequence=True,
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LPA_FACT_TABLE_NUM_UDF
+            ),
+        )
+
+        offload_list_as_range_ipa_standard_story_tests(
             schema,
+            data_db,
             LPA_FACT_TABLE_NUM_UDF,
-            part_key_type=ORACLE_TYPE_NUMBER,
-            default_partition=True,
-            out_of_sequence=True,
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, LPA_FACT_TABLE_NUM_UDF
-        ),
-    )
-
-    offload_list_as_range_ipa_standard_story_tests(
-        schema,
-        data_db,
-        LPA_FACT_TABLE_NUM_UDF,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        ORACLE_TYPE_NUMBER,
-        partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            ORACLE_TYPE_NUMBER,
+            partition_function=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8,
+        )
 
 
 def test_offload_list_rpa_subpart(config, schema, data_db):
     id = "test_offload_list_rpa_subpart"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_subpartitioned_fact_ddl(
-            schema, LIST_RANGE_TABLE
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, LIST_RANGE_TABLE
-        ),
-    )
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_subpartitioned_fact_ddl(
+                schema, LIST_RANGE_TABLE
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LIST_RANGE_TABLE
+            ),
+        )
 
-    # Offloads from a LIST/RANGE subpartitioned fact table with LIST_AS_RANGE proving we can use the IPA options on the top level.
-    options = {
-        "owner_table": schema + "." + LIST_RANGE_TABLE,
-        "reset_backend_table": True,
-        "less_than_value": "4",
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 10,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-    )
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        LIST_RANGE_TABLE,
-        "3",
-        incremental_key="CHANNEL_ID",
-        ipa_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
-        incremental_key_type=ORACLE_TYPE_NUMBER,
-        incremental_range="PARTITION",
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offloads from a LIST/RANGE subpartitioned fact table with LIST_AS_RANGE proving we can use the IPA options on the top level.
+        options = {
+            "owner_table": schema + "." + LIST_RANGE_TABLE,
+            "reset_backend_table": True,
+            "less_than_value": "4",
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 10,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+        )
+        assert sales_based_fact_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            LIST_RANGE_TABLE,
+            "3",
+            incremental_key="CHANNEL_ID",
+            ipa_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+            incremental_key_type=ORACLE_TYPE_NUMBER,
+            incremental_range="PARTITION",
+        )

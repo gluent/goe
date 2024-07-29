@@ -319,13 +319,11 @@ def test_offload_transport_oracle_iot_num_qi(
 ):
     """Test IOT offload with Query Import."""
     id = "test_offload_transport_oracle_iot_num_qi"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_query_import_available(None, config, None, messages=messages):
-            messages.log(f"Skipping {id} because Query Import is not configured")
             pytest.skip(f"Skipping {id} because Query Import is not configured")
 
         iot_num_dim_tests(
@@ -345,13 +343,11 @@ def test_offload_transport_oracle_iot_num_dataproc_cluster(
 ):
     """Test IOT offload with Dataproc."""
     id = "test_offload_transport_oracle_iot_num_dataproc_cluster"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Dataproc is not configured")
             pytest.skip(f"Skipping {id} because Dataproc is not configured")
 
         iot_num_dim_tests(
@@ -371,13 +367,11 @@ def test_offload_transport_oracle_iot_num_dataproc_batches(
 ):
     """Test IOT offload with Dataproc Batches."""
     id = "test_offload_transport_oracle_iot_num_dataproc_batches"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_batches_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Dataproc Batches is not configured")
             pytest.skip(f"Skipping {id} because Dataproc Batches is not configured")
 
         iot_num_dim_tests(
@@ -397,13 +391,11 @@ def test_offload_transport_oracle_iot_num_spark_submit(
 ):
     """Test IOT offload with Spark Submit."""
     id = "test_offload_transport_oracle_iot_num_spark_submit"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_submit_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Spark Submit is not configured")
             pytest.skip(f"Skipping {id} because Spark Submit is not configured")
 
         iot_num_dim_tests(
@@ -423,13 +415,11 @@ def test_offload_transport_oracle_iot_num_sqoop(
 ):
     """Test IOT offload with Sqoop."""
     id = "test_offload_transport_oracle_iot_num_sqoop"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_sqoop_available(None, config, messages=messages):
-            messages.log(f"Skipping {id} because Sqoop is not configured")
             pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
         iot_num_dim_tests(
@@ -452,13 +442,11 @@ def test_offload_transport_oracle_iot_ts_dataproc_cluster(
 ):
     """Test IOT offload with Dataproc."""
     id = "test_offload_transport_oracle_iot_ts_dataproc_cluster"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Dataproc is not configured")
             pytest.skip(f"Skipping {id} because Dataproc is not configured")
 
         iot_ts_dim_tests(
@@ -478,13 +466,11 @@ def test_offload_transport_oracle_iot_ts_dataproc_batches(
 ):
     """Test IOT offload with Dataproc Batches."""
     id = "test_offload_transport_oracle_iot_ts_dataproc_batches"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_batches_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Dataproc Batches is not configured")
             pytest.skip(f"Skipping {id} because Dataproc Batches is not configured")
 
         iot_ts_dim_tests(
@@ -504,13 +490,11 @@ def test_offload_transport_oracle_iot_ts_spark_submit(
 ):
     """Test IOT offload with Spark Submit."""
     id = "test_offload_transport_oracle_iot_ts_spark_submit"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_submit_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Spark Submit is not configured")
             pytest.skip(f"Skipping {id} because Spark Submit is not configured")
 
         iot_ts_dim_tests(
@@ -530,13 +514,11 @@ def test_offload_transport_oracle_iot_ts_sqoop(
 ):
     """Test IOT offload with Sqoop."""
     id = "test_offload_transport_oracle_iot_ts_sqoop"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_sqoop_available(None, config, messages=messages):
-            messages.log(f"Skipping {id} because Sqoop is not configured")
             pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
         iot_ts_dim_tests(
@@ -559,13 +541,11 @@ def test_offload_transport_oracle_iot_str_dataproc_cluster(
 ):
     """Test IOT offload with Dataproc."""
     id = "test_offload_transport_oracle_iot_str_dataproc_cluster"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Dataproc is not configured")
             pytest.skip(f"Skipping {id} because Dataproc is not configured")
 
         iot_str_dim_tests(
@@ -585,13 +565,11 @@ def test_offload_transport_oracle_iot_str_dataproc_batches(
 ):
     """Test IOT offload with Dataproc Batches."""
     id = "test_offload_transport_oracle_iot_str_dataproc_batches"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_batches_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Dataproc Batches is not configured")
             pytest.skip(f"Skipping {id} because Dataproc Batches is not configured")
 
         iot_str_dim_tests(
@@ -611,13 +589,11 @@ def test_offload_transport_oracle_iot_str_spark_submit(
 ):
     """Test IOT offload with Spark Submit."""
     id = "test_offload_transport_oracle_iot_str_spark_submit"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_spark_submit_available(config, None, messages=messages):
-            messages.log(f"Skipping {id} because Spark Submit is not configured")
             pytest.skip(f"Skipping {id} because Spark Submit is not configured")
 
         iot_str_dim_tests(
@@ -637,13 +613,11 @@ def test_offload_transport_oracle_iot_str_sqoop(
 ):
     """Test IOT offload with Sqoop."""
     id = "test_offload_transport_oracle_iot_str_sqoop"
-    with get_test_messages_ctx(config, id) as messages:
-        if config.db_type != offload_constants.DBTYPE_ORACLE:
-            messages.log(f"Skipping {id} for frontend: {config.db_type}")
-            pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
+    if config.db_type != offload_constants.DBTYPE_ORACLE:
+        pytest.skip(f"Skipping {id} for frontend: {config.db_type}")
 
+    with get_test_messages_ctx(config, id) as messages:
         if not is_sqoop_available(None, config, messages=messages):
-            messages.log(f"Skipping {id} because Sqoop is not configured")
             pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
         iot_str_dim_tests(

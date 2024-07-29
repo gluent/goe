@@ -39,8 +39,8 @@ from tests.integration.test_functions import (
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -82,111 +82,109 @@ def test_offload_hash_column_synapse(config, schema, data_db):
     HASH keys will be chosen from hash bucket key option or automatically in order of PK, stats and fallback.
     """
     id = "test_offload_hash_column_synapse"
-    messages = get_test_messages(config, id)
-
     if config.target != offload_constants.DBTYPE_SYNAPSE:
-        messages.log(f"Skipping {id} for backend: {config.target}")
         pytest.skip(f"Skipping {id} for backend: {config.target}")
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, OFFLOAD_DIM),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, OFFLOAD_DIM
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, OFFLOAD_DIM
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, OFFLOAD_DIM
+                ),
+            ],
+        )
 
-    # Offload the dimension without --bucket-hash-column and high threshold, expect ROUND_ROBIN.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        config_overrides={"hash_distribution_threshold": "10g"},
-    )
-    assert standard_dimension_assertion(
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        OFFLOAD_DIM,
-        bucket_column="NULL",
-    )
-    assert synapse_distribution_assertion(
-        backend_api, messages, data_db, OFFLOAD_DIM, "ROUND_ROBIN"
-    )
+        # Offload the dimension without --bucket-hash-column and high threshold, expect ROUND_ROBIN.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            config_overrides={"hash_distribution_threshold": "10g"},
+        )
+        assert standard_dimension_assertion(
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            OFFLOAD_DIM,
+            bucket_column="NULL",
+        )
+        assert synapse_distribution_assertion(
+            backend_api, messages, data_db, OFFLOAD_DIM, "ROUND_ROBIN"
+        )
 
-    # Offload the dimension with --bucket-hash-column and high threshold, expect HASH.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "bucket_hash_col": "prod_id",
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        config_overrides={"hash_distribution_threshold": "10g"},
-    )
-    assert standard_dimension_assertion(
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        OFFLOAD_DIM,
-        bucket_column="PROD_ID",
-    )
-    assert synapse_distribution_assertion(
-        backend_api, messages, data_db, OFFLOAD_DIM, "HASH"
-    )
+        # Offload the dimension with --bucket-hash-column and high threshold, expect HASH.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "bucket_hash_col": "prod_id",
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            config_overrides={"hash_distribution_threshold": "10g"},
+        )
+        assert standard_dimension_assertion(
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            OFFLOAD_DIM,
+            bucket_column="PROD_ID",
+        )
+        assert synapse_distribution_assertion(
+            backend_api, messages, data_db, OFFLOAD_DIM, "HASH"
+        )
 
-    # Offload the dimension without --bucket-hash-column and low threshold, expect HASH.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "reset_backend_table": True,
-        "execute": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        config_overrides={"hash_distribution_threshold": "0.1k"},
-    )
-    assert standard_dimension_assertion(
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        OFFLOAD_DIM,
-        bucket_column="PROD_ID",
-    )
-    assert synapse_distribution_assertion(
-        backend_api, messages, data_db, OFFLOAD_DIM, "HASH"
-    )
-
-    # Frontend API is not used for anything else so let's close it.
-    frontend_api.close()
+        # Offload the dimension without --bucket-hash-column and low threshold, expect HASH.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            config_overrides={"hash_distribution_threshold": "0.1k"},
+        )
+        assert standard_dimension_assertion(
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            OFFLOAD_DIM,
+            bucket_column="PROD_ID",
+        )
+        assert synapse_distribution_assertion(
+            backend_api, messages, data_db, OFFLOAD_DIM, "HASH"
+        )

@@ -42,8 +42,8 @@ from tests.integration.test_functions import (
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -203,104 +203,102 @@ def exsting_table_ddl_file_tests(
 def test_ddl_file_new_table_local_fs(config, schema, data_db):
     """Test requesting a DDL file to local FS for a new table."""
     id = "test_ddl_file_new_table_local_fs"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
-    test_table = TEST_TABLE_LFS_1
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        test_table = TEST_TABLE_LFS_1
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, test_table),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, test_table
-        ),
-    )
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, test_table
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, test_table
+            ),
+        )
 
-    ddl_file_prefix = get_temp_path(prefix=id)
-    new_table_ddl_file_tests(
-        config, schema, data_db, test_table, ddl_file_prefix, backend_api, messages
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        ddl_file_prefix = get_temp_path(prefix=id)
+        new_table_ddl_file_tests(
+            config, schema, data_db, test_table, ddl_file_prefix, backend_api, messages
+        )
 
 
 def test_ddl_file_existing_table_local_fs(config, schema, data_db):
     """Test requesting a DDL file to local FS for a previously offloaded table."""
     id = "test_ddl_file_existing_table_local_fs"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
-    test_table = TEST_TABLE_LFS_2
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        test_table = TEST_TABLE_LFS_2
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, test_table),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, test_table
-        ),
-    )
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, test_table
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, test_table
+            ),
+        )
 
-    ddl_file_prefix = get_temp_path(prefix=id)
-    exsting_table_ddl_file_tests(
-        config, schema, data_db, test_table, ddl_file_prefix, backend_api, messages
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        ddl_file_prefix = get_temp_path(prefix=id)
+        exsting_table_ddl_file_tests(
+            config, schema, data_db, test_table, ddl_file_prefix, backend_api, messages
+        )
 
 
 def test_ddl_file_new_table_cloud_storage(config, schema, data_db):
     """Test requesting a DDL file to cloud storage for a new table."""
     id = "test_ddl_file_new_table_cloud_storage"
-    messages = get_test_messages(config, id)
-
     if not config.offload_fs_container:
-        messages.log(f"Skipping {id} when OFFLOAD_FS_CONTAINER is empty")
         pytest.skip(f"Skipping {id} when OFFLOAD_FS_CONTAINER is empty")
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages)
-    test_table = TEST_TABLE_CS_1
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        test_table = TEST_TABLE_CS_1
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, test_table),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, test_table
-        ),
-    )
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, test_table
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, test_table
+            ),
+        )
 
-    dfs_client = get_dfs_from_options(config, messages)
-    bucket_path = dfs_client.gen_uri(
-        config.offload_fs_scheme,
-        config.offload_fs_container,
-        config.offload_fs_prefix,
-    )
+        dfs_client = get_dfs_from_options(config, messages)
+        bucket_path = dfs_client.gen_uri(
+            config.offload_fs_scheme,
+            config.offload_fs_container,
+            config.offload_fs_prefix,
+        )
 
-    ddl_file_prefix = get_temp_path(tmp_dir=bucket_path, prefix=id)
-    new_table_ddl_file_tests(
-        config,
-        schema,
-        data_db,
-        test_table,
-        ddl_file_prefix,
-        backend_api,
-        messages,
-        dfs_client=dfs_client,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        ddl_file_prefix = get_temp_path(tmp_dir=bucket_path, prefix=id)
+        new_table_ddl_file_tests(
+            config,
+            schema,
+            data_db,
+            test_table,
+            ddl_file_prefix,
+            backend_api,
+            messages,
+            dfs_client=dfs_client,
+        )

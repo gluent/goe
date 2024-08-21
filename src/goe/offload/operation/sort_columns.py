@@ -20,7 +20,7 @@
 from typing import Optional, TYPE_CHECKING
 
 from goe.offload.column_metadata import match_table_column
-from goe.offload.offload_constants import SORT_COLUMNS_NO_CHANGE
+from goe.offload import offload_constants
 from goe.offload.offload_functions import expand_columns_csv
 from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_metadata_functions import offload_sort_columns_to_csv
@@ -56,16 +56,10 @@ UNKNOWN_SORT_COLUMN_EXCEPTION_TEXT = "Unknown columns specified for backend sort
 
 def default_sort_columns_from_metadata(
     hybrid_metadata: "OrchestrationMetadata",
-    rdbms_column_names: list,
-    revalidate_columns=False,
 ):
     sort_columns = None
     if hybrid_metadata and hybrid_metadata.offload_sort_columns:
         sort_columns = csv_split(hybrid_metadata.offload_sort_columns)
-    if revalidate_columns:
-        # If this is a re-present then ensure the sort columns still exist (schema evolution)
-        if sort_columns:
-            validate_sort_columns_exist(sort_columns, rdbms_column_names)
     return sort_columns
 
 
@@ -104,16 +98,14 @@ def sort_columns_csv_to_sort_columns(
     backend_cols: list,
     backend_api: "BackendApiInterface",
     messages: "OffloadMessages",
-):
+) -> Optional[list]:
     assert isinstance(sort_columns_csv, (str, type(None)))
     sort_columns = None
     rdbms_column_names = offload_source_table.get_column_names()
-    if sort_columns_csv == SORT_COLUMNS_NO_CHANGE:
+    if sort_columns_csv == offload_constants.SORT_COLUMNS_NO_CHANGE:
         if hybrid_metadata and hybrid_metadata.offload_sort_columns:
             # Use existing metadata to continue with existing configuration
-            sort_columns = default_sort_columns_from_metadata(
-                hybrid_metadata, rdbms_column_names
-            )
+            sort_columns = default_sort_columns_from_metadata(hybrid_metadata)
             messages.log(
                 "Retaining SORT BY columns from previous offload: %s" % sort_columns,
                 detail=VVERBOSE,
@@ -123,6 +115,9 @@ def sort_columns_csv_to_sort_columns(
             # based on the frontend/backend combination.
             if backend_api.default_sort_columns_to_primary_key():
                 sort_columns = offload_source_table.get_primary_key_columns()
+    elif sort_columns_csv == offload_constants.SORT_COLUMNS_NONE:
+        # The user requested no sorting.
+        sort_columns = None
     elif sort_columns_csv:
         # The user gave us a list so use that and ensure all stated SORT BY columns exist.
         sort_columns = expand_columns_csv(

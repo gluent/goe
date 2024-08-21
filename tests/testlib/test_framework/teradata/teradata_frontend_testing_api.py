@@ -2068,6 +2068,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
         table_name: str,
         extra_col_tuples: Optional[list] = None,
         empty: bool = False,
+        pk_col_name: str = None,
     ) -> list:
         extra_cols = ""
         if extra_col_tuples:
@@ -2124,7 +2125,7 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 """
             )
         return self.gen_ctas_from_subquery(
-            schema, table_name, subquery, with_stats_collection=True
+            schema, table_name, subquery, pk_col_name=pk_col_name, with_stats_collection=True
         )
 
     def table_row_count_from_stats(

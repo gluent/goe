@@ -2017,8 +2017,9 @@ class BaseOperation(object):
         backend_api=None,
     ):
         """Default sort_columns for storage index benefit if not specified by the user.
-        sort_columns_csv: The incoming option string which can be a CSV list of column names or the special token
-            SORT_COLUMNS_NO_CHANGE which identifies the user has not asked for a change.
+        sort_columns_csv: The incoming option string which can be a CSV list of column names or:
+            - the special token SORT_COLUMNS_NO_CHANGE which identifies the user has not asked for a change.
+            - the special token SORT_COLUMNS_NONE which identifies the user has not asked for no sort columns.
         sort_columns: A Python list of column names defined by the user.
         backend_cols: A standalone parameter because this function may be used on tables that do not yet exist.
         """
@@ -3361,7 +3362,7 @@ def get_options(usage=None, operation_name=None):
         "--sort-columns",
         dest="sort_columns_csv",
         default=orchestration_defaults.sort_columns_default(),
-        help="CSV list of sort/cluster columns to use when storing data in a backend table",
+        help=f'CSV list of sort/cluster columns to use when storing data in a backend table or "{offload_constants.SORT_COLUMNS_NONE}" to force no sort columns',
     )
     opt.add_option(
         "--offload-distribute-enabled",

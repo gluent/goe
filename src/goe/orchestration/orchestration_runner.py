@@ -106,7 +106,11 @@ class OrchestrationRunner:
 
     def _build_offload_source_table(self, operation):
         return OffloadSourceTable.create(
-            operation.owner, operation.table_name, self._config, self._messages
+            operation.owner,
+            operation.table_name,
+            self._config,
+            self._messages,
+            dry_run=(not operation.execute),
         )
 
     def _build_repo_client(

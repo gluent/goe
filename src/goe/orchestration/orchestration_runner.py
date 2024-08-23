@@ -91,9 +91,9 @@ LOG_FILE_PREFIXES = {
 class OrchestrationRunner:
     """OrchestrationRunner: Library providing simple entry point for orchestration commands."""
 
-    def __init__(self, config_overrides=None, dry_run=False, suppress_stdout=False):
+    def __init__(self, config_overrides=None, suppress_stdout=False):
         self._config = self._gen_config(
-            config_overrides, dry_run, suppress_stdout=suppress_stdout
+            config_overrides, suppress_stdout=suppress_stdout
         )
         # State refreshed by each command, not necessarily static.
         self._execution_id: Optional[ExecutionId] = None
@@ -106,14 +106,20 @@ class OrchestrationRunner:
 
     def _build_offload_source_table(self, operation):
         return OffloadSourceTable.create(
-            operation.owner, operation.table_name, self._config, self._messages
+            operation.owner,
+            operation.table_name,
+            self._config,
+            self._messages,
+            dry_run=(not operation.execute),
         )
 
-    def _build_repo_client(self, messages) -> "OrchestrationRepoClientInterface":
+    def _build_repo_client(
+        self, messages, dry_run=False
+    ) -> "OrchestrationRepoClientInterface":
         return orchestration_repo_client_factory(
             self._config,
             messages,
-            dry_run=bool(not self._config.execute),
+            dry_run=dry_run,
             trace_action="repo_client(OrchestrationRunner)",
         )
 
@@ -218,13 +224,16 @@ class OrchestrationRunner:
             )
             raise
 
+    def _execute_from_params(self, params) -> bool:
+        if isinstance(params, dict):
+            return params["execute"]
+        else:
+            return params.execute
+
     def _gen_config(
-        self, config_overrides, dry_run, suppress_stdout=False
+        self, config_overrides, suppress_stdout=False
     ) -> OrchestrationConfig:
-        # options.execute remains a disease in goe.py and IU therefore we need this preamble for config
         overrides = config_overrides or {}
-        if "execute" not in overrides:
-            overrides["execute"] = bool(not dry_run)
         if suppress_stdout:
             overrides["suppress_stdout"] = suppress_stdout
         return OrchestrationConfig.from_dict(overrides)
@@ -239,10 +248,15 @@ class OrchestrationRunner:
         )
 
     def _gen_offload_operation(
-        self, params, repo_client: "OrchestrationRepoClientInterface"
+        self,
+        params,
+        repo_client: "OrchestrationRepoClientInterface",
     ):
         """Return an OffloadOperation object based on either a parameter dict or OptParse object."""
         try:
+            max_hybrid_name_length = self._get_max_hybrid_identifier_length(
+                dry_run=bool(not self._execute_from_params(params))
+            )
             if isinstance(params, dict):
                 # Non-CLI APIs are dict driven therefore we construct via "from_dict".
                 # Also will be threaded and not-safe to pass in shared repo_client.
@@ -252,7 +266,7 @@ class OrchestrationRunner:
                     self._messages,
                     repo_client=repo_client,
                     execution_id=self._execution_id,
-                    max_hybrid_name_length=self._get_max_hybrid_identifier_length(),
+                    max_hybrid_name_length=max_hybrid_name_length,
                 )
             else:
                 # CLI has an OptParse object therefore we construct via "from_options".
@@ -263,7 +277,7 @@ class OrchestrationRunner:
                     self._messages,
                     repo_client=repo_client,
                     execution_id=self._execution_id,
-                    max_hybrid_name_length=self._get_max_hybrid_identifier_length(),
+                    max_hybrid_name_length=max_hybrid_name_length,
                 )
             return op
         except Exception as exc:
@@ -284,7 +298,7 @@ class OrchestrationRunner:
             execution_id = ExecutionId()
         return execution_id
 
-    def _get_max_hybrid_identifier_length(self) -> int:
+    def _get_max_hybrid_identifier_length(self, dry_run: bool) -> int:
         """Get the max supported hybrid identifier (table/view/column) length for the frontend RDBMS.
         This is not ideal because it is making a frontend connection just to get this information but at the point
         this is called we don't already have a connection we can use.
@@ -295,7 +309,7 @@ class OrchestrationRunner:
                 self._config.db_type,
                 self._config,
                 self._messages,
-                dry_run=bool(not self._config.execute),
+                dry_run=dry_run,
                 trace_action="_get_max_hybrid_identifier_length",
             )
             self._max_hybrid_name_length = frontend_api.max_table_name_length()
@@ -332,7 +346,9 @@ class OrchestrationRunner:
                 detail=VVERBOSE,
             )
             init_redis_execution_id(self._execution_id)
-            return self._build_repo_client(self._messages)
+            return self._build_repo_client(
+                self._messages, dry_run=(not self._execute_from_params(params))
+            )
         except Exception as exc:
             self._log_error(
                 f"Exception initializing command {command}: {str(exc)}", detail=VVERBOSE
@@ -392,21 +408,21 @@ class OrchestrationRunner:
         logger.error(msg)
         self._messages.log(msg, detail=detail)
 
-    def _log_final_messages(self, command_type, repo_client=None):
+    def _log_final_messages(self, command_type, dry_run):
         self._messages.log_step_deltas()
         if self._messages.get_messages():
             self._messages.offload_step(
                 command_steps.STEP_MESSAGES,
                 self._messages.log_messages,
                 command_type=command_type,
-                execute=self._config.execute,
+                execute=(not dry_run),
             )
 
     def _offload(self, operation, offload_source_table, offload_target_table):
         with orchestration_lock_for_table(
             offload_source_table.owner,
             offload_source_table.table_name,
-            dry_run=bool(not self._config.execute),
+            dry_run=(not operation.execute),
         ):
             try:
                 return offload_table(
@@ -451,6 +467,7 @@ class OrchestrationRunner:
         messages_override: Allows us to pass in an existing messages object so a parent can inspect the messages,
                            used for testing.
         """
+        dry_run = bool(not self._execute_from_params(params))
         repo_client = self._init_command(
             orchestration_constants.COMMAND_OFFLOAD,
             params,
@@ -478,9 +495,7 @@ class OrchestrationRunner:
             status = self._offload(
                 operation, offload_source_table, offload_target_table
             )
-            self._log_final_messages(
-                orchestration_constants.COMMAND_OFFLOAD, repo_client=repo_client
-            )
+            self._log_final_messages(orchestration_constants.COMMAND_OFFLOAD, dry_run)
 
             self._command_end(command_id, repo_client)
             self._cleanup_objects(

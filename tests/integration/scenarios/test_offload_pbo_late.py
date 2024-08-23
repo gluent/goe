@@ -69,8 +69,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -176,6 +176,7 @@ def offload_pbo_late_100_x_tests(
         "ipa_predicate_type": ipa_predicate_type,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -219,6 +220,7 @@ def offload_pbo_late_100_x_tests(
         ),
         "ipa_predicate_type": ipa_predicate_type,
         "offload_type": OFFLOAD_TYPE_INCREMENTAL,
+        "execute": True,
     }
     run_offload(
         options,
@@ -235,6 +237,7 @@ def offload_pbo_late_100_x_tests(
             "column(time_id) = datetime(%s)" % OLD_HV_1
         ),
         "ipa_predicate_type": ipa_predicate_type,
+        "execute": True,
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -349,6 +352,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "offload_partition_granularity": offload_partition_granularity,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
     assert sales_based_fact_assertion(
@@ -375,6 +379,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(hv_pred),
         "ipa_predicate_type": ipa_predicate_type,
+        "execute": True,
     }
     run_offload(options, config, messages, expected_status=False)
 
@@ -399,6 +404,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "offload_predicate": GenericPredicate(hv_pred),
         "reset_hybrid_view": True,
         "ipa_predicate_type": ipa_predicate_type,
+        "execute": True,
     }
     run_offload(
         options,
@@ -413,6 +419,7 @@ def offload_pbo_late_arriving_std_range_tests(
             "owner_table": schema + "." + table_name,
             "offload_predicate": GenericPredicate(hv_pred),
             "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
+            "execute": True,
         }
         run_offload(
             options,
@@ -427,6 +434,7 @@ def offload_pbo_late_arriving_std_range_tests(
             "owner_table": schema + "." + table_name,
             "offload_predicate": GenericPredicate(hv_pred),
             "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_LIST,
+            "execute": True,
         }
         run_offload(
             options,
@@ -440,6 +448,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(hv_pred),
         "ipa_predicate_type": INCREMENTAL_PREDICATE_TYPE_PREDICATE,
+        "execute": True,
     }
     run_offload(
         options,
@@ -454,6 +463,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "owner_table": schema + "." + table_name,
         "offload_predicate": GenericPredicate(hv_pred),
         "ipa_predicate_type": ipa_predicate_type,
+        "execute": True,
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
     run_offload(options, config, messages)
@@ -483,314 +493,277 @@ def offload_pbo_late_arriving_std_range_tests(
     # Attempt to re-offload same predicate.
     run_offload(options, config, messages, expected_status=False)
 
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
-
 
 def test_offload_pbo_late_range_90_10(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload."""
     id = "test_offload_pbo_late_range_90_10"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, RANGE_TABLE_LATE, simple_partition_names=True
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, RANGE_TABLE_LATE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+                schema, RANGE_TABLE_LATE, simple_partition_names=True
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, RANGE_TABLE_LATE
+                ),
+            ],
+        )
 
-    offload_pbo_late_arriving_std_range_tests(
-        schema,
-        data_db,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        RANGE_TABLE_LATE,
-        id,
-    )
+        offload_pbo_late_arriving_std_range_tests(
+            schema,
+            data_db,
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            RANGE_TABLE_LATE,
+            id,
+        )
 
-    # TODO do we need to create a test for below 100_10 tests?
-    # offload_pbo_late_100_x_tests(config, backend_api, frontend_api, messages, repo_client, schema, data_db, RANGE_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # TODO do we need to create a test for below 100_10 tests?
+        # offload_pbo_late_100_x_tests(config, backend_api, frontend_api, messages, repo_client, schema,
+        # data_db, RANGE_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
 
 
 def test_offload_pbo_late_range_100_0(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload."""
     id = "test_offload_pbo_late_range_100_0"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, RANGE_TABLE_LATE_100_0, simple_partition_names=True
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, RANGE_TABLE_LATE_100_0
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+                schema, RANGE_TABLE_LATE_100_0, simple_partition_names=True
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, RANGE_TABLE_LATE_100_0
+                ),
+            ],
+        )
 
-    offload_pbo_late_100_x_tests(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        RANGE_TABLE_LATE_100_0,
-        OFFLOAD_PATTERN_100_0,
-        id,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        offload_pbo_late_100_x_tests(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            RANGE_TABLE_LATE_100_0,
+            OFFLOAD_PATTERN_100_0,
+            id,
+        )
 
 
 def test_offload_pbo_late_list_as_range(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a LIST_AS_RANGE."""
     id = "test_offload_pbo_late_list_as_range"
-    messages = get_test_messages(config, id)
-
     if config.db_type == DBTYPE_TERADATA:
-        messages.log(
-            "Skipping LAR tests on Teradata because CASE_N is not yet supported"
+        pytest.skip(f"Skipping {id} on Teradata because CASE_N is not yet supported")
+
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
         )
-        return
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
-            schema,
-            LAR_TABLE_LATE,
-            part_key_type=frontend_api.test_type_canonical_date(),
-            with_drop=True,
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LAR_TABLE_LATE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LAR_TABLE_LATE,
+                part_key_type=frontend_api.test_type_canonical_date(),
+                with_drop=True,
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LAR_TABLE_LATE
+                ),
+            ],
+        )
 
-    offload_pbo_late_arriving_std_range_tests(
-        schema,
-        data_db,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        LAR_TABLE_LATE,
-        id,
-    )
+        offload_pbo_late_arriving_std_range_tests(
+            schema,
+            data_db,
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            LAR_TABLE_LATE,
+            id,
+        )
 
-    # TODO do we need to create a test for below 100_10 tests?
-    # offload_pbo_late_100_x_tests(options, backend_api, frontend_api, messages, repo_client, schema,
-    #                                    hybrid_schema, data_db, LAR_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # TODO do we need to create a test for below 100_10 tests?
+        # offload_pbo_late_100_x_tests(options, backend_api, frontend_api, messages, repo_client, schema,
+        #                                    hybrid_schema, data_db, LAR_TABLE_LATE, OFFLOAD_PATTERN_100_10, id)
 
 
 def test_offload_pbo_late_list_as_range_100_0(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a LIST_AS_RANGE 100/0."""
     id = "test_offload_pbo_late_list_as_range_100_0"
-    messages = get_test_messages(config, id)
-
     if config.db_type == DBTYPE_TERADATA:
-        messages.log(
-            "Skipping LAR tests on Teradata because CASE_N is not yet supported"
+        pytest.skip(f"Skipping {id} on Teradata because CASE_N is not yet supported")
+
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
         )
-        return
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
-            schema,
-            LAR_TABLE_LATE_100_0,
-            part_key_type=frontend_api.test_type_canonical_date(),
-            with_drop=True,
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LAR_TABLE_LATE_100_0
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LAR_TABLE_LATE_100_0,
+                part_key_type=frontend_api.test_type_canonical_date(),
+                with_drop=True,
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LAR_TABLE_LATE_100_0
+                ),
+            ],
+        )
 
-    offload_pbo_late_100_x_tests(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        LAR_TABLE_LATE_100_0,
-        OFFLOAD_PATTERN_100_0,
-        id,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        offload_pbo_late_100_x_tests(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            LAR_TABLE_LATE_100_0,
+            OFFLOAD_PATTERN_100_0,
+            id,
+        )
 
 
 def test_offload_pbo_late_mcol_range(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a multi-partition column table."""
     id = "test_offload_pbo_late_mcol_range"
-    messages = get_test_messages(config, id)
-
     if config.db_type == DBTYPE_TERADATA:
-        messages.log(
+        pytest.skip(
             "Skipping multi-column tests on Teradata because we currently only support RANGE with a single column"
         )
-        return
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_multi_col_fact_create_ddl(
-            schema,
-            MCOL_TABLE_LATE,
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, MCOL_TABLE_LATE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_multi_col_fact_create_ddl(
+                schema,
+                MCOL_TABLE_LATE,
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, MCOL_TABLE_LATE
+                ),
+            ],
+        )
 
-    offload_pbo_late_arriving_std_range_tests(
-        schema,
-        data_db,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        MCOL_TABLE_LATE,
-        id,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        offload_pbo_late_arriving_std_range_tests(
+            schema,
+            data_db,
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            MCOL_TABLE_LATE,
+            id,
+        )
 
 
 def test_offload_pbo_late_range_sub(config, schema, data_db):
     """Tests for Late Arriving Predicate Based Offload on a RANGE/RANGE table."""
     id = "test_offload_pbo_late_range_sub"
-    messages = get_test_messages(config, id)
 
     if config.db_type == DBTYPE_TERADATA:
-        messages.log(
+        pytest.skip(
             "Skipping subpartition tests on Teradata because we currently only support RANGE at top level"
         )
-        return
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(
-        config, messages, trace_action=f"ftest_api({id})"
-    )
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_subpartitioned_fact_ddl(
-            schema,
-            RANGE_SP_LATE,
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, RANGE_SP_LATE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_subpartitioned_fact_ddl(
+                schema,
+                RANGE_SP_LATE,
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, RANGE_SP_LATE
+                ),
+            ],
+        )
 
-    offload_pbo_late_arriving_std_range_tests(
-        schema,
-        data_db,
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        RANGE_SP_LATE,
-        id,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        offload_pbo_late_arriving_std_range_tests(
+            schema,
+            data_db,
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            RANGE_SP_LATE,
+            id,
+        )

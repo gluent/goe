@@ -262,8 +262,6 @@ class MSSQLFrontendApi(FrontendApiInterface):
         """Run a query, fetch and return the results.
         Always opens/closes a fresh cursor to ensure we have a clean session environment with no settings
         carried forwards from a previous action.
-        TODO Do we have a profile on Netezza? If yes we need to implement based on profile argument.
-        TODO Do we have an equivalent to cx_Oracle.connection.action on Netezza?
         """
         assert sql
 
@@ -407,6 +405,7 @@ class MSSQLFrontendApi(FrontendApiInterface):
         arg_list=None,
         log_level=VERBOSE,
         not_when_dry_running=False,
+        commit=False,
     ):
         raise NotImplementedError("MSSQL execute_function not implemented.")
 

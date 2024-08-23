@@ -58,8 +58,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -278,842 +278,865 @@ def offload_lpa_fact_assertion(
 
 def test_offload_lpa_num(config, schema, data_db):
     id = "test_offload_lpa_num"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_list_multi_part_value_create_ddl(
-            schema,
-            LPA_NUM_PART_KEY_TABLE,
-            oracle_column.ORACLE_TYPE_NUMBER,
-            [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LPA_NUM_PART_KEY_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_list_multi_part_value_create_ddl(
+                schema,
+                LPA_NUM_PART_KEY_TABLE,
+                oracle_column.ORACLE_TYPE_NUMBER,
+                [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LPA_NUM_PART_KEY_TABLE
+                ),
+            ],
+        )
 
-    # Offload a partition with multiple NUMBER partition keys.
-    options = {
-        "owner_table": schema + "." + LPA_NUM_PART_KEY_TABLE,
-        "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 1000,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_NUM_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_PART1_KEY1, LPA_PART1_KEY2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Offload a partition with multiple NUMBER partition keys.
+        options = {
+            "owner_table": schema + "." + LPA_NUM_PART_KEY_TABLE,
+            "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 1000,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_NUM_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_PART1_KEY1, LPA_PART1_KEY2],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload next partition.
-    options = {
-        "owner_table": schema + "." + LPA_NUM_PART_KEY_TABLE,
-        "equal_to_values": [LPA_PART2_KEY1],
-        "verify_row_count": "aggregate",
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_NUM_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload next partition.
+        options = {
+            "owner_table": schema + "." + LPA_NUM_PART_KEY_TABLE,
+            "equal_to_values": [LPA_PART2_KEY1],
+            "verify_row_count": "aggregate",
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_NUM_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
 
 def test_offload_lpa_vc2(config, schema, data_db):
     id = "test_offload_lpa_vc2"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_list_multi_part_value_create_ddl(
-            schema,
-            LPA_VC2_PART_KEY_TABLE,
-            oracle_column.ORACLE_TYPE_VARCHAR2,
-            [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LPA_VC2_PART_KEY_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_list_multi_part_value_create_ddl(
+                schema,
+                LPA_VC2_PART_KEY_TABLE,
+                oracle_column.ORACLE_TYPE_VARCHAR2,
+                [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LPA_VC2_PART_KEY_TABLE
+                ),
+            ],
+        )
 
-    # Offload a partition with multiple VC2 partition keys.
-    options = {
-        "owner_table": schema + "." + LPA_VC2_PART_KEY_TABLE,
-        "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_VC2_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_PART1_KEY1, LPA_PART1_KEY2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Offload a partition with multiple VC2 partition keys.
+        options = {
+            "owner_table": schema + "." + LPA_VC2_PART_KEY_TABLE,
+            "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_VC2_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_PART1_KEY1, LPA_PART1_KEY2],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload next LPA partition.
-    options = {
-        "owner_table": schema + "." + LPA_VC2_PART_KEY_TABLE,
-        "equal_to_values": [LPA_PART2_KEY1],
-        "verify_row_count": "aggregate",
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_VC2_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload next LPA partition.
+        options = {
+            "owner_table": schema + "." + LPA_VC2_PART_KEY_TABLE,
+            "equal_to_values": [LPA_PART2_KEY1],
+            "verify_row_count": "aggregate",
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_VC2_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
 
 def test_offload_lpa_char(config, schema, data_db):
     id = "test_offload_lpa_char"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_list_multi_part_value_create_ddl(
-            schema,
-            LPA_CHR_PART_KEY_TABLE,
-            oracle_column.ORACLE_TYPE_CHAR,
-            [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LPA_CHR_PART_KEY_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_list_multi_part_value_create_ddl(
+                schema,
+                LPA_CHR_PART_KEY_TABLE,
+                oracle_column.ORACLE_TYPE_CHAR,
+                [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LPA_CHR_PART_KEY_TABLE
+                ),
+            ],
+        )
 
-    # Offload a partition with multiple CHAR partition keys.
-    options = {
-        "owner_table": schema + "." + LPA_CHR_PART_KEY_TABLE,
-        "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_CHR_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_PART1_KEY1, LPA_PART1_KEY2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Offload a partition with multiple CHAR partition keys.
+        options = {
+            "owner_table": schema + "." + LPA_CHR_PART_KEY_TABLE,
+            "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_CHR_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_PART1_KEY1, LPA_PART1_KEY2],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload next LPA partition.
-    options = {
-        "owner_table": schema + "." + LPA_CHR_PART_KEY_TABLE,
-        "equal_to_values": [LPA_PART2_KEY1],
-        "verify_row_count": "aggregate",
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_CHR_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload next LPA partition.
+        options = {
+            "owner_table": schema + "." + LPA_CHR_PART_KEY_TABLE,
+            "equal_to_values": [LPA_PART2_KEY1],
+            "verify_row_count": "aggregate",
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_CHR_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
 
 def test_offload_lpa_date(config, schema, data_db):
     id = "test_offload_lpa_date"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_list_multi_part_value_create_ddl(
-            schema,
-            LPA_DT_PART_KEY_TABLE,
-            oracle_column.ORACLE_TYPE_DATE,
-            [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2, LPA_DT_PART2_KEY1],
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LPA_DT_PART_KEY_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_list_multi_part_value_create_ddl(
+                schema,
+                LPA_DT_PART_KEY_TABLE,
+                oracle_column.ORACLE_TYPE_DATE,
+                [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2, LPA_DT_PART2_KEY1],
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LPA_DT_PART_KEY_TABLE
+                ),
+            ],
+        )
 
-    # Offload a partition with multiple DATE partition keys.
-    options = {
-        "owner_table": schema + "." + LPA_DT_PART_KEY_TABLE,
-        "equal_to_values": ["%s,%s" % (LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2)],
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_DT_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Offload a partition with multiple DATE partition keys.
+        options = {
+            "owner_table": schema + "." + LPA_DT_PART_KEY_TABLE,
+            "equal_to_values": ["%s,%s" % (LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2)],
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_DT_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload next LPA partition.
-    options = {
-        "owner_table": schema + "." + LPA_DT_PART_KEY_TABLE,
-        "equal_to_values": [LPA_DT_PART2_KEY1],
-        "verify_row_count": "aggregate",
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_DT_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2, LPA_DT_PART2_KEY1],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload next LPA partition.
+        options = {
+            "owner_table": schema + "." + LPA_DT_PART_KEY_TABLE,
+            "equal_to_values": [LPA_DT_PART2_KEY1],
+            "verify_row_count": "aggregate",
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_DT_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2, LPA_DT_PART2_KEY1],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
 
 def test_offload_lpa_ts(config, schema, data_db):
     id = "test_offload_lpa_ts"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_list_multi_part_value_create_ddl(
-            schema,
-            LPA_TS_PART_KEY_TABLE,
-            oracle_column.ORACLE_TYPE_TIMESTAMP,
-            [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2, LPA_DT_PART2_KEY1],
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LPA_TS_PART_KEY_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_list_multi_part_value_create_ddl(
+                schema,
+                LPA_TS_PART_KEY_TABLE,
+                oracle_column.ORACLE_TYPE_TIMESTAMP,
+                [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2, LPA_DT_PART2_KEY1],
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LPA_TS_PART_KEY_TABLE
+                ),
+            ],
+        )
 
-    # Offload a partition with multiple CHAR partition keys.
-    options = {
-        "owner_table": schema + "." + LPA_TS_PART_KEY_TABLE,
-        "equal_to_values": ["%s,%s" % (LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2)],
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_TS_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Offload a partition with multiple CHAR partition keys.
+        options = {
+            "owner_table": schema + "." + LPA_TS_PART_KEY_TABLE,
+            "equal_to_values": ["%s,%s" % (LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2)],
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_TS_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload next LPA partition.
-    options = {
-        "owner_table": schema + "." + LPA_TS_PART_KEY_TABLE,
-        "equal_to_values": [LPA_DT_PART2_KEY1],
-        "verify_row_count": "aggregate",
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_TS_PART_KEY_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2, LPA_DT_PART2_KEY1],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload next LPA partition.
+        options = {
+            "owner_table": schema + "." + LPA_TS_PART_KEY_TABLE,
+            "equal_to_values": [LPA_DT_PART2_KEY1],
+            "verify_row_count": "aggregate",
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_TS_PART_KEY_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_DT_PART1_KEY1, LPA_DT_PART1_KEY2, LPA_DT_PART2_KEY1],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
 
 def test_offload_lpa_unicode(config, schema, data_db):
     id = "test_offload_lpa_unicode"
-    messages = get_test_messages(config, id)
 
     if not os.environ.get("NLS_LANG"):
-        messages.log(f"Skipping {id} because NLS_LANG is not set")
         pytest.skip(f"Skipping {id} because NLS_LANG is not set")
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_list_multi_part_value_create_ddl(
-            schema,
-            LPA_UNICODE_FACT_TABLE,
-            oracle_column.ORACLE_TYPE_NVARCHAR2,
-            [LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2, LPA_UNICODE_PART2_KEY1],
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LPA_UNICODE_FACT_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_list_multi_part_value_create_ddl(
+                schema,
+                LPA_UNICODE_FACT_TABLE,
+                oracle_column.ORACLE_TYPE_NVARCHAR2,
+                [
+                    LPA_UNICODE_PART1_KEY1,
+                    LPA_UNICODE_PART1_KEY2,
+                    LPA_UNICODE_PART2_KEY1,
+                ],
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LPA_UNICODE_FACT_TABLE
+                ),
+            ],
+        )
 
-    # Offload a partition from a table that has unicode partition keys.
-    # Impala/HDFS do not support unicode partition keys so we partition the backend by ID instead.
-    # We can still check code and metadata honour the characters.
-    options = {
-        "owner_table": schema + "." + LPA_UNICODE_FACT_TABLE,
-        "equal_to_values": [(LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2)],
-        "offload_partition_columns": partition_columns_if_supported(backend_api, "id"),
-        "offload_partition_granularity": "100",
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 10000,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_UNICODE_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Offload a partition from a table that has unicode partition keys.
+        # Impala/HDFS do not support unicode partition keys so we partition the backend by ID instead.
+        # We can still check code and metadata honour the characters.
+        options = {
+            "owner_table": schema + "." + LPA_UNICODE_FACT_TABLE,
+            "equal_to_values": [(LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2)],
+            "offload_partition_columns": partition_columns_if_supported(
+                backend_api, "id"
+            ),
+            "offload_partition_granularity": "100",
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 10000,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_UNICODE_FACT_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload next LPA partition.
-    options = {
-        "owner_table": schema + "." + LPA_UNICODE_FACT_TABLE,
-        "equal_to_values": [(LPA_UNICODE_PART2_KEY1,)],
-        "verify_row_count": "aggregate",
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_UNICODE_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2, LPA_UNICODE_PART2_KEY1],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Offload next LPA partition.
+        options = {
+            "owner_table": schema + "." + LPA_UNICODE_FACT_TABLE,
+            "equal_to_values": [(LPA_UNICODE_PART2_KEY1,)],
+            "verify_row_count": "aggregate",
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_UNICODE_FACT_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_UNICODE_PART1_KEY1, LPA_UNICODE_PART1_KEY2, LPA_UNICODE_PART2_KEY1],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
 
 def test_offload_lpa_fact(config, schema, data_db):
     id = "test_offload_lpa_fact"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LPA_FACT_TABLE,
+                default_partition=True,
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LPA_FACT_TABLE
+            ),
+        )
+
+        # Offload empty LIST partition.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "equal_to_values": [test_constants.SALES_BASED_LIST_HV_2],
+            "offload_partition_lower_value": test_constants.LOWER_YRMON_NUM,
+            "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
             schema,
+            data_db,
             LPA_FACT_TABLE,
-            default_partition=True,
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, LPA_FACT_TABLE
-        ),
-    )
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [test_constants.SALES_BASED_LIST_HV_2],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+            backend_table_count_check=0,
+        )
 
-    # Offload empty LIST partition.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "equal_to_values": [test_constants.SALES_BASED_LIST_HV_2],
-        "offload_partition_lower_value": test_constants.LOWER_YRMON_NUM,
-        "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [test_constants.SALES_BASED_LIST_HV_2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-        backend_table_count_check=0,
-    )
+        # Offload empty LIST partition.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "equal_to_values": [test_constants.SALES_BASED_LIST_HV_1],
+            "offload_partition_lower_value": test_constants.LOWER_YRMON_NUM,
+            "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_FACT_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [test_constants.SALES_BASED_LIST_HV_1],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload empty LIST partition.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "equal_to_values": [test_constants.SALES_BASED_LIST_HV_1],
-        "offload_partition_lower_value": test_constants.LOWER_YRMON_NUM,
-        "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
-        "reset_backend_table": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [test_constants.SALES_BASED_LIST_HV_1],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Offload IPA an empty LIST partition and ensure, even though no data copied, metadata reflects current and past predicates.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "equal_to_values": [test_constants.SALES_BASED_LIST_HV_2],
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_FACT_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [
+                test_constants.SALES_BASED_LIST_HV_1,
+                test_constants.SALES_BASED_LIST_HV_2,
+            ],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload IPA an empty LIST partition and ensure, even though no data copied, metadata reflects current and past predicates.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "equal_to_values": [test_constants.SALES_BASED_LIST_HV_2],
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [test_constants.SALES_BASED_LIST_HV_1, test_constants.SALES_BASED_LIST_HV_2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Offload IPA LIST by partition name.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3
+            + ","
+            + test_constants.SALES_BASED_LIST_PNAME_4,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_FACT_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [
+                test_constants.SALES_BASED_LIST_HV_1,
+                test_constants.SALES_BASED_LIST_HV_2,
+                test_constants.SALES_BASED_LIST_HV_3,
+                test_constants.SALES_BASED_LIST_HV_4,
+            ],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload IPA LIST by partition name.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3
-        + ","
-        + test_constants.SALES_BASED_LIST_PNAME_4,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [
-            test_constants.SALES_BASED_LIST_HV_1,
-            test_constants.SALES_BASED_LIST_HV_2,
-            test_constants.SALES_BASED_LIST_HV_3,
-            test_constants.SALES_BASED_LIST_HV_4,
-        ],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Attempt and fail to Offload IPA a default partition.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "equal_to_values": ["DEfauLT"],
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=IPA_OFFLOAD_DEFAULT_PARTITION_EXCEPTION_TEXT,
+        )
 
-    # Attempt and fail to Offload IPA a default partition.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "equal_to_values": ["DEfauLT"],
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=IPA_OFFLOAD_DEFAULT_PARTITION_EXCEPTION_TEXT,
-    )
+        # Offloads same partition from fact table again which should result in no action and return of False for early abort.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3,
+            "execute": True,
+        }
+        run_offload(options, config, messages, expected_status=False)
 
-    # Offloads same partition from fact table again which should result in no action and return of False for early abort.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3,
-    }
-    run_offload(options, config, messages, expected_status=False)
+        # Reset the predicate in a list 90/10 config with no new value, this should be rejected.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "reset_hybrid_view": True,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=offload_constants.RESET_HYBRID_VIEW_EXCEPTION_TEXT,
+        )
 
-    # Reset the predicate in a list 90/10 config with no new value, this should be rejected.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "reset_hybrid_view": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=offload_constants.RESET_HYBRID_VIEW_EXCEPTION_TEXT,
-    )
+        # Reset the predicate in a list 90/10 config with an invalid list.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "reset_hybrid_view": True,
+            "partition_names_csv": "NOT_A_PARTITION",
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=NO_MATCHING_PARTITION_EXCEPTION_TEXT,
+        )
 
-    # Reset the predicate in a list 90/10 config with an invalid list.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "reset_hybrid_view": True,
-        "partition_names_csv": "NOT_A_PARTITION",
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=NO_MATCHING_PARTITION_EXCEPTION_TEXT,
-    )
+        # TODO Enable tests below as part of issue-16.
+        # Reset the predicate in a list 90/10 config with a new list.
+        # options = {
+        #    "owner_table": schema + "." + LPA_FACT_TABLE,
+        #    "reset_hybrid_view": True,
+        #    "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3,
+        #    "execute": True,
+        # }
+        # run_offload(options, config, messages)
+        # assert offload_lpa_fact_assertion(
+        #    schema,
+        #    data_db,
+        #    LPA_FACT_TABLE,
+        #    config,
+        #    backend_api,
+        #    messages,
+        #    repo_client,
+        #    [
+        #        test_constants.SALES_BASED_LIST_HV_3,
+        #    ],
+        #    incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        # )
 
-    # TODO Enable tests below as part of issue-16.
-    # Reset the predicate in a list 90/10 config with a new list.
-    # options = {
-    #    "owner_table": schema + "." + LPA_FACT_TABLE,
-    #    "reset_hybrid_view": True,
-    #    "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_3,
-    # }
-    # run_offload(options, config, messages)
-    # assert offload_lpa_fact_assertion(
-    #    schema,
-    #    data_db,
-    #    LPA_FACT_TABLE,
-    #    config,
-    #    backend_api,
-    #    messages,
-    #    repo_client,
-    #    [
-    #        test_constants.SALES_BASED_LIST_HV_3,
-    #    ],
-    #    incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    # )
+        # Offload a partition after the Hybrid View reset, should move data and influence the metadata.
+        # We pass HV 5 and 6 but only 6 has not been offloaded, should then have 3, 5 and 6 in view while only copying 6.
+        # options = {
+        #    "owner_table": schema + "." + LPA_FACT_TABLE,
+        #    "reset_hybrid_view": True,
+        #    "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_5
+        #    + ","
+        #    + test_constants.SALES_BASED_LIST_PNAME_6,
+        # }
+        # run_offload(options, config, messages)
+        # assert offload_lpa_fact_assertion(
+        #    schema,
+        #    data_db,
+        #    LPA_FACT_TABLE,
+        #    config,
+        #    backend_api,
+        #    messages,
+        #    repo_client,
+        #    [
+        #        test_constants.SALES_BASED_LIST_HV_3,
+        #        test_constants.SALES_BASED_LIST_HV_5,
+        #        test_constants.SALES_BASED_LIST_HV_6,
+        #    ],
+        #    incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        # )
 
-    # Offload a partition after the Hybrid View reset, should move data and influence the metadata.
-    # We pass HV 5 and 6 but only 6 has not been offloaded, should then have 3, 5 and 6 in view while only copying 6.
-    # options = {
-    #    "owner_table": schema + "." + LPA_FACT_TABLE,
-    #    "reset_hybrid_view": True,
-    #    "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_5
-    #    + ","
-    #    + test_constants.SALES_BASED_LIST_PNAME_6,
-    # }
-    # run_offload(options, config, messages)
-    # assert offload_lpa_fact_assertion(
-    #    schema,
-    #    data_db,
-    #    LPA_FACT_TABLE,
-    #    config,
-    #    backend_api,
-    #    messages,
-    #    repo_client,
-    #    [
-    #        test_constants.SALES_BASED_LIST_HV_3,
-    #        test_constants.SALES_BASED_LIST_HV_5,
-    #        test_constants.SALES_BASED_LIST_HV_6,
-    #    ],
-    #    incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    # )
+        # Only way to offload the default partition is to switch to FULL.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "offload_type": OFFLOAD_TYPE_FULL,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_FACT_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            None,
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Only way to offload the default partition is to switch to FULL.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "offload_type": OFFLOAD_TYPE_FULL,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FACT_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        None,
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
-
-    # Now we've offloaded the default partition we can't go back to 90/10.
-    options = {
-        "owner_table": schema + "." + LPA_FACT_TABLE,
-        "offload_type": OFFLOAD_TYPE_INCREMENTAL,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=INCREMENTAL_OFFLOAD_DEFAULT_PARTITION_EXCEPTION_TEXT,
-    )
+        # Now we've offloaded the default partition we can't go back to 90/10.
+        options = {
+            "owner_table": schema + "." + LPA_FACT_TABLE,
+            "offload_type": OFFLOAD_TYPE_INCREMENTAL,
+            "execute": True,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=INCREMENTAL_OFFLOAD_DEFAULT_PARTITION_EXCEPTION_TEXT,
+        )
 
 
 def test_offload_lpa_part_fn(config, schema, data_db):
     id = "test_offload_lpa_part_fn"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    if not backend_api.goe_partition_functions_supported():
-        messages.log(
-            f"Skipping {id} due to goe_partition_functions_supported() == False"
+        if not backend_api.goe_partition_functions_supported():
+            pytest.skip(
+                f"Skipping {id} due to goe_partition_functions_supported() == False"
+            )
+
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
         )
-        pytest.skip(
-            f"Skipping {id} due to goe_partition_functions_supported() == False"
-        )
+        udf = data_db + "." + test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
+        udf_synth_name = synthetic_part_col_name("U0", "CAT")
+        udf_synth_name = convert_backend_identifier_case(config, udf_synth_name)
 
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-    udf = data_db + "." + test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
-    udf_synth_name = synthetic_part_col_name("U0", "CAT")
-    udf_synth_name = convert_backend_identifier_case(config, udf_synth_name)
-
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=gen_list_multi_part_value_create_ddl(
-            schema,
-            LPA_NUM_PART_FUNC_TABLE,
-            oracle_column.ORACLE_TYPE_NUMBER,
-            [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, LPA_NUM_PART_FUNC_TABLE
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=gen_list_multi_part_value_create_ddl(
+                schema,
+                LPA_NUM_PART_FUNC_TABLE,
+                oracle_column.ORACLE_TYPE_NUMBER,
+                [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, LPA_NUM_PART_FUNC_TABLE
+                ),
+            ],
+        )
 
-    backend_api.create_test_partition_functions(
-        data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
-    )
+        backend_api.create_test_partition_functions(
+            data_db, udf=test_constants.PARTITION_FUNCTION_TEST_FROM_INT8
+        )
 
-    # IPA 90/10 list partition with partition function.
-    options = {
-        "owner_table": schema + "." + LPA_NUM_PART_FUNC_TABLE,
-        "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
-        "offload_partition_functions": udf,
-        "offload_partition_lower_value": 0,
-        "offload_partition_upper_value": 1000,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_NUM_PART_FUNC_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_PART1_KEY1, LPA_PART1_KEY2],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-        partition_functions=udf,
-        synthetic_partition_column_name=udf_synth_name,
-    )
+        # IPA 90/10 list partition with partition function.
+        options = {
+            "owner_table": schema + "." + LPA_NUM_PART_FUNC_TABLE,
+            "equal_to_values": ["%s,%s" % (LPA_PART1_KEY1, LPA_PART1_KEY2)],
+            "offload_partition_functions": udf,
+            "offload_partition_lower_value": 0,
+            "offload_partition_upper_value": 1000,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_NUM_PART_FUNC_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_PART1_KEY1, LPA_PART1_KEY2],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+            partition_functions=udf,
+            synthetic_partition_column_name=udf_synth_name,
+        )
 
-    # LPA next partition with partition function.
-    options = {
-        "owner_table": schema + "." + LPA_NUM_PART_FUNC_TABLE,
-        "equal_to_values": [LPA_PART2_KEY1],
-        "verify_row_count": "aggregate",
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_NUM_PART_FUNC_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-        partition_functions=udf,
-    )
+        # LPA next partition with partition function.
+        options = {
+            "owner_table": schema + "." + LPA_NUM_PART_FUNC_TABLE,
+            "equal_to_values": [LPA_PART2_KEY1],
+            "verify_row_count": "aggregate",
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
+            schema,
+            data_db,
+            LPA_NUM_PART_FUNC_TABLE,
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            [LPA_PART1_KEY1, LPA_PART1_KEY2, LPA_PART2_KEY1],
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+            partition_functions=udf,
+        )
 
 
 def test_offload_lpa_full(config, schema, data_db):
     id = "test_offload_lpa_full"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_create_ddl(
+                schema,
+                LPA_FULL_TABLE,
+                default_partition=False,
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, LPA_FULL_TABLE
+            ),
+        )
+
+        # Offload 100/0 LIST partitioned table.
+        options = {
+            "owner_table": schema + "." + LPA_FULL_TABLE,
+            "offload_partition_lower_value": test_constants.LOWER_YRMON_NUM,
+            "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
             schema,
+            data_db,
             LPA_FULL_TABLE,
-            default_partition=False,
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, LPA_FULL_TABLE
-        ),
-    )
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            None,
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )
 
-    # Offload 100/0 LIST partitioned table.
-    options = {
-        "owner_table": schema + "." + LPA_FULL_TABLE,
-        "offload_partition_lower_value": test_constants.LOWER_YRMON_NUM,
-        "offload_partition_upper_value": test_constants.UPPER_YRMON_NUM,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FULL_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        None,
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+        # Add a new partition.
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_list_fact_add_partition_ddl(
+                schema,
+                LPA_FULL_TABLE,
+            ),
+        )
 
-    # Add a new partition.
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_list_fact_add_partition_ddl(
+        # Offload new partition to 100/0 list fact.
+        options = {
+            "owner_table": schema + "." + LPA_FULL_TABLE,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert offload_lpa_fact_assertion(
             schema,
+            data_db,
             LPA_FULL_TABLE,
-        ),
-    )
-
-    # Offload new partition to 100/0 list fact.
-    options = {
-        "owner_table": schema + "." + LPA_FULL_TABLE,
-    }
-    run_offload(options, config, messages)
-    assert offload_lpa_fact_assertion(
-        schema,
-        data_db,
-        LPA_FULL_TABLE,
-        config,
-        backend_api,
-        messages,
-        repo_client,
-        None,
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
-        incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
-    )
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            None,
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
+            incremental_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST,
+        )

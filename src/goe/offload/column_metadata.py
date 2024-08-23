@@ -229,7 +229,9 @@ def match_partition_column_by_source(source_column_name, column_list):
 def match_table_column(
     search_name: str, column_list: list
 ) -> Optional["ColumnMetadataInterface"]:
-    """Looks for, and returns, a column with name search_name in a list of table columns."""
+    """Looks for, and returns, a column with name search_name in a list of table columns.
+
+    Case insensitive matching."""
     assert search_name
     assert isinstance(column_list, list)
     if column_list:

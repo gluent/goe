@@ -24,14 +24,8 @@
 
 import logging
 import os
+from typing import TYPE_CHECKING
 
-from goe.data_governance.hadoop_data_governance import (
-    data_governance_register_new_table_step,
-    get_data_governance_register,
-)
-from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE,
-)
 from goe.filesystem.goe_dfs import gen_load_uri_from_options
 from goe.offload.column_metadata import ColumnMetadataInterface, get_column_names
 from goe.offload.hadoop import hadoop_predicate
@@ -69,6 +63,9 @@ from goe.offload.staging.parquet.parquet_column import (
     PARQUET_TYPE_INT64,
 )
 
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
+
 
 ###############################################################################
 # CONSTANTS
@@ -99,14 +96,13 @@ class BackendHadoopTable(BackendTableInterface):
 
     def __init__(
         self,
-        db_name,
-        table_name,
-        backend_type,
-        orchestration_options,
+        db_name: str,
+        table_name: str,
+        backend_type: str,
+        orchestration_options: "OrchestrationConfig",
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
-        data_gov_client=None,
         dry_run=False,
         existing_backend_api=None,
         do_not_connect=False,
@@ -126,7 +122,6 @@ class BackendHadoopTable(BackendTableInterface):
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -339,7 +334,7 @@ FROM %s.%s""" % (
                 self._avro_schema_hdfs_path, data=avro_schema_str, overwrite=True
             )
 
-    def _create_load_table(self, staging_file):
+    def _create_load_table(self, staging_file, with_terminator=False) -> list:
         """Create the staging/load table and supporting HDFS directory"""
         self._recreate_load_table_dir(include_remove=False)
         no_partition_cols = []
@@ -352,7 +347,7 @@ FROM %s.%s""" % (
         table_properties = {
             "avro.schema.url": "%s%s" % (schema_fs_prefix, self._avro_schema_hdfs_path)
         }
-        self._db_api.create_table(
+        return self._db_api.create_table(
             self._load_db_name,
             self._load_table_name,
             self.convert_canonical_columns_to_backend(
@@ -364,6 +359,7 @@ FROM %s.%s""" % (
             external=True,
             table_properties=table_properties,
             sync=True,
+            with_terminator=with_terminator,
         )
 
     def _create_new_backend_table(self, sort_column_names=None):
@@ -646,12 +642,14 @@ FROM %s.%s""" % (
     def cleanup_staging_area(self):
         self._drop_load_table(sync=True)
 
-    def create_backend_table(self):
+    def create_backend_table(self, with_terminator=False) -> list:
         """Create a table in the backend based on object state.
         Creating a new table may change our world view so the function drops state if in execute mode.
         If dry_run then we leave state in place to allow other operations to preview.
         """
-        cmds = self._create_new_backend_table(sort_column_names=self._sort_columns)
+        cmds = self._create_new_backend_table(
+            sort_column_names=self._sort_columns, with_terminator=with_terminator
+        )
         if not self._dry_run:
             # The CREATE TABLE above may have changed our world view so let's reset what we already know
             self._drop_state()
@@ -787,23 +785,7 @@ FROM %s.%s""" % (
             return
         if staging_file.file_format == FILE_STORAGE_FORMAT_AVRO:
             self._copy_load_table_avro_schema(staging_file)
-        (
-            pre_register_data_gov_fn,
-            post_register_data_gov_fn,
-        ) = get_data_governance_register(
-            self._data_gov_client,
-            lambda: data_governance_register_new_table_step(
-                self._load_db_name,
-                self.table_name,
-                self._data_gov_client,
-                self._messages,
-                DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE,
-                self._orchestration_config,
-            ),
-        )
-        pre_register_data_gov_fn()
         self._recreate_load_table(staging_file)
-        post_register_data_gov_fn()
 
     def validate_type_conversions(self, staging_columns: list):
         self._validate_final_table_casts(staging_columns)
@@ -812,8 +794,21 @@ FROM %s.%s""" % (
     # PUBLIC METHODS
     ###########################################################################
 
-    def create_db(self):
-        return self._create_final_db(location=self._get_data_db_hdfs_dir())
+    def create_db(self, with_terminator=False) -> list:
+        return self._create_final_db(
+            location=self._get_data_db_hdfs_dir(),
+            with_terminator=with_terminator,
+        )
+
+    def create_load_db(self, with_terminator=False) -> list:
+        """Create a load database."""
+        if self._db_api.load_db_transport_supported():
+            return self._create_load_db(
+                location=self._get_load_db_hdfs_dir(),
+                with_terminator=with_terminator,
+            )
+        else:
+            return []
 
     def default_udf_db_name(self):
         """By default we support UDF_DB but on Hadoop we use 'default' as a fall back"""

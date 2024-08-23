@@ -72,7 +72,7 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
     get_frontend_testing_api,
-    get_test_messages,
+    get_test_messages_ctx,
 )
 
 
@@ -140,6 +140,7 @@ def simple_offload_test(
         "offload_transport_method": transport_method,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
 
     if transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY:
@@ -170,7 +171,7 @@ def load_table_compression_tests(
     repo_client = orchestration_repo_client_factory(
         config, messages, trace_action=f"repo_client({test_id})"
     )
-    dfs = get_dfs_from_options(config, messages=messages)
+    dfs = get_dfs_from_options(config, messages=messages, dry_run=False)
     backend_name = convert_backend_identifier_case(config, table_name)
 
     # Setup
@@ -198,6 +199,7 @@ def load_table_compression_tests(
         "compress_load_table": False,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -216,6 +218,7 @@ def load_table_compression_tests(
         "preserve_load_table": True,
         "compress_load_table": True,
         "reset_backend_table": True,
+        "execute": True,
     }
     run_offload(options, config, messages)
 
@@ -265,6 +268,7 @@ def offload_transport_polling_validation_tests(
         "offload_transport_validation_polling_interval": 1,
         "reset_backend_table": True,
         "create_backend_db": True,
+        "execute": True,
     }
     log_test_marker(messages, f"{test_id}:1")
     run_offload(options, config, messages)
@@ -278,6 +282,7 @@ def offload_transport_polling_validation_tests(
         "offload_transport_method": transport_method,
         "offload_transport_validation_polling_interval": OFFLOAD_TRANSPORT_VALIDATION_POLLER_DISABLED,
         "reset_backend_table": True,
+        "execute": True,
     }
     log_test_marker(messages, f"{test_id}:2")
     run_offload(options, config, messages)
@@ -295,249 +300,226 @@ def test_offload_transport_spark_submit(config, schema, data_db):
     """Test simple offload with spark-submit."""
     # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_spark_submit"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_spark_submit_available(config, None, messages=messages):
+            pytest.skip(f"Skipping {id} because spark-submit is not configured")
 
-    if not is_spark_submit_available(config, None, messages=messages):
-        messages.log(f"Skipping {id} because spark-submit is not configured")
-        pytest.skip(f"Skipping {id} because spark-submit is not configured")
-
-    simple_offload_test(
-        config,
-        schema,
-        data_db,
-        SPARK_SUBMIT_DIM,
-        OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
-        messages,
-        id,
-    )
+        simple_offload_test(
+            config,
+            schema,
+            data_db,
+            SPARK_SUBMIT_DIM,
+            OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
+            messages,
+            id,
+        )
 
 
 def test_offload_transport_dataproc_cluster(config, schema, data_db):
     """Test simple offload with Dataproc."""
     # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_dataproc_cluster"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
+            pytest.skip(f"Skipping {id} because Dataproc is not configured")
 
-    if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
-        messages.log(f"Skipping {id} because Dataproc is not configured")
-        pytest.skip(f"Skipping {id} because Dataproc is not configured")
-
-    simple_offload_test(
-        config,
-        schema,
-        data_db,
-        SPARK_DATAPROC_DIM,
-        OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
-        messages,
-        id,
-    )
+        simple_offload_test(
+            config,
+            schema,
+            data_db,
+            SPARK_DATAPROC_DIM,
+            OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,
+            messages,
+            id,
+        )
 
 
 def test_offload_transport_dataproc_batches(config, schema, data_db):
     """Test simple offload with Dataproc."""
     # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_dataproc_batches"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_spark_gcloud_batches_available(config, None, messages=messages):
+            pytest.skip(f"Skipping {id} because Dataproc Batches is not configured")
 
-    if not is_spark_gcloud_batches_available(config, None, messages=messages):
-        messages.log(f"Skipping {id} because Dataproc Batches is not configured")
-        pytest.skip(f"Skipping {id} because Dataproc Batches is not configured")
-
-    simple_offload_test(
-        config,
-        schema,
-        data_db,
-        SPARK_BATCHES_DIM,
-        OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
-        messages,
-        id,
-    )
+        simple_offload_test(
+            config,
+            schema,
+            data_db,
+            SPARK_BATCHES_DIM,
+            OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
+            messages,
+            id,
+        )
 
 
 def test_offload_transport_spark_thrift(config, schema, data_db):
     """Test simple offload with Spark Thriftserver."""
     # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_spark_thrift"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_spark_submit_available(config, None, messages=messages):
+            pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
 
-    if not is_spark_submit_available(config, None, messages=messages):
-        messages.log(f"Skipping {id} because Spark Thriftserver is not configured")
-        pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
-
-    simple_offload_test(
-        config,
-        schema,
-        data_db,
-        SPARK_THRIFT_DIM,
-        OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
-        messages,
-        id,
-    )
+        simple_offload_test(
+            config,
+            schema,
+            data_db,
+            SPARK_THRIFT_DIM,
+            OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
+            messages,
+            id,
+        )
 
 
 def test_offload_transport_spark_livy(config, schema, data_db):
     """Test simple offload with Spark Livy."""
     # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_spark_livy"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_livy_available(config, None, messages=messages):
+            pytest.skip(f"Skipping {id} because Spark Livy is not configured")
 
-    if not is_livy_available(config, None, messages=messages):
-        messages.log(f"Skipping {id} because Spark Livy is not configured")
-        pytest.skip(f"Skipping {id} because Spark Livy is not configured")
-
-    simple_offload_test(
-        config,
-        schema,
-        data_db,
-        SPARK_LIVY_DIM,
-        OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
-        messages,
-        id,
-    )
+        simple_offload_test(
+            config,
+            schema,
+            data_db,
+            SPARK_LIVY_DIM,
+            OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
+            messages,
+            id,
+        )
 
 
 def test_offload_transport_sqoop_table(config, schema, data_db):
     """Test simple offload with table centric Sqoop."""
     # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_sqoop_table"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_sqoop_available(None, config, messages=messages):
+            pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
-    if not is_sqoop_available(None, config, messages=messages):
-        messages.log(f"Skipping {id} because Sqoop is not configured")
-        pytest.skip(f"Skipping {id} because Sqoop is not configured")
-
-    simple_offload_test(
-        config,
-        schema,
-        data_db,
-        SQOOP_DIM,
-        OFFLOAD_TRANSPORT_METHOD_SQOOP,
-        messages,
-        id,
-    )
+        simple_offload_test(
+            config,
+            schema,
+            data_db,
+            SQOOP_DIM,
+            OFFLOAD_TRANSPORT_METHOD_SQOOP,
+            messages,
+            id,
+        )
 
 
 def test_offload_transport_sqoop_by_query(config, schema, data_db):
     """Test simple offload with Sqoop by query."""
     # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_sqoop_by_query"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_sqoop_by_query_available(config, messages=messages):
+            pytest.skip(f"Skipping {id} because Sqoop is not configured")
 
-    if not is_sqoop_by_query_available(config, messages=messages):
-        messages.log(f"Skipping {id} because Sqoop is not configured")
-        pytest.skip(f"Skipping {id} because Sqoop is not configured")
-
-    simple_offload_test(
-        config,
-        schema,
-        data_db,
-        SQOOP_BY_QUERY_DIM,
-        OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
-        messages,
-        id,
-    )
+        simple_offload_test(
+            config,
+            schema,
+            data_db,
+            SQOOP_BY_QUERY_DIM,
+            OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
+            messages,
+            id,
+        )
 
 
 def test_offload_transport_load_table_qi(config, schema, data_db):
     """Test load table controls when using Query Import."""
     id = "test_offload_transport_load_table_qi"
-    messages = get_test_messages(config, id)
-
-    load_table_compression_tests(
-        config,
-        schema,
-        data_db,
-        LOAD_TABLE_COMP_DIM1,
-        OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
-        messages,
-        id,
-    )
+    with get_test_messages_ctx(config, id) as messages:
+        load_table_compression_tests(
+            config,
+            schema,
+            data_db,
+            LOAD_TABLE_COMP_DIM1,
+            OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+            messages,
+            id,
+        )
 
 
 def test_offload_transport_load_table_no_qi(config, schema, data_db):
     """Test load table controls when using anying other than Query Import."""
     id = "test_offload_transport_load_table_no_qi"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if (
+            no_query_import_transport_method(config)
+            == OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
+        ):
+            pytest.skip(
+                f"Skipping {id} because we only have Query Import at our disposal"
+            )
 
-    if (
-        no_query_import_transport_method(config)
-        == OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
-    ):
-        messages.log(
-            f"Skipping {id} tests because we only have Query Import at our disposal"
+        load_table_compression_tests(
+            config,
+            schema,
+            data_db,
+            LOAD_TABLE_COMP_DIM2,
+            no_query_import_transport_method(config),
+            messages,
+            id,
         )
-        pytest.skip(f"Skipping {id} because we only have Query Import at our disposal")
-
-    load_table_compression_tests(
-        config,
-        schema,
-        data_db,
-        LOAD_TABLE_COMP_DIM2,
-        no_query_import_transport_method(config),
-        messages,
-        id,
-    )
 
 
 def test_offload_transport_polling_validation_spark_submit(config, schema, data_db):
     """Offload with Spark submit transport method and use polling validation for transported rows."""
     id = "test_offload_transport_polling_validation_spark_submit"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_spark_submit_available(config, None):
+            pytest.skip(f"Skipping {id} because spark-submit is not configured")
 
-    if not is_spark_submit_available(config, None):
-        messages.log(f"Skipping {id} because spark-submit is not configured")
-        pytest.skip(f"Skipping {id} because spark-submit is not configured")
-
-    offload_transport_polling_validation_tests(
-        config,
-        messages,
-        schema,
-        data_db,
-        POLL_VALIDATION_SSUBMIT,
-        OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
-        id,
-    )
+        offload_transport_polling_validation_tests(
+            config,
+            messages,
+            schema,
+            data_db,
+            POLL_VALIDATION_SSUBMIT,
+            OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT,
+            id,
+        )
 
 
 def test_offload_transport_polling_validation_spark_thrift(config, schema, data_db):
     """Offload with Spark Thriftserver transport method and use polling validation for transported rows."""
     id = "test_offload_transport_polling_validation_spark_thrift"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_spark_thrift_available(config, None):
+            pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
 
-    if not is_spark_thrift_available(config, None):
-        messages.log(f"Skipping {id} because Spark Thriftserver is not configured")
-        pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
-
-    offload_transport_polling_validation_tests(
-        config,
-        messages,
-        schema,
-        data_db,
-        POLL_VALIDATION_STHRIFT,
-        OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
-        id,
-        # Without SQL stats validation we cannot validate staged row count.
-        expect_missing_validation_warning=True,
-    )
+        offload_transport_polling_validation_tests(
+            config,
+            messages,
+            schema,
+            data_db,
+            POLL_VALIDATION_STHRIFT,
+            OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT,
+            id,
+            # Without SQL stats validation we cannot validate staged row count.
+            expect_missing_validation_warning=True,
+        )
 
 
 def test_offload_transport_polling_validation_spark_livy(config, schema, data_db):
     """Offload with Spark Livy transport method and use polling validation for transported rows."""
     id = "test_offload_transport_polling_validation_spark_livy"
-    messages = get_test_messages(config, id)
+    with get_test_messages_ctx(config, id) as messages:
+        if not is_livy_available(config, None):
+            pytest.skip(f"Skipping {id} because Spark Livy is not configured")
 
-    if not is_livy_available(config, None):
-        messages.log(f"Skipping {id} because Spark Livy is not configured")
-        pytest.skip(f"Skipping {id} because Spark Livy is not configured")
-
-    offload_transport_polling_validation_tests(
-        config,
-        messages,
-        schema,
-        data_db,
-        POLL_VALIDATION_SLIVY,
-        OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
-        id,
-        # Without SQL stats validation we cannot validate staged row count.
-        expect_missing_validation_warning=True,
-    )
+        offload_transport_polling_validation_tests(
+            config,
+            messages,
+            schema,
+            data_db,
+            POLL_VALIDATION_SLIVY,
+            OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY,
+            id,
+            # Without SQL stats validation we cannot validate staged row count.
+            expect_missing_validation_warning=True,
+        )

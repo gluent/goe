@@ -24,6 +24,7 @@ from uuid import UUID
 from pydantic import UUID4, Field, Json, PositiveInt, validator
 
 # GOE
+from goe.config import option_descriptions
 import goe.config.orchestration_defaults as defaults
 from goe.listener.schemas.base import BaseSchema, TotaledResults
 from goe.orchestration.execution_id import ExecutionId
@@ -204,22 +205,6 @@ class OffloadOptions(BaseSchema):
         description="Create backend database",
         cli=("--create-backend-db"),
     )
-    # TODO: Deprecated
-    data_governance_custom_properties: Optional[Json] = Field(
-        default=None,
-        title="Data governance custom properties",
-        description="Data governance custom properties",
-        cli=("--data-governance-custom-properties"),
-        no_api=True,
-    )
-    # TODO: Deprecated
-    data_governance_custom_tags_csv: Optional[List[str]] = Field(
-        default=[],
-        title="Data governance custom tags",
-        description="Data governance custom tags",
-        cli=("--data-governance-custom-tags"),
-        no_api=True,
-    )
     data_sample_parallelism: Optional[int] = Field(
         default=0,
         title="Data sample parallelism",
@@ -247,6 +232,15 @@ class OffloadOptions(BaseSchema):
         title="Date columns in CSV",
         description="CSV list of columns to treat as date columns",
         cli=("--date-columns"),
+    )
+    ddl_file: Optional[str] = Field(
+        default=None,
+        title="Path to output generated target table DDL",
+        description=(
+            "Output generated target table DDL to a file, should include full path or literal AUTO. "
+            "Supports local paths or cloud storage URIs"
+        ),
+        cli=("--ddl-file"),
     )
     decimal_columns_csv_list: Optional[List[str]] = Field(
         default=None,
@@ -716,9 +710,7 @@ class OffloadOptions(BaseSchema):
     reset_backend_table: Optional[bool] = Field(
         default=False,
         title="Reset backend table",
-        description=(
-            "Remove backend data table. Use with caution - this will delete previously offloaded data for this table!"
-        ),
+        description=option_descriptions.RESET_BACKEND_TABLE,
         cli=("--reset-backend-table"),
     )
     reset_hybrid_view: Optional[bool] = Field(
@@ -728,6 +720,12 @@ class OffloadOptions(BaseSchema):
             "Reset Incremental Partition Append or Predicate-Based Offload predicates in the hybrid view."
         ),
         cli=("--reset-hybrid-view"),
+    )
+    reuse_backend_table: Optional[bool] = Field(
+        default=False,
+        title="Reuse backend table",
+        description=option_descriptions.REUSE_BACKEND_TABLE,
+        cli=("--reuse-backend-table"),
     )
     skip: Optional[str] = Field(
         default=None,

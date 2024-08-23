@@ -26,16 +26,8 @@ from abc import ABCMeta, abstractmethod
 import collections
 import inspect
 import logging
-from typing import Callable, Optional
+from typing import Callable, Optional, TYPE_CHECKING
 
-from goe.data_governance.hadoop_data_governance import (
-    data_governance_register_new_db_step,
-    data_governance_register_new_table_step,
-    get_data_governance_register,
-)
-from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_OFFLOAD_DB,
-)
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.offload.backend_api import VALID_REMOTE_DB_TYPES
 from goe.offload.column_metadata import (
@@ -69,6 +61,9 @@ from goe.offload.synthetic_partition_literal import SyntheticPartitionLiteral
 from goe.orchestration import command_steps
 from goe.offload.hadoop.hadoop_column import HADOOP_TYPE_STRING
 from goe.util.misc_functions import csv_split
+
+if TYPE_CHECKING:
+    from goe.config.orchestration_config import OrchestrationConfig
 
 
 class BackendTableException(Exception):
@@ -128,14 +123,13 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def __init__(
         self,
-        db_name,
-        table_name,
-        backend_type,
-        orchestration_options,
+        db_name: str,
+        table_name: str,
+        backend_type: str,
+        orchestration_options: "OrchestrationConfig",
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
-        data_gov_client=None,
         dry_run=False,
         existing_backend_api=None,
         do_not_connect=False,
@@ -153,7 +147,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._backend_type = backend_type
         self._messages = messages
         self._hybrid_metadata = hybrid_metadata
-        self._data_gov_client = data_gov_client
         self._dry_run = dry_run
         self._do_not_connect = do_not_connect
         # One day we may split connectivity options from other config
@@ -208,6 +201,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         # Cache some attributes in state
         self._columns = None
         self._partition_columns = None
+        self._has_rows = None
         self._log_profile_after_final_table_load = None
         self._log_profile_after_verification_queries = None
 
@@ -271,7 +265,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._bucket_hash_col = None
         self.refresh_operational_settings(
             offload_operation=orchestration_operation,
-            data_gov_client=self._data_gov_client,
         )
 
     def __del__(self):
@@ -364,7 +357,7 @@ class BackendTableInterface(metaclass=ABCMeta):
                 % (canonical_column.partition_info.range_end, range_max)
             )
 
-    def _create_db(self, db_name, comment=None, properties=None):
+    def _create_db(self, db_name, comment=None, properties=None, with_terminator=False):
         """Call through to relevant BackendApi to create a final database/dataset/schema.
         location can mean different things to different backends.
         """
@@ -379,23 +372,32 @@ class BackendTableInterface(metaclass=ABCMeta):
             return []
         else:
             return self._db_api.create_database(
-                db_name, comment=comment, properties=properties
+                db_name,
+                comment=comment,
+                properties=properties,
+                with_terminator=with_terminator,
             )
 
-    def _create_final_db(self, location=None):
+    def _create_final_db(self, location=None, with_terminator=False):
         comment = BACKEND_DB_COMMENT_TEMPLATE.format(
             db_name_type="Offload", db_name_label=self.db_name_label()
         )
         return self._create_db(
-            self.db_name, comment=comment, properties={"location": location}
+            self.db_name,
+            comment=comment,
+            properties={"location": location},
+            with_terminator=with_terminator,
         )
 
-    def _create_load_db(self, location=None):
+    def _create_load_db(self, location=None, with_terminator=False) -> list:
         comment = BACKEND_DB_COMMENT_TEMPLATE.format(
             db_name_type="Offload load", db_name_label=self.db_name_label()
         )
         return self._create_db(
-            self._load_db_name, comment=comment, properties={"location": location}
+            self._load_db_name,
+            comment=comment,
+            properties={"location": location},
+            with_terminator=with_terminator,
         )
 
     def _create_result_cache_db(self, location=None):
@@ -989,6 +991,7 @@ class BackendTableInterface(metaclass=ABCMeta):
             self._dfs_client = get_dfs_from_options(
                 self._orchestration_config,
                 messages=self._messages,
+                dry_run=self._dry_run,
                 do_not_connect=self._do_not_connect,
             )
             self._backend_dfs = self._dfs_client.backend_dfs
@@ -1067,7 +1070,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     def _recreate_load_table(self, staging_file):
         """Drop and create the staging/load table and any supporting filesystem directory"""
         self._drop_load_table()
-        self._create_load_table(staging_file)
+        return self._create_load_table(staging_file)
 
     def _result_cache_db_exists(self):
         return self._db_api.database_exists(self._result_cache_db_name)
@@ -1502,7 +1505,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     # enforced private methods
 
     @abstractmethod
-    def _create_load_table(self, staging_file):
+    def _create_load_table(self, staging_file, with_terminator=False) -> list:
         pass
 
     @abstractmethod
@@ -1787,6 +1790,13 @@ class BackendTableInterface(metaclass=ABCMeta):
             ansi_joined_tables,
             sync=True,
         )
+
+    def create_load_db(self, with_terminator=False) -> list:
+        """Generic code to create a load database, individual backends may have overrides."""
+        if self._db_api.load_db_transport_supported():
+            return self._create_load_db(with_terminator=with_terminator)
+        else:
+            return []
 
     def db_exists(self):
         return self._db_api.database_exists(self.db_name)
@@ -2092,6 +2102,11 @@ class BackendTableInterface(metaclass=ABCMeta):
             column_name = column.upper()
         return self._final_table_casts[column_name]["verify_cast"]
 
+    def has_rows(self):
+        if self._has_rows is None:
+            self._has_rows = self._db_api.table_has_rows(self.db_name, self.table_name)
+        return self._has_rows
+
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)
 
@@ -2158,7 +2173,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         self,
         offload_operation=None,
         rdbms_columns=None,
-        data_gov_client=None,
         staging_columns=None,
     ):
         """This backend table object is created before we have validated/tuned user inputs in offload_operation
@@ -2177,8 +2191,6 @@ class BackendTableInterface(metaclass=ABCMeta):
             )
         if rdbms_columns:
             self.set_final_table_casts(rdbms_columns, staging_columns)
-        if data_gov_client:
-            self.set_data_gov_client(data_gov_client)
 
     def set_column_stats(self, new_column_stats, ndv_cap, num_null_factor):
         self._db_api.set_column_stats(
@@ -2198,9 +2210,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         assert valid_column_list(new_columns)
         self._columns = new_columns
         self._partition_columns = get_partition_columns(new_columns)
-
-    def set_data_gov_client(self, data_gov_client):
-        self._data_gov_client = data_gov_client
 
     def set_final_table_casts(self, rdbms_columns, staging_columns):
         """Set cast expressions in state that are required to convert staged RDBMS data into correct backend data.
@@ -2344,7 +2353,7 @@ class BackendTableInterface(metaclass=ABCMeta):
     # Final table enforced methods/properties
 
     @abstractmethod
-    def create_db(self):
+    def create_db(self, with_terminator=False) -> list:
         pass
 
     @abstractmethod
@@ -2405,45 +2414,19 @@ class BackendTableInterface(metaclass=ABCMeta):
                 optional=True,
             )
 
-    def create_backend_db_step(self):
+    def create_backend_db_step(self) -> list:
+        executed_commands = []
         if self.create_database_supported() and self._user_requested_create_backend_db:
-            (
-                pre_register_data_gov_fn,
-                post_register_data_gov_fn,
-            ) = get_data_governance_register(
-                self._data_gov_client,
-                lambda: data_governance_register_new_db_step(
-                    self.db_name,
-                    self._data_gov_client,
-                    self._messages,
-                    DATA_GOVERNANCE_GOE_OBJECT_TYPE_OFFLOAD_DB,
-                    self._orchestration_config,
-                ),
+            executed_commands: list = self._offload_step(
+                command_steps.STEP_CREATE_DB, lambda: self.create_db()
             )
-            pre_register_data_gov_fn()
-            self._offload_step(command_steps.STEP_CREATE_DB, lambda: self.create_db())
-            post_register_data_gov_fn()
+        return executed_commands
 
-    def create_backend_table_step(self, goe_object_type):
-        (
-            pre_register_data_gov_fn,
-            post_register_data_gov_fn,
-        ) = get_data_governance_register(
-            self._data_gov_client,
-            lambda: data_governance_register_new_table_step(
-                self.db_name,
-                self.table_name,
-                self._data_gov_client,
-                self._messages,
-                goe_object_type,
-                self._orchestration_config,
-            ),
-        )
-        pre_register_data_gov_fn()
-        self._offload_step(
+    def create_backend_table_step(self) -> list:
+        executed_commands: list = self._offload_step(
             command_steps.STEP_CREATE_TABLE, lambda: self.create_backend_table()
         )
-        post_register_data_gov_fn()
+        return executed_commands
 
     def empty_staging_area_step(self, staging_file):
         self._offload_step(
@@ -2494,7 +2477,7 @@ class BackendTableInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def create_backend_table(self):
+    def create_backend_table(self) -> list:
         pass
 
     @abstractmethod

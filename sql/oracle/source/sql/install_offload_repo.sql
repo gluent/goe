@@ -21,5 +21,6 @@ prompt Installing GOE repository...
 alter session set current_schema = &goe_db_repo_user;
 -- Start offload repo version files...
 @@create_offload_repo_100.sql
+@@create_offload_repo_104.sql
 -- End offload repo version files.
 @@install_offload_repo_code.sql

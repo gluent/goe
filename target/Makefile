@@ -14,7 +14,7 @@
 
 .PHONY: clean package
 
-OFFLOAD_VERSION=$(shell cat ../version)
+OFFLOAD_VERSION=$(shell sed -rn 's/version = "([a-zA-Z0-9.-]+)"/\1/p' ../pyproject.toml)
 GOE_PACKAGE=goe_$(OFFLOAD_VERSION).tar.gz
 SPARK_PACKAGE=goe_transport_$(OFFLOAD_VERSION).tar.gz
 

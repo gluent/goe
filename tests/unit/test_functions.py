@@ -13,12 +13,14 @@
 # limitations under the License.
 
 import os
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import numpy
 
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.column_metadata import ColumnPartitionInfo
+from goe.offload.factory.backend_table_factory import backend_table_factory
 from goe.offload.offload_source_table import RdbmsPartition
 from goe.offload.oracle.oracle_column import (
     OracleColumn,
@@ -26,6 +28,9 @@ from goe.offload.oracle.oracle_column import (
     ORACLE_TYPE_NUMBER,
 )
 from goe.offload.oracle.oracle_offload_source_table import OracleSourceTable
+
+if TYPE_CHECKING:
+    from goe.offload.backend_table import BackendTableInterface
 
 
 FAKE_COMMON_ENV = {
@@ -49,14 +54,6 @@ FAKE_MSSQL_ENV = {
     "FRONTEND_ODBC_DRIVER_NAME": "o",
 }
 FAKE_MSSQL_ENV.update(FAKE_COMMON_ENV)
-
-FAKE_NETEZZA_ENV = {
-    "FRONTEND_DISTRIBUTION": "NETEZZA",
-    "NETEZZA_CONN": "c",
-    "NETEZZA_APP_USER": "a",
-    "NETEZZA_APP_PASS": "b",
-}
-FAKE_NETEZZA_ENV.update(FAKE_COMMON_ENV)
 
 FAKE_ORACLE_ENV = {
     "FRONTEND_DISTRIBUTION": "ORACLE",
@@ -295,10 +292,6 @@ def optional_hadoop_dependency_exception(e: Exception) -> bool:
     return any(_ in str(e) for _ in ["hdfs", "impala", "requests_kerberos"])
 
 
-def optional_netezza_dependency_exception(e: Exception) -> bool:
-    return "pyodbc" in str(e)
-
-
 def optional_sql_server_dependency_exception(e: Exception) -> bool:
     return "pymssql" in str(e)
 
@@ -319,7 +312,7 @@ def build_mock_options(mock_env: dict):
     assert mock_env
     k = mock.patch.dict(os.environ, mock_env)
     k.start()
-    c = OrchestrationConfig.from_dict({"verbose": False, "execute": False})
+    c = OrchestrationConfig.from_dict({"verbose": False})
     k.stop()
     return c
 
@@ -336,6 +329,20 @@ def build_mock_offload_operation():
     fake_operation.max_offload_chunk_size = 100 * 1024 * 1024
     fake_operation.max_offload_chunk_count = 100
     return fake_operation
+
+
+def build_fake_backend_table(config, messages) -> "BackendTableInterface":
+    """Return a fake BackendTable."""
+    test_table_object = backend_table_factory(
+        "no_user",
+        "no_table",
+        config.target,
+        config,
+        messages,
+        dry_run=True,
+        do_not_connect=True,
+    )
+    return test_table_object
 
 
 def build_fake_oracle_table(config, messages) -> OracleSourceTable:

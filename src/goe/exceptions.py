@@ -1,4 +1,4 @@
-# Copyright 2016 The GOE Authors. All rights reserved.
+# Copyright 2024 The GOE Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ===========================================================================================
-# Netezza settings
-# ===========================================================================================
 
-# Frontend distribution:
-FRONTEND_DISTRIBUTION=NETEZZA
+class OffloadException(Exception):
+    pass
 
-NETEZZA_CONN=<hostname>:1521/<service>
-NETEZZA_APP_USER=goe_app
-NETEZZA_APP_PASS=goe_app
+
+class OffloadOptionError(Exception):
+    def __init__(self, detail):
+        self.detail = detail
+
+    def __str__(self):
+        return repr(self.detail)

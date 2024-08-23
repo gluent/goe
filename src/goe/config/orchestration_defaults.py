@@ -34,7 +34,6 @@ from goe.offload.offload_constants import (
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
     DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     FILE_STORAGE_FORMAT_AVRO,
@@ -192,7 +191,6 @@ def frontend_db_type_default():
     ).lower()
     if frontend_distro in [
         DBTYPE_MSSQL,
-        DBTYPE_NETEZZA,
         DBTYPE_ORACLE,
         DBTYPE_TERADATA,
     ]:
@@ -651,23 +649,6 @@ def mssql_dsn_default():
 
 
 ###########################################################################
-# FRONTEND Netezza DEFAULTS
-###########################################################################
-
-
-def netezza_app_user_default():
-    return os.environ.get("NETEZZA_APP_USER")
-
-
-def netezza_app_pass_default():
-    return os.environ.get("NETEZZA_APP_PASS")
-
-
-def netezza_dsn_default():
-    return os.environ.get("NETEZZA_CONN")
-
-
-###########################################################################
 # FRONTEND TERADATA DEFAULTS
 ###########################################################################
 
@@ -918,45 +899,6 @@ def sqoop_password_file_default() -> Optional[str]:
 
 def sqoop_queue_name_default() -> Optional[str]:
     return os.environ.get("SQOOP_QUEUE_NAME")
-
-
-# DATA GOVERNANCE DEFAULTS
-
-
-def data_governance_api_url_default():
-    return os.environ.get("DATA_GOVERNANCE_API_URL")
-
-
-def data_governance_api_user_default():
-    return os.environ.get("DATA_GOVERNANCE_API_USER")
-
-
-def data_governance_api_pass_default():
-    return os.environ.get("DATA_GOVERNANCE_API_PASS")
-
-
-def data_governance_api_backend_default():
-    return os.environ.get("DATA_GOVERNANCE_BACKEND")
-
-
-def cloudera_navigator_hive_source_id_default():
-    return os.environ.get("CLOUDERA_NAVIGATOR_HIVE_SOURCE_ID")
-
-
-def data_governance_auto_tags_default():
-    return os.environ.get("DATA_GOVERNANCE_AUTO_TAGS")
-
-
-def data_governance_custom_tags_default():
-    return os.environ.get("DATA_GOVERNANCE_CUSTOM_TAGS")
-
-
-def data_governance_auto_properties_default():
-    return os.environ.get("DATA_GOVERNANCE_AUTO_PROPERTIES")
-
-
-def data_governance_custom_properties_default():
-    return os.environ.get("DATA_GOVERNANCE_CUSTOM_PROPERTIES")
 
 
 ###########################################################################

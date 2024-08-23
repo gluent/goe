@@ -76,7 +76,6 @@ class BackendSnowflakeTable(BackendTableInterface):
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
-        data_gov_client=None,
         dry_run=False,
         existing_backend_api=None,
         do_not_connect=False,
@@ -90,7 +89,6 @@ class BackendSnowflakeTable(BackendTableInterface):
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -125,7 +123,7 @@ class BackendSnowflakeTable(BackendTableInterface):
         """
         return {"BINARY_INPUT_FORMAT": "BASE64"}
 
-    def _create_load_table(self, staging_file):
+    def _create_load_table(self, staging_file, with_terminator=False) -> list:
         raise NotImplementedError(self._not_implemented_message("Load table"))
 
     def _drop_load_table(self, sync=None):
@@ -192,17 +190,22 @@ class BackendSnowflakeTable(BackendTableInterface):
             }
         )
 
-    def _gen_create_file_format_sql_text(self, file_format_name, staging_format):
+    def _gen_create_file_format_sql_text(
+        self, file_format_name, staging_format, with_terminator=False
+    ):
         null_if = (
             " NULL_IF = 'null'" if staging_format == FILE_STORAGE_FORMAT_AVRO else ""
         )
-        return "CREATE FILE FORMAT %s TYPE = %s%s" % (
+        sql = "CREATE FILE FORMAT %s TYPE = %s%s" % (
             self._db_api.enclose_object_reference(self.db_name, file_format_name),
             staging_format,
             null_if,
         )
+        if with_terminator:
+            sql += ";"
+        return sql
 
-    def _gen_create_stage_sql_text(self):
+    def _gen_create_stage_sql_text(self, with_terminator=False):
         stage_url = self._get_dfs_client().gen_uri(
             self._offload_fs_scheme_override(),
             self._orchestration_config.offload_fs_container,
@@ -210,7 +213,7 @@ class BackendSnowflakeTable(BackendTableInterface):
             backend_db=self.db_name,
             container_override=self._offload_fs_container_override(),
         )
-        return (
+        sql = (
             dedent(
                 """\
                       CREATE STAGE %s
@@ -225,6 +228,9 @@ class BackendSnowflakeTable(BackendTableInterface):
                 self._db_api.enclose_identifier(self._snowflake_integration),
             )
         )
+        if with_terminator:
+            sql += ";"
+        return sql
 
     def _gen_synthetic_partition_column_object(self, synthetic_name, partition_info):
         raise NotImplementedError(
@@ -492,7 +498,7 @@ class BackendSnowflakeTable(BackendTableInterface):
         """We cannot influence stats on Snowflake and this should never be called due to capability setting"""
         pass
 
-    def create_backend_table(self):
+    def create_backend_table(self, with_terminator=False) -> list:
         """Create a table in Snowflake based on object state.
         Creating a new table may change our world view so the function drops state if in execute mode.
         If dry_run then we leave state in place to allow other operations to preview.
@@ -504,12 +510,13 @@ class BackendSnowflakeTable(BackendTableInterface):
             self.get_columns(),
             no_partition_columns,
             sort_column_names=self._sort_columns,
+            with_terminator=with_terminator,
         )
         if not self._dry_run:
             self._drop_state()
         return cmds
 
-    def create_db(self):
+    def create_db(self, with_terminator=False) -> list:
         """On Snowflake we create a SCHEMA, STAGE and all FILE FORMATs"""
         cmds = self._create_final_db()
         # Create STAGE and FILE FORMAT
@@ -521,7 +528,9 @@ class BackendSnowflakeTable(BackendTableInterface):
                 detail=VERBOSE,
             )
         else:
-            sqls.append(self._gen_create_stage_sql_text())
+            sqls.append(
+                self._gen_create_stage_sql_text(with_terminator=with_terminator)
+            )
 
         for staging_format in self._db_api.valid_staging_formats():
             file_format = add_suffix_in_same_case(
@@ -536,7 +545,9 @@ class BackendSnowflakeTable(BackendTableInterface):
                 )
             else:
                 sqls.append(
-                    self._gen_create_file_format_sql_text(file_format, staging_format)
+                    self._gen_create_file_format_sql_text(
+                        file_format, staging_format, with_terminator=with_terminator
+                    )
                 )
 
         # TODO NJ@2020-11-12 Prepare result cache area for Hybrid Queries, temporary solution that will be removed

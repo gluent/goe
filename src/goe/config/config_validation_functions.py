@@ -22,13 +22,6 @@ import random
 import re
 
 from goe.config import orchestration_defaults
-from goe.data_governance.hadoop_data_governance_constants import (
-    SUPPORTED_DATA_GOVERNANCE_BACKENDS,
-)
-from goe.data_governance.hadoop_data_governance import (
-    is_valid_data_governance_tag,
-    is_valid_data_governance_auto_property,
-)
 from goe.filesystem.goe_dfs import (
     AZURE_OFFLOAD_FS_SCHEMES,
     OFFLOAD_FS_SCHEME_MAPRFS,
@@ -48,7 +41,6 @@ from goe.offload.offload_constants import (
     DBTYPE_HIVE,
     DBTYPE_IMPALA,
     DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
@@ -187,51 +179,6 @@ def normalise_backend_session_parameters(opts):
             "OFFLOAD_BACKEND_SESSION_PARAMETERS", opts.backend_session_parameters
         )
         opts.backend_session_parameters = json.loads(opts.backend_session_parameters)
-
-
-def normalise_data_governance_config(options):
-    if options.data_governance_api_url:
-        if not options.data_governance_backend:
-            raise OrchestrationConfigException(
-                "DATA_GOVERNANCE_BACKEND is required when connecting to a Data Governance API"
-            )
-        if options.data_governance_backend not in SUPPORTED_DATA_GOVERNANCE_BACKENDS:
-            raise OrchestrationConfigException(
-                "Invalid DATA_GOVERNANCE_BACKEND %s. Valid values are: %s"
-                % (options.data_governance_backend, SUPPORTED_DATA_GOVERNANCE_BACKENDS)
-            )
-        if (
-            options.data_governance_backend == "navigator"
-            and not options.cloudera_navigator_hive_source_id
-        ):
-            raise OrchestrationConfigException(
-                "--cloudera-navigator-hive-source-id is required for Cloudera Navigator integration"
-            )
-
-        tag_list = (
-            options.data_governance_auto_tags_csv.split(",")
-            if options.data_governance_auto_tags_csv
-            else []
-        )
-        invalid_auto_tags = [_ for _ in tag_list if not is_valid_data_governance_tag(_)]
-        if invalid_auto_tags:
-            # Using env var name for exception because the command line option is hidden
-            raise OrchestrationConfigException(
-                "Invalid values for DATA_GOVERNANCE_AUTO_TAGS: %s" % invalid_auto_tags
-            )
-
-        auto_properties = (
-            options.data_governance_auto_properties_csv.split(",")
-            if options.data_governance_auto_properties_csv
-            else []
-        )
-        invalid_auto_props = [
-            _ for _ in auto_properties if not is_valid_data_governance_auto_property(_)
-        ]
-        # TODO nj@2020-01-31 It feels like we should add the lines below but need to investigate/test before we do
-        # if invalid_auto_props:
-        # raise OrchestrationConfigException('Invalid values for DATA_GOVERNANCE_AUTO_PROPERTIES: %s'
-        #                                    % invalid_auto_props)
 
 
 def normalise_filesystem_options(options, exc_cls=OrchestrationConfigException):
@@ -437,8 +384,6 @@ def normalise_offload_transport_config(options, exc_cls=OrchestrationConfigExcep
             options.offload_transport_dsn = options.mssql_dsn
         elif options.db_type == DBTYPE_ORACLE:
             options.offload_transport_dsn = options.oracle_dsn
-        elif options.db_type == DBTYPE_NETEZZA:
-            options.offload_transport_dsn = options.netezza_dsn
         elif options.db_type == DBTYPE_TERADATA:
             options.offload_transport_dsn = options.teradata_server
 
@@ -463,8 +408,6 @@ def normalise_rdbms_options(options, exc_cls=OrchestrationConfigException):
         normalise_mssql_options(options, exc_cls=exc_cls)
     elif options.db_type == DBTYPE_ORACLE:
         normalise_rdbms_oracle_options(options, exc_cls=exc_cls)
-    elif options.db_type == DBTYPE_NETEZZA:
-        normalise_netezza_options(options, exc_cls=exc_cls)
     elif options.db_type == DBTYPE_TERADATA:
         normalise_teradata_options(options, exc_cls=exc_cls)
 
@@ -524,23 +467,6 @@ def normalise_mssql_options(options, exc_cls=OrchestrationConfigException):
     options.rdbms_app_user = options.mssql_app_user
     options.rdbms_app_pass = options.mssql_app_pass
     options.rdbms_dsn = options.mssql_dsn
-    options.ora_adm_user = None
-    options.ora_adm_pass = None
-    options.ora_repo_user = None
-    options.sqoop_password_file = None
-
-
-def normalise_netezza_options(options, exc_cls=OrchestrationConfigException):
-    if (
-        not options.netezza_app_user
-        or not options.netezza_app_pass
-        or not options.netezza_dsn
-    ):
-        raise exc_cls("IBM Netezza connection options required")
-
-    options.rdbms_app_user = options.netezza_app_user
-    options.rdbms_app_pass = options.netezza_app_pass
-    options.rdbms_dsn = options.netezza_dsn
     options.ora_adm_user = None
     options.ora_adm_pass = None
     options.ora_repo_user = None

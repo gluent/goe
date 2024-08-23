@@ -41,8 +41,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -151,185 +151,226 @@ def sort_story_assertion(
 
 def test_offload_sorting_dim(config, schema, data_db):
     id = "test_offload_sorting_dim"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-    backend_name = convert_backend_identifier_case(config, OFFLOAD_DIM)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
+        backend_name = convert_backend_identifier_case(config, OFFLOAD_DIM)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, OFFLOAD_DIM),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, OFFLOAD_DIM
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, OFFLOAD_DIM
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, OFFLOAD_DIM
+                ),
+            ],
+        )
 
-    # Default Offload Of Dimension.
-    # No column defaults for a non-partitioned table.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "sort_columns_csv": offload_constants.SORT_COLUMNS_NO_CHANGE,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert sort_story_assertion(
-        schema,
-        OFFLOAD_DIM,
-        backend_name,
-        data_db,
-        backend_api,
-        messages,
-        repo_client,
-        offload_sort_columns="NULL",
-    )
-
-    if not dim_sorted_table_supported(backend_api):
-        # Connections are being left open, explicitly close them.
-        frontend_api.close()
-        return
-
-    # Offload table with 2 sort columns.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "sort_columns_csv": "txn_day,Txn_Rate",
-        "reset_backend_table": True,
-    }
-    run_offload(options, config, messages)
-    assert sort_story_assertion(
-        schema,
-        OFFLOAD_DIM,
-        backend_name,
-        data_db,
-        backend_api,
-        messages,
-        repo_client,
-        offload_sort_columns="TXN_DAY,TXN_RATE",
-    )
-
-    if backend_api.max_sort_columns() < 5:
-        # Offload table with too many sort columns.
-        # BigQuery has a limit on cluster columns, this test confirms we throw an exception.
+        # Default Offload Of Dimension.
+        # No column defaults for a non-partitioned table.
         options = {
             "owner_table": schema + "." + OFFLOAD_DIM,
-            "sort_columns_csv": "txn_day,Txn_Rate,prod_id,txn_desc,TXN_CODE",
+            "sort_columns_csv": offload_constants.SORT_COLUMNS_NO_CHANGE,
             "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sort_story_assertion(
+            schema,
+            OFFLOAD_DIM,
+            backend_name,
+            data_db,
+            backend_api,
+            messages,
+            repo_client,
+            offload_sort_columns="NULL",
+        )
+
+        if not dim_sorted_table_supported(backend_api):
+            # Connections are being left open, explicitly close them.
+            frontend_api.close()
+            return
+
+        # Offload table with 2 sort columns.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "sort_columns_csv": "txn_day,Txn_Rate",
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sort_story_assertion(
+            schema,
+            OFFLOAD_DIM,
+            backend_name,
+            data_db,
+            backend_api,
+            messages,
+            repo_client,
+            offload_sort_columns="TXN_DAY,TXN_RATE",
+        )
+
+        if backend_api.max_sort_columns() < 5:
+            # Offload table with too many sort columns.
+            # BigQuery has a limit on cluster columns, this test confirms we throw an exception.
+            options = {
+                "owner_table": schema + "." + OFFLOAD_DIM,
+                "sort_columns_csv": "txn_day,Txn_Rate,prod_id,txn_desc,TXN_CODE",
+                "reset_backend_table": True,
+                "execute": True,
+            }
+            run_offload(
+                options,
+                config,
+                messages,
+                expected_exception_string=SORT_COLUMN_MAX_EXCEEDED_EXCEPTION_TEXT,
+            )
+
+        # Offload with bad sort column - expect exception.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "sort_columns_csv": "not_a_column,txn_day",
+            "reset_backend_table": True,
+            "execute": True,
         }
         run_offload(
             options,
             config,
             messages,
-            expected_exception_string=SORT_COLUMN_MAX_EXCEEDED_EXCEPTION_TEXT,
+            expected_exception_string=UNKNOWN_SORT_COLUMN_EXCEPTION_TEXT,
         )
 
-    # Offload with bad sort column - expect exception.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "sort_columns_csv": "not_a_column,txn_day",
-        "reset_backend_table": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        expected_exception_string=UNKNOWN_SORT_COLUMN_EXCEPTION_TEXT,
-    )
-
-    # Match sort columns with a wildcard.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_DIM,
-        "sort_columns_csv": "*rate",
-        "reset_backend_table": True,
-    }
-    run_offload(options, config, messages)
-    assert sort_story_assertion(
-        schema,
-        OFFLOAD_DIM,
-        backend_name,
-        data_db,
-        backend_api,
-        messages,
-        repo_client,
-        offload_sort_columns="TXN_RATE",
-    )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Match sort columns with a wildcard.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "sort_columns_csv": "*rate",
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sort_story_assertion(
+            schema,
+            OFFLOAD_DIM,
+            backend_name,
+            data_db,
+            backend_api,
+            messages,
+            repo_client,
+            offload_sort_columns="TXN_RATE",
+        )
 
 
 def test_offload_sorting_fact(config, schema, data_db):
     id = "test_offload_sorting_fact"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    if not fact_sorted_table_supported(backend_api):
-        messages.log(f"Skipping {id} due to fact_sorted_table_supported() == False")
-        return
+        if not fact_sorted_table_supported(backend_api):
+            messages.log(f"Skipping {id} due to fact_sorted_table_supported() == False")
+            return
 
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
-    backend_name = convert_backend_identifier_case(config, OFFLOAD_FACT)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
+        backend_name = convert_backend_identifier_case(config, OFFLOAD_FACT)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, OFFLOAD_FACT, simple_partition_names=True
-        ),
-        python_fns=lambda: drop_backend_test_table(
-            config, backend_api, messages, data_db, OFFLOAD_FACT
-        ),
-    )
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+                schema, OFFLOAD_FACT, simple_partition_names=True
+            ),
+            python_fns=lambda: drop_backend_test_table(
+                config, backend_api, messages, data_db, OFFLOAD_FACT
+            ),
+        )
 
-    # Initial offload with custom sorting.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
-        "sort_columns_csv": "channel_id,promo_id",
-        "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
-        "offload_partition_columns": offload_sorting_fact_offload1_partition_columns(
-            backend_api
-        ),
-        "offload_partition_granularity": offload_sorting_fact_offload1_granularity(
-            backend_api
-        ),
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert sort_story_assertion(
-        schema,
-        OFFLOAD_FACT,
-        backend_name,
-        data_db,
-        backend_api,
-        messages,
-        repo_client,
-        offload_sort_columns="CHANNEL_ID,PROMO_ID",
-    )
+        # Initial offload with custom sorting.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_FACT,
+            "sort_columns_csv": "channel_id,promo_id",
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
+            "offload_partition_columns": offload_sorting_fact_offload1_partition_columns(
+                backend_api
+            ),
+            "offload_partition_granularity": offload_sorting_fact_offload1_granularity(
+                backend_api
+            ),
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sort_story_assertion(
+            schema,
+            OFFLOAD_FACT,
+            backend_name,
+            data_db,
+            backend_api,
+            messages,
+            repo_client,
+            offload_sort_columns="CHANNEL_ID,PROMO_ID",
+        )
 
-    # Incremental offload table with modified sorting.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
-        "sort_columns_csv": "channel_id,promo_id,prod_id",
-        "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
-    }
-    if backend_api.sorted_table_modify_supported():
-        # Fail to modify existing sorting.
-        # This only runs if changing the sort columns is not supported and should throw an exception.
+        # Incremental offload table with modified sorting.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_FACT,
+            "sort_columns_csv": "channel_id,promo_id,prod_id",
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+            "execute": True,
+        }
+        if backend_api.sorted_table_modify_supported():
+            # Fail to modify existing sorting.
+            # This only runs if changing the sort columns is not supported and should throw an exception.
+            run_offload(options, config, messages)
+            assert sort_story_assertion(
+                schema,
+                OFFLOAD_FACT,
+                backend_name,
+                data_db,
+                backend_api,
+                messages,
+                repo_client,
+                offload_sort_columns="CHANNEL_ID,PROMO_ID,PROD_ID",
+            )
+        else:
+            # Fail to modify existing sorting.
+            # This only runs if changing the sort columns is not supported and should throw an exception.
+            run_offload(
+                options,
+                config,
+                messages,
+                expected_exception_string=SORT_COLUMN_NO_MODIFY_EXCEPTION_TEXT,
+            )
+
+        if not backend_api.sorted_table_modify_supported():
+            # No need to run the remainer of these tests.
+            frontend_api.close()
+            return
+
+        # Incremental offload with default sorting.
+        # Sort columns remain the same as defined in previous offload.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_FACT,
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_3,
+            "execute": True,
+        }
         run_offload(options, config, messages)
         assert sort_story_assertion(
             schema,
@@ -341,76 +382,43 @@ def test_offload_sorting_fact(config, schema, data_db):
             repo_client,
             offload_sort_columns="CHANNEL_ID,PROMO_ID,PROD_ID",
         )
-    else:
-        # Fail to modify existing sorting.
-        # This only runs if changing the sort columns is not supported and should throw an exception.
-        run_offload(
-            options,
-            config,
+
+        # Incremental offload with empty sorting parameter.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_FACT,
+            "sort_columns_csv": "",
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sort_story_assertion(
+            schema,
+            OFFLOAD_FACT,
+            backend_name,
+            data_db,
+            backend_api,
             messages,
-            expected_exception_string=SORT_COLUMN_NO_MODIFY_EXCEPTION_TEXT,
+            repo_client,
+            offload_sort_columns="NULL",
         )
 
-    if not backend_api.sorted_table_modify_supported():
-        # No need to run the remainer of these tests.
-        frontend_api.close()
-        return
-
-    # Incremental offload with default sorting.
-    # Sort columns remain the same as defined in previous offload.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
-        "older_than_date": test_constants.SALES_BASED_FACT_HV_3,
-    }
-    run_offload(options, config, messages)
-    assert sort_story_assertion(
-        schema,
-        OFFLOAD_FACT,
-        backend_name,
-        data_db,
-        backend_api,
-        messages,
-        repo_client,
-        offload_sort_columns="CHANNEL_ID,PROMO_ID,PROD_ID",
-    )
-
-    # Incremental offload with empty sorting parameter.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
-        "sort_columns_csv": "",
-        "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
-    }
-    run_offload(options, config, messages)
-    assert sort_story_assertion(
-        schema,
-        OFFLOAD_FACT,
-        backend_name,
-        data_db,
-        backend_api,
-        messages,
-        repo_client,
-        offload_sort_columns="NULL",
-    )
-
-    # Test below disabled until we tackle issue-81
-    # No-op offload (same HV as previous) but still expect to change sort columns.
-    options = {
-        "owner_table": schema + "." + OFFLOAD_FACT,
-        "sort_columns_csv": "channel_id,promo_id",
-        "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
-        "force": True,
-    }
-    # run_offload(options, config, messages)
-    # assert sort_story_assertion(
-    #    schema,
-    #    OFFLOAD_FACT,
-    #    backend_name,
-    #    data_db,
-    #    backend_api,
-    #    messages,
-    #    repo_client,
-    #    offload_sort_columns="CHANNEL_ID,PROMO_ID",
-    # )
-
-    # Connections are being left open, explicitly close them.
-    frontend_api.close()
+        # Test below disabled until we tackle issue-81
+        # No-op offload (same HV as previous) but still expect to change sort columns.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_FACT,
+            "sort_columns_csv": "channel_id,promo_id",
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
+            "force": True,
+            "execute": True,
+        }
+        # run_offload(options, config, messages)
+        # assert sort_story_assertion(
+        #    schema,
+        #    OFFLOAD_FACT,
+        #    backend_name,
+        #    data_db,
+        #    backend_api,
+        #    messages,
+        #    repo_client,
+        #    offload_sort_columns="CHANNEL_ID,PROMO_ID",
+        # )

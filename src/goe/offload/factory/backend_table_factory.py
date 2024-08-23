@@ -32,7 +32,6 @@ def backend_table_factory(
     messages,
     orchestration_operation=None,
     hybrid_metadata=None,
-    data_gov_client=None,
     dry_run=None,
     frontend_owner_override=None,
     frontend_name_override=None,
@@ -44,8 +43,12 @@ def backend_table_factory(
     an orchestration_operation or a means of getting hybrid_metadata.
     """
     if dry_run is None:
-        if hasattr(orchestration_options, "execute"):
+        if orchestration_operation:
+            dry_run = bool(not orchestration_operation.execute)
+        elif hasattr(orchestration_options, "execute"):
             dry_run = bool(not orchestration_options.execute)
+        elif do_not_connect:
+            dry_run = True
         else:
             dry_run = False
 
@@ -71,7 +74,6 @@ def backend_table_factory(
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -87,7 +89,6 @@ def backend_table_factory(
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -103,7 +104,6 @@ def backend_table_factory(
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -119,7 +119,6 @@ def backend_table_factory(
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -135,7 +134,6 @@ def backend_table_factory(
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,

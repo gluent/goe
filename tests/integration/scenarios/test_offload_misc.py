@@ -46,8 +46,8 @@ from tests.integration.test_functions import (
 from tests.testlib.test_framework import test_constants
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -78,171 +78,175 @@ def log_test_marker(messages, test_id):
 
 def test_offload_misc_verification_parallel(config, schema, data_db):
     id = "test_offload_misc_verification_parallel"
-    messages = get_test_messages(config, id)
 
     if config.db_type != offload_constants.DBTYPE_ORACLE:
-        messages.log(f"Skipping {id} for system: {config.db_type}")
-        return
+        pytest.skip(f"Skipping {id} for system: {config.db_type}")
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
-            schema, PARALLEL_V_DIM
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, PARALLEL_V_DIM
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, PARALLEL_V_DIM
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, PARALLEL_V_DIM
+                ),
+            ],
+        )
 
-    # Offload with count verification parallelism=3.
-    # Disables data sampling to minimize risk of other hints being matched.
-    options = {
-        "owner_table": schema + "." + PARALLEL_V_DIM,
-        "verify_parallelism": 3,
-        "data_sample_pct": 0,
-        "reset_backend_table": True,
-    }
-    log_test_marker(messages, f"{id}1")
-    run_offload(options, config, messages, config_overrides={"execute": False})
-    assert hint_text_in_log(messages, config, 3, f"{id}1")
+        # Offload with count verification parallelism=3.
+        # Disables data sampling to minimize risk of other hints being matched.
+        options = {
+            "owner_table": schema + "." + PARALLEL_V_DIM,
+            "verify_parallelism": 3,
+            "data_sample_pct": 0,
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        log_test_marker(messages, f"{id}1")
+        run_offload(options, config, messages)
+        assert hint_text_in_log(messages, config, 3, f"{id}1")
 
-    # Offload with verification parallelism=1.
-    options = {
-        "owner_table": schema + "." + PARALLEL_V_DIM,
-        "verify_parallelism": 1,
-        "data_sample_pct": 0,
-        "reset_backend_table": True,
-    }
-    log_test_marker(messages, f"{id}2")
-    run_offload(options, config, messages, config_overrides={"execute": False})
-    assert hint_text_in_log(messages, config, 1, f"{id}2")
+        # Offload with verification parallelism=1.
+        options = {
+            "owner_table": schema + "." + PARALLEL_V_DIM,
+            "verify_parallelism": 1,
+            "data_sample_pct": 0,
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        log_test_marker(messages, f"{id}2")
+        run_offload(options, config, messages)
+        assert hint_text_in_log(messages, config, 1, f"{id}2")
 
-    # Offload with verification parallelism=0.
-    options = {
-        "owner_table": schema + "." + PARALLEL_V_DIM,
-        "verify_parallelism": 0,
-        "data_sample_pct": 0,
-        "reset_backend_table": True,
-    }
-    log_test_marker(messages, f"{id}3")
-    run_offload(options, config, messages, config_overrides={"execute": False})
-    assert hint_text_in_log(messages, config, 0, f"{id}3")
+        # Offload with verification parallelism=0.
+        options = {
+            "owner_table": schema + "." + PARALLEL_V_DIM,
+            "verify_parallelism": 0,
+            "data_sample_pct": 0,
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        log_test_marker(messages, f"{id}3")
+        run_offload(options, config, messages)
+        assert hint_text_in_log(messages, config, 0, f"{id}3")
 
-    # Offload with aggregation verification parallelism=4.
-    options = {
-        "owner_table": schema + "." + PARALLEL_V_DIM,
-        "verify_parallelism": 4,
-        "verify_row_count": "aggregate",
-        "data_sample_pct": 0,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    log_test_marker(messages, f"{id}4")
-    run_offload(options, config, messages)
-    assert hint_text_in_log(messages, config, 4, f"{id}4")
+        # Offload with aggregation verification parallelism=4.
+        options = {
+            "owner_table": schema + "." + PARALLEL_V_DIM,
+            "verify_parallelism": 4,
+            "verify_row_count": "aggregate",
+            "data_sample_pct": 0,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        log_test_marker(messages, f"{id}4")
+        run_offload(options, config, messages)
+        assert hint_text_in_log(messages, config, 4, f"{id}4")
 
 
 def test_offload_misc_maxvalue_partition(config, schema, data_db):
     id = "test_offload_misc_maxvalue_partition"
-    messages = get_test_messages(config, id)
 
     if config.db_type != offload_constants.DBTYPE_ORACLE:
-        messages.log(f"Skipping {id} for system: {config.db_type}")
-        return
+        pytest.skip(f"Skipping {id} for system: {config.db_type}")
 
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    repo_client = orchestration_repo_client_factory(
-        config, messages, trace_action=f"repo_client({id})"
-    )
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.sales_based_fact_create_ddl(
-            schema, MAXVAL_FACT, maxval_partition=True
-        ),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, MAXVAL_FACT
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.sales_based_fact_create_ddl(
+                schema, MAXVAL_FACT, maxval_partition=True
             ),
-        ],
-    )
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, MAXVAL_FACT
+                ),
+            ],
+        )
 
-    # 90/10 Offload of Fact Ready to Convert.
-    # Offloads first partitions from a fact table ready for subsequent tests.
-    options = {
-        "owner_table": schema + "." + MAXVAL_FACT,
-        "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
-        "reset_backend_table": True,
-        "create_backend_db": True,
-    }
-    run_offload(options, config, messages)
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        MAXVAL_FACT,
-        test_constants.SALES_BASED_FACT_HV_2,
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
-    )
+        # 90/10 Offload of Fact Ready to Convert.
+        # Offloads first partitions from a fact table ready for subsequent tests.
+        options = {
+            "owner_table": schema + "." + MAXVAL_FACT,
+            "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sales_based_fact_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            MAXVAL_FACT,
+            test_constants.SALES_BASED_FACT_HV_2,
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+        )
 
-    # 90/10 Offload of Fact with MAXVALUE Partition.
-    # Offloads all partitions from a MAXVALUE fact table but in 90/10, the MAXVALUE partition should be skipped.
-    options = {
-        "owner_table": schema + "." + MAXVAL_FACT,
-    }
-    offload_messages = run_offload(options, config, messages)
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        MAXVAL_FACT,
-        test_constants.SALES_BASED_FACT_HV_6,
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
-    )
-    assert text_in_messages(offload_messages, NO_MAXVALUE_PARTITION_NOTICE_TEXT)
+        # 90/10 Offload of Fact with MAXVALUE Partition.
+        # Offloads all partitions from a MAXVALUE fact table but in 90/10, the MAXVALUE partition should be skipped.
+        options = {
+            "owner_table": schema + "." + MAXVAL_FACT,
+            "execute": True,
+        }
+        offload_messages = run_offload(options, config, messages)
+        assert sales_based_fact_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            MAXVAL_FACT,
+            test_constants.SALES_BASED_FACT_HV_6,
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+        )
+        assert text_in_messages(offload_messages, NO_MAXVALUE_PARTITION_NOTICE_TEXT)
 
-    # Offload 90/10 fact to 100/0.
-    # Offloads all partitions from a fact table including MAXVALUE partition.
-    options = {
-        "owner_table": schema + "." + MAXVAL_FACT,
-        "offload_type": OFFLOAD_TYPE_FULL,
-    }
-    offload_messages = run_offload(options, config, messages)
-    assert sales_based_fact_assertion(
-        config,
-        backend_api,
-        frontend_api,
-        messages,
-        repo_client,
-        schema,
-        data_db,
-        MAXVAL_FACT,
-        None,
-        offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
-        check_backend_rowcount=True,
-    )
+        # Offload 90/10 fact to 100/0.
+        # Offloads all partitions from a fact table including MAXVALUE partition.
+        options = {
+            "owner_table": schema + "." + MAXVAL_FACT,
+            "offload_type": OFFLOAD_TYPE_FULL,
+            "execute": True,
+        }
+        offload_messages = run_offload(options, config, messages)
+        assert sales_based_fact_assertion(
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            MAXVAL_FACT,
+            None,
+            offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
+            check_backend_rowcount=True,
+        )

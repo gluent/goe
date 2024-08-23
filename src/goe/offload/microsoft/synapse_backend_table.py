@@ -23,13 +23,6 @@
 import logging
 import os
 
-from goe.data_governance.hadoop_data_governance import (
-    data_governance_register_new_table_step,
-    get_data_governance_register,
-)
-from goe.data_governance.hadoop_data_governance_constants import (
-    DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE,
-)
 from goe.offload.microsoft.synapse_column import (
     SynapseColumn,
     SYNAPSE_TYPE_BIGINT,
@@ -87,7 +80,6 @@ class BackendSynapseTable(BackendTableInterface):
         messages,
         orchestration_operation=None,
         hybrid_metadata=None,
-        data_gov_client=None,
         dry_run=False,
         existing_backend_api=None,
         do_not_connect=False,
@@ -101,7 +93,6 @@ class BackendSynapseTable(BackendTableInterface):
             messages,
             orchestration_operation=orchestration_operation,
             hybrid_metadata=hybrid_metadata,
-            data_gov_client=data_gov_client,
             dry_run=dry_run,
             existing_backend_api=existing_backend_api,
             do_not_connect=do_not_connect,
@@ -141,7 +132,7 @@ class BackendSynapseTable(BackendTableInterface):
             self._load_db_name, self._load_table_name, for_columns=True
         )
 
-    def _create_load_table(self, staging_file):
+    def _create_load_table(self, staging_file, with_terminator=False) -> list:
         no_partition_cols = []
         self._db_api.create_table(
             self._load_db_name,
@@ -162,6 +153,7 @@ class BackendSynapseTable(BackendTableInterface):
                 ),
             },
             sync=True,
+            with_terminator=with_terminator,
         )
 
     def _drop_load_table(self, sync=None):
@@ -433,7 +425,7 @@ class BackendSynapseTable(BackendTableInterface):
     def compute_final_table_stats(self, incremental_stats, materialized_join=False):
         return self._db_api.compute_stats(self.db_name, self.table_name)
 
-    def create_backend_table(self):
+    def create_backend_table(self, with_terminator=False) -> list:
         """Create a table in Synapse based on object state.
         For efficiency, we compute backend stats immediately after table creation to initialise empty stats
         objects on each column. These will be updated using a single table level command after the final load.
@@ -454,6 +446,7 @@ class BackendSynapseTable(BackendTableInterface):
             no_partition_columns,
             table_properties=table_properties,
             sort_column_names=self._sort_columns,
+            with_terminator=with_terminator,
         )
         if (
             self._offload_stats_method
@@ -469,8 +462,8 @@ class BackendSynapseTable(BackendTableInterface):
             self._drop_state()
         return cmds
 
-    def create_db(self):
-        cmds = self._create_final_db()
+    def create_db(self, with_terminator=False):
+        cmds = self._create_final_db(with_terminator=with_terminator)
         return cmds
 
     def derive_unicode_string_columns(self, as_csv=False):
@@ -556,27 +549,11 @@ class BackendSynapseTable(BackendTableInterface):
 
     def post_transport_tasks(self, staging_file):
         """On Synapse we create the load table AFTER creating the Parquet datafiles."""
-        (
-            pre_register_data_gov_fn,
-            post_register_data_gov_fn,
-        ) = get_data_governance_register(
-            self._data_gov_client,
-            lambda: data_governance_register_new_table_step(
-                self._load_db_name,
-                self.table_name,
-                self._data_gov_client,
-                self._messages,
-                DATA_GOVERNANCE_GOE_OBJECT_TYPE_LOAD_TABLE,
-                self._orchestration_config,
-            ),
-        )
-        pre_register_data_gov_fn()
         if self.create_database_supported() and self._user_requested_create_backend_db:
             self._create_load_db()
         self._recreate_load_table(staging_file)
         if self.table_stats_compute_supported():
             self._compute_load_table_statistics()
-        post_register_data_gov_fn()
 
     def predicate_has_rows(self, predicate):
         if not self.exists():

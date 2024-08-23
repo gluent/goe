@@ -121,10 +121,11 @@ def test_raw_conn(hadoop_host, hadoop_port):
 
 
 def get_cli_hdfs(orchestration_config, host, messages):
+    # dry_run always = False in connect.
     return CliHdfs(
         host,
         orchestration_config.hadoop_ssh_user,
-        dry_run=(not orchestration_config.execute),
+        dry_run=False,
         messages=messages,
         db_path_suffix=orchestration_config.hdfs_db_path_suffix,
         hdfs_data=orchestration_config.hdfs_data,
@@ -241,7 +242,7 @@ def test_webhdfs_config(orchestration_config, messages):
         orchestration_config.hadoop_ssh_user,
         True if orchestration_config.kerberos_service else False,
         orchestration_config.webhdfs_verify_ssl,
-        dry_run=not orchestration_config.execute,
+        dry_run=False,
         messages=messages,
         db_path_suffix=orchestration_config.hdfs_db_path_suffix,
         hdfs_data=orchestration_config.hdfs_data,
@@ -264,7 +265,7 @@ def test_sentry_privs(orchestration_config, backend_api, messages):
         log("Skipping Sentry steps due to backend system", detail=VVERBOSE)
         return
 
-    dfs_client = get_dfs_from_options(orchestration_config, messages)
+    dfs_client = get_dfs_from_options(orchestration_config, messages, dry_run=False)
     uris_left_to_check = get_hdfs_dirs(
         orchestration_config, dfs_client, include_hdfs_home=False
     )

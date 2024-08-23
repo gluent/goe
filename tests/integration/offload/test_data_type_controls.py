@@ -195,6 +195,7 @@ def test_data_type_mapping_offload(config, schema, data_db):
         "owner_table": schema + "." + DIM_NAME,
         "create_backend_db": True,
         "reset_backend_table": True,
+        "execute": True,
     }
     offload_modifiers = frontend_api.goe_type_mapping_offload_options(
         max_decimal_precision, max_decimal_scale, max_decimal_integral_magnitude

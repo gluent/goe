@@ -357,6 +357,7 @@ class FrontendApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def enclosure_character(self):
         """Correct character for the RDBMS for enclose_identifier().
+
         Superceded by enclose_identifier(), ideally we shouldn't use enclosure_character() any longer.
         """
 
@@ -369,8 +370,10 @@ class FrontendApiInterface(metaclass=ABCMeta):
         arg_list=None,
         log_level=VERBOSE,
         not_when_dry_running=False,
+        commit=False,
     ):
         """Execute a function in the frontend system and return the result.
+
         Parameters are based on Oracle functionality so may need to change as new frontends are implemented.
         not_when_dry_running: Because we don't know if a frontend function is read-only or read/write we assume
                               we should run the function even in read-only mode. If the function is making changes
@@ -380,6 +383,7 @@ class FrontendApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def format_query_parameter(self, param_name):
         """For engines that support query parameters this method prefixes or suffixes a parameter name.
+
         For example on Oracle it prefixes a ":" symbol.
         """
 
@@ -399,7 +403,7 @@ class FrontendApiInterface(metaclass=ABCMeta):
     def get_columns(self, schema, table_name):
         """Get a list of frontend column objects in the order they are stored by the frontend.
         Example might be:
-            [NetezzaColumn(...), NetezzaColumn(...)]
+            [OracleColumn(...), OracleColumn(...)]
         """
 
     @abstractmethod

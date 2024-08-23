@@ -23,14 +23,12 @@ from goe.offload.frontend_api import FRONTEND_TRACE_MODULE
 from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
     DBTYPE_ORACLE,
-    DBTYPE_NETEZZA,
     FILE_STORAGE_FORMAT_AVRO,
 )
-from goe.offload.offload_messages import VERBOSE, VVERBOSE
+from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_transport import (
     OffloadTransportException,
     OffloadTransport,
-    FRONTEND_TRACE_MODULE,
     OFFLOAD_TRANSPORT_METHOD_SQOOP,
     OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY,
     TRANSPORT_CXT_BYTES,
@@ -78,7 +76,7 @@ class OffloadTransportStandardSqoop(OffloadTransport):
             rdbms_columns_override=rdbms_columns_override,
         )
 
-        if offload_options.db_type in (DBTYPE_MSSQL, DBTYPE_NETEZZA):
+        if offload_options.db_type == DBTYPE_MSSQL:
             if len(offload_source_table.get_primary_key_columns()) == 1:
                 messages.warning(
                     "Downgrading Sqoop parallelism for %s table without a singleton primary key"
@@ -301,9 +299,11 @@ class OffloadTransportStandardSqoop(OffloadTransport):
             + ["--fetch-size=%d" % int(self._offload_transport_fetch_size)]
             + self._column_type_read_remappings()
             + [
-                "--as-avrodatafile"
-                if self._staging_format == FILE_STORAGE_FORMAT_AVRO
-                else "--as-parquetfile",
+                (
+                    "--as-avrodatafile"
+                    if self._staging_format == FILE_STORAGE_FORMAT_AVRO
+                    else "--as-parquetfile"
+                ),
                 "--outdir=" + self._offload_options.sqoop_outdir,
             ]
         )
@@ -345,7 +345,7 @@ class OffloadTransportStandardSqoop(OffloadTransport):
                     )
             # In order to let Impala/Hive drop the load table in the future we need g+w
             self.log_dfs_cmd('chmod(%s, "g+w")' % self._staging_table_location)
-            if self._offload_options.execute:
+            if not self._dry_run:
                 self._dfs_client.chmod(self._staging_table_location, mode="g+w")
         except:
             # Even in a sqoop failure we still want to chmod the load directory - if it exists
@@ -354,7 +354,7 @@ class OffloadTransportStandardSqoop(OffloadTransport):
                 % self._staging_table_location,
                 detail=VVERBOSE,
             )
-            if self._offload_options.execute:
+            if not self._dry_run:
                 try:
                     self._dfs_client.chmod(self._staging_table_location, mode="g+w")
                 except Exception as exc:
@@ -438,7 +438,7 @@ class OffloadTransportStandardSqoop(OffloadTransport):
         return self._messages.offload_step(
             command_steps.STEP_STAGING_TRANSPORT,
             step_fn,
-            execute=self._offload_options.execute,
+            execute=(not self._dry_run),
         )
 
     def ping_source_rdbms(self):

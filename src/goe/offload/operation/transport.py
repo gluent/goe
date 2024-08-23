@@ -16,9 +16,6 @@
 
 from typing import TYPE_CHECKING
 
-from goe.data_governance.hadoop_data_governance import (
-    data_governance_update_metadata_step,
-)
 from goe.offload.offload_constants import (
     DBTYPE_HIVE,
     OFFLOAD_STATS_METHOD_COPY,
@@ -63,7 +60,6 @@ def offload_data_to_target(
     offload_options: "OrchestrationConfig",
     source_data_client: "OffloadSourceDataInterface",
     messages: OffloadMessages,
-    data_gov_client,
 ):
     """Offloads the data via whatever means is appropriate (including validation steps).
     Returns the number of rows offloaded, None if nothing to do (i.e. non execute mode).
@@ -103,7 +99,7 @@ def offload_data_to_target(
             chunk_count=chunk_count,
             sync=sync,
             offload_predicate=offload_operation.inflight_offload_predicate,
-            dry_run=bool(not offload_options.execute),
+            dry_run=bool(not offload_operation.execute),
         )
 
     if discarded_all_partitions:
@@ -146,14 +142,6 @@ def offload_data_to_target(
         if rows_imported and rows_imported >= 0:
             rows_offloaded = rows_imported
 
-    data_governance_update_metadata_step(
-        offload_target_table.db_name,
-        offload_target_table.table_name,
-        data_gov_client,
-        messages,
-        offload_options,
-    )
-
     if offload_operation.offload_stats_method in [
         OFFLOAD_STATS_METHOD_NATIVE,
         OFFLOAD_STATS_METHOD_HISTORY,
@@ -171,7 +159,7 @@ def offload_data_to_target(
                     offload_options,
                     messages,
                 ),
-                execute=offload_options.execute,
+                execute=offload_operation.execute,
                 optional=True,
             )
     else:

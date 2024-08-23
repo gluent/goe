@@ -273,6 +273,7 @@ class CrossDbValidator(OffloadMessagesMixin, object):
         messages=None,
         backend_db=None,
         backend_table=None,
+        execute=True,
     ):
         """CONSTRUCTOR
 
@@ -284,6 +285,7 @@ class CrossDbValidator(OffloadMessagesMixin, object):
         """
         assert db_name and table_name
 
+        self._execute = execute
         self._db_name = db_name
         self._table_name = table_name
         self._db_table = "%s.%s" % (db_name, table_name)
@@ -292,6 +294,7 @@ class CrossDbValidator(OffloadMessagesMixin, object):
             connection_options,
             messages,
             conn_user_override=connection_options.rdbms_app_user,
+            dry_run=(not self._execute),
             trace_action=self.__class__.__name__,
         )
         if backend_obj:
@@ -301,7 +304,7 @@ class CrossDbValidator(OffloadMessagesMixin, object):
                 connection_options.target,
                 connection_options,
                 messages,
-                dry_run=bool(not connection_options.execute),
+                dry_run=bool(not self._execute),
             )
         self._connection_options = connection_options
         self._messages = messages
@@ -473,9 +476,11 @@ class CrossDbValidator(OffloadMessagesMixin, object):
         if filters:
             sql += "\nWHERE  %s" % expand(
                 filters,
-                lambda x: (" ".join((x[0], x[1], str(x[2]))))
-                if type(x) in (list, tuple)
-                else x,
+                lambda x: (
+                    (" ".join((x[0], x[1], str(x[2]))))
+                    if type(x) in (list, tuple)
+                    else x
+                ),
                 lambda x, y: "%s\nAND    %s" % (x, y),
             )
 
@@ -763,6 +768,7 @@ class CrossDbValidator(OffloadMessagesMixin, object):
                 self._messages,
                 hybrid_metadata=self._offload_metadata,
                 existing_backend_api=self._backend,
+                dry_run=(not self._execute),
             )
         (
             inc_keys,

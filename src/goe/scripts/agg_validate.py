@@ -24,7 +24,7 @@ import logging
 import re
 import sys
 
-from goe.config import config_descriptions, config_file, orchestration_defaults
+from goe.config import option_descriptions, config_file, orchestration_defaults
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.offload_validation import (
     CrossDbValidator,
@@ -235,7 +235,7 @@ def parse_args():
         "--frontend-parallelism",
         default=orchestration_defaults.verify_parallelism_default(),
         type=int,
-        help=config_descriptions.VERIFY_PARALLELISM,
+        help=option_descriptions.VERIFY_PARALLELISM,
     )
     parser.add_option(
         "--skip-boundary-check",

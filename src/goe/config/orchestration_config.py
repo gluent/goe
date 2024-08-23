@@ -28,7 +28,6 @@ from goe.config.config_validation_functions import (
     check_offload_fs_scheme_supported_in_backend,
     normalise_backend_session_parameters,
     normalise_backend_options,
-    normalise_data_governance_config,
     normalise_db_prefix_and_paths,
     normalise_filesystem_options,
     normalise_listener_options,
@@ -40,7 +39,6 @@ from goe.config.config_validation_functions import (
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_constants import (
     DBTYPE_MSSQL,
-    DBTYPE_NETEZZA,
     DBTYPE_ORACLE,
     DBTYPE_TERADATA,
     HADOOP_BASED_BACKEND_DISTRIBUTIONS,
@@ -68,18 +66,10 @@ EXPECTED_CONFIG_ARGS = [
     "bigquery_dataset_location",
     "bigquery_dataset_project",
     "ca_cert",
-    "cloudera_navigator_hive_source_id",
     "db_name_pattern",
     "db_name_prefix",
     "db_type",
-    "data_governance_api_url",
-    "data_governance_api_user",
-    "data_governance_api_pass",
-    "data_governance_backend",
-    "data_governance_auto_tags_csv",
-    "data_governance_auto_properties_csv",
     "dev_log_level",
-    "execute",
     "error_on_token",
     "frontend_odbc_driver_name",
     "google_dataproc_batches_subnet",
@@ -132,9 +122,6 @@ EXPECTED_CONFIG_ARGS = [
     "mssql_dsn",
     "mssql_app_user",
     "mssql_app_pass",
-    "netezza_dsn",
-    "netezza_app_user",
-    "netezza_app_pass",
     "not_null_propagation",
     "offload_fs_container",
     "offload_fs_prefix",
@@ -252,7 +239,6 @@ class OrchestrationConfig:
     db_type: str
     dev_log_level: str
     error_on_token: Optional[str]
-    execute: bool
     frontend_odbc_driver_name: Optional[str]
     google_dataproc_batches_subnet: Optional[str]
     google_dataproc_batches_ttl: Optional[str]
@@ -317,7 +303,6 @@ class OrchestrationConfig:
         self._do_not_connect = do_not_connect
 
         normalise_backend_session_parameters(self)
-        normalise_data_governance_config(self)
         normalise_filesystem_options(self)
         try:
             normalise_backend_options(self)
@@ -388,34 +373,6 @@ class OrchestrationConfig:
             ca_cert=config_dict.get(
                 "ca_cert", orchestration_defaults.ca_cert_default()
             ),
-            cloudera_navigator_hive_source_id=config_dict.get(
-                "cloudera_navigator_hive_source_id",
-                orchestration_defaults.cloudera_navigator_hive_source_id_default(),
-            ),
-            data_governance_api_url=config_dict.get(
-                "data_governance_api_url",
-                orchestration_defaults.data_governance_api_url_default(),
-            ),
-            data_governance_api_user=config_dict.get(
-                "data_governance_api_user",
-                orchestration_defaults.data_governance_api_user_default(),
-            ),
-            data_governance_api_pass=config_dict.get(
-                "data_governance_api_pass",
-                orchestration_defaults.data_governance_api_pass_default(),
-            ),
-            data_governance_backend=config_dict.get(
-                "data_governance_backend",
-                orchestration_defaults.data_governance_api_backend_default(),
-            ),
-            data_governance_auto_tags_csv=config_dict.get(
-                "data_governance_auto_tags_csv",
-                orchestration_defaults.data_governance_auto_tags_default(),
-            ),
-            data_governance_auto_properties_csv=config_dict.get(
-                "data_governance_auto_properties_csv",
-                orchestration_defaults.data_governance_auto_properties_default(),
-            ),
             db_name_pattern=config_dict.get(
                 "db_name_pattern", orchestration_defaults.db_name_pattern_default()
             ),
@@ -429,9 +386,6 @@ class OrchestrationConfig:
                 "dev_log_level", orchestration_defaults.dev_log_level_default()
             ),
             error_on_token=config_dict.get("error_on_token"),
-            execute=config_dict.get(
-                "execute", orchestration_defaults.execute_default()
-            ),
             frontend_odbc_driver_name=config_dict.get(
                 "frontend_odbc_driver_name",
                 orchestration_defaults.frontend_odbc_driver_name_default(),
@@ -601,15 +555,6 @@ class OrchestrationConfig:
             ),
             mssql_dsn=config_dict.get(
                 "mssql_dsn", orchestration_defaults.mssql_dsn_default()
-            ),
-            netezza_app_user=config_dict.get(
-                "netezza_app_user", orchestration_defaults.netezza_app_user_default()
-            ),
-            netezza_app_pass=config_dict.get(
-                "netezza_app_pass", orchestration_defaults.netezza_app_pass_default()
-            ),
-            netezza_dsn=config_dict.get(
-                "netezza_dsn", orchestration_defaults.netezza_dsn_default()
             ),
             not_null_propagation=config_dict.get(
                 "not_null_propagation",
@@ -971,11 +916,6 @@ class OrchestrationConfig:
             log_fn(
                 "Connecting to Microsoft SQL Server as %s (%s)"
                 % (self.mssql_app_user, self.mssql_dsn)
-            )
-        elif self.db_type == DBTYPE_NETEZZA:
-            log_fn(
-                "Connecting to IBM Netezza as %s (%s)"
-                % (self.netezza_app_user, self.netezza_dsn)
             )
         elif self.db_type == DBTYPE_TERADATA:
             log_fn(

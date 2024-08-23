@@ -38,8 +38,8 @@ from tests.integration.test_functions import (
 )
 from tests.testlib.test_framework.test_functions import (
     get_backend_testing_api,
-    get_frontend_testing_api,
-    get_test_messages,
+    get_frontend_testing_api_ctx,
+    get_test_messages_ctx,
 )
 
 
@@ -65,100 +65,107 @@ def data_db(schema, config):
 
 def test_offload_step_dim(config, schema, data_db):
     id = "test_offload_step_dim"
-    messages = get_test_messages(config, id)
-    backend_api = get_backend_testing_api(config, messages)
-    frontend_api = get_frontend_testing_api(config, messages, trace_action=id)
-    backend_name = convert_backend_identifier_case(config, STEP_DIM)
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+        backend_name = convert_backend_identifier_case(config, STEP_DIM)
 
-    # Setup
-    run_setup(
-        frontend_api,
-        backend_api,
-        config,
-        messages,
-        frontend_sqls=frontend_api.standard_dimension_frontend_ddl(schema, STEP_DIM),
-        python_fns=[
-            lambda: drop_backend_test_table(
-                config, backend_api, messages, data_db, STEP_DIM
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, STEP_DIM
             ),
-        ],
-    )
-
-    # Offload skipping step STEP_VALIDATE_DATA.
-    options = {
-        "owner_table": schema + "." + STEP_DIM,
-        "skip": [step_title_to_step_id(step_title(command_steps.STEP_VALIDATE_DATA))],
-        "reset_backend_table": True,
-    }
-    offload_messages = run_offload(
-        options, config, messages, config_overrides={"execute": False}
-    )
-    assert (
-        messages_step_executions(
-            offload_messages, step_title(command_steps.STEP_VALIDATE_DATA)
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, STEP_DIM
+                ),
+            ],
         )
-        == 0
-    )
 
-    # Offload skipping step STEP_VALIDATE_CASTS.
-    options = {
-        "owner_table": schema + "." + STEP_DIM,
-        "skip": [step_title_to_step_id(step_title(command_steps.STEP_VALIDATE_CASTS))],
-        "reset_backend_table": True,
-    }
-    offload_messages = run_offload(
-        options, config, messages, config_overrides={"execute": False}
-    )
-    assert (
-        messages_step_executions(
-            offload_messages, step_title(command_steps.STEP_VALIDATE_CASTS)
+        # Offload skipping step STEP_VALIDATE_DATA.
+        options = {
+            "owner_table": schema + "." + STEP_DIM,
+            "skip": [
+                step_title_to_step_id(step_title(command_steps.STEP_VALIDATE_DATA))
+            ],
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        offload_messages = run_offload(options, config, messages)
+        assert (
+            messages_step_executions(
+                offload_messages, step_title(command_steps.STEP_VALIDATE_DATA)
+            )
+            == 0
         )
-        == 0
-    )
 
-    # Offload skipping step STEP_VERIFY_EXPORTED_DATA.
-    options = {
-        "owner_table": schema + "." + STEP_DIM,
-        "skip": [
-            step_title_to_step_id(step_title(command_steps.STEP_VERIFY_EXPORTED_DATA))
-        ],
-        "reset_backend_table": True,
-    }
-    offload_messages = run_offload(
-        options, config, messages, config_overrides={"execute": False}
-    )
-    assert (
-        messages_step_executions(
-            offload_messages, step_title(command_steps.STEP_VERIFY_EXPORTED_DATA)
+        # Offload skipping step STEP_VALIDATE_CASTS.
+        options = {
+            "owner_table": schema + "." + STEP_DIM,
+            "skip": [
+                step_title_to_step_id(step_title(command_steps.STEP_VALIDATE_CASTS))
+            ],
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        offload_messages = run_offload(options, config, messages)
+        assert (
+            messages_step_executions(
+                offload_messages, step_title(command_steps.STEP_VALIDATE_CASTS)
+            )
+            == 0
         )
-        == 0
-    )
 
-    # Offload aborting before step STEP_CREATE_TABLE
-    options = {
-        "owner_table": schema + "." + STEP_DIM,
-        "error_before_step": step_title(command_steps.STEP_CREATE_TABLE),
-        "reset_backend_table": True,
-    }
-    run_offload(
-        options,
-        config,
-        messages,
-        config_overrides={"execute": False},
-        expected_exception_string=FORCED_EXCEPTION_TEXT,
-    )
+        # Offload skipping step STEP_VERIFY_EXPORTED_DATA.
+        options = {
+            "owner_table": schema + "." + STEP_DIM,
+            "skip": [
+                step_title_to_step_id(
+                    step_title(command_steps.STEP_VERIFY_EXPORTED_DATA)
+                )
+            ],
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        offload_messages = run_offload(options, config, messages)
+        assert (
+            messages_step_executions(
+                offload_messages, step_title(command_steps.STEP_VERIFY_EXPORTED_DATA)
+            )
+            == 0
+        )
 
-    # Offload aborting before step STEP_FINAL_LOAD
-    options = {
-        "owner_table": schema + "." + STEP_DIM,
-        "error_before_step": step_title(command_steps.STEP_FINAL_LOAD),
-        "reset_backend_table": True,
-    }
-    run_offload(
-        options, config, messages, expected_exception_string=FORCED_EXCEPTION_TEXT
-    )
+        # Offload aborting before step STEP_CREATE_TABLE
+        options = {
+            "owner_table": schema + "." + STEP_DIM,
+            "error_before_step": step_title(command_steps.STEP_CREATE_TABLE),
+            "reset_backend_table": True,
+            "execute": False,
+        }
+        run_offload(
+            options,
+            config,
+            messages,
+            expected_exception_string=FORCED_EXCEPTION_TEXT,
+        )
 
-    # Table exists
-    assert backend_api.table_exists(data_db, backend_name)
-    # Table is empty
-    assert backend_api.get_table_row_count(data_db, backend_name) == 0
+        # Offload aborting before step STEP_FINAL_LOAD
+        options = {
+            "owner_table": schema + "." + STEP_DIM,
+            "error_before_step": step_title(command_steps.STEP_FINAL_LOAD),
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(
+            options, config, messages, expected_exception_string=FORCED_EXCEPTION_TEXT
+        )
+
+        # Table exists
+        assert backend_api.table_exists(data_db, backend_name)
+        # Table is empty
+        assert backend_api.get_table_row_count(data_db, backend_name) == 0

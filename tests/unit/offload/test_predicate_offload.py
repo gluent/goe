@@ -169,7 +169,7 @@ def test_predicate_parse_single_datetime(dsl_value_str, ast_token_values):
         "test' string",
         'test \\" string',
         "",
-        "`~!@#$%^&*()_+-={}[]|\:;?/>.<,0987654321",
+        "`~!@#$%^&*()_+-={}[]|\\:;?/>.<,0987654321",
         "\u00f6",
     ],
 )

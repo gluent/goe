@@ -2009,17 +2009,17 @@ class BaseOperation(object):
 
     def validate_sort_columns(
         self,
-        rdbms_column_names,
-        messages,
-        offload_options,
+        offload_source_table: OffloadSourceTableInterface,
+        messages: OffloadMessages,
+        offload_options: "OrchestrationConfig",
         backend_cols,
         hybrid_metadata,
         backend_api=None,
-        metadata_refresh=False,
     ):
         """Default sort_columns for storage index benefit if not specified by the user.
-        sort_columns_csv: The incoming option string which can be a CSV list of column names or the special token
-            SORT_COLUMNS_NO_CHANGE which identifies the user has not asked for a change.
+        sort_columns_csv: The incoming option string which can be a CSV list of column names or:
+            - the special token SORT_COLUMNS_NO_CHANGE which identifies the user has not asked for a change.
+            - the special token SORT_COLUMNS_NONE which identifies the user has not asked for no sort columns.
         sort_columns: A Python list of column names defined by the user.
         backend_cols: A standalone parameter because this function may be used on tables that do not yet exist.
         """
@@ -2057,10 +2057,9 @@ class BaseOperation(object):
             self.sort_columns = sort_columns_csv_to_sort_columns(
                 self.sort_columns_csv,
                 hybrid_metadata,
-                rdbms_column_names,
+                offload_source_table,
                 backend_cols,
                 backend_api,
-                metadata_refresh,
                 messages,
             )
         finally:
@@ -2621,7 +2620,7 @@ def offload_operation_logic(
                 )
 
     offload_operation.validate_sort_columns(
-        offload_source_table.get_column_names(),
+        offload_source_table,
         messages,
         offload_options,
         offload_target_table.get_columns(),
@@ -3363,7 +3362,7 @@ def get_options(usage=None, operation_name=None):
         "--sort-columns",
         dest="sort_columns_csv",
         default=orchestration_defaults.sort_columns_default(),
-        help="CSV list of sort/cluster columns to use when storing data in a backend table",
+        help=f'CSV list of sort/cluster columns to use when storing data in a backend table or "{offload_constants.SORT_COLUMNS_NONE}" to force no sort columns',
     )
     opt.add_option(
         "--offload-distribute-enabled",

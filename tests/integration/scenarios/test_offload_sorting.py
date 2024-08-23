@@ -167,7 +167,7 @@ def test_offload_sorting_dim(config, schema, data_db):
             config,
             messages,
             frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
-                schema, OFFLOAD_DIM
+                schema, OFFLOAD_DIM, pk_col_name="ID"
             ),
             python_fns=[
                 lambda: drop_backend_test_table(
@@ -177,7 +177,6 @@ def test_offload_sorting_dim(config, schema, data_db):
         )
 
         # Default Offload Of Dimension.
-        # No column defaults for a non-partitioned table.
         options = {
             "owner_table": schema + "." + OFFLOAD_DIM,
             "sort_columns_csv": offload_constants.SORT_COLUMNS_NO_CHANGE,
@@ -186,6 +185,9 @@ def test_offload_sorting_dim(config, schema, data_db):
             "execute": True,
         }
         run_offload(options, config, messages)
+        expected_sort_cols = (
+            "ID" if backend_api.default_sort_columns_to_primary_key() else "NULL"
+        )
         assert sort_story_assertion(
             schema,
             OFFLOAD_DIM,
@@ -194,12 +196,10 @@ def test_offload_sorting_dim(config, schema, data_db):
             backend_api,
             messages,
             repo_client,
-            offload_sort_columns="NULL",
+            offload_sort_columns=expected_sort_cols,
         )
 
         if not dim_sorted_table_supported(backend_api):
-            # Connections are being left open, explicitly close them.
-            frontend_api.close()
             return
 
         # Offload table with 2 sort columns.
@@ -270,6 +270,25 @@ def test_offload_sorting_dim(config, schema, data_db):
             offload_sort_columns="TXN_RATE",
         )
 
+        # Offload table explicitly with no sort columns.
+        options = {
+            "owner_table": schema + "." + OFFLOAD_DIM,
+            "sort_columns_csv": offload_constants.SORT_COLUMNS_NONE,
+            "reset_backend_table": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sort_story_assertion(
+            schema,
+            OFFLOAD_DIM,
+            backend_name,
+            data_db,
+            backend_api,
+            messages,
+            repo_client,
+            offload_sort_columns="NULL",
+        )
+
 
 def test_offload_sorting_fact(config, schema, data_db):
     id = "test_offload_sorting_fact"
@@ -300,6 +319,33 @@ def test_offload_sorting_fact(config, schema, data_db):
                 config, backend_api, messages, data_db, OFFLOAD_FACT
             ),
         )
+
+        if backend_api.default_sort_columns_to_primary_key():
+            # Initial offload with no sorting, no primary therefore no cluster columns.
+            options = {
+                "owner_table": schema + "." + OFFLOAD_FACT,
+                "older_than_date": test_constants.SALES_BASED_FACT_HV_1,
+                "offload_partition_columns": offload_sorting_fact_offload1_partition_columns(
+                    backend_api
+                ),
+                "offload_partition_granularity": offload_sorting_fact_offload1_granularity(
+                    backend_api
+                ),
+                "reset_backend_table": True,
+                "create_backend_db": True,
+                "execute": True,
+            }
+            run_offload(options, config, messages)
+            assert sort_story_assertion(
+                schema,
+                OFFLOAD_FACT,
+                backend_name,
+                data_db,
+                backend_api,
+                messages,
+                repo_client,
+                offload_sort_columns="NULL",
+            )
 
         # Initial offload with custom sorting.
         options = {

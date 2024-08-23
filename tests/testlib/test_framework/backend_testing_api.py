@@ -436,6 +436,9 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def default_date_based_partition_granularity(self):
         return self._db_api.default_date_based_partition_granularity()
 
+    def default_sort_columns_to_primary_key(self):
+        return self._db_api.default_sort_columns_to_primary_key()
+
     def default_storage_compression(self, storage_compression, storage_format):
         return self._db_api.default_storage_compression(
             storage_compression, storage_format

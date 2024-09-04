@@ -505,7 +505,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -519,6 +519,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
             incremental_key="TS",
             incremental_key_type=frontend_datetime,
             check_backend_rowcount=True,
+            offload_messages=offload_messages,
         )
 
         # Offload second partition from a microsecond partitioned table.
@@ -532,7 +533,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
             ),
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -546,6 +547,7 @@ def test_offload_data_partition_by_microsecond(config, schema, data_db):
             incremental_key="TS",
             incremental_key_type=frontend_datetime,
             check_backend_rowcount=True,
+            offload_messages=offload_messages,
         )
 
         # No-op offload of microsecond partitioned table.
@@ -618,7 +620,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
                 "create_backend_db": True,
                 "execute": True,
             }
-            run_offload(options, config, messages)
+            offload_messages = run_offload(options, config, messages)
             assert sales_based_fact_assertion(
                 config,
                 backend_api,
@@ -631,6 +633,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
                 "2030-01-02",
                 incremental_key="TS",
                 incremental_key_type=frontend_datetime,
+                offload_messages=offload_messages,
             )
 
             # Offload second partition from a nanosecond partitioned table.
@@ -645,7 +648,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
                 ),
                 "execute": True,
             }
-            run_offload(options, config, messages)
+            offload_messages = run_offload(options, config, messages)
             assert sales_based_fact_assertion(
                 config,
                 backend_api,
@@ -658,6 +661,7 @@ def test_offload_data_partition_by_nanosecond(config, schema, data_db):
                 "2030-01-02",
                 incremental_key="TS",
                 incremental_key_type=frontend_datetime,
+                offload_messages=offload_messages,
             )
 
 
@@ -1009,7 +1013,7 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -1026,6 +1030,7 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
             ),
             offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
             incremental_key="part_col",
+            offload_messages=offload_messages,
         )
 
         # Offload 2nd partition.
@@ -1036,7 +1041,7 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
             "offload_transport_method": no_query_import_transport_method(config),
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -1049,6 +1054,7 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
             gen_large_num_list_part_literal(backend_api),
             offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
             incremental_key="part_col",
+            offload_messages=offload_messages,
         )
 
         # Offload 3rd partition, HWM all 9s.
@@ -1058,7 +1064,7 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
             "offload_transport_method": no_query_import_transport_method(config),
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -1071,4 +1077,5 @@ def test_offload_data_large_decimals_rpa(config, schema, data_db):
             gen_large_num_list_part_literal(backend_api, all_nines=True),
             offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
             incremental_key="part_col",
+            offload_messages=offload_messages,
         )

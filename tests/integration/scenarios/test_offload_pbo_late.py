@@ -178,7 +178,7 @@ def offload_pbo_late_100_x_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -193,6 +193,7 @@ def offload_pbo_late_100_x_tests(
         incremental_key=inc_key,
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
+        offload_messages=offload_messages,
     )
 
     # Add late arriving data below the HWM.
@@ -240,7 +241,7 @@ def offload_pbo_late_100_x_tests(
         "execute": True,
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -256,13 +257,14 @@ def offload_pbo_late_100_x_tests(
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
         incremental_predicate_value="NULL",
+        offload_messages=offload_messages,
     )
     assert check_predicate_count_matches_log(
         frontend_api,
         messages,
+        offload_messages,
         schema,
         table_name,
-        f"{test_id}:1",
         "time_id = %s" % const_to_date_expr(config, OLD_HV_1),
     )
 
@@ -354,7 +356,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -371,6 +373,7 @@ def offload_pbo_late_arriving_std_range_tests(
         incremental_predicate_value="NULL",
         incremental_range=expected_incremental_range,
         check_hwm_in_metadata=check_hwm_in_metadata,
+        offload_messages=offload_messages,
     )
 
     # No-op Offload Late Arriving Data.
@@ -466,7 +469,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "execute": True,
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -482,13 +485,17 @@ def offload_pbo_late_arriving_std_range_tests(
         ipa_predicate_type=ipa_predicate_type,
         incremental_predicate_value="NULL",
         check_hwm_in_metadata=check_hwm_in_metadata,
+        offload_messages=offload_messages,
     )
     assert check_predicate_count_matches_log(
-        frontend_api, messages, schema, table_name, f"{test_id}:1", chk_cnt_filter
+        frontend_api,
+        messages,
+        offload_messages,
+        schema,
+        table_name,
+        chk_cnt_filter,
     )
-    assert text_in_log(
-        messages, PREDICATE_APPEND_HWM_MESSAGE_TEXT, search_from_text=f"{test_id}:1"
-    )
+    assert text_in_log(offload_messages, PREDICATE_APPEND_HWM_MESSAGE_TEXT, messages)
 
     # Attempt to re-offload same predicate.
     run_offload(options, config, messages, expected_status=False)

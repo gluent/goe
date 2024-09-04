@@ -501,6 +501,7 @@ def samp_date_assertion(
     backend_api,
     frontend_api,
     messages,
+    offload_messages,
     data_db,
     backend_name,
     from_stats=True,
@@ -573,7 +574,9 @@ def samp_date_assertion(
             % ("good_ts", expected_good_data_type)
         )
     if expected_bad_data_type != expected_good_data_type:
-        text_match = messages.text_in_messages(DATETIME_STATS_SAMPLING_OPT_ACTION_TEXT)
+        text_match = offload_messages.text_in_messages(
+            DATETIME_STATS_SAMPLING_OPT_ACTION_TEXT
+        )
         if text_match != from_stats:
             raise ScenarioRunnerException(
                 "text_match != from_stats: %s != %s" % (text_match, from_stats)
@@ -811,7 +814,7 @@ def test_numeric_controls(config, schema, data_db):
             "decimal_padding_digits": 2,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         nums_assertion(
             config,
             frontend_api,
@@ -835,8 +838,8 @@ def test_numeric_controls(config, schema, data_db):
                 "execute": True,
             }
             log_test_marker(messages, f"{id}:samp1")
-            run_offload(options, config, messages)
-            assert hint_text_in_log(messages, config, 0, f"{id}:samp1")
+            offload_messages = run_offload(options, config, messages)
+            assert hint_text_in_log(offload_messages, config, 0, f"{id}:samp1")
 
         # Offload Dimension With Parallel Sampling=3.
         # Runs with --no-verify to remove risk of verification having a PARALLEL hint.
@@ -850,8 +853,8 @@ def test_numeric_controls(config, schema, data_db):
                 "execute": True,
             }
             log_test_marker(messages, f"{id}:samp2")
-            run_offload(options, config, messages)
-            assert hint_text_in_log(messages, config, 3, f"{id}:samp2")
+            offload_messages = run_offload(options, config, messages)
+            assert hint_text_in_log(offload_messages, config, 3, f"{id}:samp2")
 
         # Offload Dimension with number overflow (expect to fail).
         if config.target not in [offload_constants.DBTYPE_BIGQUERY]:
@@ -1016,9 +1019,15 @@ def test_date_sampling(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         samp_date_assertion(
-            config, backend_api, frontend_api, messages, data_db, DATE_SDIM
+            config,
+            backend_api,
+            frontend_api,
+            messages,
+            offload_messages,
+            data_db,
+            DATE_SDIM,
         )
 
         # Remove stats from DATE_SDIM.
@@ -1042,12 +1051,13 @@ def test_date_sampling(config, schema, data_db):
             "reset_backend_table": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         samp_date_assertion(
             config,
             backend_api,
             frontend_api,
             messages,
+            offload_messages,
             data_db,
             DATE_SDIM,
             from_stats=False,
@@ -1076,12 +1086,13 @@ def test_date_sampling(config, schema, data_db):
             "reset_backend_table": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         samp_date_assertion(
             config,
             backend_api,
             frontend_api,
             messages,
+            offload_messages,
             data_db,
             DATE_SDIM,
             from_stats=False,

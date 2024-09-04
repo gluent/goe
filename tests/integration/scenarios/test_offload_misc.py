@@ -194,7 +194,7 @@ def test_offload_misc_maxvalue_partition(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -206,6 +206,7 @@ def test_offload_misc_maxvalue_partition(config, schema, data_db):
             MAXVAL_FACT,
             test_constants.SALES_BASED_FACT_HV_2,
             offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+            offload_messages=offload_messages,
         )
 
         # 90/10 Offload of Fact with MAXVALUE Partition.
@@ -226,8 +227,11 @@ def test_offload_misc_maxvalue_partition(config, schema, data_db):
             MAXVAL_FACT,
             test_constants.SALES_BASED_FACT_HV_6,
             offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+            offload_messages=offload_messages,
         )
-        assert text_in_messages(offload_messages, NO_MAXVALUE_PARTITION_NOTICE_TEXT)
+        assert text_in_messages(
+            offload_messages, NO_MAXVALUE_PARTITION_NOTICE_TEXT, messages
+        )
 
         # Offload 90/10 fact to 100/0.
         # Offloads all partitions from a fact table including MAXVALUE partition.
@@ -249,4 +253,5 @@ def test_offload_misc_maxvalue_partition(config, schema, data_db):
             None,
             offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
             check_backend_rowcount=True,
+            offload_messages=offload_messages,
         )

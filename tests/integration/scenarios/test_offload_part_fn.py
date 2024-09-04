@@ -361,7 +361,7 @@ def test_offload_part_fn_num(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert standard_dimension_assertion(
             config,
             backend_api,
@@ -373,6 +373,7 @@ def test_offload_part_fn_num(config, schema, data_db):
             partition_functions=expected_udf_metadata(
                 config, data_db, data_db + "." + INT8_UDF
             ),
+            offload_messages=offload_messages,
         )
         assert offload_part_fn_assertion(
             config, backend_api, messages, data_db, DIM_NUM, udf=INT8_UDF
@@ -390,7 +391,7 @@ def test_offload_part_fn_num(config, schema, data_db):
             "reset_backend_table": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert standard_dimension_assertion(
             config,
             backend_api,
@@ -400,6 +401,7 @@ def test_offload_part_fn_num(config, schema, data_db):
             data_db,
             DIM_NUM,
             partition_functions=expected_udf_metadata(config, data_db, INT8_UDF),
+            offload_messages=offload_messages,
         )
         assert offload_part_fn_assertion(
             config, backend_api, messages, data_db, DIM_NUM, udf=INT8_UDF
@@ -450,7 +452,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert standard_dimension_assertion(
             config,
             backend_api,
@@ -460,6 +462,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
             data_db,
             DIM_DEC,
             partition_functions=expected_udf_metadata(config, data_db, INT38_UDF),
+            offload_messages=offload_messages,
         )
         assert offload_part_fn_assertion(
             config, backend_api, messages, data_db, DIM_DEC, udf=INT38_UDF
@@ -478,7 +481,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
             "reset_backend_table": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert standard_dimension_assertion(
             config,
             backend_api,
@@ -488,6 +491,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
             data_db,
             DIM_DEC,
             partition_functions=expected_udf_metadata(config, data_db, DEC19_UDF),
+            offload_messages=offload_messages,
         )
         assert offload_part_fn_assertion(
             config, backend_api, messages, data_db, DIM_DEC, udf=DEC19_UDF
@@ -541,7 +545,7 @@ def test_offload_part_fn_str(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert standard_dimension_assertion(
             config,
             backend_api,
@@ -551,6 +555,7 @@ def test_offload_part_fn_str(config, schema, data_db):
             data_db,
             DIM_STR,
             partition_functions=expected_udf_metadata(config, data_db, STRING_UDF),
+            offload_messages=offload_messages,
         )
         assert offload_part_fn_assertion(
             config,

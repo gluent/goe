@@ -145,17 +145,24 @@ def simple_offload_test(
 
     if transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY:
         # Setting timeout low to allow any subsequent test to reset config and not re-use session.
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
             config_overrides={"offload_transport_livy_idle_session_timeout": 4},
         )
     else:
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
     assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, table_name
+        config,
+        backend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        table_name,
+        offload_messages=offload_messages,
     )
 
     # Connections are being left open, explicitly close them.
@@ -201,13 +208,20 @@ def load_table_compression_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert backend_table_exists(
         config, backend_api, messages, load_db, table_name
     ), "Backend load table should exist"
     assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, table_name
+        config,
+        backend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        table_name,
+        offload_messages=offload_messages,
     )
     assert not load_table_is_compressed(data_db, backend_name, config, dfs, messages)
 
@@ -220,13 +234,20 @@ def load_table_compression_tests(
         "reset_backend_table": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert backend_table_exists(
         config, backend_api, messages, load_db, table_name
     ), "Backend load table should exist"
     assert standard_dimension_assertion(
-        config, backend_api, messages, repo_client, schema, data_db, table_name
+        config,
+        backend_api,
+        messages,
+        repo_client,
+        schema,
+        data_db,
+        table_name,
+        offload_messages=offload_messages,
     )
     assert load_table_is_compressed(data_db, backend_name, config, dfs, messages)
 
@@ -271,9 +292,12 @@ def offload_transport_polling_validation_tests(
         "execute": True,
     }
     log_test_marker(messages, f"{test_id}:1")
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert text_in_log(
-        POLLING_VALIDATION_TEXT % "OffloadTransportSqlStatsThread", f"{test_id}:1"
+        offload_messages,
+        POLLING_VALIDATION_TEXT % "OffloadTransportSqlStatsThread",
+        messages,
+        f"{test_id}:1",
     )
 
     # Offload with disabled SQL stats validation.
@@ -286,9 +310,19 @@ def offload_transport_polling_validation_tests(
     }
     log_test_marker(messages, f"{test_id}:2")
     run_offload(options, config, messages)
-    assert not text_in_log(OFFLOAD_TRANSPORT_SQL_STATISTICS_TITLE, f"{test_id}:2")
+    assert not text_in_log(
+        offload_messages,
+        OFFLOAD_TRANSPORT_SQL_STATISTICS_TITLE,
+        messages,
+        search_from_text=f"{test_id}:2",
+    )
     assert (
-        text_in_log(MISSING_ROWS_IMPORTED_WARNING, f"{test_id}:2")
+        text_in_log(
+            offload_messages,
+            MISSING_ROWS_IMPORTED_WARNING,
+            messages,
+            search_from_text=f"{test_id}:2",
+        )
         == expect_missing_validation_warning
     )
 

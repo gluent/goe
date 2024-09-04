@@ -113,13 +113,13 @@ def data_db(schema, config):
     return db
 
 
-def backend_case_offload_assertion(messages, search_token: str, test_id: str) -> bool:
+def backend_case_offload_assertion(
+    offload_messages, test_messages, search_token: str
+) -> bool:
     search_string = f"{ADJUSTED_BACKEND_IDENTIFIER_MESSAGE_TEXT}: {search_token}"
-    result = text_in_log(messages, search_string, f"{test_id}")
+    result = text_in_log(offload_messages, search_string, test_messages)
     if not result:
-        messages.log(
-            f'Search string "{search_string}" not found in log (beyond token: "{test_id}")'
-        )
+        test_messages.log(f'Search string "{search_string}" not found in log')
     return result
 
 
@@ -310,15 +310,14 @@ def test_identifiers_table_name_case(config, schema, data_db):
             "create_backend_db": True,
             "execute": False,
         }
-        log_test_marker(messages, f"{id}1")
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
             config_overrides={"backend_identifier_case": "LOWER"},
         )
         assert backend_case_offload_assertion(
-            messages, f"{data_db}.{CASE_DIM}".lower(), f"{id}1"
+            offload_messages, messages, f"{data_db}.{CASE_DIM}".lower()
         )
 
         options = {
@@ -326,15 +325,14 @@ def test_identifiers_table_name_case(config, schema, data_db):
             "reset_backend_table": True,
             "execute": False,
         }
-        log_test_marker(messages, f"{id}2")
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
             config_overrides={"backend_identifier_case": "UPPER"},
         )
         assert backend_case_offload_assertion(
-            messages, f"{data_db}.{CASE_DIM}".upper(), f"{id}2"
+            offload_messages, messages, f"{data_db}.{CASE_DIM}".upper()
         )
 
         options = {
@@ -342,15 +340,16 @@ def test_identifiers_table_name_case(config, schema, data_db):
             "reset_backend_table": True,
             "execute": False,
         }
-        log_test_marker(messages, f"{id}3")
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
             config_overrides={"backend_identifier_case": "NO_MODIFY"},
         )
         assert backend_case_offload_assertion(
-            messages, f"{data_db.upper()}.{CASE_DIM.capitalize()}", f"{id}3"
+            offload_messages,
+            messages,
+            f"{data_db.upper()}.{CASE_DIM.capitalize()}",
         )
 
 
@@ -388,7 +387,7 @@ def test_identifiers_table_name_change_100_0(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
@@ -403,6 +402,7 @@ def test_identifiers_table_name_change_100_0(config, schema, data_db):
             data_db,
             NEW_NAME_DIM1,
             backend_table=NEW_NAME_DIM2,
+            offload_messages=offload_messages,
         )
         assert not backend_table_exists(
             config, backend_api, messages, data_db, NEW_NAME_DIM1
@@ -460,7 +460,7 @@ def test_identifiers_table_name_change_90_10(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert sales_based_fact_assertion(
             config,
@@ -473,6 +473,7 @@ def test_identifiers_table_name_change_90_10(config, schema, data_db):
             NEW_NAME_FACT1,
             SALES_BASED_FACT_HV_1,
             backend_table=NEW_NAME_FACT2,
+            offload_messages=offload_messages,
         )
         assert not backend_table_exists(
             config, backend_api, messages, data_db, NEW_NAME_DIM1

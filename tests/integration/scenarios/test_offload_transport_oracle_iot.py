@@ -44,9 +44,7 @@ from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
-from tests.integration.scenarios.assertion_functions import (
-    standard_dimension_assertion,
-)
+from tests.integration.scenarios.assertion_functions import standard_dimension_assertion
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
     run_setup,
@@ -182,7 +180,7 @@ def iot_num_dim_tests(
         "execute": True,
     }
     log_test_marker(messages, test_id)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert standard_dimension_assertion(
         config,
@@ -193,6 +191,7 @@ def iot_num_dim_tests(
         data_db,
         table_name,
         split_type=expected_split_type,
+        offload_messages=offload_messages,
     )
 
     # Connections are being left open, explicitly close them.
@@ -238,7 +237,7 @@ def iot_str_dim_tests(
         "execute": True,
     }
     log_test_marker(messages, test_id)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert standard_dimension_assertion(
         config,
@@ -249,6 +248,7 @@ def iot_str_dim_tests(
         data_db,
         table_name,
         split_type=expected_split_type,
+        offload_messages=offload_messages,
     )
 
     # Connections are being left open, explicitly close them.
@@ -294,7 +294,7 @@ def iot_ts_dim_tests(
         "execute": True,
     }
     log_test_marker(messages, test_id)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert standard_dimension_assertion(
         config,
@@ -305,6 +305,7 @@ def iot_ts_dim_tests(
         data_db,
         table_name,
         split_type=expected_split_type,
+        offload_messages=offload_messages,
     )
 
     # Connections are being left open, explicitly close them.

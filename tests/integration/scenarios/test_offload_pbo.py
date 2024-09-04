@@ -227,16 +227,22 @@ def check_pbo_metadata(
 
 
 def check_predicate_count_matches_log(
-    frontend_api, messages, schema, table_name, test_id, where_clause
+    frontend_api,
+    test_messages,
+    offload_messages,
+    schema,
+    table_name,
+    test_id,
+    where_clause,
 ):
     """Compare RDBMS count to logged count."""
-    messages.log("check_predicate_count_matches_log(%s)" % test_id)
+    test_messages.log("check_predicate_count_matches_log(%s)" % test_id)
     app_count = frontend_api.get_table_row_count(
         schema, table_name, filter_clause=where_clause
     )
-    offload_count = get_offload_row_count_from_log(messages, test_id)
+    offload_count = get_offload_row_count_from_log(offload_messages, test_messages)
     if app_count != offload_count:
-        messages.log("%s != %s" % (app_count, offload_count))
+        test_messages.log("%s != %s" % (app_count, offload_count))
         return False
     return True
 
@@ -437,13 +443,20 @@ def test_offload_pbo_dim(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:1", detail=VVERBOSE)
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
         )
         assert standard_dimension_assertion(
-            config, backend_api, messages, repo_client, schema, data_db, DIM_TABLE
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            DIM_TABLE,
+            offload_messages=offload_messages,
         )
         assert pbo_assertion(
             messages,
@@ -460,6 +473,7 @@ def test_offload_pbo_dim(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             DIM_TABLE,
             f"{id}:1",
@@ -543,7 +557,7 @@ def test_offload_pbo_dim(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:2", detail=VVERBOSE)
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
@@ -567,6 +581,7 @@ def test_offload_pbo_dim(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             DIM_TABLE,
             f"{id}:2",
@@ -614,13 +629,20 @@ def test_offload_pbo_unicode(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:1", detail=VVERBOSE)
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
         )
         assert standard_dimension_assertion(
-            config, backend_api, messages, repo_client, schema, data_db, UNICODE_TABLE
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            UNICODE_TABLE,
+            offload_messages=offload_messages,
         )
         assert pbo_assertion(
             messages,
@@ -633,6 +655,7 @@ def test_offload_pbo_unicode(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             UNICODE_TABLE,
             f"{id}:1",
@@ -648,13 +671,20 @@ def test_offload_pbo_unicode(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:2", detail=VVERBOSE)
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
         )
         assert standard_dimension_assertion(
-            config, backend_api, messages, repo_client, schema, data_db, UNICODE_TABLE
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            UNICODE_TABLE,
+            offload_messages=offload_messages,
         )
         assert pbo_assertion(
             messages,
@@ -667,6 +697,7 @@ def test_offload_pbo_unicode(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             UNICODE_TABLE,
             f"{id}:2",
@@ -710,13 +741,20 @@ def test_offload_pbo_char_pad(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:1", detail=VVERBOSE)
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
         )
         assert standard_dimension_assertion(
-            config, backend_api, messages, repo_client, schema, data_db, CHAR_TABLE
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            CHAR_TABLE,
+            offload_messages=offload_messages,
         )
         assert pbo_assertion(
             messages,
@@ -729,6 +767,7 @@ def test_offload_pbo_char_pad(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             CHAR_TABLE,
             f"{id}:1",
@@ -786,13 +825,20 @@ def test_offload_pbo_ts(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:1", detail=VVERBOSE)
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
         )
         assert standard_dimension_assertion(
-            config, backend_api, messages, repo_client, schema, data_db, TS_TABLE
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            TS_TABLE,
+            offload_messages=offload_messages,
         )
         assert pbo_assertion(
             messages,
@@ -805,6 +851,7 @@ def test_offload_pbo_ts(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             TS_TABLE,
             f"{id}:1",
@@ -873,7 +920,7 @@ def test_offload_pbo_range(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:1", detail=VVERBOSE)
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert pbo_assertion(
             messages,
             repo_client,
@@ -892,6 +939,7 @@ def test_offload_pbo_range(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             RANGE_TABLE,
             f"{id}:1",
@@ -1032,7 +1080,7 @@ def test_offload_pbo_list(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:1", detail=VVERBOSE)
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert pbo_assertion(
             messages,
             repo_client,
@@ -1051,6 +1099,7 @@ def test_offload_pbo_list(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             LIST_TABLE,
             f"{id}:1",
@@ -1081,7 +1130,7 @@ def test_offload_pbo_list(config, schema, data_db):
             "execute": True,
         }
         messages.log(f"{id}:2", detail=VVERBOSE)
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert pbo_assertion(
             messages,
             repo_client,
@@ -1100,6 +1149,7 @@ def test_offload_pbo_list(config, schema, data_db):
         assert check_predicate_count_matches_log(
             frontend_api,
             messages,
+            offload_messages,
             schema,
             LIST_TABLE,
             f"{id}:2",

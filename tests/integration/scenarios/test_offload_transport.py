@@ -107,10 +107,6 @@ def data_db(schema, config):
     return data_db
 
 
-def log_test_marker(messages, test_id):
-    messages.log(test_id, detail=VVERBOSE)
-
-
 def simple_offload_test(
     config, schema, data_db, table_name, transport_method, messages, test_id
 ):
@@ -291,13 +287,11 @@ def offload_transport_polling_validation_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    log_test_marker(messages, f"{test_id}:1")
     offload_messages = run_offload(options, config, messages)
     assert text_in_log(
         offload_messages,
         POLLING_VALIDATION_TEXT % "OffloadTransportSqlStatsThread",
         messages,
-        f"{test_id}:1",
     )
 
     # Offload with disabled SQL stats validation.
@@ -308,20 +302,17 @@ def offload_transport_polling_validation_tests(
         "reset_backend_table": True,
         "execute": True,
     }
-    log_test_marker(messages, f"{test_id}:2")
     run_offload(options, config, messages)
     assert not text_in_log(
         offload_messages,
         OFFLOAD_TRANSPORT_SQL_STATISTICS_TITLE,
         messages,
-        search_from_text=f"{test_id}:2",
     )
     assert (
         text_in_log(
             offload_messages,
             MISSING_ROWS_IMPORTED_WARNING,
             messages,
-            search_from_text=f"{test_id}:2",
         )
         == expect_missing_validation_warning
     )

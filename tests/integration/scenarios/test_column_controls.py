@@ -60,6 +60,7 @@ from tests.integration.scenarios.assertion_functions import (
     backend_column_exists,
     frontend_column_exists,
     hint_text_in_log,
+    text_in_messages,
 )
 from tests.integration.scenarios.scenario_runner import (
     ScenarioRunnerException,
@@ -136,10 +137,6 @@ def load_db(schema, config):
     load_db = load_db_name(schema, config)
     load_db = convert_backend_identifier_case(config, load_db)
     return load_db
-
-
-def log_test_marker(messages, test_id):
-    messages.log(test_id, detail=VVERBOSE)
 
 
 def cast_validation_exception_text(backend_api):
@@ -574,8 +571,8 @@ def samp_date_assertion(
             % ("good_ts", expected_good_data_type)
         )
     if expected_bad_data_type != expected_good_data_type:
-        text_match = offload_messages.text_in_messages(
-            DATETIME_STATS_SAMPLING_OPT_ACTION_TEXT
+        text_match = text_in_messages(
+            offload_messages, DATETIME_STATS_SAMPLING_OPT_ACTION_TEXT, messages
         )
         if text_match != from_stats:
             raise ScenarioRunnerException(
@@ -837,9 +834,8 @@ def test_numeric_controls(config, schema, data_db):
                 "verify_row_count": False,
                 "execute": True,
             }
-            log_test_marker(messages, f"{id}:samp1")
             offload_messages = run_offload(options, config, messages)
-            assert hint_text_in_log(offload_messages, config, 0, f"{id}:samp1")
+            assert hint_text_in_log(offload_messages, config, 0)
 
         # Offload Dimension With Parallel Sampling=3.
         # Runs with --no-verify to remove risk of verification having a PARALLEL hint.
@@ -852,9 +848,8 @@ def test_numeric_controls(config, schema, data_db):
                 "verify_row_count": False,
                 "execute": True,
             }
-            log_test_marker(messages, f"{id}:samp2")
             offload_messages = run_offload(options, config, messages)
-            assert hint_text_in_log(offload_messages, config, 3, f"{id}:samp2")
+            assert hint_text_in_log(offload_messages, config, 3)
 
         # Offload Dimension with number overflow (expect to fail).
         if config.target not in [offload_constants.DBTYPE_BIGQUERY]:

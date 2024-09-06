@@ -123,10 +123,6 @@ def backend_case_offload_assertion(
     return result
 
 
-def log_test_marker(messages, test_id):
-    messages.log(test_id, detail=VVERBOSE)
-
-
 def test_identifiers_keyword_column_names(config, schema, data_db):
     id = "test_identifiers_keyword_column_names"
     with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(

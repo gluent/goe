@@ -95,10 +95,6 @@ def data_db(schema: str, config: OrchestrationConfig) -> str:
     return data_db
 
 
-def log_test_marker(messages, test_id):
-    messages.log(test_id, detail=VVERBOSE)
-
-
 def gen_num_dim_table_ddl(frontend_api, schema, table_name):
     ddl = [
         f"DROP TABLE {schema}.{table_name}",
@@ -179,7 +175,6 @@ def iot_num_dim_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    log_test_marker(messages, test_id)
     offload_messages = run_offload(options, config, messages)
 
     assert standard_dimension_assertion(
@@ -236,7 +231,6 @@ def iot_str_dim_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    log_test_marker(messages, test_id)
     offload_messages = run_offload(options, config, messages)
 
     assert standard_dimension_assertion(
@@ -293,7 +287,6 @@ def iot_ts_dim_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    log_test_marker(messages, test_id)
     offload_messages = run_offload(options, config, messages)
 
     assert standard_dimension_assertion(

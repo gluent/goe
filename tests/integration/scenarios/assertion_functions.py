@@ -62,7 +62,6 @@ def hint_text_in_log(
     offload_messages: "OffloadMessages",
     config: "OrchestrationConfig",
     parallelism: int,
-    search_from_text,
 ):
     if config.db_type == DBTYPE_ORACLE:
         hint = (
@@ -70,9 +69,7 @@ def hint_text_in_log(
             if parallelism in (0, 1)
             else "PARALLEL({})".format(str(parallelism))
         )
-        return bool(
-            test_functions.get_line_from_log(offload_messages, hint, search_from_text)
-        )
+        return bool(test_functions.get_line_from_log(offload_messages, hint))
     else:
         return False
 
@@ -596,9 +593,10 @@ def sales_based_fact_assertion(
     elif offload_pattern == OFFLOAD_PATTERN_100_0:
         offload_type = OFFLOAD_TYPE_FULL
         incremental_key = None
-        check_fn = lambda mt: bool(
-            not mt.incremental_key and not mt.incremental_high_value
-        )
+
+        def check_fn(mt):
+            return bool(not mt.incremental_key and not mt.incremental_high_value)
+
     elif offload_pattern == OFFLOAD_PATTERN_100_10:
         offload_type = OFFLOAD_TYPE_FULL
 

@@ -72,10 +72,6 @@ def data_db(schema, config):
     return data_db
 
 
-def log_test_marker(messages, test_id):
-    messages.log(test_id, detail=VVERBOSE)
-
-
 def test_offload_misc_verification_parallel(config, schema, data_db):
     id = "test_offload_misc_verification_parallel"
 
@@ -112,9 +108,8 @@ def test_offload_misc_verification_parallel(config, schema, data_db):
             "reset_backend_table": True,
             "execute": False,
         }
-        log_test_marker(messages, f"{id}1")
-        run_offload(options, config, messages)
-        assert hint_text_in_log(messages, config, 3, f"{id}1")
+        offload_messages = run_offload(options, config, messages)
+        assert hint_text_in_log(offload_messages, config, 3)
 
         # Offload with verification parallelism=1.
         options = {
@@ -124,9 +119,8 @@ def test_offload_misc_verification_parallel(config, schema, data_db):
             "reset_backend_table": True,
             "execute": False,
         }
-        log_test_marker(messages, f"{id}2")
-        run_offload(options, config, messages)
-        assert hint_text_in_log(messages, config, 1, f"{id}2")
+        offload_messages = run_offload(options, config, messages)
+        assert hint_text_in_log(offload_messages, config, 1)
 
         # Offload with verification parallelism=0.
         options = {
@@ -136,9 +130,8 @@ def test_offload_misc_verification_parallel(config, schema, data_db):
             "reset_backend_table": True,
             "execute": False,
         }
-        log_test_marker(messages, f"{id}3")
-        run_offload(options, config, messages)
-        assert hint_text_in_log(messages, config, 0, f"{id}3")
+        offload_messages = run_offload(options, config, messages)
+        assert hint_text_in_log(offload_messages, config, 0)
 
         # Offload with aggregation verification parallelism=4.
         options = {
@@ -150,9 +143,8 @@ def test_offload_misc_verification_parallel(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        log_test_marker(messages, f"{id}4")
-        run_offload(options, config, messages)
-        assert hint_text_in_log(messages, config, 4, f"{id}4")
+        offload_messages = run_offload(options, config, messages)
+        assert hint_text_in_log(offload_messages, config, 4)
 
 
 def test_offload_misc_maxvalue_partition(config, schema, data_db):

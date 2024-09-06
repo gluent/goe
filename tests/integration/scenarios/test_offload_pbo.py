@@ -476,7 +476,7 @@ def test_offload_pbo_dim(config, schema, data_db):
             offload_messages,
             schema,
             DIM_TABLE,
-            f"{id}:1",
+            id,
             "txn_desc = 'ABC'",
         )
 
@@ -584,7 +584,7 @@ def test_offload_pbo_dim(config, schema, data_db):
             offload_messages,
             schema,
             DIM_TABLE,
-            f"{id}:2",
+            id,
             "txn_desc = 'GHI'",
         )
 
@@ -658,7 +658,7 @@ def test_offload_pbo_unicode(config, schema, data_db):
             offload_messages,
             schema,
             UNICODE_TABLE,
-            f"{id}:1",
+            id,
             "data = '%s'" % UCODE_VALUE1,
         )
 
@@ -700,7 +700,7 @@ def test_offload_pbo_unicode(config, schema, data_db):
             offload_messages,
             schema,
             UNICODE_TABLE,
-            f"{id}:2",
+            id,
             "data = '%s'" % UCODE_VALUE2,
         )
 
@@ -770,7 +770,7 @@ def test_offload_pbo_char_pad(config, schema, data_db):
             offload_messages,
             schema,
             CHAR_TABLE,
-            f"{id}:1",
+            id,
             "data = 'a  '",
         )
 
@@ -854,7 +854,7 @@ def test_offload_pbo_ts(config, schema, data_db):
             offload_messages,
             schema,
             TS_TABLE,
-            f"{id}:1",
+            id,
             "id = 1",
         )
 
@@ -942,7 +942,7 @@ def test_offload_pbo_range(config, schema, data_db):
             offload_messages,
             schema,
             RANGE_TABLE,
-            f"{id}:1",
+            id,
             "time_id >= %s and time_id < %s"
             % (
                 const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_2),
@@ -1102,7 +1102,7 @@ def test_offload_pbo_list(config, schema, data_db):
             offload_messages,
             schema,
             LIST_TABLE,
-            f"{id}:1",
+            id,
             "yrmon = %s AND channel_id = 3"
             % const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_1),
         )
@@ -1152,7 +1152,7 @@ def test_offload_pbo_list(config, schema, data_db):
             offload_messages,
             schema,
             LIST_TABLE,
-            f"{id}:2",
+            id,
             "yrmon = %s AND channel_id = 4"
             % const_to_date_expr(config, test_constants.SALES_BASED_FACT_HV_1),
         )

@@ -189,7 +189,7 @@ def fact_as_date_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert sales_based_fact_assertion(
         config,
@@ -202,6 +202,7 @@ def fact_as_date_tests(
         table_name,
         test_constants.SALES_BASED_FACT_HV_2,
         check_backend_rowcount=True,
+        offload_messages=offload_messages,
     )
     assert offload_date_assertion(
         config,
@@ -456,7 +457,7 @@ def test_offload_backend_part_date_as_str(config, schema, data_db):
             "reset_backend_table": True,
             "execute": True,
         }
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
@@ -477,6 +478,7 @@ def test_offload_backend_part_date_as_str(config, schema, data_db):
                 test_constants.SALES_BASED_FACT_HV_1,
                 check_backend_rowcount=True,
                 offload_pattern=scenario_constants.OFFLOAD_PATTERN_90_10,
+                offload_messages=offload_messages,
             )
             assert backend_column_exists(
                 backend_api,

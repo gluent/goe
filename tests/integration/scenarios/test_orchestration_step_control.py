@@ -99,7 +99,7 @@ def test_offload_step_dim(config, schema, data_db):
         offload_messages = run_offload(options, config, messages)
         assert (
             messages_step_executions(
-                offload_messages, step_title(command_steps.STEP_VALIDATE_DATA)
+                offload_messages, step_title(command_steps.STEP_VALIDATE_DATA), messages
             )
             == 0
         )
@@ -116,7 +116,9 @@ def test_offload_step_dim(config, schema, data_db):
         offload_messages = run_offload(options, config, messages)
         assert (
             messages_step_executions(
-                offload_messages, step_title(command_steps.STEP_VALIDATE_CASTS)
+                offload_messages,
+                step_title(command_steps.STEP_VALIDATE_CASTS),
+                messages,
             )
             == 0
         )
@@ -135,7 +137,9 @@ def test_offload_step_dim(config, schema, data_db):
         offload_messages = run_offload(options, config, messages)
         assert (
             messages_step_executions(
-                offload_messages, step_title(command_steps.STEP_VERIFY_EXPORTED_DATA)
+                offload_messages,
+                step_title(command_steps.STEP_VERIFY_EXPORTED_DATA),
+                messages,
             )
             == 0
         )

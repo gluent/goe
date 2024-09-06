@@ -225,7 +225,7 @@ def offload_range_ipa_standard_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert sales_based_fact_assertion(
         config,
@@ -241,6 +241,7 @@ def offload_range_ipa_standard_tests(
         backend_table=backend_name,
         partition_functions=udf,
         synthetic_partition_column_name=expected_goe_part_name,
+        offload_messages=offload_messages,
     )
 
     # RANGE Offload 2nd Partition.
@@ -253,7 +254,7 @@ def offload_range_ipa_standard_tests(
         "synthetic_partition_digits": different_partition_digits,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert sales_based_fact_assertion(
         config,
@@ -268,6 +269,7 @@ def offload_range_ipa_standard_tests(
         incremental_key_type=part_key_type,
         partition_functions=udf,
         synthetic_partition_column_name=expected_goe_part_name,
+        offload_messages=offload_messages,
     )
 
     # RANGE Offload 3rd Partition - Verification.
@@ -276,7 +278,7 @@ def offload_range_ipa_standard_tests(
         less_than_option: hv_3,
         "execute": False,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     # Assert HV is still from prior offload.
     assert sales_based_fact_assertion(
@@ -292,6 +294,7 @@ def offload_range_ipa_standard_tests(
         incremental_key_type=part_key_type,
         partition_functions=udf,
         synthetic_partition_column_name=expected_goe_part_name,
+        offload_messages=offload_messages,
     )
 
     # RANGE Offload With Multiple Partition Names - Expect Exception.
@@ -317,7 +320,7 @@ def offload_range_ipa_standard_tests(
         "verify_row_count": "aggregate",
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert sales_based_fact_assertion(
         config,
@@ -331,6 +334,7 @@ def offload_range_ipa_standard_tests(
         hv_3,
         incremental_key_type=part_key_type,
         partition_functions=udf,
+        offload_messages=offload_messages,
     )
 
     # RANGE No-op of 3rd Partition.
@@ -340,7 +344,7 @@ def offload_range_ipa_standard_tests(
         "execute": True,
     }
     # On Teradata we can't test by partition name in previous test so this test will not be a no-op.
-    run_offload(
+    offload_messages = run_offload(
         options,
         config,
         messages,
@@ -359,6 +363,7 @@ def offload_range_ipa_standard_tests(
         hv_3,
         incremental_key_type=part_key_type,
         partition_functions=udf,
+        offload_messages=offload_messages,
     )
 
     # Setup - drop oldest partition from fact.
@@ -384,7 +389,7 @@ def offload_range_ipa_standard_tests(
         less_than_option: hv_4,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
 
     assert sales_based_fact_assertion(
         config,
@@ -398,6 +403,7 @@ def offload_range_ipa_standard_tests(
         hv_4,
         incremental_key_type=part_key_type,
         partition_functions=udf,
+        offload_messages=offload_messages,
     )
 
     # Setup - drop all offloaded partitions from fact.
@@ -426,7 +432,7 @@ def offload_range_ipa_standard_tests(
         less_than_option: hv_4,
         "execute": True,
     }
-    run_offload(options, config, messages, expected_status=False)
+    offload_messages = run_offload(options, config, messages, expected_status=False)
 
     assert sales_based_fact_assertion(
         config,
@@ -440,6 +446,7 @@ def offload_range_ipa_standard_tests(
         hv_4,
         incremental_key_type=part_key_type,
         partition_functions=udf,
+        offload_messages=offload_messages,
     )
 
 
@@ -701,7 +708,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert sales_based_fact_assertion(
             config,
@@ -715,6 +722,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
             "U",
             incremental_key="STR",
             incremental_key_type=canonical_string,
+            offload_messages=offload_messages,
         )
 
         # 2nd Offload By Lower Case Character.
@@ -723,7 +731,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
             "less_than_value": "u",
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert sales_based_fact_assertion(
             config,
@@ -737,6 +745,7 @@ def test_offload_rpa_alpha(config, schema, data_db):
             "u",
             incremental_key="STR",
             incremental_key_type=canonical_string,
+            offload_messages=offload_messages,
         )
 
 
@@ -784,7 +793,7 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -795,6 +804,7 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
             data_db,
             NOSEG_FACT,
             test_constants.SALES_BASED_FACT_HV_2,
+            offload_messages=offload_messages,
         )
 
         # Offload remaining empty partitions, metadata should still reflect this.
@@ -804,7 +814,7 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
             "max_offload_chunk_count": 1,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -815,4 +825,5 @@ def test_offload_rpa_empty_partitions(config, schema, data_db):
             data_db,
             NOSEG_FACT,
             test_constants.SALES_BASED_FACT_HV_5,
+            offload_messages=offload_messages,
         )

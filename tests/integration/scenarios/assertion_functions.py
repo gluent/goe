@@ -55,13 +55,13 @@ if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
     from testlib.test_framework.backend_testing_api import BackendTestingApiInterface
     from testlib.test_framework.frontend_testing_api import FrontendTestingApiInterface
+    from testlib.test_framework.offload_test_messages import OffloadTestMessages
 
 
 def hint_text_in_log(
-    messages: "OffloadMessages",
+    offload_messages: "OffloadMessages",
     config: "OrchestrationConfig",
     parallelism: int,
-    search_from_text,
 ):
     if config.db_type == DBTYPE_ORACLE:
         hint = (
@@ -69,47 +69,62 @@ def hint_text_in_log(
             if parallelism in (0, 1)
             else "PARALLEL({})".format(str(parallelism))
         )
-        return bool(messages.get_line_from_log(hint, search_from_text))
+        return bool(test_functions.get_line_from_log(offload_messages, hint))
     else:
         return False
 
 
 def text_in_log(
-    messages: "OffloadMessages", search_text: str, search_from_text=""
+    offload_messages: "OffloadMessages",
+    search_text: str,
+    test_messages: "OffloadTestMessages",
+    search_from_text="",
 ) -> bool:
     # Do not log search_text below because that is a sure fire way to break the check.
-    messages.log(f'text_in_log(">8 snip 8<", "{search_from_text}")', detail=VERBOSE)
+    test_messages.log(
+        f'text_in_log(">8 snip 8<", "{search_from_text}")', detail=VERBOSE
+    )
     return bool(
-        messages.get_line_from_log(search_text, search_from_text=search_from_text)
+        test_functions.get_line_from_log(
+            offload_messages, search_text, search_from_text=search_from_text
+        )
     )
 
 
-def text_in_events(messages, message_token) -> bool:
-    messages.log(f"text_in_events({message_token})", detail=VERBOSE)
-    return test_functions.text_in_events(messages, message_token)
+def text_in_events(
+    offload_messages: "OffloadMessages",
+    message_token,
+    test_messages: "OffloadTestMessages",
+) -> bool:
+    test_messages.log(f"text_in_events({message_token})", detail=VERBOSE)
+    return test_functions.text_in_events(offload_messages, message_token)
 
 
-def text_in_messages(messages, log_text) -> bool:
-    messages.log(f"text_in_messages({log_text})", detail=VERBOSE)
-    return test_functions.text_in_messages(messages, log_text)
+def text_in_messages(
+    offload_messages: "OffloadMessages", log_text, test_messages: "OffloadTestMessages"
+) -> bool:
+    test_messages.log(f"text_in_messages({log_text})", detail=VERBOSE)
+    return test_functions.text_in_messages(offload_messages, log_text)
 
 
-def messages_step_executions(messages, step_text) -> int:
+def messages_step_executions(
+    offload_messages: "OffloadMessages", step_text, test_messages: "OffloadTestMessages"
+) -> int:
     """Return the number of times step "step_text" was executed."""
     assert step_text
-    messages.log("messages_step_executions: %s" % step_text, detail=VERBOSE)
-    if messages and step_text in messages.steps:
-        return messages.steps[step_text]["count"]
+    test_messages.log("messages_step_executions: %s" % step_text, detail=VERBOSE)
+    if offload_messages and step_text in offload_messages.steps:
+        return offload_messages.steps[step_text]["count"]
     return 0
 
 
-def get_offload_row_count_from_log(messages, test_name):
+def get_offload_row_count_from_log(offload_messages, test_messages):
     """Search test log forwards from the "test_name" we are processing and find the offload row count"""
-    messages.log("get_offload_row_count_from_log(%s)" % test_name, detail=VERBOSE)
-    matched_line = messages.get_line_from_log(
-        TOTAL_ROWS_OFFLOADED_LOG_TEXT, search_from_text=test_name
+    test_messages.log("get_offload_row_count_from_log()", detail=VERBOSE)
+    matched_line = test_functions.get_line_from_log(
+        offload_messages, TOTAL_ROWS_OFFLOADED_LOG_TEXT
     )
-    messages.log("matched_line: %s" % matched_line)
+    test_messages.log("matched_line: %s" % matched_line)
     rows = int(matched_line.split()[-1]) if matched_line else None
     return rows
 
@@ -425,11 +440,13 @@ def load_table_is_compressed(db_name, table_name, config, dfs_client, messages):
 
 
 def offload_rowsource_split_type_assertion(
-    messages: "OffloadMessages", story_id: str, split_type: str
+    offload_messages: "OffloadMessages",
+    split_type: str,
+    test_messages: "OffloadTestMessages",
 ):
     search = TRANSPORT_ROW_SOURCE_QUERY_SPLIT_TYPE_TEXT + split_type
-    if not text_in_log(messages, search, "(%s)" % (story_id)):
-        messages.log(
+    if not text_in_log(offload_messages, search, test_messages):
+        test_messages.log(
             f"offload_rowsource_split_type_assertion failed, did not find: {search}"
         )
         return False
@@ -474,17 +491,17 @@ def date_goe_part_column_name(backend_api, source_col_name, granularity_override
 def standard_dimension_assertion(
     config: "OrchestrationConfig",
     backend_api: "BackendTestingApiInterface",
-    messages: "OffloadMessages",
+    messages: "OffloadTestMessages",
     repo_client: "OrchestrationRepoClientInterface",
     schema: str,
     data_db: str,
     table_name: str,
     backend_db=None,
     backend_table=None,
-    story_id="",
     split_type=None,
     partition_functions=None,
     bucket_column=None,
+    offload_messages: "OffloadMessages" = None,
 ) -> bool:
     data_db = backend_db or data_db
     backend_table = backend_table or table_name
@@ -509,11 +526,15 @@ def standard_dimension_assertion(
         messages.log("backend_table_exists() == False")
         return False
 
-    if text_in_messages(messages, MISSING_ROWS_IMPORTED_WARNING):
+    if offload_messages and text_in_messages(
+        offload_messages, MISSING_ROWS_IMPORTED_WARNING, messages
+    ):
         return False
 
-    if split_type:
-        if not offload_rowsource_split_type_assertion(messages, story_id, split_type):
+    if split_type and offload_messages:
+        if not offload_rowsource_split_type_assertion(
+            offload_messages, split_type, messages
+        ):
             return False
 
     return True
@@ -523,7 +544,7 @@ def sales_based_fact_assertion(
     config: "OrchestrationConfig",
     backend_api: "BackendTestingApiInterface",
     frontend_api: "FrontendTestingApiInterface",
-    messages: "OffloadMessages",
+    messages: "OffloadTestMessages",
     repo_client: "OrchestrationRepoClientInterface",
     schema: str,
     data_db: str,
@@ -534,7 +555,6 @@ def sales_based_fact_assertion(
     offload_pattern=OFFLOAD_PATTERN_90_10,
     incremental_key="TIME_ID",
     incremental_range=None,
-    story_id="",
     split_type=None,
     check_hwm_in_metadata=True,
     ipa_predicate_type="RANGE",
@@ -543,6 +563,7 @@ def sales_based_fact_assertion(
     partition_functions=None,
     synthetic_partition_column_name=None,
     check_backend_rowcount=False,
+    offload_messages: "OffloadMessages" = None,
 ) -> bool:
     data_db = backend_db or data_db
     backend_table = backend_table or table_name
@@ -572,9 +593,10 @@ def sales_based_fact_assertion(
     elif offload_pattern == OFFLOAD_PATTERN_100_0:
         offload_type = OFFLOAD_TYPE_FULL
         incremental_key = None
-        check_fn = lambda mt: bool(
-            not mt.incremental_key and not mt.incremental_high_value
-        )
+
+        def check_fn(mt):
+            return bool(not mt.incremental_key and not mt.incremental_high_value)
+
     elif offload_pattern == OFFLOAD_PATTERN_100_10:
         offload_type = OFFLOAD_TYPE_FULL
 
@@ -625,11 +647,15 @@ def sales_based_fact_assertion(
         ):
             return False
 
-    if text_in_messages(messages, MISSING_ROWS_IMPORTED_WARNING):
+    if offload_messages and text_in_messages(
+        offload_messages, MISSING_ROWS_IMPORTED_WARNING, messages
+    ):
         return False
 
-    if split_type:
-        if not offload_rowsource_split_type_assertion(messages, story_id, split_type):
+    if split_type and offload_messages:
+        if not offload_rowsource_split_type_assertion(
+            offload_messages, split_type, messages
+        ):
             return False
 
     return True

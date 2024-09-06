@@ -1621,7 +1621,7 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
             password_snippet = get_password_snippet()
 
         # Certain config should not be logged
-        config_blacklist = [
+        config_nolog = [
             "spark.jdbc.password",
             "spark.authenticate.secret",
             "spark.hadoop.fs.gs.auth.service.account.private.key",
@@ -1635,13 +1635,13 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
         ]
         debug_conf_snippet = dedent(
             """\
-                                    config_blacklist = %s
+                                    config_nolog = %s
                                     for kv in sorted(spark.sparkContext.getConf().getAll()):
-                                        if kv[0] in config_blacklist:
+                                        if kv[0] in config_nolog:
                                             print(kv[0], '?')
                                         else:
                                             print(kv)"""
-            % repr(config_blacklist)
+            % repr(config_nolog)
         )
 
         params = {

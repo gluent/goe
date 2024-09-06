@@ -177,7 +177,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    run_offload(
+    offload_messages = run_offload(
         options,
         config,
         messages,
@@ -198,6 +198,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         backend_table=backend_name,
         partition_functions=udf,
         synthetic_partition_column_name=gl_part_column_check_name,
+        offload_messages=offload_messages,
     )
 
     # 2nd partition happens to be empty but we should still move HWMs etc.
@@ -206,7 +207,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         less_than_option: hv_3,
         "execute": True,
     }
-    run_offload(
+    offload_messages = run_offload(
         options,
         config,
         messages,
@@ -226,6 +227,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         incremental_key_type=part_key_type,
         partition_functions=udf,
         synthetic_partition_column_name=gl_part_column_check_name,
+        offload_messages=offload_messages,
     )
 
     # Attempt to top up LIST_AS_RANGE by LPA - expect exception.
@@ -262,7 +264,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         "partition_names_csv": test_constants.SALES_BASED_LIST_PNAME_4,
         "execute": True,
     }
-    run_offload(
+    offload_messages = run_offload(
         options,
         config,
         messages,
@@ -281,6 +283,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         ipa_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
         incremental_key_type=part_key_type,
         partition_functions=udf,
+        offload_messages=offload_messages,
     )
 
     # No-op re-offload of 3rd partition.
@@ -320,7 +323,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         less_than_option: hv_5,
         "execute": True,
     }
-    run_offload(
+    offload_messages = run_offload(
         options,
         config,
         messages,
@@ -339,6 +342,7 @@ def offload_list_as_range_ipa_standard_story_tests(
         ipa_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
         incremental_key_type=part_key_type,
         partition_functions=udf,
+        offload_messages=offload_messages,
     )
 
 
@@ -582,7 +586,7 @@ def test_offload_list_rpa_subpart(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
@@ -601,4 +605,5 @@ def test_offload_list_rpa_subpart(config, schema, data_db):
             ipa_predicate_type=INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE,
             incremental_key_type=ORACLE_TYPE_NUMBER,
             incremental_range="PARTITION",
+            offload_messages=offload_messages,
         )

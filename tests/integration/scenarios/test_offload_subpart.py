@@ -29,9 +29,7 @@ from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
-from tests.integration.scenarios.assertion_functions import (
-    sales_based_fact_assertion,
-)
+from tests.integration.scenarios.assertion_functions import sales_based_fact_assertion
 from tests.integration.scenarios import scenario_constants
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
@@ -110,7 +108,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert sales_based_fact_assertion(
             config,
@@ -123,6 +121,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
             FACT_LIST_RANGE_R,
             test_constants.SALES_BASED_FACT_HV_1,
             incremental_range="SUBPARTITION",
+            offload_messages=offload_messages,
         )
 
         # Incremental Offload of Subpartitioned Fact.
@@ -131,7 +130,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
             "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert sales_based_fact_assertion(
             config,
@@ -144,6 +143,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
             FACT_LIST_RANGE_R,
             test_constants.SALES_BASED_FACT_HV_2,
             incremental_range="SUBPARTITION",
+            offload_messages=offload_messages,
         )
 
         # This test chooses a HWM that is not common across all list partition values and therefore should throw an exception.
@@ -172,7 +172,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
             "offload_type": OFFLOAD_TYPE_FULL,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert sales_based_fact_assertion(
             config,
@@ -186,6 +186,7 @@ def test_offload_subpart_lr_range(config, schema, data_db):
             None,
             incremental_range="SUBPARTITION",
             offload_pattern=scenario_constants.OFFLOAD_PATTERN_100_0,
+            offload_messages=offload_messages,
         )
 
         # Offload Type FULL->INCREMENTAL of Subpartitioned Fact (Expect to Fail).
@@ -312,7 +313,7 @@ def test_offload_subpart_range_range(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -326,6 +327,7 @@ def test_offload_subpart_range_range(config, schema, data_db):
             incremental_range="PARTITION",
             incremental_key="CHANNEL_ID",
             incremental_key_type=ORACLE_TYPE_NUMBER,
+            offload_messages=offload_messages,
         )
 
         # Offload a RANGE/RANGE NUMBER/DATE table at subpartition level RANGE.
@@ -336,7 +338,7 @@ def test_offload_subpart_range_range(config, schema, data_db):
             "reset_backend_table": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -348,6 +350,7 @@ def test_offload_subpart_range_range(config, schema, data_db):
             FACT_RANGE_RANGE,
             test_constants.SALES_BASED_FACT_HV_1,
             incremental_range="SUBPARTITION",
+            offload_messages=offload_messages,
         )
 
 
@@ -386,7 +389,7 @@ def test_offload_subpart_hash_range(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -398,4 +401,5 @@ def test_offload_subpart_hash_range(config, schema, data_db):
             FACT_HASH_RANGE,
             test_constants.SALES_BASED_FACT_HV_1,
             incremental_range="SUBPARTITION",
+            offload_messages=offload_messages,
         )

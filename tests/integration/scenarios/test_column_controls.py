@@ -41,7 +41,6 @@ from goe.offload.offload_functions import (
     data_db_name,
     load_db_name,
 )
-from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_source_table import (
     DATA_SAMPLE_SIZE_AUTO,
     DATETIME_STATS_SAMPLING_OPT_ACTION_TEXT,

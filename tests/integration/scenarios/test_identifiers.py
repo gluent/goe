@@ -24,7 +24,6 @@ from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
 )
-from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_transport import (
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
     OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD,

@@ -22,7 +22,6 @@ from goe.offload.offload_functions import (
     data_db_name,
     load_db_name,
 )
-from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_transport import (
     MISSING_ROWS_IMPORTED_WARNING,
     OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
@@ -383,7 +382,7 @@ def test_offload_transport_spark_thrift(config, schema, data_db):
     # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_spark_thrift"
     with get_test_messages_ctx(config, id) as messages:
-        if not is_spark_submit_available(config, None, messages=messages):
+        if not is_spark_thrift_available(config, None, messages=messages):
             pytest.skip(f"Skipping {id} because Spark Thriftserver is not configured")
 
         simple_offload_test(

@@ -21,11 +21,9 @@
 from contextlib import contextmanager
 
 from goe.goe import (
-    get_log_fh_name,
     log as offload_log,
     normal,
 )
-from goe.offload.offload_constants import DBTYPE_ORACLE
 from goe.offload.offload_functions import convert_backend_identifier_case, data_db_name
 from goe.offload.offload_messages import OffloadMessages
 from goe.util.goe_log_fh import GOELogFileHandle
@@ -114,11 +112,6 @@ def get_line_from_log(
         messages, search_text, search_from_text=search_from_text, max_matches=1
     )
     return matches[0] if matches else None
-
-
-def get_test_set_sql_path(directory_name, db_type=None):
-    db_type = db_type or DBTYPE_ORACLE
-    return f"test_sets/{directory_name}/sql/{db_type}"
 
 
 def goe_wide_max_columns(frontend_api, backend_api_or_count):

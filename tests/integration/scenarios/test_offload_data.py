@@ -178,7 +178,7 @@ def gen_fractional_second_partition_table_ddl(
 
 
 def gen_offload_nulls_create_ddl(
-    schema, table_name, backend_api, frontend_api, config, to_allow_query_import
+    schema, table_name, backend_api, frontend_api, config, to_allow_query_import=False
 ):
     ddl = ["DROP TABLE %(schema)s.%(table)s" % {"schema": schema, "table": table_name}]
     if config.db_type == offload_constants.DBTYPE_ORACLE:

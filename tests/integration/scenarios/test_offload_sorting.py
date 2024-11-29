@@ -48,6 +48,7 @@ from tests.testlib.test_framework.test_functions import (
 
 OFFLOAD_DIM = "STORY_SORT_DIM"
 OFFLOAD_FACT = "STORY_SORT_FACT"
+MANY_PK_DIM = "STORY_SORT_MANY_PK"
 
 
 @pytest.fixture
@@ -67,17 +68,7 @@ def data_db(schema, config):
     return data_db
 
 
-def dim_sorted_table_supported(backend_api, modify=False):
-    if modify:
-        return bool(
-            backend_api.sorted_table_supported()
-            and backend_api.sorted_table_modify_supported()
-        )
-    else:
-        return backend_api.sorted_table_supported()
-
-
-def fact_sorted_table_supported(backend_api, modify=False):
+def sorted_table_supported(backend_api, modify=False):
     if modify:
         return bool(
             backend_api.sorted_table_supported()
@@ -199,7 +190,7 @@ def test_offload_sorting_dim(config, schema, data_db):
             offload_sort_columns=expected_sort_cols,
         )
 
-        if not dim_sorted_table_supported(backend_api):
+        if not sorted_table_supported(backend_api):
             return
 
         # Offload table with 2 sort columns.
@@ -297,9 +288,8 @@ def test_offload_sorting_fact(config, schema, data_db):
     ) as frontend_api:
         backend_api = get_backend_testing_api(config, messages)
 
-        if not fact_sorted_table_supported(backend_api):
-            messages.log(f"Skipping {id} due to fact_sorted_table_supported() == False")
-            return
+        if not sorted_table_supported(backend_api):
+            pytest.skip(f"Skipping {id} due to sorted_table_supported() == False")
 
         repo_client = orchestration_repo_client_factory(
             config, messages, trace_action=f"repo_client({id})"
@@ -468,3 +458,65 @@ def test_offload_sorting_fact(config, schema, data_db):
         #    repo_client,
         #    offload_sort_columns="CHANNEL_ID,PROMO_ID",
         # )
+
+
+def test_offload_sorting_many_pk_cols(config, schema, data_db):
+    """Test Offload to BigQuery when there are many primary key columns."""
+    id = "test_offload_sorting_many_pk_cols"
+    with get_test_messages_ctx(config, id) as messages, get_frontend_testing_api_ctx(
+        config, messages, trace_action=id
+    ) as frontend_api:
+        backend_api = get_backend_testing_api(config, messages)
+
+        if not sorted_table_supported(backend_api):
+            pytest.skip(f"Skipping {id} due to sorted_table_supported() == False")
+        if backend_api.max_sort_columns() > 4:
+            pytest.skip(f"Skipping {id} due to backend_api.max_sort_columns() > 4")
+
+        repo_client = orchestration_repo_client_factory(
+            config, messages, trace_action=f"repo_client({id})"
+        )
+        backend_name = convert_backend_identifier_case(config, MANY_PK_DIM)
+        sort_cols = [
+            "ID",
+            "PROD_ID",
+            "TXN_DAY",
+            "TXN_DATE",
+            "TXN_TIME",
+        ]
+
+        # Setup
+        run_setup(
+            frontend_api,
+            backend_api,
+            config,
+            messages,
+            frontend_sqls=frontend_api.standard_dimension_frontend_ddl(
+                schema, MANY_PK_DIM, pk_col_name=",".join(sort_cols)
+            ),
+            python_fns=[
+                lambda: drop_backend_test_table(
+                    config, backend_api, messages, data_db, MANY_PK_DIM
+                ),
+            ],
+        )
+
+        # Default Offload Of Dimension.
+        options = {
+            "owner_table": schema + "." + MANY_PK_DIM,
+            "sort_columns_csv": offload_constants.SORT_COLUMNS_NO_CHANGE,
+            "reset_backend_table": True,
+            "create_backend_db": True,
+            "execute": True,
+        }
+        run_offload(options, config, messages)
+        assert sort_story_assertion(
+            schema,
+            MANY_PK_DIM,
+            backend_name,
+            data_db,
+            backend_api,
+            messages,
+            repo_client,
+            offload_sort_columns=",".join(sort_cols[:5]),
+        )

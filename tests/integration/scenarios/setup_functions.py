@@ -136,7 +136,7 @@ def get_sales_based_fact_partition_list(
     """
     if not frontend_api:
         return []
-    if type(hv_string_list) == str:
+    if isinstance(hv_string_list, str):
         hv_string_list = [hv_string_list]
 
     partitions = frontend_api.frontend_table_partition_list(

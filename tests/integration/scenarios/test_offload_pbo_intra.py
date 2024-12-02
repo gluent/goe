@@ -161,7 +161,7 @@ def offload_pbo_intra_day_std_range_tests(
         "reset_backend_table": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -176,6 +176,7 @@ def offload_pbo_intra_day_std_range_tests(
         incremental_key_type=part_key_type,
         incremental_predicate_value="NULL",
         ipa_predicate_type=ipa_predicate_type,
+        offload_messages=offload_messages,
     )
 
     # Attempts to use a predicate without supplying the partition column which is invalid.
@@ -227,7 +228,7 @@ def offload_pbo_intra_day_std_range_tests(
         "execute": True,
     }
     messages.log(f"{test_id}:1", detail=VVERBOSE)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -241,6 +242,7 @@ def offload_pbo_intra_day_std_range_tests(
         incremental_key=inc_key,
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
+        offload_messages=offload_messages,
     )
     assert pbo_assertion(
         messages,
@@ -255,6 +257,7 @@ def offload_pbo_intra_day_std_range_tests(
     assert check_predicate_count_matches_log(
         frontend_api,
         messages,
+        offload_messages,
         schema,
         table_name,
         f"{test_id}:1",
@@ -285,7 +288,7 @@ def offload_pbo_intra_day_std_range_tests(
         "execute": True,
     }
     messages.log(f"{test_id}:2", detail=VVERBOSE)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -299,6 +302,7 @@ def offload_pbo_intra_day_std_range_tests(
         incremental_key=inc_key,
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
+        offload_messages=offload_messages,
     )
     assert pbo_assertion(
         messages,
@@ -312,6 +316,7 @@ def offload_pbo_intra_day_std_range_tests(
     assert check_predicate_count_matches_log(
         frontend_api,
         messages,
+        offload_messages,
         schema,
         table_name,
         f"{test_id}:2",
@@ -326,7 +331,7 @@ def offload_pbo_intra_day_std_range_tests(
         "execute": True,
     }
     messages.log(f"{test_id}:3", detail=VVERBOSE)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -340,6 +345,7 @@ def offload_pbo_intra_day_std_range_tests(
         incremental_key=inc_key,
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
+        offload_messages=offload_messages,
     )
     assert pbo_assertion(
         messages,
@@ -353,6 +359,7 @@ def offload_pbo_intra_day_std_range_tests(
     assert check_predicate_count_matches_log(
         frontend_api,
         messages,
+        offload_messages,
         schema,
         table_name,
         f"{test_id}:3",
@@ -368,7 +375,7 @@ def offload_pbo_intra_day_std_range_tests(
         "execute": True,
     }
     messages.log(f"{test_id}:4", detail=VVERBOSE)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -383,6 +390,7 @@ def offload_pbo_intra_day_std_range_tests(
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
         check_backend_rowcount=False,
+        offload_messages=offload_messages,
     )
     assert pbo_assertion(
         messages,
@@ -396,6 +404,7 @@ def offload_pbo_intra_day_std_range_tests(
     assert check_predicate_count_matches_log(
         frontend_api,
         messages,
+        offload_messages,
         schema,
         table_name,
         f"{test_id}:4",

@@ -23,9 +23,7 @@ from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
 
-from tests.integration.scenarios.assertion_functions import (
-    standard_dimension_assertion,
-)
+from tests.integration.scenarios.assertion_functions import standard_dimension_assertion
 from tests.integration.scenarios.scenario_runner import (
     run_offload,
     run_setup,
@@ -116,7 +114,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
@@ -131,6 +129,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
             data_db,
             OFFLOAD_DIM,
             bucket_column="NULL",
+            offload_messages=offload_messages,
         )
         assert synapse_distribution_assertion(
             backend_api, messages, data_db, OFFLOAD_DIM, "ROUND_ROBIN"
@@ -143,7 +142,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
             "reset_backend_table": True,
             "execute": True,
         }
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
@@ -158,6 +157,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
             data_db,
             OFFLOAD_DIM,
             bucket_column="PROD_ID",
+            offload_messages=offload_messages,
         )
         assert synapse_distribution_assertion(
             backend_api, messages, data_db, OFFLOAD_DIM, "HASH"
@@ -169,7 +169,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
             "reset_backend_table": True,
             "execute": True,
         }
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
@@ -184,6 +184,7 @@ def test_offload_hash_column_synapse(config, schema, data_db):
             data_db,
             OFFLOAD_DIM,
             bucket_column="PROD_ID",
+            offload_messages=offload_messages,
         )
         assert synapse_distribution_assertion(
             backend_api, messages, data_db, OFFLOAD_DIM, "HASH"

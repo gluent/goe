@@ -115,6 +115,8 @@ def sort_columns_csv_to_sort_columns(
             # based on the frontend/backend combination.
             if backend_api.default_sort_columns_to_primary_key():
                 sort_columns = offload_source_table.get_primary_key_columns()
+                # Ensure we don't have too many sort columns.
+                sort_columns = sort_columns[:backend_api.max_sort_columns()]
     elif sort_columns_csv == offload_constants.SORT_COLUMNS_NONE:
         # The user requested no sorting.
         sort_columns = None

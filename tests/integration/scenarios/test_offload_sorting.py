@@ -501,7 +501,7 @@ def test_offload_sorting_many_pk_cols(config, schema, data_db):
             ],
         )
 
-        # Default Offload Of Dimension.
+        # Default Offload of Dimension.
         options = {
             "owner_table": schema + "." + MANY_PK_DIM,
             "sort_columns_csv": offload_constants.SORT_COLUMNS_NO_CHANGE,
@@ -518,5 +518,5 @@ def test_offload_sorting_many_pk_cols(config, schema, data_db):
             backend_api,
             messages,
             repo_client,
-            offload_sort_columns=",".join(sort_cols[:5]),
+            offload_sort_columns=",".join(sort_cols[:4]),
         )

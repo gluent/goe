@@ -241,17 +241,6 @@ CAPABILITY_GOE_PARTITION_FUNCTIONS = "goe_partition_functions"
 CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY = "goe_multi_column_incremental_key"
 CAPABILITY_GOE_OFFLOAD_STATUS_REPORT = "goe_offload_status_report"
 CAPABILITY_GOE_SCHEMA_SYNC = "goe_schema_sync"
-""" CAPABILITY_GOE_SEQ_TABLE
-        Does the backend require the GOE sequence table.
-
-        Cloudera Data Hub versions earlier than 5.10.x contain a performance issue with Impala queries
-        that contain a large number of constants in an in-list (refer to IMPALA-4302 for details).
-        GOE includes an optimization that overcomes this by transforming large in-lists
-        into a semi-join using a sequence table.
-
-        Only currently required on Cloudera Data Hub versions earlier than 5.10.x.
-"""
-CAPABILITY_GOE_SEQ_TABLE = "goe_seq_table"
 """ CAPABILITY_GOE_UDFS
         Does the backend require the GOE User-defined Functions (UDFs).
 
@@ -371,7 +360,6 @@ HIVE_BACKEND_CAPABILITIES = {
     CAPABILITY_GOE_JOIN_PUSHDOWN: True,
     CAPABILITY_GOE_MATERIALIZED_JOIN: True,
     CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GOE_SEQ_TABLE: False,
     CAPABILITY_GOE_UDFS: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
     CAPABILITY_NAN: True,
@@ -405,7 +393,6 @@ IMPALA_BACKEND_CAPABILITIES.update(
         CAPABILITY_DROP_COLUMN: True,
         CAPABILITY_FS_SCHEME_ABFS: True,
         CAPABILITY_FS_SCHEME_WASB: False,
-        CAPABILITY_GOE_SEQ_TABLE: True,
         CAPABILITY_NOT_NULL_COLUMN: False,
         CAPABILITY_RANGER: True,
         CAPABILITY_REFRESH_FUNCTIONS: True,
@@ -438,7 +425,6 @@ BIGQUERY_BACKEND_CAPABILITIES = {
     CAPABILITY_GOE_JOIN_PUSHDOWN: True,
     CAPABILITY_GOE_MATERIALIZED_JOIN: True,
     CAPABILITY_GOE_PARTITION_FUNCTIONS: True,
-    CAPABILITY_GOE_SEQ_TABLE: False,
     CAPABILITY_GOE_UDFS: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
     CAPABILITY_NAN: True,
@@ -481,7 +467,6 @@ SNOWFLAKE_BACKEND_CAPABILITIES = {
     CAPABILITY_GOE_JOIN_PUSHDOWN: True,
     CAPABILITY_GOE_MATERIALIZED_JOIN: True,
     CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GOE_SEQ_TABLE: False,
     CAPABILITY_GOE_UDFS: False,
     CAPABILITY_LOAD_DB_TRANSPORT: False,
     CAPABILITY_NAN: True,
@@ -524,7 +509,6 @@ SYNAPSE_BACKEND_CAPABILITIES = {
     CAPABILITY_GOE_JOIN_PUSHDOWN: True,
     CAPABILITY_GOE_MATERIALIZED_JOIN: True,
     CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GOE_SEQ_TABLE: False,
     CAPABILITY_GOE_UDFS: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
     CAPABILITY_NAN: False,

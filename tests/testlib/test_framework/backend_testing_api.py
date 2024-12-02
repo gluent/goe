@@ -660,9 +660,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def goe_partition_functions_supported(self):
         return self._db_api.goe_partition_functions_supported()
 
-    def goe_sequence_table_supported(self):
-        return self._db_api.goe_sequence_table_supported()
-
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)
 
@@ -806,9 +803,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
 
     def schema_evolution_supported(self):
         return self._db_api.schema_evolution_supported()
-
-    def sequence_table_max(self, db_name, table_name):
-        return self._db_api.sequence_table_max(db_name, table_name)
 
     def sorted_table_supported(self):
         return self._db_api.sorted_table_supported()

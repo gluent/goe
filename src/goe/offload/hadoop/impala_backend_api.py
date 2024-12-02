@@ -24,13 +24,11 @@ from copy import copy
 import logging
 import os
 import re
-import traceback
 
 from numpy import datetime64
 
 from goe.offload.backend_api import (
     BackendApiException,
-    MissingSequenceTableException,
     UdfDetails,
     UdfParameter,
 )
@@ -82,7 +80,7 @@ from goe.offload.hadoop.hadoop_column import (
 from goe.offload.hadoop.impala_literal import ImpalaLiteral
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.filesystem.goe_dfs import OFFLOAD_NON_HDFS_FS_SCHEMES
-from goe.util.better_impyla import BetterImpylaException, from_impala_size
+from goe.util.better_impyla import from_impala_size
 from goe.util.goe_version import GOEVersion
 
 
@@ -1043,39 +1041,6 @@ FROM   %(from_db_table)s%(where)s""" % {
     def min_datetime_value(self):
         return datetime64("1400-01-01")
 
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        """Used to populate data in the sequence file, for Impala/Hive a single insert with many literal clauses works fine
-        options.sequence_table_name is tricky to deal with because we can leave the db part out,
-        e.g. both of these are valid:
-            options.sequence_table_name = 'udf_db.my_sequence_table
-            options.sequence_table_name = 'my_sequence_table
-        This code inserts in fairly large chunks (max_chunk_elements) to try get the whole table in a single file,
-        multiple smaller inserts would create multiple files.
-        This doesn't use insert_literal_values() because of the options db name "thing"
-        """
-        assert table_name
-        assert starting_seq is not None
-        assert target_seq is not None
-        db_clause = (self.enclose_identifier(db_name) + ".") if db_name else ""
-
-        cmds = []
-
-        join_str = "\n," if split_by_cr else ","
-        max_chunk_elements = 100000
-        insert_data = "INSERT INTO %s%s VALUES " % (
-            db_clause,
-            self.enclose_identifier(table_name),
-        )
-        sequence_data = list(range(int(starting_seq) + 1, int(target_seq) + 1))
-        while sequence_data:
-            sequence_data_chunk = sequence_data[:max_chunk_elements]
-            sequence_data = sequence_data[max_chunk_elements:]
-            sql = insert_data + join_str.join("(%s)" % i for i in sequence_data_chunk)
-            cmds.extend(self.execute_dml(sql, sync=True))
-        return cmds
-
     def ranger_supported(self):
         """CDP/CDH >= 7 has moved from Sentry to Ranger. We do not currently establish the platform/distribution
         version so using Impala version as a proxy for CDP/CDH version.
@@ -1109,34 +1074,6 @@ FROM   %(from_db_table)s%(where)s""" % {
             return bool(GOEVersion(self.target_version()) < GOEVersion("3.3.0"))
         else:
             return False
-
-    def sequence_table_max(self, db_name, table_name):
-        """options.sequence_table_name is tricky to deal with because we can leave the db part out,
-        e.g. both of these are valid:
-            options.sequence_table_name = 'udf_db.my_sequence_table
-            options.sequence_table_name = 'my_sequence_table
-        This makes table existence difficult to check because we only have part of the identifying data.
-        What connect has always done, and continues to do here is combine the existence check with
-        the select for a max value. We then use any exception to detect a missing table.
-        Not ideal but I'm not convinced that forcing "default" as the db is reliable.
-        Because underlying exceptions cannot be trusted across different backends we need to be sure to
-        raise the specific MissingSequenceTableException exception.
-        """
-        assert table_name
-        db_clause = (self.enclose_identifier(db_name) + ".") if db_name else ""
-        sql = "SELECT MAX(n) FROM %s%s" % (
-            db_clause,
-            self.enclose_identifier(table_name),
-        )
-        try:
-            row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
-            if row:
-                return row[0]
-            else:
-                return None
-        except BetterImpylaException as exc:
-            self._log(traceback.format_exc(), detail=VVERBOSE)
-            raise MissingSequenceTableException(str(exc))
 
     def sorted_table_supported(self):
         """SORT BY is not valid in Impala before v2.9.0"""

@@ -2086,11 +2086,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         """
         return -(2**63)
 
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        raise NotImplementedError("Sequence table does not apply for BigQuery")
-
     def refresh_table_files(self, db_name, table_name, sync=None):
         """No requirement to re-scan files for a table on BigQuery but drop from cache because that will be stale"""
         self.drop_state()
@@ -2127,9 +2122,6 @@ FROM   %(from_db_table)s%(where)s""" % {
     def role_exists(self, role_name):
         """No roles in BigQuery"""
         pass
-
-    def sequence_table_max(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for BigQuery")
 
     def set_column_stats(
         self, db_name, table_name, new_column_stats, ndv_cap, num_null_factor

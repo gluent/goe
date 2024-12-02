@@ -679,22 +679,12 @@ FROM   %(from_db_table)s%(where)s%(dist_by)s%(sort_by)s""" % {
         # return datetime64('0001-01-01')
         return datetime64("1000-01-01")
 
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        """options.sequence_table_name does not apply on Hive."""
-        raise NotImplementedError("sequence_table_max is not implemented on Hive")
-
     def refresh_table_files(self, db_name, table_name, sync=None):
         """No requirement to scan files for a table on Hive but drop from cache because that will be stale.
         MSCK REPAIR TABLE is for finding new partitions rather than just rescanning for files
         therefore is not what this is intended for.
         """
         self.drop_state()
-
-    def sequence_table_max(self, db_name, table_name):
-        """options.sequence_table_name does not apply on Hive."""
-        raise NotImplementedError("sequence_table_max is not implemented on Hive")
 
     def supported_backend_data_types(self):
         return [

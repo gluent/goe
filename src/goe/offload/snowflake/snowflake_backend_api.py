@@ -1833,11 +1833,6 @@ class BackendSnowflakeApi(BackendApiInterface):
     def partition_column_requires_synthetic_column(self, backend_column, granularity):
         return False
 
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        raise NotImplementedError("Sequence table does not apply for Snowflake")
-
     def refresh_table_files(self, db_name, table_name, sync=None):
         """No requirement to re-scan files for a table on Snowflake but drop cache because that will be stale"""
         self.drop_state()
@@ -1878,9 +1873,6 @@ class BackendSnowflakeApi(BackendApiInterface):
         sql = "SHOW ROLES LIKE '%s'" % role_name
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return bool(row)
-
-    def sequence_table_max(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for Snowflake")
 
     def set_column_stats(
         self, db_name, table_name, new_column_stats, ndv_cap, num_null_factor

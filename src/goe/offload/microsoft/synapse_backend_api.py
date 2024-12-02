@@ -2212,11 +2212,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         """Table partitioning not implemented at this stage on Synapse"""
         return False
 
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        raise NotImplementedError("Sequence table does not apply for Synapse")
-
     def refresh_table_files(self, db_name, table_name, sync=None):
         """No requirement to re-scan files for a table on Synapse but drop cache because that will be stale"""
         self.drop_state()
@@ -2287,9 +2282,6 @@ FROM   %(from_db_table)s%(where)s""" % {
             sql, log_level=VVERBOSE, query_params=[role_name]
         )
         return bool(row)
-
-    def sequence_table_max(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for Synapse")
 
     def set_column_stats(
         self, db_name, table_name, new_column_stats, ndv_cap, num_null_factor

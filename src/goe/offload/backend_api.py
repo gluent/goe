@@ -81,7 +81,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_GOE_JOIN_PUSHDOWN,
     CAPABILITY_GOE_MATERIALIZED_JOIN,
     CAPABILITY_GOE_PARTITION_FUNCTIONS,
-    CAPABILITY_GOE_SEQ_TABLE,
     CAPABILITY_GOE_UDFS,
     CAPABILITY_LOAD_DB_TRANSPORT,
     CAPABILITY_NAN,
@@ -118,10 +117,6 @@ class BackendApiException(Exception):
 
 
 class BackendStatsException(Exception):
-    pass
-
-
-class MissingSequenceTableException(Exception):
     pass
 
 
@@ -1739,18 +1734,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        """Populate options.sequence_table_name up to target_seq.
-        split_by_cr: This option is a bit of a fudge but allows a calling program to parse the output.
-                     The idea being that, on some backends, this method may produce lengthy output
-                     which we may not want on screen. With split_by_cr the calling program has the
-                     opportunity to split the executed text by cr and only log some lines.
-        """
-        pass
-
-    @abstractmethod
     def refresh_table_files(self, db_name, table_name, sync=None):
         pass
 
@@ -1768,10 +1751,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
     @abstractmethod
     def role_exists(self, role_name):
         """Check the role exists, returns True/False"""
-        pass
-
-    @abstractmethod
-    def sequence_table_max(self, db_name, table_name):
         pass
 
     @abstractmethod
@@ -2016,9 +1995,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
 
     def goe_partition_functions_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_PARTITION_FUNCTIONS)
-
-    def goe_sequence_table_supported(self):
-        return self.is_capability_supported(CAPABILITY_GOE_SEQ_TABLE)
 
     def goe_udfs_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_UDFS)

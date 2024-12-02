@@ -219,7 +219,7 @@ def offload_basic_fact_init_assertion(
 
 
 def offload_basic_fact_1st_incr_assertion(
-    config, backend_api, messages, data_db, backend_name
+    config, backend_api, messages, data_db, backend_name, offload_messages
 ):
     backend_columns = backend_api.get_partition_columns(data_db, backend_name)
     if not backend_columns:
@@ -236,7 +236,7 @@ def offload_basic_fact_1st_incr_assertion(
         )
     )
     if (
-        text_in_events(messages, MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE)
+        text_in_events(offload_messages, MAX_QUERY_OPTIMISTIC_PRUNE_CLAUSE, messages)
         != expect_optimistic_prune_clause
     ):
         messages.log(
@@ -342,13 +342,20 @@ def test_offload_basic_dim(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert backend_table_exists(
             config, backend_api, messages, load_db, test_table
         ), "Backend load table should exist"
         assert standard_dimension_assertion(
-            config, backend_api, messages, repo_client, schema, data_db, test_table
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            test_table,
+            offload_messages=offload_messages,
         )
 
         # Attempt to re-offload, expect to fail.
@@ -361,6 +368,7 @@ def test_offload_basic_dim(config, schema, data_db):
             offload_messages,
             offload_constants.TARGET_HAS_DATA_MESSAGE_TEMPLATE
             % (data_db, backend_name),
+            messages,
         )
 
         # Reset offload the dimension adding backend partitioning (if supported).
@@ -386,7 +394,7 @@ def test_offload_basic_dim(config, schema, data_db):
                         "offload_partition_granularity": "1,1",
                     }
                 )
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert backend_table_exists(
             config, backend_api, messages, data_db, test_table
@@ -395,7 +403,14 @@ def test_offload_basic_dim(config, schema, data_db):
             config, backend_api, messages, load_db, test_table
         ), "Backend load table should NOT exist"
         assert standard_dimension_assertion(
-            config, backend_api, messages, repo_client, schema, data_db, test_table
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            test_table,
+            offload_messages=offload_messages,
         )
         assert offload_basic_dim_assertion(backend_api, messages, data_db, backend_name)
 
@@ -526,7 +541,7 @@ def test_offload_basic_fact(config, schema, data_db):
         # The fact is partitioned by multiple columns (if possible) with appropriate granularity.
         # We use COPY stats on this initial offload, also specify some specific data types.
         options["execute"] = True
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert sales_based_fact_assertion(
             config,
@@ -539,6 +554,7 @@ def test_offload_basic_fact(config, schema, data_db):
             test_table,
             test_constants.SALES_BASED_FACT_HV_1,
             check_backend_rowcount=True,
+            offload_messages=offload_messages,
         )
         assert offload_basic_fact_init_assertion(
             config, backend_api, messages, data_db, backend_name
@@ -550,10 +566,10 @@ def test_offload_basic_fact(config, schema, data_db):
             "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
             "execute": False,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         assert offload_basic_fact_1st_incr_assertion(
-            config, backend_api, messages, data_db, backend_name
+            config, backend_api, messages, data_db, backend_name, offload_messages
         )
 
         # Offloads next partition from fact table.
@@ -562,7 +578,7 @@ def test_offload_basic_fact(config, schema, data_db):
             "older_than_date": test_constants.SALES_BASED_FACT_HV_2,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -573,10 +589,11 @@ def test_offload_basic_fact(config, schema, data_db):
             data_db,
             test_table,
             test_constants.SALES_BASED_FACT_HV_2,
+            offload_messages=offload_messages,
         )
 
         # Try re-offload same partition which will result in no action and early abort.
-        run_offload(options, config, messages, expected_status=False)
+        offload_messages = run_offload(options, config, messages, expected_status=False)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -587,6 +604,7 @@ def test_offload_basic_fact(config, schema, data_db):
             data_db,
             test_table,
             test_constants.SALES_BASED_FACT_HV_2,
+            offload_messages=offload_messages,
         )
 
         # Offloads next partition with dodgy settings, offload will override these with sensible options.
@@ -603,7 +621,7 @@ def test_offload_basic_fact(config, schema, data_db):
             "synthetic_partition_digits": 5,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
         assert sales_based_fact_assertion(
             config,
             backend_api,
@@ -614,6 +632,7 @@ def test_offload_basic_fact(config, schema, data_db):
             data_db,
             test_table,
             test_constants.SALES_BASED_FACT_HV_3,
+            offload_messages=offload_messages,
         )
         assert offload_basic_fact_2nd_incr_assertion(
             config, backend_api, messages, data_db, backend_name
@@ -636,7 +655,7 @@ def test_offload_basic_fact(config, schema, data_db):
             "older_than_date": test_constants.SALES_BASED_FACT_HV_4,
             "execute": True,
         }
-        run_offload(options, config, messages)
+        offload_messages = run_offload(options, config, messages)
 
         # TODO We need to be able to assert on whether the empty partitions were picked up or not,
         #      needs access to the offload log file...
@@ -650,6 +669,7 @@ def test_offload_basic_fact(config, schema, data_db):
             data_db,
             test_table,
             test_constants.SALES_BASED_FACT_HV_4,
+            offload_messages=offload_messages,
         )
 
 
@@ -937,7 +957,7 @@ def test_offload_log_path_gcs(config, schema, data_db):
             "create_backend_db": True,
             "execute": True,
         }
-        run_offload(
+        offload_messages = run_offload(
             options,
             config,
             messages,
@@ -946,5 +966,12 @@ def test_offload_log_path_gcs(config, schema, data_db):
         )
 
         assert standard_dimension_assertion(
-            config, backend_api, messages, repo_client, schema, data_db, table_name
+            config,
+            backend_api,
+            messages,
+            repo_client,
+            schema,
+            data_db,
+            table_name,
+            offload_messages=offload_messages,
         )

@@ -24,7 +24,6 @@ from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
 )
-from goe.offload.offload_messages import VVERBOSE
 from goe.offload.offload_metadata_functions import (
     OFFLOAD_TYPE_FULL,
     OFFLOAD_TYPE_INCREMENTAL,
@@ -138,9 +137,12 @@ def offload_pbo_late_100_x_tests(
     if table_name == RANGE_TABLE_LATE_100_0:
         inc_key = "TIME_ID"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
-        add_rows_fn = lambda: frontend_api.sales_based_fact_late_arriving_data_sql(
-            schema, table_name, OLD_HV_1
-        )
+
+        def add_rows_fn():
+            return frontend_api.sales_based_fact_late_arriving_data_sql(
+                schema, table_name, OLD_HV_1
+            )
+
         if offload_pattern == OFFLOAD_PATTERN_100_0:
             test_id = "range_100_0"
             hv_1 = chk_hv_1 = None
@@ -155,9 +157,12 @@ def offload_pbo_late_100_x_tests(
             return []
         inc_key = "YRMON"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE
-        add_rows_fn = lambda: frontend_api.sales_based_list_fact_late_arriving_data_sql(
-            schema, table_name, OLD_HV_1, test_constants.SALES_BASED_FACT_HV_1
-        )
+
+        def add_rows_fn():
+            return frontend_api.sales_based_list_fact_late_arriving_data_sql(
+                schema, table_name, OLD_HV_1, test_constants.SALES_BASED_FACT_HV_1
+            )
+
         if offload_pattern == OFFLOAD_PATTERN_100_0:
             test_id = "lar_100_0"
             hv_1 = chk_hv_1 = None
@@ -178,7 +183,7 @@ def offload_pbo_late_100_x_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -193,6 +198,7 @@ def offload_pbo_late_100_x_tests(
         incremental_key=inc_key,
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
+        offload_messages=offload_messages,
     )
 
     # Add late arriving data below the HWM.
@@ -239,8 +245,7 @@ def offload_pbo_late_100_x_tests(
         "ipa_predicate_type": ipa_predicate_type,
         "execute": True,
     }
-    messages.log(f"{test_id}:1", detail=VVERBOSE)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -256,13 +261,15 @@ def offload_pbo_late_100_x_tests(
         incremental_key_type=part_key_type,
         ipa_predicate_type=ipa_predicate_type,
         incremental_predicate_value="NULL",
+        offload_messages=offload_messages,
     )
     assert check_predicate_count_matches_log(
         frontend_api,
         messages,
+        offload_messages,
         schema,
         table_name,
-        f"{test_id}:1",
+        test_id,
         "time_id = %s" % const_to_date_expr(config, OLD_HV_1),
     )
 
@@ -301,9 +308,12 @@ def offload_pbo_late_arriving_std_range_tests(
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
         hv_1 = chk_hv_1 = test_constants.SALES_BASED_FACT_HV_1
         hv_pred = "(column(time_id) = datetime(%s))" % OLD_HV_1
-        add_row_fn = lambda: frontend_api.sales_based_fact_late_arriving_data_sql(
-            schema, table_name, OLD_HV_1
-        )
+
+        def add_row_fn():
+            return frontend_api.sales_based_fact_late_arriving_data_sql(
+                schema, table_name, OLD_HV_1
+            )
+
     elif table_name == LAR_TABLE_LATE:
         inc_key = "YRMON"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_LIST_AS_RANGE
@@ -313,9 +323,12 @@ def offload_pbo_late_arriving_std_range_tests(
             "(column(yrmon) = datetime(%s)) and (column(time_id) = datetime(%s))"
             % (test_constants.SALES_BASED_FACT_HV_1, OLD_HV_1)
         )
-        add_row_fn = lambda: frontend_api.sales_based_list_fact_late_arriving_data_sql(
-            schema, table_name, OLD_HV_1, test_constants.SALES_BASED_FACT_HV_1
-        )
+
+        def add_row_fn():
+            return frontend_api.sales_based_list_fact_late_arriving_data_sql(
+                schema, table_name, OLD_HV_1, test_constants.SALES_BASED_FACT_HV_1
+            )
+
     elif table_name == MCOL_TABLE_LATE:
         inc_key = "TIME_YEAR, TIME_MONTH, TIME_ID"
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
@@ -323,9 +336,12 @@ def offload_pbo_late_arriving_std_range_tests(
         offload_partition_granularity = "1,1,Y"
         less_than_option = "less_than_value"
         hv_pred = "(column(time_id) = datetime(%s))" % OLD_HV_1
-        add_row_fn = lambda: gen_insert_late_arriving_sales_based_multi_pcol_data(
-            schema, table_name, OLD_HV_1
-        )
+
+        def add_row_fn():
+            return gen_insert_late_arriving_sales_based_multi_pcol_data(
+                schema, table_name, OLD_HV_1
+            )
+
         check_hwm_in_metadata = False
         if config.target == DBTYPE_BIGQUERY:
             offload_partition_columns = "TIME_ID"
@@ -336,9 +352,12 @@ def offload_pbo_late_arriving_std_range_tests(
         ipa_predicate_type = INCREMENTAL_PREDICATE_TYPE_RANGE
         hv_1 = chk_hv_1 = test_constants.SALES_BASED_FACT_HV_1
         hv_pred = "(column(time_id) = datetime(%s))" % OLD_HV_1
-        add_row_fn = lambda: frontend_api.sales_based_fact_late_arriving_data_sql(
-            schema, table_name, OLD_HV_1, channel_id_literal=2
-        )
+
+        def add_row_fn():
+            return frontend_api.sales_based_fact_late_arriving_data_sql(
+                schema, table_name, OLD_HV_1, channel_id_literal=2
+            )
+
         expected_incremental_range = "SUBPARTITION"
     else:
         raise NotImplementedError(f"Test table not implemented: {table_name}")
@@ -354,7 +373,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "create_backend_db": True,
         "execute": True,
     }
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -371,6 +390,7 @@ def offload_pbo_late_arriving_std_range_tests(
         incremental_predicate_value="NULL",
         incremental_range=expected_incremental_range,
         check_hwm_in_metadata=check_hwm_in_metadata,
+        offload_messages=offload_messages,
     )
 
     # No-op Offload Late Arriving Data.
@@ -465,8 +485,7 @@ def offload_pbo_late_arriving_std_range_tests(
         "ipa_predicate_type": ipa_predicate_type,
         "execute": True,
     }
-    messages.log(f"{test_id}:1", detail=VVERBOSE)
-    run_offload(options, config, messages)
+    offload_messages = run_offload(options, config, messages)
     assert sales_based_fact_assertion(
         config,
         backend_api,
@@ -482,13 +501,18 @@ def offload_pbo_late_arriving_std_range_tests(
         ipa_predicate_type=ipa_predicate_type,
         incremental_predicate_value="NULL",
         check_hwm_in_metadata=check_hwm_in_metadata,
+        offload_messages=offload_messages,
     )
     assert check_predicate_count_matches_log(
-        frontend_api, messages, schema, table_name, f"{test_id}:1", chk_cnt_filter
+        frontend_api,
+        messages,
+        offload_messages,
+        schema,
+        table_name,
+        test_id,
+        chk_cnt_filter,
     )
-    assert text_in_log(
-        messages, PREDICATE_APPEND_HWM_MESSAGE_TEXT, search_from_text=f"{test_id}:1"
-    )
+    assert text_in_log(offload_messages, PREDICATE_APPEND_HWM_MESSAGE_TEXT, messages)
 
     # Attempt to re-offload same predicate.
     run_offload(options, config, messages, expected_status=False)

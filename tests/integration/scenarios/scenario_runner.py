@@ -65,10 +65,11 @@ def run_offload(
     execution_id = ExecutionId()
     messages = OffloadMessages.from_options(
         orchestration_config,
-        log_fh=parent_messages.get_log_fh(),
+        # log_fh=parent_messages.get_log_fh(),
         execution_id=execution_id,
         command_type=orchestration_constants.COMMAND_OFFLOAD,
     )
+    messages.init_log(orchestration_config.log_path, "test_offload")
     try:
         config_overrides = get_config_overrides(config_overrides, orchestration_config)
         messages_override = None if no_messages_override else messages
@@ -103,6 +104,12 @@ def run_offload(
         else:
             parent_messages.log(traceback.format_exc())
             raise
+    finally:
+        try:
+            messages.close_log()
+        except Exception:
+            pass
+
     return messages
 
 

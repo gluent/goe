@@ -116,7 +116,7 @@ def new_table_ddl_file_tests(
         config, backend_api, messages, data_db, test_table
     ), f"Backend table for {schema}.{test_table} should not exist"
     assert text_in_messages(
-        offload_messages, offload_constants.DDL_FILE_EXECUTE_MESSAGE_TEXT
+        offload_messages, offload_constants.DDL_FILE_EXECUTE_MESSAGE_TEXT, messages
     )
     step_assertions(offload_messages)
 
@@ -179,7 +179,7 @@ def exsting_table_ddl_file_tests(
         config, backend_api, messages, data_db, test_table
     ), f"Backend table for {schema}.{test_table} should exist"
     assert text_in_messages(
-        offload_messages, offload_constants.DDL_FILE_EXECUTE_MESSAGE_TEXT
+        offload_messages, offload_constants.DDL_FILE_EXECUTE_MESSAGE_TEXT, messages
     )
     step_assertions(offload_messages)
     assert os.path.isfile(ddl_file), f"DDL file has not been created: {ddl_file}"

@@ -1591,25 +1591,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        """Used to insert specific data into a table. The table should already exist.
-        literal_list: A list of rows to insert (a list of lists).
-                      The row level lists should contain the exact right number of columns.
-        column_list: The column specs for the columns to be inserted, if left blank this will default to all
-                     columns in the table
-        Disclaimer: This code is used in testing and generating the sequence table. It is not robust enough to
-                    be a part of any Offload Transport
-        """
-
-    @abstractmethod
     def is_nan_sql_expression(self, column_expr):
         """Return a SQL expression testing if an expression is NaN (not-a-number)."""
 

@@ -1814,68 +1814,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         row = self.execute_query_fetch_one("SELECT SESSION_USER()", log_level=None)
         return row[0] if row else None
 
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        """Insert an array of literals into a table using INSERT...VALUES(...),(...),(...).
-        We've done this for simplicity due to two issues:
-        1) BigQuery issue: https://github.com/googleapis/google-cloud-python/issues/5539
-            "The issue is eventual consistency with the backend. Replacing the table, while it has the
-             same table_id, represents a new table in terms of it's internal UUID and thus backends may
-             deliver to the "old" table for a short period (typically a few minutes)."
-           This means we can have problems with this method of inserting rows, it is likely only suitable for testing.
-        2) Python does not support encoding Decimal to JSON until Python 3.10:
-            https://bugs.python.org/issue16535
-           Which gives us issue with this API:
-            site-packages/google/cloud/bigquery/client.py", line 3421, in insert_rows
-                return self.insert_rows_json(table, json_rows, **kwargs)
-                ...
-            json/encoder.py", line 179, in default
-                raise TypeError(f'Object of type {o.__class__.__name__} '
-            TypeError: Object of type Decimal is not JSON serializable
-        """
-
-        def gen_literal(py_val, data_type):
-            return str(self.to_backend_literal(py_val, data_type))
-
-        assert db_name
-        assert table_name
-        assert literal_list and isinstance(literal_list, list)
-        assert isinstance(literal_list[0], list)
-
-        column_list = column_list or self.get_columns(db_name, table_name)
-        column_names = [_.name for _ in column_list]
-        data_type_strs = [_.format_data_type() for _ in column_list]
-
-        cmds = []
-        remaining_rows = literal_list[:]
-        while remaining_rows:
-            this_chunk = remaining_rows[:max_rows_per_insert]
-            remaining_rows = remaining_rows[max_rows_per_insert:]
-            formatted_rows = []
-            for row in this_chunk:
-                formatted_rows.append(
-                    ",".join(
-                        gen_literal(py_val, data_type)
-                        for py_val, data_type in zip(row, data_type_strs)
-                    )
-                )
-            sql = self._insert_literals_using_insert_values_sql_text(
-                db_name,
-                table_name,
-                column_names,
-                formatted_rows,
-                split_by_cr=split_by_cr,
-            )
-            cmds.extend(self.execute_dml(sql, log_level=VVERBOSE))
-        return cmds
-
     def is_nan_sql_expression(self, column_expr):
         """is_nan for BigQuery"""
         return "is_nan(%s)" % column_expr

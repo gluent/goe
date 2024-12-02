@@ -247,33 +247,6 @@ OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'"""
         )
         return tab_stats, part_stats, col_stats
 
-    def _insert_literal_values_format_sql(
-        self, db_name, table_name, column_names, literal_csv_list, split_by_cr=True
-    ):
-        """Hive doesn't support UDFs in VALUES clause, HDP 2.6.1 requires column case to match CREATE TABLE statement,
-        so we insert SELECTs rather than VALUES.
-        UNIONing the selects into a single statement avoids creating many single row files
-        Hive also doesn't universally support listing the columns you plan to insert into. On HDP this is fine
-        but on EMR it fails as below:
-          0: jdbc:hive2://localhost:10000/default>
-            INSERT INTO `tc_emr_1_SH_TEST`.`goe_backend_types`
-            (`ID`,`COLUMN_1`,`COLUMN_2`,`COLUMN_3`,`COLUMN_4`,`COLUMN_5`,`COLUMN_6`,`COLUMN_7`,`COLUMN_8`,`COLUMN_9`,`COLUMN_10`)
-            SELECT CAST(0 AS int),CAST(52 AS TINYINT),CAST(4257 AS SMALLINT),CAST(-510192861 AS INT)
-            ,CAST(-689489120933 AS BIGINT),NULL,timestamp '2020-11-09 01:40:06',CAST(NULL AS FLOAT)
-            ,CAST(2.59692560188e+19 AS DOUBLE),CAST(20052603.16 AS DECIMAL(10,2)),CAST(-998045512624685 AS DECIMAL(15,0));
-          Error: Error while compiling statement: FAILED: SemanticException 1:51
-            '[COLUMN_6, COLUMN_5, COLUMN_8, COLUMN_7, COLUMN_2, COLUMN_1, COLUMN_10, COLUMN_4, COLUMN_3, ID, COLUMN_9]'
-            in insert schema specification are not found among regular columns of tc_emr_1_SH_TEST.goe_backend_types
-            nor dynamic partition columns.. Error encountered near token 'COLUMN_10' (state=42000,code=40000)
-        """
-        join_str = "\nUNION ALL\n" if split_by_cr else " UNION ALL "
-        insert_template = "INSERT INTO %s " % (
-            self.enclose_object_reference(db_name, table_name)
-        )
-        formatted_rows = ["SELECT {}".format(_) for _ in literal_csv_list]
-        sql = insert_template + "\n" + join_str.join(formatted_rows)
-        return sql
-
     def _partition_clause_null_constant(self):
         return HDFS_NULL_PART_KEY_CONSTANT
 

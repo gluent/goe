@@ -1987,63 +1987,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return row[0] if row else None
 
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        """Insert rows into Synapse table using INSERT ... VALUES. Only suitable for low volumes.
-        Cannot add any CASTs when using INSERT ... VALUES. Statements fail with:
-            Msg 104334, Level 16, State 1, Line 1
-            Insert values statement can contain only constant literal values or variable references.
-        Also, even though MSSQL supports multi-row INSERT ... VALUES statements, Synapse does not:
-            https://docs.microsoft.com/en-us/sql/t-sql/statements/insert-transact-sql?view=sql-server-ver15#b-inserting-multiple-rows-of-data
-            Note: The table value constructor is not supported in Azure Synapse Analytics.
-        For this reason we insert a UNION ALL select statement, like we do on Hive.
-        """
-
-        def gen_literal(py_val, data_type):
-            return str(self.to_backend_literal(py_val, data_type))
-
-        def insert_from_union_all_select(literal_csv_list):
-            join_str = "\nUNION ALL\n" if split_by_cr else " UNION ALL "
-            insert_template = "INSERT INTO %s " % (
-                self.enclose_object_reference(db_name, table_name)
-            )
-            select_statements = ["SELECT {}".format(_) for _ in literal_csv_list]
-            return insert_template + "\n" + join_str.join(select_statements)
-
-        assert db_name
-        assert table_name
-        assert literal_list and isinstance(literal_list, list)
-        assert isinstance(literal_list[0], list)
-
-        if column_list:
-            assert valid_column_list(column_list), (
-                "Incorrectly formed column_list: %s" % column_list
-            )
-
-        cmds = []
-        remaining_rows = literal_list[:]
-        while remaining_rows:
-            this_chunk = remaining_rows[:max_rows_per_insert]
-            remaining_rows = remaining_rows[max_rows_per_insert:]
-            formatted_rows = []
-            for row in this_chunk:
-                formatted_rows.append(
-                    ",".join(
-                        gen_literal(py_val, col.data_type)
-                        for py_val, col in zip(row, column_list)
-                    )
-                )
-            sql = insert_from_union_all_select(formatted_rows)
-            cmds.extend(self.execute_dml(sql, log_level=VVERBOSE))
-        return cmds
-
     def is_nan_sql_expression(self, column_expr):
         """If we reach here something has gone wrong so raise an exception"""
         raise NotImplementedError("is_nan_sql_expression not supported for Synapse")

@@ -663,24 +663,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)
 
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        return self._db_api.insert_literal_values(
-            db_name,
-            table_name,
-            literal_list,
-            column_list=column_list,
-            max_rows_per_insert=max_rows_per_insert,
-            split_by_cr=split_by_cr,
-        )
-
     def insert_table_as_select(
         self,
         db_name,

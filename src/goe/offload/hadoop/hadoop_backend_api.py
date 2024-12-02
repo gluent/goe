@@ -75,7 +75,6 @@ from goe.offload.column_metadata import (
     CanonicalColumn,
     is_safe_mapping,
     match_table_column,
-    valid_column_list,
     GOE_TYPE_FIXED_STRING,
     GOE_TYPE_LARGE_STRING,
     GOE_TYPE_VARIABLE_STRING,
@@ -594,13 +593,6 @@ class BackendHadoopApi(BackendApiInterface):
     def _get_table_stats(self, hive_stats, as_dict=False, part_stats=False):
         raise NotImplementedError(
             "_get_table_stats() is not implemented for common Hadoop class"
-        )
-
-    def _insert_literal_values_format_sql(
-        self, db_name, table_name, column_names, literal_csv_list, split_by_cr=True
-    ):
-        raise NotImplementedError(
-            "_insert_literal_values_format_sql() is not implemented for common Hadoop class"
         )
 
     def _invalid_identifier_character_re(self):
@@ -1248,78 +1240,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" % {
         hive_stats = self._get_hive_stats_table(db_name, table_name)
         return hive_stats.table_partitions()
 
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        """Used to insert specific data into a table. The table should already exist.
-        literal_list: A list of rows to insert (a list of lists).
-                      The row level lists should contain the exact right number of columns
-        column_list: The columns to be inserted, if left blank this will default to all columns in the table
-        Disclaimer: This code is used in testing and generating the sequence table. It is not robust enough to
-                    be a part of any Offload Transport
-        """
-
-        def gen_literal(py_val):
-            return str(self.to_backend_literal(py_val))
-
-        def add_cast(literal, formatted_data_type):
-            if formatted_data_type.upper() in [
-                HADOOP_TYPE_STRING,
-                HADOOP_TYPE_TIMESTAMP,
-            ]:
-                return literal
-            elif (
-                self._backend_type == DBTYPE_HIVE
-                and HADOOP_TYPE_VARCHAR in formatted_data_type.upper()
-            ):
-                # No CAST if Hive and VARCHAR2 because UNION ALL failing with NullPointerException.
-                # This is a fudge really but only actually used in testing so not a big issue.
-                return literal
-            return "CAST(%s AS %s)" % (literal, formatted_data_type)
-
-        assert db_name
-        assert table_name
-        assert literal_list and isinstance(literal_list, list)
-        assert isinstance(literal_list[0], list)
-
-        if column_list:
-            assert valid_column_list(column_list), (
-                "Incorrectly formed column_list: %s" % column_list
-            )
-
-        column_list = column_list or self.get_columns(db_name, table_name)
-        column_names = [_.name for _ in column_list]
-        data_type_strs = [_.format_data_type() for _ in column_list]
-
-        cmds = []
-        remaining_rows = literal_list[:]
-        while remaining_rows:
-            this_chunk = remaining_rows[:max_rows_per_insert]
-            remaining_rows = remaining_rows[max_rows_per_insert:]
-            formatted_rows = []
-            for row in this_chunk:
-                formatted_rows.append(
-                    ",".join(
-                        add_cast(gen_literal(py_val), data_type)
-                        for py_val, data_type in zip(row, data_type_strs)
-                    )
-                )
-            sql = self._insert_literal_values_format_sql(
-                db_name,
-                table_name,
-                column_names,
-                formatted_rows,
-                split_by_cr=split_by_cr,
-            )
-            cmds.extend(self.execute_dml(sql, log_level=VVERBOSE))
-        return cmds
-
     def is_valid_partitioning_data_type(self, data_type):
         if not data_type:
             return False
@@ -1374,7 +1294,7 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" % {
         try:
             hive_table = self._get_hive_table(db_name, object_name)
             return hive_table.is_view()
-        except BetterImpylaException as exc:
+        except BetterImpylaException:
             # view does not exist
             return False
 

@@ -452,13 +452,6 @@ class BackendImpalaApi(BackendHadoopApi):
             )
         return tab_stats, part_stats, col_stats
 
-    def _insert_literal_values_format_sql(
-        self, db_name, table_name, column_names, literal_csv_list, split_by_cr=True
-    ):
-        return self._insert_literals_using_insert_values_sql_text(
-            db_name, table_name, column_names, literal_csv_list, split_by_cr=split_by_cr
-        )
-
     def _partition_clause_null_constant(self):
         return "NULL"
 

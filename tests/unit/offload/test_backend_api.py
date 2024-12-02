@@ -842,50 +842,6 @@ class TestBackendApi(TestCase):
         self.api.identifier_contains_invalid_characters("some!name")
         self.api.identifier_contains_invalid_characters("some#na#me")
 
-    def _test_insert_literal_values(self):
-        """_test_insert_literal_values
-        Uses backend specific types which is not ideal but don't want to over-develop this for unit tests
-        """
-        column_list = [
-            self.api.gen_column_object(
-                "col1", data_type=self.test_api.backend_test_type_canonical_int_8()
-            ),
-            self.api.gen_column_object(
-                "col2", data_type=self.test_api.backend_test_type_canonical_timestamp()
-            ),
-            self.api.gen_column_object(
-                "col3", data_type=self.test_api.backend_test_type_canonical_string()
-            ),
-        ]
-        literal_list = [
-            [1, "2019-12-01", "row 1"],
-            [2, "2019-12-02", "row 2"],
-            [3, "2019-12-03", "row 3"],
-            [4, None, "row 4"],
-            [5, "2019-12-05", None],
-        ]
-        if self.connect_to_backend:
-            self.assertIsInstance(
-                self.api.insert_literal_values(
-                    self.db,
-                    self.table,
-                    literal_list,
-                    column_list=column_list,
-                    max_rows_per_insert=3,
-                ),
-                list,
-            )
-            self.assertIsInstance(
-                self.api.insert_literal_values(
-                    self.db,
-                    self.table,
-                    literal_list,
-                    column_list=column_list,
-                    split_by_cr=False,
-                ),
-                list,
-            )
-
     def _test_is_nan_sql_expression(self):
         if self.api.nan_supported():
             self.assertIsNotNone(self.api.is_nan_sql_expression("a-column"))
@@ -1339,7 +1295,6 @@ class TestBackendApi(TestCase):
         except NotImplementedError:
             pass
         self._test_identifier_contains_invalid_characters()
-        self._test_insert_literal_values()
         self._test_is_nan_sql_expression()
         self._test_is_supported_data_type()
         self._test_is_valid_staging_format()

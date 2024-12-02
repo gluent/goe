@@ -33,7 +33,6 @@ from goe.offload.column_metadata import (
 )
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
-from goe.offload.frontend_api import GET_DDL_TYPE_VIEW
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.util.simple_timer import SimpleTimer
 from tests.testlib.test_framework import test_constants
@@ -479,12 +478,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         """Oracle has an override for this."""
         return True
 
-    def lob_safe_table_projection(self, schema, table_name) -> str:
-        """Returns a CSV of columns names for use in SQL with LOB columns protected if required for the frontend.
-        This basic version returns all columns unmodified, some frontends may override.
-        """
-        return ",".join(self._db_api.get_column_names(schema, table_name))
-
     def nan_supported(self) -> bool:
         return self._db_api.nan_supported()
 
@@ -497,51 +490,8 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def table_exists(self, schema, table_name) -> bool:
         return self._db_api.table_exists(schema, table_name)
 
-    def table_minus_row_count(
-        self,
-        schema1: str,
-        table_name1: str,
-        schema2: str,
-        table_name2: Optional[str] = None,
-        column: Optional[str] = None,
-        where_clause: Optional[str] = None,
-    ) -> int:
-        """Return row count from a (SELECT * FROM table1 MINUS SELECT * FROM table2) query."""
-        projection = (
-            column or self.lob_safe_table_projection(schema1, table_name1) or "*"
-        )
-        where_clause = where_clause or ""
-        table_name2 = table_name2 or table_name1
-        self._log(
-            f"table_minus_row_count: {schema1}.{table_name1} vs {schema2}.{table_name2}",
-            detail=VERBOSE,
-        )
-        q1 = "SELECT %s FROM %s.%s %s" % (
-            projection,
-            schema1,
-            table_name1,
-            where_clause,
-        )
-        q2 = "SELECT %s FROM %s.%s %s" % (
-            projection,
-            schema2,
-            table_name2,
-            where_clause,
-        )
-        q = "SELECT COUNT(*) FROM (%s MINUS %s)" % (q1, q2)
-        self._log("table_minus_row_count qry: %s" % q, detail=VVERBOSE)
-        row = self._db_api.execute_query_fetch_one(q)
-        return_count = row[0]
-        return return_count
-
     def view_exists(self, schema, view_name) -> bool:
         return self._db_api.view_exists(schema, view_name)
-
-    def view_is_valid(self, schema, view_name) -> bool:
-        """
-        Return True/False if a view is valid. Interface method returns True, individual implementations may override.
-        """
-        return True
 
     # Enforced methods/properties
 
@@ -585,10 +535,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
         with_stats_collection: bool = False,
     ) -> list:
         """Return a list[str] of SQL required to CTAS a table from a subquery."""
-
-    @abstractmethod
-    def get_test_table_owner(self, expected_schema: str, table_name: str) -> str:
-        """Return the schema of a test table. Useful because in Teamcity test schemas can have v tag appended."""
 
     @abstractmethod
     def goe_type_mapping_generated_table_col_specs(

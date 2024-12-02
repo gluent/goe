@@ -254,9 +254,9 @@ class BackendBigQueryApi(BackendApiInterface):
     def _check_kms_key_name(self, kms_key_name: str, key_type="job"):
         """Use startswith() to verify custom key for key name.
         Example of custom key name:
-            projects/goe-teamcity/locations/us-west3/keyRings/krname/cryptoKeys/etl5
+            projects/goe-test/locations/us-west3/keyRings/krname/cryptoKeys/etl5
         Example of what we get from a query_job object:
-            projects/goe-teamcity/locations/us-west3/keyRings/krname/cryptoKeys/etl5/cryptoKeyVersions/1
+            projects/goe-test/locations/us-west3/keyRings/krname/cryptoKeys/etl5/cryptoKeyVersions/1
         It's worth noting that this has not always been the case, BigQuery behaviour has changed in the past.
         """
         if self._kms_key_name and not (kms_key_name or "").startswith(

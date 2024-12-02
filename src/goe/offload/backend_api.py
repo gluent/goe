@@ -79,9 +79,7 @@ from goe.offload.offload_constants import (
     CAPABILITY_FS_SCHEME_WASB,
     CAPABILITY_GOE_COLUMN_TRANSFORMATIONS,
     CAPABILITY_GOE_JOIN_PUSHDOWN,
-    CAPABILITY_GOE_MATERIALIZED_JOIN,
     CAPABILITY_GOE_PARTITION_FUNCTIONS,
-    CAPABILITY_GOE_UDFS,
     CAPABILITY_LOAD_DB_TRANSPORT,
     CAPABILITY_NAN,
     CAPABILITY_NANOSECONDS,
@@ -1949,14 +1947,8 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
     def goe_join_pushdown_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_JOIN_PUSHDOWN)
 
-    def goe_materialized_join_supported(self):
-        return self.is_capability_supported(CAPABILITY_GOE_MATERIALIZED_JOIN)
-
     def goe_partition_functions_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_PARTITION_FUNCTIONS)
-
-    def goe_udfs_supported(self):
-        return self.is_capability_supported(CAPABILITY_GOE_UDFS)
 
     def load_db_transport_supported(self):
         return self.is_capability_supported(CAPABILITY_LOAD_DB_TRANSPORT)

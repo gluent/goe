@@ -219,10 +219,6 @@ class BackendHiveTable(BackendHadoopTable):
         else:
             return to_synth_expr
 
-    def _synthetic_bucket_filter_non_udf_sql_expression(self):
-        """Hive override"""
-        return HASH_BUCKET_EXPRESSION
-
     def _tzoffset_to_timestamp_sql_expression(self, col_name):
         """Hive tzoffset SQL expression"""
         udf_db_prefix = (

@@ -40,9 +40,6 @@ from goe.util.goe_version import GOEVersion
 # CONSTANTS
 ###############################################################################
 
-FNV_HASH_BUCKET_EXPRESSION = (
-    "CAST(COALESCE(PMOD(FNV_HASH(%(dividend)s),%(divisor)s),0) AS SMALLINT)"
-)
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default
@@ -241,10 +238,6 @@ class BackendImpalaTable(BackendHadoopTable):
             return "LPAD(%s, %s, '0')" % (to_synth_expr, synthetic_partition_digits)
         else:
             return to_synth_expr
-
-    def _synthetic_bucket_filter_non_udf_sql_expression(self):
-        """Impala override"""
-        return FNV_HASH_BUCKET_EXPRESSION
 
     def _tzoffset_to_timestamp_sql_expression(self, col_name):
         """Impala tzoffset equivalent SQL expression"""

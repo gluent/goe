@@ -623,12 +623,6 @@ class BackendBigQueryTable(BackendTableInterface):
             self._warning("Staging database %s does not exist" % self._load_db_name)
         return self._load_db_exists()
 
-    def synthetic_bucket_data_type(self):
-        raise NotImplementedError("Synthetic bucketing is not supported on BigQuery")
-
-    def synthetic_bucket_filter_capable_column(self, backend_column):
-        raise NotImplementedError("Synthetic bucketing is not supported on BigQuery")
-
     def validate_type_conversions(self, staging_columns: list):
         """Validate the staged data before we insert it into the final backend table.
         BigQuery catches overflowing casts but this way we can spot them beforehand and

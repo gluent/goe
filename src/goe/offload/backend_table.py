@@ -2375,18 +2375,6 @@ class BackendTableInterface(metaclass=ABCMeta):
     def staging_area_exists(self):
         pass
 
-    @abstractmethod
-    def synthetic_bucket_data_type(self):
-        pass
-
-    @abstractmethod
-    def synthetic_bucket_filter_capable_column(self, backend_column):
-        """Returns the metadata method and SQL expression pattern used to generate the bucket id
-        Currently only enabling bucket filtering for integral data
-        When we consider opening this up to other types we should consider excluding TZ aware data because
-        a backend upgrade could change the result of CASTs
-        """
-
     ###########################################################################
     # PUBLIC METHODS - HIGH LEVEL STEP METHODS AND SUPPORTING ABSTRACT METHODS
     ###########################################################################
@@ -2548,14 +2536,8 @@ class BackendTableInterface(metaclass=ABCMeta):
     def goe_join_pushdown_supported(self):
         return self._db_api.goe_join_pushdown_supported()
 
-    def goe_materialized_join_supported(self):
-        return self._db_api.goe_materialized_join_supported()
-
     def goe_partition_functions_supported(self):
         return self._db_api.goe_partition_functions_supported()
-
-    def goe_udfs_supported(self):
-        return self._db_api.goe_udfs_supported()
 
     def nan_supported(self):
         return self._db_api.nan_supported()

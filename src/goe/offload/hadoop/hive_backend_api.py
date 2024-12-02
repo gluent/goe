@@ -20,10 +20,7 @@
     See BackendHadoopApi for better+impyla justification.
 """
 
-from goe.util.goe_version import GOEVersion
 import logging
-import os
-import re
 
 from numpy import datetime64
 
@@ -42,7 +39,7 @@ from goe.offload.offload_constants import (
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.hadoop.hive_literal import HiveLiteral
-from goe.offload.hadoop.hadoop_backend_api import BackendHadoopApi, HIVE_UDF_LIB
+from goe.offload.hadoop.hadoop_backend_api import BackendHadoopApi
 
 from goe.util.better_impyla import HDFS_NULL_PART_KEY_CONSTANT
 from goe.offload.hadoop.hadoop_column import (
@@ -70,56 +67,6 @@ from goe.offload.hadoop.hadoop_column import (
 ###############################################################################
 # CONSTANTS
 ###############################################################################
-
-HIVE_UDF_SPECS = [
-    (
-        "GOE_TZOFFSET_TO_TIMESTAMP",
-        "com.goe.udf.TzOffsetStrToTimestamp",
-        "'2015-01-01 12:13:14.56789 +02:00'",
-    ),
-    ("GOE_VERSION", "com.goe.udf.GOEVersion", ""),
-    ("GOE_UPPER", "com.goe.udf.GOEToUpper", "'Heya!'"),
-    ("GOE_LOWER", "com.goe.udf.GOEToLower", "'Heya!'"),
-    ("GOE_DAYOFWEEK", "com.goe.udf.GOEDayOfWeek", "'2017-10-17'"),
-    (
-        "GOE_TO_INTERNAL_NUMBER",
-        "com.goe.udf.ToOracleInternalNumberRaw",
-        "CAST(1 AS TINYINT)",
-    ),
-    (
-        "GOE_TO_INTERNAL_DATE",
-        "com.goe.udf.ToOracleInternalDateRaw",
-        "CAST(0 AS TIMESTAMP)",
-    ),
-    (
-        "GOE_TO_INTERNAL_DOUBLE",
-        "com.goe.udf.ToOracleInternalDouble",
-        "CAST(1.1 AS DOUBLE)",
-    ),
-    (
-        "GOE_TO_INTERNAL_FLOAT",
-        "com.goe.udf.ToOracleInternalFloat",
-        "CAST(1.1 AS FLOAT)",
-    ),
-    (
-        "GOE_ROW_RUN_LENGTH",
-        "com.goe.udf.OracleRowRunLengthRaw",
-        "CAST('rowrow' AS BINARY), 1",
-    ),
-    (
-        "GOE_FIELD_RUN_LENGTH",
-        "com.goe.udf.OracleFieldRunLengthRaw",
-        "CAST('foo' AS BINARY), 1",
-    ),
-    (
-        "GOE_UTF8_RUN_LENGTH",
-        "com.goe.udf.OracleUtf8RunLengthRaw",
-        "CAST('bar' AS BINARY), 1",
-    ),
-    ("GOE_BUCKET", "com.goe.udf.GOEBucket", "1,16"),
-    ("GOE_BUCKET", "com.goe.udf.GOEBucket", "CAST(1234 AS DECIMAL(38,0)),16"),
-]
-
 
 ###########################################################################
 # GLOBAL FUNCTIONS
@@ -249,29 +196,6 @@ OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'"""
 
     def _partition_clause_null_constant(self):
         return HDFS_NULL_PART_KEY_CONSTANT
-
-    def _udf_installation_sql(self, udf_db=None):
-        """Hive"""
-        f_jar = "hdfs://%s/%s" % (os.environ["HDFS_HOME"], HIVE_UDF_LIB)
-        cmds = []
-        for f_name, f_class in set([_[:-1] for _ in HIVE_UDF_SPECS]):
-            cmds.extend(self._drop_udf(f_name, udf_db=udf_db))
-            cmds.extend(self._create_hive_udf(f_name, f_class, f_jar, udf_db=udf_db))
-        return cmds
-
-    def _udf_test_sql(self, udf_db=None):
-        """Return a list of SQLs to be used for testing all UDFs"""
-        db_clause = (self.enclose_identifier(udf_db) + ".") if udf_db else ""
-        test_args = [(f_name, f_arg) for f_name, _, f_arg in HIVE_UDF_SPECS]
-        sqls = []
-        for f_name, f_arg in test_args:
-            sql = "SELECT %s%s(%s)" % (
-                db_clause,
-                self.enclose_identifier(f_name),
-                f_arg % {"fn_db": db_clause},
-            )
-            sqls.append(sql)
-        return sqls
 
     ###########################################################################
     # PUBLIC METHODS
@@ -687,32 +611,3 @@ FROM   %(from_db_table)s%(where)s%(dist_by)s%(sort_by)s""" % {
 
     def udf_details(self, db_name, udf_name):
         raise NotImplementedError("udf_details is not implemented on Hive")
-
-    def udf_installation_os(self, user_udf_version):
-        """Hive
-        Returns a list of commands executed
-        """
-        if not self.goe_udfs_supported():
-            self._messages.log(
-                "Skipping installation of UDFs due to backend: %s" % self._backend_type
-            )
-            return None
-
-        cmds = []
-
-        if user_udf_version:
-            udf_version = user_udf_version
-        elif GOEVersion(self.target_version()) >= GOEVersion("3.0.0"):
-            udf_version = "3.0.0"
-        else:
-            udf_version = "2.0.0"
-
-        udf_lib_source = re.sub(r"\.jar$", "-" + udf_version + ".jar", HIVE_UDF_LIB)
-        udf_lib_destination = HIVE_UDF_LIB
-        cmds.extend(
-            self._udf_installation_copy_library_to_hdfs(
-                udf_lib_source, udf_lib_destination
-            )
-        )
-
-        return cmds

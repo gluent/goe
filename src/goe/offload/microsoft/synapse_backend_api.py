@@ -2382,15 +2382,6 @@ FROM   %(from_db_table)s%(where)s""" % {
             to_string,
         )
 
-    def udf_installation_os(self, user_udf_version):
-        raise NotImplementedError("UDFs are not supported for Synapse")
-
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        raise NotImplementedError("UDFs are not supported for Synapse")
-
-    def udf_installation_test(self, udf_db=None):
-        raise NotImplementedError("UDFs are not supported for Synapse")
-
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, SynapseColumn)
         if isinstance(canonical_override, CanonicalColumn):

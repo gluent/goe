@@ -1847,28 +1847,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def udf_installation_os(self, user_udf_version):
-        """Copies any libraries required to support UDFs from our software package to wherever they should be.
-        Returns a list of commands executed.
-        """
-        pass
-
-    @abstractmethod
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        """Executes any SQL commands required for UDF installation.
-        Returns a list of commands executed, in dry_run mode that's all it does.
-        udf_db can be empty which means we won't specify one and pickup a default.
-        """
-        pass
-
-    @abstractmethod
-    def udf_installation_test(self, udf_db=None):
-        """Executes any SQL commands to test each UDF.
-        udf_db can be empty which means we won't specify one and pickup a default.
-        """
-        pass
-
-    @abstractmethod
     def valid_canonical_override(self, column, canonical_override):
         """Present has a number of options for overriding the default canonical mapping in to_canonical_column().
         This method validates the override.

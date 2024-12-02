@@ -1980,15 +1980,6 @@ class BackendSnowflakeApi(BackendApiInterface):
             udfs.append(UdfDetails(db_name, udf_name, return_type, parameters))
         return udfs
 
-    def udf_installation_os(self, user_udf_version):
-        raise NotImplementedError("GOE UDFs are not supported on Snowflake")
-
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        raise NotImplementedError("GOE UDFs are not supported on Snowflake")
-
-    def udf_installation_test(self, udf_db=None):
-        raise NotImplementedError("GOE UDFs are not supported on Snowflake")
-
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, SnowflakeColumn)
         if isinstance(canonical_override, CanonicalColumn):

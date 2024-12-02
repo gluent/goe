@@ -1203,27 +1203,6 @@ class TestBackendApi(TestCase):
         except NotImplementedError:
             pass
 
-    def _test_udf_installation_os(self):
-        if self.connect_to_backend:
-            try:
-                self.api.udf_installation_os(None)
-            except NotImplementedError:
-                pass
-
-    def _test_udf_installation_sql(self):
-        if self.connect_to_backend:
-            try:
-                self.api.udf_installation_sql(True, "any_db")
-            except NotImplementedError:
-                pass
-
-    def _test_udf_installation_test(self):
-        if self.connect_to_backend:
-            try:
-                self.api.udf_installation_test(udf_db="any_db")
-            except NotImplementedError:
-                pass
-
     def _test_valid_staging_formats(self):
         self.assertIsInstance(self.api.valid_staging_formats(), list)
 
@@ -1337,9 +1316,6 @@ class TestBackendApi(TestCase):
         except NotImplementedError:
             pass
         self._test_transform_translate_expression()
-        self._test_udf_installation_os()
-        self._test_udf_installation_sql()
-        self._test_udf_installation_test()
         self._test_valid_staging_formats()
         self._test_view_exists()
         # Engine specific tests

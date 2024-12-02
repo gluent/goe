@@ -22,7 +22,6 @@
 
 from copy import copy
 import logging
-import os
 import re
 
 from numpy import datetime64
@@ -57,8 +56,6 @@ from goe.offload.offload_constants import (
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.hadoop.hadoop_backend_api import (
     BackendHadoopApi,
-    HADOOP_DECIMAL_MAX_PRECISION,
-    IMPALA_UDF_LIB,
 )
 from goe.offload.hadoop.hadoop_column import (
     HadoopColumn,
@@ -78,8 +75,6 @@ from goe.offload.hadoop.hadoop_column import (
     HADOOP_TYPE_BOOLEAN,
 )
 from goe.offload.hadoop.impala_literal import ImpalaLiteral
-from goe.filesystem.goe_dfs_factory import get_dfs_from_options
-from goe.filesystem.goe_dfs import OFFLOAD_NON_HDFS_FS_SCHEMES
 from goe.util.better_impyla import from_impala_size
 from goe.util.goe_version import GOEVersion
 
@@ -87,201 +82,6 @@ from goe.util.goe_version import GOEVersion
 ###############################################################################
 # CONSTANTS
 ###############################################################################
-
-
-def gen_decimal_impala_functions_in_constants(fpq=False):
-    """Generate UDF overloads for all supported DECIMAL combinations.
-    Needs to be declared before constants due to usage in constant generation.
-    """
-    if fpq:
-        # This is the original even-only scale list because that's what any FPQ UDFs would have been created with
-        ps_list = [(18, s * 2) for s in range(9)] + [
-            (HADOOP_DECIMAL_MAX_PRECISION, s * 2) for s in range(20)
-        ]
-    else:
-        ps_list = [(18, _) for _ in range(18)] + [
-            (HADOOP_DECIMAL_MAX_PRECISION, _) for _ in range(39)
-        ]
-    for precision, scale in ps_list:
-        int_input = 1 if precision != scale else 0.1
-        if fpq:
-            yield (
-                "GOE_TO_FPQ",
-                "STRING",
-                "DECIMAL(%s,%s)" % (precision, scale),
-                "CAST(%s AS DECIMAL(%s,%s))" % (int_input, precision, scale),
-                "goeToFpqNumber",
-            )
-        else:
-            yield (
-                "GOE_TO_INTERNAL_NUMBER",
-                "STRING",
-                "DECIMAL(%s,%s)" % (precision, scale),
-                "CAST(%s AS DECIMAL(%s,%s))" % (int_input, precision, scale),
-                "toInternal",
-            )
-
-
-IMPALA_UDF_SPECS = list(gen_decimal_impala_functions_in_constants()) + [
-    (
-        "GOE_TO_INTERNAL_DOUBLE",
-        "STRING",
-        "DOUBLE",
-        "CAST(1.1 AS DOUBLE)",
-        "toInternal",
-    ),
-    (
-        "GOE_TO_INTERNAL_FLOAT",
-        "STRING",
-        "FLOAT",
-        "CAST(1.1 AS FLOAT)",
-        "toInternalFloat",
-    ),
-    (
-        "GOE_TO_INTERNAL_FLOAT",
-        "STRING",
-        "DOUBLE",
-        "CAST(1.1 AS FLOAT)",
-        "toInternalFloat",
-    ),
-    (
-        "GOE_TO_INTERNAL_NUMBER",
-        "STRING",
-        "TINYINT",
-        "CAST(1 AS TINYINT)",
-        "toInternal",
-    ),
-    (
-        "GOE_TO_INTERNAL_NUMBER",
-        "STRING",
-        "SMALLINT",
-        "CAST(1 AS SMALLINT)",
-        "toInternal",
-    ),
-    ("GOE_TO_INTERNAL_NUMBER", "STRING", "INT", "CAST(1 AS INT)", "toInternal"),
-    (
-        "GOE_TO_INTERNAL_NUMBER",
-        "STRING",
-        "BIGINT",
-        "CAST(1 AS BIGINT)",
-        "toInternal",
-    ),
-    (
-        "GOE_TO_INTERNAL_DATE",
-        "STRING",
-        "TIMESTAMP",
-        "CAST(0 AS TIMESTAMP)",
-        "toInternalDate",
-    ),
-    (
-        "GOE_TO_INTERNAL_DATE",
-        "STRING",
-        "STRING",
-        "'0100-01-01 00:00:00.000000000'",
-        "toInternalDate",
-    ),
-    ("GOE_FIELD_RUN_LENGTH", "STRING", "STRING, INT", "'foo', 1", "fieldRunLength"),
-    ("GOE_UTF8_RUN_LENGTH", "STRING", "STRING, INT", "'bar', 1", "utf8RunLength"),
-    ("GOE_ROW_RUN_LENGTH", "STRING", "STRING, INT", "'rowrow', 1", "rowRunLength"),
-    ("GOE_VERSION", "STRING", "", "", "goeVersion"),
-    ("GOE_UPPER", "STRING", "STRING", "'lowercase'", "goeToUpper"),
-    ("GOE_UPPER", "STRING", "STRING,STRING", "'áéíóú','UTF-8'", "goeToUpper"),
-    ("GOE_LOWER", "STRING", "STRING", "'ÁÉÍÓÚ'", "goeToLower"),
-    ("GOE_LOWER", "STRING", "STRING,STRING", "'ÁÉÍÓÚ','UTF-8'", "goeToLower"),
-    ("GOE_TOUTF8", "STRING", "STRING,STRING", "'abcd','UTF-8'", "goeToUtf8"),
-    (
-        "GOE_TRANSFORM",
-        "STRING",
-        "STRING,STRING,STRING",
-        "'UPPER', 'abc', '[^a]'",
-        "goeTransform",
-    ),
-    (
-        "GOE_TRANSCODE",
-        "STRING",
-        "STRING, STRING, STRING",
-        "'foo','UTF8','UTF16'",
-        ("goeTranscode", "goeTranscodePrepare", "goeTranscodeClose"),
-    ),
-    ("GOE_BUCKET", "SMALLINT", "BIGINT,SMALLINT", "1,16", "goeBucket"),
-    (
-        "GOE_BUCKET",
-        "SMALLINT",
-        "DECIMAL(38,0),SMALLINT",
-        "CAST(1234 AS DECIMAL(38,0)),16",
-        "goeBucket",
-    ),
-]
-
-IMPALA_FPQ_UDF_SPECS = (
-    [
-        (
-            "GOE_FPQ_NULL",
-            "STRING",
-            "SMALLINT",
-            "CAST(1 AS SMALLINT)",
-            "goeFpqNull",
-        ),
-        (
-            "GOE_FPQ_ROW",
-            "STRING",
-            "BOOLEAN, STRING",
-            "TRUE,%(fn_db)sGOE_TO_FPQ('rowrow')",
-            "goeFpqRow",
-        ),
-        (
-            "GOE_FPQ_ROW",
-            "STRING",
-            "BOOLEAN, STRING, STRING ...",
-            "TRUE,%(fn_db)sGOE_TO_FPQ('foo'),%(fn_db)sGOE_TO_FPQ('bar'),%(fn_db)sGOE_TO_FPQ('baz')",
-            "goeFpqRow",
-        ),
-    ]
-    + list(gen_decimal_impala_functions_in_constants(fpq=True))
-    + [
-        ("GOE_TO_FPQ", "STRING", "BIGINT", "CAST(1 AS BIGINT)", "goeToFpqNumber"),
-        ("GOE_TO_FPQ", "STRING", "INT", "CAST(1 AS INT)", "goeToFpqNumber"),
-        (
-            "GOE_TO_FPQ",
-            "STRING",
-            "SMALLINT",
-            "CAST(1 AS SMALLINT)",
-            "goeToFpqNumber",
-        ),
-        (
-            "GOE_TO_FPQ",
-            "STRING",
-            "TINYINT",
-            "CAST(1 AS TINYINT)",
-            "goeToFpqNumber",
-        ),
-        ("GOE_TO_FPQ", "STRING", "TIMESTAMP", "CAST(0 AS TIMESTAMP)", "goeToFpq"),
-        (
-            "GOE_TO_FPQ_TIMESTAMP",
-            "STRING",
-            "TIMESTAMP",
-            "CAST(0 AS TIMESTAMP)",
-            "goeToFpqTimestamp",
-        ),
-        (
-            "GOE_TO_FPQ_TIMESTAMP",
-            "STRING",
-            "TIMESTAMP, SMALLINT",
-            "CAST(0 AS TIMESTAMP), 5180",
-            "goeToFpqTimestamp",
-        ),
-        ("GOE_TO_FPQ", "STRING", "STRING", "'foo'", "goeToFpq"),
-        ("GOE_TO_FPQ", "STRING", "FLOAT", "CAST(1.123 AS FLOAT)", "goeToFpq"),
-        ("GOE_TO_FPQ", "STRING", "DOUBLE", "CAST(1.123 AS DOUBLE)", "goeToFpq"),
-        (
-            "GOE_TO_FPQ_INTERVAL",
-            "STRING",
-            "STRING,BOOLEAN",
-            "'44517008-8',TRUE",
-            "goeToFpqInterval",
-        ),
-    ]
-)
 
 
 ###########################################################################
@@ -330,58 +130,6 @@ class BackendImpalaApi(BackendHadoopApi):
 
     def _backend_capabilities(self):
         return IMPALA_BACKEND_CAPABILITIES
-
-    def _create_impala_udf(
-        self,
-        function_name,
-        function_spec,
-        function_symbol,
-        function_return,
-        udf_db=None,
-        sync=None,
-    ):
-        """Impala UDF.
-        More code from here may move to create_udf(). create_udf() came later as part of BigQuery work
-        and didn't want to destabilise this UDF installation code too much.
-        """
-        assert function_name
-        assert function_spec is not None
-        assert function_symbol
-        assert function_return
-
-        log_level = VVERBOSE if self._dry_run else VERBOSE
-
-        if isinstance(function_symbol, tuple):
-            symbol_clause = (
-                "SYMBOL='%s' PREPARE_FN='%s' CLOSE_FN='%s'" % function_symbol
-            )
-        else:
-            symbol_clause = "SYMBOL='%s'" % function_symbol
-        hdfs_client = get_dfs_from_options(
-            self._connection_options, messages=self._messages, dry_run=self._dry_run
-        )
-        target_uri = (
-            hdfs_client.gen_uri(
-                self._connection_options.offload_fs_scheme,
-                self._connection_options.offload_fs_container,
-                self._connection_options.offload_fs_prefix,
-            )
-            if self._connection_options.offload_fs_scheme in OFFLOAD_NON_HDFS_FS_SCHEMES
-            else self._connection_options.hdfs_home
-        )
-        target_file = os.path.join(target_uri, IMPALA_UDF_LIB)
-        function_body = "LOCATION '%s' %s" % (target_file, symbol_clause)
-
-        return self.create_udf(
-            udf_db,
-            function_name,
-            function_return,
-            None,
-            function_body,
-            sync=sync,
-            log_level=log_level,
-            spec_as_string=function_spec,
-        )
 
     def _execute_ddl_or_dml(
         self,
@@ -454,84 +202,6 @@ class BackendImpalaApi(BackendHadoopApi):
 
     def _partition_clause_null_constant(self):
         return "NULL"
-
-    def _udf_installation_sql(self, udf_db=None):
-        """Impala"""
-
-        def get_sync(i, num_fns):
-            if i == 0:
-                return False
-            elif i == num_fns - 1:
-                return True
-            else:
-                return None
-
-        goe_impala_functions_all = IMPALA_UDF_SPECS + IMPALA_FPQ_UDF_SPECS
-        assert [
-            tupl[0] for tupl in goe_impala_functions_all if len(tupl) != 5
-        ] == [], "Unexpected item count in IMPALA_UDF_SPECS"
-
-        cmds = []
-        log_level = VVERBOSE if self._dry_run else VERBOSE
-
-        if (udf_db and self.database_exists(udf_db)) or not udf_db:
-            db_clause = " IN %s" % self.enclose_identifier(udf_db) if udf_db else ""
-            if self.refresh_functions_supported():
-                self.execute_ddl(
-                    "REFRESH FUNCTIONS %s"
-                    % self.enclose_identifier(udf_db if udf_db else "default"),
-                    sync=None,
-                    log_level=log_level,
-                )
-            rows = self.execute_query_fetch_all(
-                "SHOW FUNCTIONS%s" % db_clause, log_level=log_level
-            )
-            installed_udfs = [r[1].upper().replace(" ", "") for r in rows]
-
-            # Build a list of functions to drop based on what is installed
-            goe_impala_functions_drop = []
-            for fnc in goe_impala_functions_all:
-                if (
-                    "%s(%s)" % (fnc[0].upper(), fnc[2].upper().replace(" ", ""))
-                    in installed_udfs
-                ):
-                    goe_impala_functions_drop.append(fnc)
-
-            for i, (f_name, _, f_type, _, _) in enumerate(goe_impala_functions_drop):
-                sync = get_sync(i, len(goe_impala_functions_drop))
-                cmds.extend(
-                    self._drop_udf(
-                        f_name,
-                        udf_db=udf_db,
-                        function_spec=f_type,
-                        sync=sync,
-                        if_exists=False,
-                    )
-                )
-
-        for i, (f_name, f_ret, f_type, _, f_symbol) in enumerate(IMPALA_UDF_SPECS):
-            sync = get_sync(i, len(IMPALA_UDF_SPECS))
-            cmds.extend(
-                self._create_impala_udf(
-                    f_name, f_type, f_symbol, f_ret, udf_db=udf_db, sync=sync
-                )
-            )
-
-        return cmds
-
-    def _udf_test_sql(self, udf_db=None):
-        """Return a list of SQLs to be used for testing all UDFs"""
-        db_clause = (self.enclose_identifier(udf_db) + ".") if udf_db else ""
-        test_args = [(f_name, f_arg) for f_name, _, _, f_arg, _ in IMPALA_UDF_SPECS]
-        sqls = []
-        for f_name, f_arg in test_args:
-            sql = "SELECT %s%s(%s)" % (
-                db_clause,
-                self.enclose_identifier(f_name),
-                f_arg % {"fn_db": db_clause},
-            )
-            sqls.append(sql)
-        return sqls
 
     ###########################################################################
     # PUBLIC METHODS
@@ -1121,25 +791,3 @@ FROM   %(from_db_table)s%(where)s""" % {
                     parameters = [UdfParameter(None, _) for _ in arg_types]
             udfs.append(UdfDetails(db_name, udf_name, return_type, parameters))
         return udfs
-
-    def udf_installation_os(self, user_udf_version):
-        """Impala
-        Returns a list of commands executed
-        """
-
-        if not self.goe_udfs_supported():
-            self._messages.log(
-                "Skipping installation of UDFs due to backend: %s" % self._backend_type
-            )
-            return
-
-        cmds = []
-        udf_lib_source = IMPALA_UDF_LIB
-        udf_lib_destination = IMPALA_UDF_LIB
-        cmds.extend(
-            self._udf_installation_copy_library_to_hdfs(
-                udf_lib_source, udf_lib_destination
-            )
-        )
-
-        return cmds

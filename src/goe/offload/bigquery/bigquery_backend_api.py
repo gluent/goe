@@ -23,7 +23,6 @@
 from datetime import datetime
 import logging
 from math import ceil
-import pprint
 import re
 from textwrap import dedent
 import traceback
@@ -2216,15 +2215,6 @@ FROM   %(from_db_table)s%(where)s""" % {
             return bool(self.list_udfs(db_name, udf_name))
         except NotFound:
             return False
-
-    def udf_installation_os(self, user_udf_version):
-        raise NotImplementedError("GOE UDFs are not supported on BigQuery")
-
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        raise NotImplementedError("GOE UDFs are not supported on BigQuery")
-
-    def udf_installation_test(self, udf_db=None):
-        raise NotImplementedError("GOE UDFs are not supported on BigQuery")
 
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, BigQueryColumn)

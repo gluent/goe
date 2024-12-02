@@ -170,9 +170,6 @@ HADOOP_DATA_TYPE_DECODE_RE = re.compile(
 # Regular expression matching invalid identifier characters, constant to ensure compiled only once
 HADOOP_INVALID_IDENTIFIER_CHARS_RE = re.compile(r"[^A-Z0-9_]", re.I)
 
-HIVE_UDF_LIB = "goe_hive_udf.jar"
-IMPALA_UDF_LIB = "to_internal.so"
-
 IMPALA_PROFILE_LOG_LENGTH = 1024 * 32
 
 
@@ -625,50 +622,6 @@ class BackendHadoopApi(BackendApiInterface):
     def _partition_clause_null_constant(self):
         raise NotImplementedError(
             "_partition_clause_null_constant() is not implemented for common Hadoop class"
-        )
-
-    def _udf_installation_sql(self, udf_db=None):
-        raise NotImplementedError(
-            "_udf_installation_sql() is not implemented for common Hadoop class"
-        )
-
-    def _udf_installation_copy_library_to_hdfs(
-        self, udf_lib_source, udf_lib_destination
-    ):
-        """Copies the UDF library from OFFLOAD_HOME/bin (CWD) to the home directory of hadoop_ssh_user
-        on the edge node and then copies from there into HDFS (local or Cloud Storage)
-        Returns a list of commands executed
-        This is shared code for Hive and Impala
-        """
-
-        self._log("UDF copy source: %s" % udf_lib_source, detail=VVERBOSE)
-        self._log("UDF copy target: %s" % udf_lib_destination, detail=VVERBOSE)
-
-        cmds = []
-        hdfs_client = get_dfs_from_options(
-            self._connection_options, messages=self._messages, dry_run=self._dry_run
-        )
-        if self._connection_options.offload_fs_scheme in OFFLOAD_NON_HDFS_FS_SCHEMES:
-            target_uri = hdfs_client.gen_uri(
-                self._connection_options.offload_fs_scheme,
-                self._connection_options.offload_fs_container,
-                self._connection_options.offload_fs_prefix,
-            )
-        else:
-            target_uri = self._connection_options.hdfs_home
-        # Copy the file to the edge node
-        # UDF library is in OFFLOAD_HOME
-        local_file = os.path.join(os.environ.get("OFFLOAD_HOME"), "bin", udf_lib_source)
-        target_file = os.path.join(target_uri, udf_lib_destination)
-        log_cmd = 'HDFS cmd: copy_from_local("%s", "%s")' % (local_file, target_file)
-        self._log(log_cmd, detail=VERBOSE)
-        hdfs_client.copy_from_local(local_file, target_file, overwrite=True)
-        cmds.append(log_cmd)
-        return cmds
-
-    def _udf_test_sql(self, udf_db=None):
-        raise NotImplementedError(
-            "_udf_test_sql() is not implemented for common Hadoop class"
         )
 
     ###########################################################################
@@ -1562,47 +1515,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" % {
                 return False
             else:
                 raise
-
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        if not self.goe_udfs_supported():
-            self._messages.log(
-                "Skipping installation of UDFs due to backend: %s" % self._backend_type
-            )
-            return None
-
-        cmds = []
-        if udf_db and not self.database_exists(udf_db):
-            if create_udf_db:
-                cmds.extend(self.create_database(udf_db))
-            else:
-                raise BackendApiException(
-                    "Database: %s does not exist. Specify --create-backend-db flag to create"
-                    % udf_db
-                )
-
-        cmds.extend(self._udf_installation_sql(udf_db=udf_db))
-        return cmds
-
-    def udf_installation_test(self, udf_db=None):
-        if not self.goe_udfs_supported():
-            self._messages.log(
-                "Skipping test of UDFs due to backend: %s" % self._backend_type
-            )
-            return None
-
-        cmds = []
-        try:
-            for sql in self._udf_test_sql(udf_db=udf_db):
-                cmds.append(sql)
-                row = self.execute_query_fetch_one(
-                    sql, log_level=VVERBOSE, not_when_dry_running=True
-                )
-                if row:
-                    self._log(str(row), detail=VVERBOSE)
-        except HiveServer2Error as exc:
-            self._log(traceback.format_exc(), detail=VVERBOSE)
-            raise BackendApiException(str(exc))
-        return cmds
 
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, HadoopColumn)

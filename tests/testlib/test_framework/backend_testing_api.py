@@ -777,9 +777,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
             backend_column, granularity
         )
 
-    def refresh_functions_supported(self):
-        return self._db_api.refresh_functions_supported()
-
     def schema_evolution_supported(self):
         return self._db_api.schema_evolution_supported()
 

@@ -499,10 +499,6 @@ class BackendBigQueryTable(BackendTableInterface):
         else:
             return []
 
-    def default_udf_db_name(self):
-        """By default we support UDF_DB but on BigQuery we use the data db as a fall back"""
-        return self._udf_db or self.db_name
-
     def empty_staging_area(self, staging_file):
         self._rm_load_table_location()
 

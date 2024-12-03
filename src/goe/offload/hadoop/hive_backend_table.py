@@ -221,13 +221,20 @@ class BackendHiveTable(BackendHadoopTable):
 
     def _tzoffset_to_timestamp_sql_expression(self, col_name):
         """Hive tzoffset SQL expression"""
-        udf_db_prefix = (
-            self.enclose_identifier(self._udf_db) + "." if self._udf_db else ""
+        raise NotImplementedError(
+            "_tzoffset_to_timestamp_sql_expression() is not implemented for Hive class"
         )
-        return "%(udf_db_prefix)sGOE_TZOFFSET_TO_TIMESTAMP(%(tstz)s)" % {
-            "udf_db_prefix": udf_db_prefix,
-            "tstz": col_name,
-        }
+        # The original code for this method is below.
+        # If we decide to ressurect Hive support we'll need to revisit this but for
+        # now it has been removed because it was a blocker to removing UDF_DB configuration.
+        #
+        # udf_db_prefix = (
+        #    self.enclose_identifier(self._udf_db) + "." if self._udf_db else ""
+        # )
+        # return "%(udf_db_prefix)sGOE_TZOFFSET_TO_TIMESTAMP(%(tstz)s)" % {
+        #    "udf_db_prefix": udf_db_prefix,
+        #    "tstz": col_name,
+        # }
 
     def _validate_staged_data_query_options(self):
         """Hive override facilitating Load Table stats."""

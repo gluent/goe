@@ -31,7 +31,6 @@ from goe.connect.connect_constants import (
     CONNECT_STATUS,
     CONNECT_TEST,
 )
-from goe.offload.backend_api import BackendApiException
 from goe.offload.bigquery.bigquery_column import (
     BIGQUERY_TYPE_DATETIME,
     BIGQUERY_TYPE_INT64,
@@ -116,13 +115,10 @@ class TestBackendApi(TestCase):
         )
 
     def _get_udf_db(self):
-        if self.config.udf_db:
-            return self.config.udf_db
+        if self.target in [DBTYPE_IMPALA, DBTYPE_HIVE]:
+            return "default"
         else:
-            if self.target in [DBTYPE_IMPALA, DBTYPE_HIVE]:
-                return "default"
-            else:
-                return self.db
+            return self.db
 
     def _test_add_columns(self):
         if self.connect_to_backend:

@@ -209,7 +209,6 @@ class BackendTableInterface(metaclass=ABCMeta):
         self._offload_staging_format = getattr(
             self._orchestration_config, "offload_staging_format", None
         )
-        self._udf_db = getattr(self._orchestration_config, "udf_db", None)
         # If orchestration_operation is not set then we are not doing anything significant by way of offload/present
         self._ipa_predicate_type = None
         self._offload_distribute_enabled = None
@@ -1044,12 +1043,12 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def _partition_function_sql_expression(self, partition_info, sql_input_expression):
         """Return a string containing a call to a partition function UDF.
-        e.g. UDF_DB.UDF_NAME(sql_input_expression)
+        e.g. SCHEMA.UDF_NAME(sql_input_expression)
         """
         assert partition_info
-        udf_db, udf_name = partition_info.function.split(".")
+        udf_schema, udf_name = partition_info.function.split(".")
         return "{}({})".format(
-            self._db_api.enclose_object_reference(udf_db, udf_name),
+            self._db_api.enclose_object_reference(udf_schema, udf_name),
             sql_input_expression,
         )
 
@@ -1806,10 +1805,6 @@ class BackendTableInterface(metaclass=ABCMeta):
 
     def default_date_based_partition_granularity(self):
         return self._db_api.default_date_based_partition_granularity()
-
-    def default_udf_db_name(self):
-        """By default we support UDF_DB but individual backends may have their own override"""
-        return self._udf_db
 
     def delta_table_exists(self):
         return False

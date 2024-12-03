@@ -41,7 +41,6 @@
 
 from datetime import datetime
 import logging
-import os
 import re
 import socket
 import traceback
@@ -51,11 +50,9 @@ import traceback
 from impala.hiveserver2 import TTransportException
 
 from goe.connect.connect_constants import CONNECT_DETAIL, CONNECT_STATUS, CONNECT_TEST
-from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.filesystem.goe_dfs import (
     get_scheme_from_location_uri,
     OFFLOAD_FS_SCHEME_S3A,
-    OFFLOAD_NON_HDFS_FS_SCHEMES,
 )
 from goe.offload.backend_api import (
     BackendApiInterface,
@@ -142,7 +139,6 @@ from goe.offload.hadoop.hadoop_column import (
 from goe.util.better_impyla import (
     HiveConnection,
     HiveTable,
-    HiveServer2Error,
     BetterImpylaException,
 )
 from goe.util.hive_table_stats import HiveTableStats
@@ -371,23 +367,6 @@ class BackendHadoopApi(BackendApiInterface):
             return (data_type, int(precision), None, None)
         else:
             return (data_type, None, None, None)
-
-    def _drop_udf(
-        self, function_name, udf_db=None, function_spec=None, sync=None, if_exists=True
-    ):
-        """Drop a Hadoop UDF, used for both Hive and Impala"""
-        assert function_name
-        log_level = VVERBOSE if self._dry_run else VERBOSE
-        db_clause = (self.enclose_identifier(udf_db) + ".") if udf_db else ""
-        spec_clause = "" if function_spec is None else "({})".format(function_spec)
-        exists_clause = "" if not if_exists else "IF EXISTS "
-        drop_sql = "DROP FUNCTION %s%s%s%s" % (
-            exists_clause,
-            db_clause,
-            self.enclose_identifier(function_name),
-            spec_clause,
-        )
-        return self.execute_ddl(drop_sql, sync=sync, log_level=log_level)
 
     def _execute_query_fetch_x(
         self,

@@ -47,7 +47,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_FS_SCHEME_ADL,
     CAPABILITY_FS_SCHEME_S3A,
     CAPABILITY_RANGER,
-    CAPABILITY_REFRESH_FUNCTIONS,
     CAPABILITY_SENTRY,
     CAPABILITY_SORTED_TABLE,
     FILE_STORAGE_FORMAT_PARQUET,
@@ -710,13 +709,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         """
         if self.is_capability_supported(CAPABILITY_RANGER):
             return bool(GOEVersion(self.target_version()) >= GOEVersion("3.3.0"))
-        else:
-            return False
-
-    def refresh_functions_supported(self):
-        """REFRESH FUNCTIONS is not valid in Impala before v2.9.0"""
-        if self.is_capability_supported(CAPABILITY_REFRESH_FUNCTIONS):
-            return bool(GOEVersion(self.target_version()) >= GOEVersion("2.9.0"))
         else:
             return False
 

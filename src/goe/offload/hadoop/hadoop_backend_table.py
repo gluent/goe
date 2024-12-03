@@ -35,7 +35,6 @@ from goe.offload.hadoop.hadoop_column import (
     HADOOP_TYPE_DOUBLE,
     HADOOP_TYPE_FLOAT,
     HADOOP_TYPE_INT,
-    HADOOP_TYPE_SMALLINT,
     HADOOP_TYPE_STRING,
 )
 from goe.offload.offload_constants import (
@@ -70,9 +69,6 @@ if TYPE_CHECKING:
 ###############################################################################
 # CONSTANTS
 ###############################################################################
-
-GOE_BUCKET_UDF = "GOE_BUCKET"
-GOE_BUCKET_UDF_EXPRESSION = "%(udf_db)sGOE_BUCKET(%(dividend)s,%(divisor)s)"
 
 # Used for test assertions
 COMPUTE_LOAD_TABLE_STATS_LOG_TEXT = "Config requires compute of stats on load table"
@@ -804,10 +800,6 @@ FROM %s.%s""" % (
             )
         else:
             return []
-
-    def default_udf_db_name(self):
-        """By default we support UDF_DB but on Hadoop we use 'default' as a fall back"""
-        return self._udf_db or "default"
 
     def get_default_location(self):
         if self._default_location is None:

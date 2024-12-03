@@ -117,24 +117,6 @@ class BackendHiveApi(BackendHadoopApi):
     def _backend_capabilities(self):
         return HIVE_BACKEND_CAPABILITIES
 
-    def _create_hive_udf(
-        self, function_name, function_class, function_library, udf_db=None
-    ):
-        """Hive"""
-        assert function_name
-        assert function_class
-        assert function_library
-
-        log_level = VVERBOSE if self._dry_run else VERBOSE
-        db_clause = (self.enclose_identifier(udf_db) + ".") if udf_db else ""
-        sql = "CREATE FUNCTION %s%s AS '%s' USING JAR '%s'" % (
-            db_clause,
-            function_name,
-            function_class,
-            function_library,
-        )
-        return self.execute_ddl(sql, log_level=log_level)
-
     def _execute_ddl_or_dml(
         self,
         sql,

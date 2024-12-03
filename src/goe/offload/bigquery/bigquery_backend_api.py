@@ -23,7 +23,6 @@
 from datetime import datetime
 import logging
 from math import ceil
-import pprint
 import re
 from textwrap import dedent
 import traceback
@@ -255,9 +254,9 @@ class BackendBigQueryApi(BackendApiInterface):
     def _check_kms_key_name(self, kms_key_name: str, key_type="job"):
         """Use startswith() to verify custom key for key name.
         Example of custom key name:
-            projects/goe-teamcity/locations/us-west3/keyRings/krname/cryptoKeys/etl5
+            projects/goe-test/locations/us-west3/keyRings/krname/cryptoKeys/etl5
         Example of what we get from a query_job object:
-            projects/goe-teamcity/locations/us-west3/keyRings/krname/cryptoKeys/etl5/cryptoKeyVersions/1
+            projects/goe-test/locations/us-west3/keyRings/krname/cryptoKeys/etl5/cryptoKeyVersions/1
         It's worth noting that this has not always been the case, BigQuery behaviour has changed in the past.
         """
         if self._kms_key_name and not (kms_key_name or "").startswith(
@@ -1814,68 +1813,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         row = self.execute_query_fetch_one("SELECT SESSION_USER()", log_level=None)
         return row[0] if row else None
 
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        """Insert an array of literals into a table using INSERT...VALUES(...),(...),(...).
-        We've done this for simplicity due to two issues:
-        1) BigQuery issue: https://github.com/googleapis/google-cloud-python/issues/5539
-            "The issue is eventual consistency with the backend. Replacing the table, while it has the
-             same table_id, represents a new table in terms of it's internal UUID and thus backends may
-             deliver to the "old" table for a short period (typically a few minutes)."
-           This means we can have problems with this method of inserting rows, it is likely only suitable for testing.
-        2) Python does not support encoding Decimal to JSON until Python 3.10:
-            https://bugs.python.org/issue16535
-           Which gives us issue with this API:
-            site-packages/google/cloud/bigquery/client.py", line 3421, in insert_rows
-                return self.insert_rows_json(table, json_rows, **kwargs)
-                ...
-            json/encoder.py", line 179, in default
-                raise TypeError(f'Object of type {o.__class__.__name__} '
-            TypeError: Object of type Decimal is not JSON serializable
-        """
-
-        def gen_literal(py_val, data_type):
-            return str(self.to_backend_literal(py_val, data_type))
-
-        assert db_name
-        assert table_name
-        assert literal_list and isinstance(literal_list, list)
-        assert isinstance(literal_list[0], list)
-
-        column_list = column_list or self.get_columns(db_name, table_name)
-        column_names = [_.name for _ in column_list]
-        data_type_strs = [_.format_data_type() for _ in column_list]
-
-        cmds = []
-        remaining_rows = literal_list[:]
-        while remaining_rows:
-            this_chunk = remaining_rows[:max_rows_per_insert]
-            remaining_rows = remaining_rows[max_rows_per_insert:]
-            formatted_rows = []
-            for row in this_chunk:
-                formatted_rows.append(
-                    ",".join(
-                        gen_literal(py_val, data_type)
-                        for py_val, data_type in zip(row, data_type_strs)
-                    )
-                )
-            sql = self._insert_literals_using_insert_values_sql_text(
-                db_name,
-                table_name,
-                column_names,
-                formatted_rows,
-                split_by_cr=split_by_cr,
-            )
-            cmds.extend(self.execute_dml(sql, log_level=VVERBOSE))
-        return cmds
-
     def is_nan_sql_expression(self, column_expr):
         """is_nan for BigQuery"""
         return "is_nan(%s)" % column_expr
@@ -2086,11 +2023,6 @@ FROM   %(from_db_table)s%(where)s""" % {
         """
         return -(2**63)
 
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        raise NotImplementedError("Sequence table does not apply for BigQuery")
-
     def refresh_table_files(self, db_name, table_name, sync=None):
         """No requirement to re-scan files for a table on BigQuery but drop from cache because that will be stale"""
         self.drop_state()
@@ -2127,9 +2059,6 @@ FROM   %(from_db_table)s%(where)s""" % {
     def role_exists(self, role_name):
         """No roles in BigQuery"""
         pass
-
-    def sequence_table_max(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for BigQuery")
 
     def set_column_stats(
         self, db_name, table_name, new_column_stats, ndv_cap, num_null_factor
@@ -2286,15 +2215,6 @@ FROM   %(from_db_table)s%(where)s""" % {
             return bool(self.list_udfs(db_name, udf_name))
         except NotFound:
             return False
-
-    def udf_installation_os(self, user_udf_version):
-        raise NotImplementedError("GOE UDFs are not supported on BigQuery")
-
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        raise NotImplementedError("GOE UDFs are not supported on BigQuery")
-
-    def udf_installation_test(self, udf_db=None):
-        raise NotImplementedError("GOE UDFs are not supported on BigQuery")
 
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, BigQueryColumn)

@@ -728,12 +728,6 @@ class BackendSnowflakeTable(BackendTableInterface):
             status = False
         return status
 
-    def synthetic_bucket_data_type(self):
-        raise NotImplementedError(self._not_implemented_message("Synthetic bucketing"))
-
-    def synthetic_bucket_filter_capable_column(self, backend_column):
-        raise NotImplementedError(self._not_implemented_message("Synthetic bucketing"))
-
     def transport_binary_data_in_base64(self):
         """Stage binary data, during offload transport, encoded as Base64"""
         return True

@@ -476,10 +476,6 @@ def ldap_password_file_default():
     return os.environ.get("HIVE_SERVER_LDAP_PASSWORD_FILE")
 
 
-def udf_db_default():
-    return os.environ.get("OFFLOAD_UDF_DB")
-
-
 def use_ssl_default():
     return bool(os.environ.get("SSL_ACTIVE", "").lower() == "true" or ca_cert_default())
 

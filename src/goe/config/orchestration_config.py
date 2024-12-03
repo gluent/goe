@@ -199,7 +199,6 @@ EXPECTED_CONFIG_ARGS = [
     "teradata_app_pass",
     "teradata_server",
     "teradata_repo_user",
-    "udf_db",
     "use_ssl",
     "use_oracle_wallet",
     "webhdfs_host",
@@ -825,7 +824,6 @@ class OrchestrationConfig:
                 "teradata_repo_user",
                 orchestration_defaults.teradata_repo_user_default(),
             ),
-            udf_db=config_dict.get("udf_db", orchestration_defaults.udf_db_default()),
             use_ssl=config_dict.get(
                 "use_ssl", orchestration_defaults.use_ssl_default()
             ),

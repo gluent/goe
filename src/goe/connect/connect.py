@@ -487,20 +487,6 @@ def get_connect_opts():
     )
     # Hidden options to keep TeamCity testing functioning
     opt.add_option(
-        "--validate-udfs",
-        dest="validate_udfs",
-        default=False,
-        action="store_true",
-        help=SUPPRESS_HELP,
-    )
-    opt.add_option(
-        "--install-udfs",
-        dest="install_udfs",
-        default=False,
-        action="store_true",
-        help=SUPPRESS_HELP,
-    )
-    opt.add_option(
         "--create-backend-db",
         dest="create_backend_db",
         action="store_true",

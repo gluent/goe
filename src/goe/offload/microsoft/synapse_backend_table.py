@@ -607,12 +607,6 @@ class BackendSynapseTable(BackendTableInterface):
             status = False
         return status
 
-    def synthetic_bucket_data_type(self):
-        raise NotImplementedError(self._not_implemented_message("Synthetic bucketing"))
-
-    def synthetic_bucket_filter_capable_column(self, backend_column):
-        raise NotImplementedError(self._not_implemented_message("Synthetic bucketing"))
-
     def setup_result_cache_area(self):
         """Prepare result cache area for Hybrid Queries"""
         cmds = []

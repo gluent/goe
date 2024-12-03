@@ -134,8 +134,6 @@ def create_incompatible_test_bigquery_udf_fns(backend_api, data_db):
 def expected_udf_metadata(config, data_db, udf_name_option):
     if "." in udf_name_option:
         return udf_name_option
-    elif config.udf_db:
-        return config.udf_db + "." + udf_name_option
     elif config.target == offload_constants.DBTYPE_IMPALA:
         return "default." + udf_name_option
     else:

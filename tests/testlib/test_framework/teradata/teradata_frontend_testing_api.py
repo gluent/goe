@@ -1513,16 +1513,6 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
             sqls.append(self.collect_table_stats_sql_text(schema, table_name))
         return sqls
 
-    def get_test_table_owner(self, expected_schema: str, table_name: str) -> str:
-        sql = f"""SELECT DatabaseName
-              FROM   DBC.TablesV
-              WHERE  UPPER(TableName) = UPPER('{table_name}')
-              ORDER BY CASE WHEN UPPER(DatabaseName) = UPPER('{expected_schema}') THEN '0'
-                            WHEN UPPER(DatabaseName) = 'SH' THEN '1'
-                            ELSE DatabaseName END"""
-        row = self.execute_query_fetch_one(sql)
-        return row[0] if row else None
-
     def goe_type_mapping_generated_table_col_specs(
         self,
         max_backend_precision,
@@ -2125,7 +2115,11 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
                 """
             )
         return self.gen_ctas_from_subquery(
-            schema, table_name, subquery, pk_col_name=pk_col_name, with_stats_collection=True
+            schema,
+            table_name,
+            subquery,
+            pk_col_name=pk_col_name,
+            with_stats_collection=True,
         )
 
     def table_row_count_from_stats(

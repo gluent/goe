@@ -348,16 +348,12 @@ def validate_offload_partition_functions(
     for part_function in offload_partition_functions:
         # Validate the partition function
         if part_function:
-            if "." in part_function:
-                func_db, func_name = part_function.split(".")
-            else:
-                func_db = backend_table.default_udf_db_name()
-                if not func_db:
-                    raise OffloadPartitionControlsException(
-                        "Offload partition function is missing %s name: %s"
-                        % (backend_table.db_name_label(initcap=True), part_function)
-                    )
-                func_name = part_function
+            if "." not in part_function:
+                raise OffloadPartitionControlsException(
+                    "Offload partition function is missing %s name: %s"
+                    % (backend_table.db_name_label(initcap=True), part_function)
+                )
+            func_db, func_name = part_function.split(".")
             backend_table.check_partition_function(func_db, func_name)
             new_partition_functions.append(func_db + "." + func_name)
         else:

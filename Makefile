@@ -51,7 +51,7 @@ install-dev:
 	if [ "$(VENV_EXISTS)" ]; then $(MAKE) python-goe-clean; fi
 	python3 -m venv $(VENV_PREFIX)
 	. $(VENV_PREFIX)/bin/activate && python3 -m pip install --quiet --upgrade pip build setuptools wheel
-	. $(VENV_PREFIX)/bin/activate && python3 -m pip install .[dev]
+	. $(VENV_PREFIX)/bin/activate && python3 -m pip install -e .[dev]
 	$(MAKE) python-goe
 
 

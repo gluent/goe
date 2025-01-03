@@ -234,7 +234,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         # Offload with unsupported partition function UDF.
         options = {
             "owner_table": schema + "." + DIM_EXC,
-            "offload_partition_functions": NO_ARG_UDF,
+            "offload_partition_functions": f"{data_db}.{NO_ARG_UDF}",
             "integer_8_columns_csv": "prod_id",
             "offload_partition_columns": "prod_id",
             "offload_partition_granularity": "10",
@@ -251,7 +251,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         )
 
         # Offload with unsupported partition function UDF.
-        options["offload_partition_functions"] = TWO_ARG_UDF
+        options["offload_partition_functions"] = f"{data_db}.{TWO_ARG_UDF}"
         run_offload(
             options,
             config,
@@ -260,7 +260,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         )
 
         # Offload with non-existent partition function UDF.
-        options["offload_partition_functions"] = INT8_UDF + "-not-real"
+        options["offload_partition_functions"] = f"{data_db}.{INT8_UDF}" + "-not-real"
         run_offload(
             options,
             config,
@@ -273,7 +273,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
 
         # Offload with STRING input to INT8 partition function.
         options["offload_partition_columns"] = "TXN_DESC"
-        options["offload_partition_functions"] = INT8_UDF
+        options["offload_partition_functions"] = f"{data_db}.{INT8_UDF}"
         run_offload(
             options,
             config,
@@ -284,7 +284,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         # Offload with DATE input to partition function.
         options = {
             "owner_table": schema + "." + DIM_EXC,
-            "offload_partition_functions": INT8_UDF,
+            "offload_partition_functions": f"{data_db}.{INT8_UDF}",
             "offload_partition_columns": "TXN_DATE",
             "offload_partition_granularity": "M",
             "reset_backend_table": True,
@@ -301,7 +301,7 @@ def test_offload_part_fn_exceptions(config, schema, data_db):
         # Offload with too many partition functions.
         options = {
             "owner_table": schema + "." + DIM_EXC,
-            "offload_partition_functions": INT8_UDF + "," + INT38_UDF,
+            "offload_partition_functions": f"{data_db}.{INT8_UDF},{data_db}.{INT38_UDF}",
             "offload_partition_columns": "TXN_DATE",
             "offload_partition_granularity": "M",
             "reset_backend_table": True,
@@ -351,7 +351,7 @@ def test_offload_part_fn_num(config, schema, data_db):
             "owner_table": schema + "." + DIM_NUM,
             "integer_8_columns_csv": "prod_id",
             "offload_partition_columns": "prod_id",
-            "offload_partition_functions": data_db + "." + INT8_UDF,
+            "offload_partition_functions": f"{data_db}.{INT8_UDF}",
             "offload_partition_granularity": "10",
             "offload_partition_lower_value": 0,
             "offload_partition_upper_value": 5000,
@@ -382,7 +382,7 @@ def test_offload_part_fn_num(config, schema, data_db):
             "owner_table": schema + "." + DIM_NUM,
             "integer_8_columns_csv": "prod_id",
             "offload_partition_columns": "prod_id",
-            "offload_partition_functions": INT8_UDF,
+            "offload_partition_functions": f"{data_db}.{INT8_UDF}",
             "offload_partition_granularity": "10",
             "offload_partition_lower_value": 0,
             "offload_partition_upper_value": 5000,
@@ -442,7 +442,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
             "owner_table": schema + "." + DIM_DEC,
             "integer_38_columns_csv": "prod_id",
             "offload_partition_columns": "prod_id",
-            "offload_partition_functions": INT38_UDF,
+            "offload_partition_functions": f"{data_db}.{INT38_UDF}",
             "offload_partition_granularity": "10",
             "offload_partition_lower_value": 0,
             "offload_partition_upper_value": 5000,
@@ -472,7 +472,7 @@ def test_offload_part_fn_dec(config, schema, data_db):
             "decimal_columns_csv_list": ["prod_id"],
             "decimal_columns_type_list": ["19,0"],
             "offload_partition_columns": "prod_id",
-            "offload_partition_functions": DEC19_UDF,
+            "offload_partition_functions": f"{data_db}.{DEC19_UDF}",
             "offload_partition_granularity": "10",
             "offload_partition_lower_value": 0,
             "offload_partition_upper_value": 5000,
@@ -535,7 +535,7 @@ def test_offload_part_fn_str(config, schema, data_db):
         options = {
             "owner_table": schema + "." + DIM_STR,
             "offload_partition_columns": "str_prod_id",
-            "offload_partition_functions": STRING_UDF,
+            "offload_partition_functions": f"{data_db}.{STRING_UDF}",
             "offload_partition_granularity": "10",
             "offload_partition_lower_value": 0,
             "offload_partition_upper_value": 5000,

@@ -78,7 +78,6 @@ from goe.offload.offload_constants import (
     CAPABILITY_FS_SCHEME_INHERIT,
     CAPABILITY_FS_SCHEME_WASB,
     CAPABILITY_GOE_COLUMN_TRANSFORMATIONS,
-    CAPABILITY_GOE_JOIN_PUSHDOWN,
     CAPABILITY_GOE_PARTITION_FUNCTIONS,
     CAPABILITY_LOAD_DB_TRANSPORT,
     CAPABILITY_NAN,
@@ -1943,9 +1942,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
 
     def goe_column_transformations_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_COLUMN_TRANSFORMATIONS)
-
-    def goe_join_pushdown_supported(self):
-        return self.is_capability_supported(CAPABILITY_GOE_JOIN_PUSHDOWN)
 
     def goe_partition_functions_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_PARTITION_FUNCTIONS)

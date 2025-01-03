@@ -459,9 +459,6 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
     def canonical_date_supported(self):
         return self._db_api.canonical_date_supported()
 
-    def goe_join_pushdown_supported(self):
-        return self._db_api.goe_join_pushdown_supported()
-
     def goe_lpa_supported(self):
         return self._db_api.goe_lpa_supported()
 

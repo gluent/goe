@@ -651,9 +651,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def goe_column_transformations_supported(self):
         return self._db_api.goe_column_transformations_supported()
 
-    def goe_join_pushdown_supported(self):
-        return self._db_api.goe_join_pushdown_supported()
-
     def goe_partition_functions_supported(self):
         return self._db_api.goe_partition_functions_supported()
 

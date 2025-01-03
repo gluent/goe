@@ -33,12 +33,10 @@ from goe.offload.offload_constants import (
     CAPABILITY_CANONICAL_TIME,
     CAPABILITY_CASE_SENSITIVE,
     CAPABILITY_GOE_HAS_DB_CODE_COMPONENT,
-    CAPABILITY_GOE_JOIN_PUSHDOWN,
     CAPABILITY_GOE_LIST_PARTITION_APPEND,
     CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY,
     CAPABILITY_GOE_OFFLOAD_STATUS_REPORT,
     CAPABILITY_GOE_SCHEMA_SYNC,
-    CAPABILITY_HYBRID_SCHEMA,
     CAPABILITY_LOW_HIGH_VALUE_FROM_STATS,
     CAPABILITY_NAN,
     CAPABILITY_PARAMETERIZED_QUERIES,
@@ -850,9 +848,6 @@ class FrontendApiInterface(metaclass=ABCMeta):
     def goe_has_db_code_component(self) -> bool:
         """Does the frontend have any in-database GOE code"""
         return self.is_capability_supported(CAPABILITY_GOE_HAS_DB_CODE_COMPONENT)
-
-    def goe_join_pushdown_supported(self) -> bool:
-        return self.is_capability_supported(CAPABILITY_GOE_JOIN_PUSHDOWN)
 
     def goe_lpa_supported(self) -> bool:
         return self.is_capability_supported(CAPABILITY_GOE_LIST_PARTITION_APPEND)

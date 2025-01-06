@@ -275,9 +275,6 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
     ) -> list:
         raise NotImplementedError("MSSQL gen_ctas_from_subquery() not yet implemented")
 
-    def get_test_table_owner(self, expected_schema: str, table_name: str) -> str:
-        raise NotImplementedError("MSSQL get_test_table_owner() not yet implemented")
-
     def goe_type_mapping_generated_table_col_specs(
         self,
         max_backend_precision,

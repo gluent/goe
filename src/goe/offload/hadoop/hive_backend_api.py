@@ -20,10 +20,7 @@
     See BackendHadoopApi for better+impyla justification.
 """
 
-from goe.util.goe_version import GOEVersion
 import logging
-import os
-import re
 
 from numpy import datetime64
 
@@ -42,7 +39,7 @@ from goe.offload.offload_constants import (
 )
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.hadoop.hive_literal import HiveLiteral
-from goe.offload.hadoop.hadoop_backend_api import BackendHadoopApi, HIVE_UDF_LIB
+from goe.offload.hadoop.hadoop_backend_api import BackendHadoopApi
 
 from goe.util.better_impyla import HDFS_NULL_PART_KEY_CONSTANT
 from goe.offload.hadoop.hadoop_column import (
@@ -70,56 +67,6 @@ from goe.offload.hadoop.hadoop_column import (
 ###############################################################################
 # CONSTANTS
 ###############################################################################
-
-HIVE_UDF_SPECS = [
-    (
-        "GOE_TZOFFSET_TO_TIMESTAMP",
-        "com.goe.udf.TzOffsetStrToTimestamp",
-        "'2015-01-01 12:13:14.56789 +02:00'",
-    ),
-    ("GOE_VERSION", "com.goe.udf.GOEVersion", ""),
-    ("GOE_UPPER", "com.goe.udf.GOEToUpper", "'Heya!'"),
-    ("GOE_LOWER", "com.goe.udf.GOEToLower", "'Heya!'"),
-    ("GOE_DAYOFWEEK", "com.goe.udf.GOEDayOfWeek", "'2017-10-17'"),
-    (
-        "GOE_TO_INTERNAL_NUMBER",
-        "com.goe.udf.ToOracleInternalNumberRaw",
-        "CAST(1 AS TINYINT)",
-    ),
-    (
-        "GOE_TO_INTERNAL_DATE",
-        "com.goe.udf.ToOracleInternalDateRaw",
-        "CAST(0 AS TIMESTAMP)",
-    ),
-    (
-        "GOE_TO_INTERNAL_DOUBLE",
-        "com.goe.udf.ToOracleInternalDouble",
-        "CAST(1.1 AS DOUBLE)",
-    ),
-    (
-        "GOE_TO_INTERNAL_FLOAT",
-        "com.goe.udf.ToOracleInternalFloat",
-        "CAST(1.1 AS FLOAT)",
-    ),
-    (
-        "GOE_ROW_RUN_LENGTH",
-        "com.goe.udf.OracleRowRunLengthRaw",
-        "CAST('rowrow' AS BINARY), 1",
-    ),
-    (
-        "GOE_FIELD_RUN_LENGTH",
-        "com.goe.udf.OracleFieldRunLengthRaw",
-        "CAST('foo' AS BINARY), 1",
-    ),
-    (
-        "GOE_UTF8_RUN_LENGTH",
-        "com.goe.udf.OracleUtf8RunLengthRaw",
-        "CAST('bar' AS BINARY), 1",
-    ),
-    ("GOE_BUCKET", "com.goe.udf.GOEBucket", "1,16"),
-    ("GOE_BUCKET", "com.goe.udf.GOEBucket", "CAST(1234 AS DECIMAL(38,0)),16"),
-]
-
 
 ###########################################################################
 # GLOBAL FUNCTIONS
@@ -169,24 +116,6 @@ class BackendHiveApi(BackendHadoopApi):
 
     def _backend_capabilities(self):
         return HIVE_BACKEND_CAPABILITIES
-
-    def _create_hive_udf(
-        self, function_name, function_class, function_library, udf_db=None
-    ):
-        """Hive"""
-        assert function_name
-        assert function_class
-        assert function_library
-
-        log_level = VVERBOSE if self._dry_run else VERBOSE
-        db_clause = (self.enclose_identifier(udf_db) + ".") if udf_db else ""
-        sql = "CREATE FUNCTION %s%s AS '%s' USING JAR '%s'" % (
-            db_clause,
-            function_name,
-            function_class,
-            function_library,
-        )
-        return self.execute_ddl(sql, log_level=log_level)
 
     def _execute_ddl_or_dml(
         self,
@@ -247,58 +176,8 @@ OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'"""
         )
         return tab_stats, part_stats, col_stats
 
-    def _insert_literal_values_format_sql(
-        self, db_name, table_name, column_names, literal_csv_list, split_by_cr=True
-    ):
-        """Hive doesn't support UDFs in VALUES clause, HDP 2.6.1 requires column case to match CREATE TABLE statement,
-        so we insert SELECTs rather than VALUES.
-        UNIONing the selects into a single statement avoids creating many single row files
-        Hive also doesn't universally support listing the columns you plan to insert into. On HDP this is fine
-        but on EMR it fails as below:
-          0: jdbc:hive2://localhost:10000/default>
-            INSERT INTO `tc_emr_1_SH_TEST`.`goe_backend_types`
-            (`ID`,`COLUMN_1`,`COLUMN_2`,`COLUMN_3`,`COLUMN_4`,`COLUMN_5`,`COLUMN_6`,`COLUMN_7`,`COLUMN_8`,`COLUMN_9`,`COLUMN_10`)
-            SELECT CAST(0 AS int),CAST(52 AS TINYINT),CAST(4257 AS SMALLINT),CAST(-510192861 AS INT)
-            ,CAST(-689489120933 AS BIGINT),NULL,timestamp '2020-11-09 01:40:06',CAST(NULL AS FLOAT)
-            ,CAST(2.59692560188e+19 AS DOUBLE),CAST(20052603.16 AS DECIMAL(10,2)),CAST(-998045512624685 AS DECIMAL(15,0));
-          Error: Error while compiling statement: FAILED: SemanticException 1:51
-            '[COLUMN_6, COLUMN_5, COLUMN_8, COLUMN_7, COLUMN_2, COLUMN_1, COLUMN_10, COLUMN_4, COLUMN_3, ID, COLUMN_9]'
-            in insert schema specification are not found among regular columns of tc_emr_1_SH_TEST.goe_backend_types
-            nor dynamic partition columns.. Error encountered near token 'COLUMN_10' (state=42000,code=40000)
-        """
-        join_str = "\nUNION ALL\n" if split_by_cr else " UNION ALL "
-        insert_template = "INSERT INTO %s " % (
-            self.enclose_object_reference(db_name, table_name)
-        )
-        formatted_rows = ["SELECT {}".format(_) for _ in literal_csv_list]
-        sql = insert_template + "\n" + join_str.join(formatted_rows)
-        return sql
-
     def _partition_clause_null_constant(self):
         return HDFS_NULL_PART_KEY_CONSTANT
-
-    def _udf_installation_sql(self, udf_db=None):
-        """Hive"""
-        f_jar = "hdfs://%s/%s" % (os.environ["HDFS_HOME"], HIVE_UDF_LIB)
-        cmds = []
-        for f_name, f_class in set([_[:-1] for _ in HIVE_UDF_SPECS]):
-            cmds.extend(self._drop_udf(f_name, udf_db=udf_db))
-            cmds.extend(self._create_hive_udf(f_name, f_class, f_jar, udf_db=udf_db))
-        return cmds
-
-    def _udf_test_sql(self, udf_db=None):
-        """Return a list of SQLs to be used for testing all UDFs"""
-        db_clause = (self.enclose_identifier(udf_db) + ".") if udf_db else ""
-        test_args = [(f_name, f_arg) for f_name, _, f_arg in HIVE_UDF_SPECS]
-        sqls = []
-        for f_name, f_arg in test_args:
-            sql = "SELECT %s%s(%s)" % (
-                db_clause,
-                self.enclose_identifier(f_name),
-                f_arg % {"fn_db": db_clause},
-            )
-            sqls.append(sql)
-        return sqls
 
     ###########################################################################
     # PUBLIC METHODS
@@ -679,22 +558,12 @@ FROM   %(from_db_table)s%(where)s%(dist_by)s%(sort_by)s""" % {
         # return datetime64('0001-01-01')
         return datetime64("1000-01-01")
 
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        """options.sequence_table_name does not apply on Hive."""
-        raise NotImplementedError("sequence_table_max is not implemented on Hive")
-
     def refresh_table_files(self, db_name, table_name, sync=None):
         """No requirement to scan files for a table on Hive but drop from cache because that will be stale.
         MSCK REPAIR TABLE is for finding new partitions rather than just rescanning for files
         therefore is not what this is intended for.
         """
         self.drop_state()
-
-    def sequence_table_max(self, db_name, table_name):
-        """options.sequence_table_name does not apply on Hive."""
-        raise NotImplementedError("sequence_table_max is not implemented on Hive")
 
     def supported_backend_data_types(self):
         return [
@@ -724,32 +593,3 @@ FROM   %(from_db_table)s%(where)s%(dist_by)s%(sort_by)s""" % {
 
     def udf_details(self, db_name, udf_name):
         raise NotImplementedError("udf_details is not implemented on Hive")
-
-    def udf_installation_os(self, user_udf_version):
-        """Hive
-        Returns a list of commands executed
-        """
-        if not self.goe_udfs_supported():
-            self._messages.log(
-                "Skipping installation of UDFs due to backend: %s" % self._backend_type
-            )
-            return None
-
-        cmds = []
-
-        if user_udf_version:
-            udf_version = user_udf_version
-        elif GOEVersion(self.target_version()) >= GOEVersion("3.0.0"):
-            udf_version = "3.0.0"
-        else:
-            udf_version = "2.0.0"
-
-        udf_lib_source = re.sub(r"\.jar$", "-" + udf_version + ".jar", HIVE_UDF_LIB)
-        udf_lib_destination = HIVE_UDF_LIB
-        cmds.extend(
-            self._udf_installation_copy_library_to_hdfs(
-                udf_lib_source, udf_lib_destination
-            )
-        )
-
-        return cmds

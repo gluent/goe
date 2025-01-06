@@ -217,14 +217,7 @@ CAPABILITY_FS_SCHEME_WASB = "fs_schema_wasb"
     multiple constants for different transformation keywords.
 """
 CAPABILITY_GOE_COLUMN_TRANSFORMATIONS = "goe_column_transformations"
-CAPABILITY_GOE_JOIN_PUSHDOWN = "goe_join_pushdown"
 CAPABILITY_GOE_LIST_PARTITION_APPEND = "goe_list_partition_append"
-""" CAPABILITY_GOE_MATERIALIZED_JOIN
-        Can we create a table in the backend that is a materialized join generated using our
-        Offload or Present join pushdown functionality. This is only used for enabling/disabling
-        tests per backend
-"""
-CAPABILITY_GOE_MATERIALIZED_JOIN = "goe_mat_join"
 """ CAPABILITY_GOE_PARTITION_FUNCTIONS
         Does the backend support our Partition Functions feature:
             - User creates a SQL UDF to convert source partition column data to synthetic partition
@@ -241,24 +234,6 @@ CAPABILITY_GOE_PARTITION_FUNCTIONS = "goe_partition_functions"
 CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY = "goe_multi_column_incremental_key"
 CAPABILITY_GOE_OFFLOAD_STATUS_REPORT = "goe_offload_status_report"
 CAPABILITY_GOE_SCHEMA_SYNC = "goe_schema_sync"
-""" CAPABILITY_GOE_SEQ_TABLE
-        Does the backend require the GOE sequence table.
-
-        Cloudera Data Hub versions earlier than 5.10.x contain a performance issue with Impala queries
-        that contain a large number of constants in an in-list (refer to IMPALA-4302 for details).
-        GOE includes an optimization that overcomes this by transforming large in-lists
-        into a semi-join using a sequence table.
-
-        Only currently required on Cloudera Data Hub versions earlier than 5.10.x.
-"""
-CAPABILITY_GOE_SEQ_TABLE = "goe_seq_table"
-""" CAPABILITY_GOE_UDFS
-        Does the backend require the GOE User-defined Functions (UDFs).
-
-        For Impala-supported backends, these are used for performance optimization reasons and are recommended,
-        but not mandatory.
-"""
-CAPABILITY_GOE_UDFS = "goe_udfs"
 """ CAPABILITY_LOAD_DB_TRANSPORT
         Do we use a load database to stage data.
 """
@@ -304,10 +279,6 @@ CAPABILITY_QUERY_SAMPLE_CLAUSE = "query_sample_clause"
         Does the backend use Apache Ranger to control authorization.
 """
 CAPABILITY_RANGER = "ranger"
-""" CAPABILITY_REFRESH_FUNCTIONS
-        Does the backend support refreshing UDFs.
-"""
-CAPABILITY_REFRESH_FUNCTIONS = "refresh_functions"
 """ CAPABILITY_SCHEMA_EVOLUTION
         Does the backend support automatic schema evolution.
         Currently restricted in scope to: does the backend support ALTER TABLE...ADD COLUMN.
@@ -368,11 +339,7 @@ HIVE_BACKEND_CAPABILITIES = {
     CAPABILITY_FS_SCHEME_S3A: True,
     CAPABILITY_FS_SCHEME_WASB: True,
     CAPABILITY_GOE_COLUMN_TRANSFORMATIONS: True,
-    CAPABILITY_GOE_JOIN_PUSHDOWN: True,
-    CAPABILITY_GOE_MATERIALIZED_JOIN: True,
     CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GOE_SEQ_TABLE: False,
-    CAPABILITY_GOE_UDFS: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
     CAPABILITY_NAN: True,
     CAPABILITY_NANOSECONDS: True,
@@ -383,7 +350,6 @@ HIVE_BACKEND_CAPABILITIES = {
     CAPABILITY_QUERY_SAMPLE_CLAUSE: False,
     # EMR does support Ranger so this could be set to True once properly tested (GOE-1878)
     CAPABILITY_RANGER: False,
-    CAPABILITY_REFRESH_FUNCTIONS: False,
     CAPABILITY_SCHEMA_EVOLUTION: True,
     CAPABILITY_SENTRY: False,
     CAPABILITY_SORTED_TABLE: True,
@@ -405,10 +371,8 @@ IMPALA_BACKEND_CAPABILITIES.update(
         CAPABILITY_DROP_COLUMN: True,
         CAPABILITY_FS_SCHEME_ABFS: True,
         CAPABILITY_FS_SCHEME_WASB: False,
-        CAPABILITY_GOE_SEQ_TABLE: True,
         CAPABILITY_NOT_NULL_COLUMN: False,
         CAPABILITY_RANGER: True,
-        CAPABILITY_REFRESH_FUNCTIONS: True,
         CAPABILITY_SENTRY: True,
         CAPABILITY_SQL_MICROSECOND_PREDICATE: True,
         CAPABILITY_TABLE_STATS_SET: True,
@@ -435,11 +399,7 @@ BIGQUERY_BACKEND_CAPABILITIES = {
     CAPABILITY_FS_SCHEME_S3A: False,
     CAPABILITY_FS_SCHEME_WASB: False,
     CAPABILITY_GOE_COLUMN_TRANSFORMATIONS: True,
-    CAPABILITY_GOE_JOIN_PUSHDOWN: True,
-    CAPABILITY_GOE_MATERIALIZED_JOIN: True,
     CAPABILITY_GOE_PARTITION_FUNCTIONS: True,
-    CAPABILITY_GOE_SEQ_TABLE: False,
-    CAPABILITY_GOE_UDFS: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
     CAPABILITY_NAN: True,
     CAPABILITY_NANOSECONDS: False,
@@ -449,7 +409,6 @@ BIGQUERY_BACKEND_CAPABILITIES = {
     CAPABILITY_PARTITION_BY_STRING: False,
     CAPABILITY_QUERY_SAMPLE_CLAUSE: False,
     CAPABILITY_RANGER: False,
-    CAPABILITY_REFRESH_FUNCTIONS: False,
     CAPABILITY_SCHEMA_EVOLUTION: True,
     CAPABILITY_SENTRY: False,
     CAPABILITY_SORTED_TABLE: True,
@@ -478,11 +437,7 @@ SNOWFLAKE_BACKEND_CAPABILITIES = {
     CAPABILITY_FS_SCHEME_S3A: True,
     CAPABILITY_FS_SCHEME_WASB: True,
     CAPABILITY_GOE_COLUMN_TRANSFORMATIONS: True,
-    CAPABILITY_GOE_JOIN_PUSHDOWN: True,
-    CAPABILITY_GOE_MATERIALIZED_JOIN: True,
     CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GOE_SEQ_TABLE: False,
-    CAPABILITY_GOE_UDFS: False,
     CAPABILITY_LOAD_DB_TRANSPORT: False,
     CAPABILITY_NAN: True,
     CAPABILITY_NANOSECONDS: True,
@@ -492,7 +447,6 @@ SNOWFLAKE_BACKEND_CAPABILITIES = {
     CAPABILITY_PARTITION_BY_STRING: False,
     CAPABILITY_QUERY_SAMPLE_CLAUSE: True,
     CAPABILITY_RANGER: False,
-    CAPABILITY_REFRESH_FUNCTIONS: False,
     CAPABILITY_SCHEMA_EVOLUTION: True,
     CAPABILITY_SENTRY: False,
     CAPABILITY_SORTED_TABLE: True,
@@ -521,11 +475,7 @@ SYNAPSE_BACKEND_CAPABILITIES = {
     CAPABILITY_FS_SCHEME_S3A: False,
     CAPABILITY_FS_SCHEME_WASB: True,
     CAPABILITY_GOE_COLUMN_TRANSFORMATIONS: False,
-    CAPABILITY_GOE_JOIN_PUSHDOWN: True,
-    CAPABILITY_GOE_MATERIALIZED_JOIN: True,
     CAPABILITY_GOE_PARTITION_FUNCTIONS: False,
-    CAPABILITY_GOE_SEQ_TABLE: False,
-    CAPABILITY_GOE_UDFS: False,
     CAPABILITY_LOAD_DB_TRANSPORT: True,
     CAPABILITY_NAN: False,
     CAPABILITY_NANOSECONDS: False,
@@ -535,7 +485,6 @@ SYNAPSE_BACKEND_CAPABILITIES = {
     CAPABILITY_PARTITION_BY_STRING: False,
     CAPABILITY_QUERY_SAMPLE_CLAUSE: True,
     CAPABILITY_RANGER: False,
-    CAPABILITY_REFRESH_FUNCTIONS: False,
     CAPABILITY_SCHEMA_EVOLUTION: True,
     CAPABILITY_SENTRY: False,
     CAPABILITY_SORTED_TABLE: True,
@@ -555,7 +504,6 @@ MSSQL_FRONTEND_CAPABILITIES = {
     CAPABILITY_CASE_SENSITIVE: False,
     CAPABILITY_GOE_HAS_DB_CODE_COMPONENT: False,
     CAPABILITY_HYBRID_SCHEMA: False,
-    CAPABILITY_GOE_JOIN_PUSHDOWN: False,
     CAPABILITY_GOE_LIST_PARTITION_APPEND: False,
     CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY: False,
     CAPABILITY_GOE_OFFLOAD_STATUS_REPORT: False,
@@ -574,7 +522,6 @@ ORACLE_FRONTEND_CAPABILITIES = {
     # This is actually true but we don't support it
     CAPABILITY_CASE_SENSITIVE: False,
     CAPABILITY_GOE_HAS_DB_CODE_COMPONENT: True,
-    CAPABILITY_GOE_JOIN_PUSHDOWN: False,
     CAPABILITY_GOE_LIST_PARTITION_APPEND: True,
     CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY: True,
     CAPABILITY_GOE_OFFLOAD_STATUS_REPORT: True,
@@ -592,7 +539,6 @@ TERADATA_FRONTEND_CAPABILITIES = {
     CAPABILITY_CANONICAL_TIME: True,
     CAPABILITY_CASE_SENSITIVE: False,
     CAPABILITY_GOE_HAS_DB_CODE_COMPONENT: False,
-    CAPABILITY_GOE_JOIN_PUSHDOWN: False,
     CAPABILITY_GOE_LIST_PARTITION_APPEND: False,
     CAPABILITY_GOE_MULTI_COLUMN_INCREMENTAL_KEY: False,
     CAPABILITY_GOE_OFFLOAD_STATUS_REPORT: False,

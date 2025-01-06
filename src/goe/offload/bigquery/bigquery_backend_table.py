@@ -499,10 +499,6 @@ class BackendBigQueryTable(BackendTableInterface):
         else:
             return []
 
-    def default_udf_db_name(self):
-        """By default we support UDF_DB but on BigQuery we use the data db as a fall back"""
-        return self._udf_db or self.db_name
-
     def empty_staging_area(self, staging_file):
         self._rm_load_table_location()
 
@@ -622,12 +618,6 @@ class BackendBigQueryTable(BackendTableInterface):
         if not self._load_db_exists():
             self._warning("Staging database %s does not exist" % self._load_db_name)
         return self._load_db_exists()
-
-    def synthetic_bucket_data_type(self):
-        raise NotImplementedError("Synthetic bucketing is not supported on BigQuery")
-
-    def synthetic_bucket_filter_capable_column(self, backend_column):
-        raise NotImplementedError("Synthetic bucketing is not supported on BigQuery")
 
     def validate_type_conversions(self, staging_columns: list):
         """Validate the staged data before we insert it into the final backend table.

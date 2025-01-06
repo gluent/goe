@@ -1565,69 +1565,6 @@ class BackendSnowflakeApi(BackendApiInterface):
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return row[0] if row else None
 
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        def gen_literal(py_val, data_type):
-            return str(self.to_backend_literal(py_val, data_type))
-
-        def add_cast(literal, formatted_data_type):
-            if any(
-                _ in formatted_data_type
-                for _ in [
-                    SNOWFLAKE_TYPE_TEXT,
-                    SNOWFLAKE_TYPE_TIMESTAMP_NTZ,
-                    SNOWFLAKE_TYPE_TIMESTAMP_TZ,
-                ]
-            ):
-                return literal
-            elif SNOWFLAKE_TYPE_BINARY in formatted_data_type:
-                return "TO_BINARY(%s, 'UTF-8')" % literal
-            else:
-                return "CAST(%s AS %s)" % (literal, formatted_data_type)
-
-        assert db_name
-        assert table_name
-        assert literal_list and isinstance(literal_list, list)
-        assert isinstance(literal_list[0], list)
-
-        if column_list:
-            assert valid_column_list(column_list), (
-                "Incorrectly formed column_list: %s" % column_list
-            )
-
-        column_names = [_.name for _ in column_list]
-        cmds = []
-        remaining_rows = literal_list[:]
-        while remaining_rows:
-            this_chunk = remaining_rows[:max_rows_per_insert]
-            remaining_rows = remaining_rows[max_rows_per_insert:]
-            formatted_rows = []
-            for row in this_chunk:
-                formatted_rows.append(
-                    ",".join(
-                        add_cast(
-                            gen_literal(py_val, col.data_type), col.format_data_type()
-                        )
-                        for py_val, col in zip(row, column_list)
-                    )
-                )
-            sql = self._insert_literals_using_insert_values_sql_text(
-                db_name,
-                table_name,
-                column_names,
-                formatted_rows,
-                split_by_cr=split_by_cr,
-            )
-            cmds.extend(self.execute_dml(sql, log_level=VVERBOSE))
-        return cmds
-
     def set_session_db(self, db_name, log_level=VERBOSE):
         assert db_name
         return self.execute_ddl("USE SCHEMA %s" % db_name, log_level=log_level)
@@ -1833,11 +1770,6 @@ class BackendSnowflakeApi(BackendApiInterface):
     def partition_column_requires_synthetic_column(self, backend_column, granularity):
         return False
 
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        raise NotImplementedError("Sequence table does not apply for Snowflake")
-
     def refresh_table_files(self, db_name, table_name, sync=None):
         """No requirement to re-scan files for a table on Snowflake but drop cache because that will be stale"""
         self.drop_state()
@@ -1878,9 +1810,6 @@ class BackendSnowflakeApi(BackendApiInterface):
         sql = "SHOW ROLES LIKE '%s'" % role_name
         row = self.execute_query_fetch_one(sql, log_level=VVERBOSE)
         return bool(row)
-
-    def sequence_table_max(self, db_name, table_name):
-        raise NotImplementedError("Sequence table does not apply for Snowflake")
 
     def set_column_stats(
         self, db_name, table_name, new_column_stats, ndv_cap, num_null_factor
@@ -2050,15 +1979,6 @@ class BackendSnowflakeApi(BackendApiInterface):
                     parameters = [tuple(_.split()) for _ in arg_strings]
             udfs.append(UdfDetails(db_name, udf_name, return_type, parameters))
         return udfs
-
-    def udf_installation_os(self, user_udf_version):
-        raise NotImplementedError("GOE UDFs are not supported on Snowflake")
-
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        raise NotImplementedError("GOE UDFs are not supported on Snowflake")
-
-    def udf_installation_test(self, udf_db=None):
-        raise NotImplementedError("GOE UDFs are not supported on Snowflake")
 
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, SnowflakeColumn)

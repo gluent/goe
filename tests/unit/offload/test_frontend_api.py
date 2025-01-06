@@ -86,7 +86,6 @@ class TestFrontendApi(TestCase):
         self.assertIsInstance(self.api.canonical_time_supported(), bool)
         self.assertIsInstance(self.api.case_sensitive_identifiers(), bool)
         self.assertIsInstance(self.api.goe_has_db_code_component(), bool)
-        self.assertIsInstance(self.api.goe_join_pushdown_supported(), bool)
         self.assertIsInstance(self.api.goe_offload_status_report_supported(), bool)
         self.assertIsInstance(self.api.parameterized_queries_supported(), bool)
 

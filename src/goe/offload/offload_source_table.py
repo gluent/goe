@@ -1266,9 +1266,6 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
         canonical_override: either a canonical column object or a GOE_TYPE_... data type.
         """
 
-    def goe_join_pushdown_supported(self):
-        return self._db_api.goe_join_pushdown_supported()
-
     def goe_offload_status_report_supported(self):
         return self._db_api.goe_offload_status_report_supported()
 

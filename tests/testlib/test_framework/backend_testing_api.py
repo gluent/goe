@@ -651,38 +651,11 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def goe_column_transformations_supported(self):
         return self._db_api.goe_column_transformations_supported()
 
-    def goe_join_pushdown_supported(self):
-        return self._db_api.goe_join_pushdown_supported()
-
-    def goe_materialized_join_supported(self):
-        return self._db_api.goe_materialized_join_supported()
-
     def goe_partition_functions_supported(self):
         return self._db_api.goe_partition_functions_supported()
 
-    def goe_sequence_table_supported(self):
-        return self._db_api.goe_sequence_table_supported()
-
     def identifier_contains_invalid_characters(self, identifier):
         return self._db_api.identifier_contains_invalid_characters(identifier)
-
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        return self._db_api.insert_literal_values(
-            db_name,
-            table_name,
-            literal_list,
-            column_list=column_list,
-            max_rows_per_insert=max_rows_per_insert,
-            split_by_cr=split_by_cr,
-        )
 
     def insert_table_as_select(
         self,
@@ -801,14 +774,8 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
             backend_column, granularity
         )
 
-    def refresh_functions_supported(self):
-        return self._db_api.refresh_functions_supported()
-
     def schema_evolution_supported(self):
         return self._db_api.schema_evolution_supported()
-
-    def sequence_table_max(self, db_name, table_name):
-        return self._db_api.sequence_table_max(db_name, table_name)
 
     def sorted_table_supported(self):
         return self._db_api.sorted_table_supported()

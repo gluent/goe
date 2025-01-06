@@ -78,11 +78,7 @@ from goe.offload.offload_constants import (
     CAPABILITY_FS_SCHEME_INHERIT,
     CAPABILITY_FS_SCHEME_WASB,
     CAPABILITY_GOE_COLUMN_TRANSFORMATIONS,
-    CAPABILITY_GOE_JOIN_PUSHDOWN,
-    CAPABILITY_GOE_MATERIALIZED_JOIN,
     CAPABILITY_GOE_PARTITION_FUNCTIONS,
-    CAPABILITY_GOE_SEQ_TABLE,
-    CAPABILITY_GOE_UDFS,
     CAPABILITY_LOAD_DB_TRANSPORT,
     CAPABILITY_NAN,
     CAPABILITY_NANOSECONDS,
@@ -118,10 +114,6 @@ class BackendApiException(Exception):
 
 
 class BackendStatsException(Exception):
-    pass
-
-
-class MissingSequenceTableException(Exception):
     pass
 
 
@@ -1596,25 +1588,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        """Used to insert specific data into a table. The table should already exist.
-        literal_list: A list of rows to insert (a list of lists).
-                      The row level lists should contain the exact right number of columns.
-        column_list: The column specs for the columns to be inserted, if left blank this will default to all
-                     columns in the table
-        Disclaimer: This code is used in testing and generating the sequence table. It is not robust enough to
-                    be a part of any Offload Transport
-        """
-
-    @abstractmethod
     def is_nan_sql_expression(self, column_expr):
         """Return a SQL expression testing if an expression is NaN (not-a-number)."""
 
@@ -1739,18 +1712,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def populate_sequence_table(
-        self, db_name, table_name, starting_seq, target_seq, split_by_cr=False
-    ):
-        """Populate options.sequence_table_name up to target_seq.
-        split_by_cr: This option is a bit of a fudge but allows a calling program to parse the output.
-                     The idea being that, on some backends, this method may produce lengthy output
-                     which we may not want on screen. With split_by_cr the calling program has the
-                     opportunity to split the executed text by cr and only log some lines.
-        """
-        pass
-
-    @abstractmethod
     def refresh_table_files(self, db_name, table_name, sync=None):
         pass
 
@@ -1768,10 +1729,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
     @abstractmethod
     def role_exists(self, role_name):
         """Check the role exists, returns True/False"""
-        pass
-
-    @abstractmethod
-    def sequence_table_max(self, db_name, table_name):
         pass
 
     @abstractmethod
@@ -1887,28 +1844,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         pass
 
     @abstractmethod
-    def udf_installation_os(self, user_udf_version):
-        """Copies any libraries required to support UDFs from our software package to wherever they should be.
-        Returns a list of commands executed.
-        """
-        pass
-
-    @abstractmethod
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        """Executes any SQL commands required for UDF installation.
-        Returns a list of commands executed, in dry_run mode that's all it does.
-        udf_db can be empty which means we won't specify one and pickup a default.
-        """
-        pass
-
-    @abstractmethod
-    def udf_installation_test(self, udf_db=None):
-        """Executes any SQL commands to test each UDF.
-        udf_db can be empty which means we won't specify one and pickup a default.
-        """
-        pass
-
-    @abstractmethod
     def valid_canonical_override(self, column, canonical_override):
         """Present has a number of options for overriding the default canonical mapping in to_canonical_column().
         This method validates the override.
@@ -2008,20 +1943,8 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
     def goe_column_transformations_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_COLUMN_TRANSFORMATIONS)
 
-    def goe_join_pushdown_supported(self):
-        return self.is_capability_supported(CAPABILITY_GOE_JOIN_PUSHDOWN)
-
-    def goe_materialized_join_supported(self):
-        return self.is_capability_supported(CAPABILITY_GOE_MATERIALIZED_JOIN)
-
     def goe_partition_functions_supported(self):
         return self.is_capability_supported(CAPABILITY_GOE_PARTITION_FUNCTIONS)
-
-    def goe_sequence_table_supported(self):
-        return self.is_capability_supported(CAPABILITY_GOE_SEQ_TABLE)
-
-    def goe_udfs_supported(self):
-        return self.is_capability_supported(CAPABILITY_GOE_UDFS)
 
     def load_db_transport_supported(self):
         return self.is_capability_supported(CAPABILITY_LOAD_DB_TRANSPORT)

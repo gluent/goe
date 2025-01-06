@@ -1321,16 +1321,6 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
             sqls.append(self.collect_table_stats_sql_text(schema, table_name))
         return sqls
 
-    def get_test_table_owner(self, expected_schema: str, table_name: str) -> str:
-        sql = f"""SELECT owner
-              FROM   dba_tables
-              WHERE  UPPER(table_name) = UPPER('{table_name}')
-              ORDER BY CASE WHEN UPPER(owner) = UPPER('{expected_schema}') THEN '0'
-                            WHEN UPPER(owner) = 'SH' THEN '1'
-                            ELSE owner END"""
-        row = self.execute_query_fetch_one(sql)
-        return row[0] if row else None
-
     def goe_type_mapping_generated_table_col_specs(
         self,
         max_backend_precision,
@@ -1484,14 +1474,6 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
 
     def lobs_support_minus_operator(self):
         return False
-
-    def lob_safe_table_projection(self, schema, table_name) -> str:
-        """Returns a CSV of columns names for use in SQL with LOB columns protected."""
-        columns = self._db_api.get_columns(schema, table_name)
-        return ",".join(
-            lob_to_hash(_.data_type, _.name) if "LOB" in _.data_type else _.name
-            for _ in columns
-        )
 
     def run_sql_in_file(self, local_path):
         """This method creates frontend objects. It is expected to be called from an SH_TEST connection
@@ -2305,7 +2287,11 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                 """
             )
         return self.gen_ctas_from_subquery(
-            schema, table_name, subquery, pk_col_name=pk_col_name, with_stats_collection=True
+            schema,
+            table_name,
+            subquery,
+            pk_col_name=pk_col_name,
+            with_stats_collection=True,
         )
 
     def table_row_count_from_stats(
@@ -2340,13 +2326,3 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
 
     def unit_test_query_options(self):
         return {"tracefile_identifier": "'GOE'"}
-
-    def view_is_valid(self, schema, view_name) -> bool:
-        self._log(f"ora_view_is_valid: {schema}.{view_name}", detail=VERBOSE)
-        q = """SELECT 1 FROM dba_objects
-               WHERE owner = UPPER(:o) AND object_name = UPPER(:v)
-               AND object_type = 'VIEW' AND status = 'VALID'"""
-        row = self._db_api.execute_query_fetch_one(
-            q, query_params={"o": schema, "v": view_name}
-        )
-        return bool(row)

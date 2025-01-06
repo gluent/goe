@@ -41,7 +41,6 @@
 
 from datetime import datetime
 import logging
-import os
 import re
 import socket
 import traceback
@@ -51,11 +50,9 @@ import traceback
 from impala.hiveserver2 import TTransportException
 
 from goe.connect.connect_constants import CONNECT_DETAIL, CONNECT_STATUS, CONNECT_TEST
-from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.filesystem.goe_dfs import (
     get_scheme_from_location_uri,
     OFFLOAD_FS_SCHEME_S3A,
-    OFFLOAD_NON_HDFS_FS_SCHEMES,
 )
 from goe.offload.backend_api import (
     BackendApiInterface,
@@ -75,7 +72,6 @@ from goe.offload.column_metadata import (
     CanonicalColumn,
     is_safe_mapping,
     match_table_column,
-    valid_column_list,
     GOE_TYPE_FIXED_STRING,
     GOE_TYPE_LARGE_STRING,
     GOE_TYPE_VARIABLE_STRING,
@@ -143,7 +139,6 @@ from goe.offload.hadoop.hadoop_column import (
 from goe.util.better_impyla import (
     HiveConnection,
     HiveTable,
-    HiveServer2Error,
     BetterImpylaException,
 )
 from goe.util.hive_table_stats import HiveTableStats
@@ -170,9 +165,6 @@ HADOOP_DATA_TYPE_DECODE_RE = re.compile(
 
 # Regular expression matching invalid identifier characters, constant to ensure compiled only once
 HADOOP_INVALID_IDENTIFIER_CHARS_RE = re.compile(r"[^A-Z0-9_]", re.I)
-
-HIVE_UDF_LIB = "goe_hive_udf.jar"
-IMPALA_UDF_LIB = "to_internal.so"
 
 IMPALA_PROFILE_LOG_LENGTH = 1024 * 32
 
@@ -375,23 +367,6 @@ class BackendHadoopApi(BackendApiInterface):
             return (data_type, int(precision), None, None)
         else:
             return (data_type, None, None, None)
-
-    def _drop_udf(
-        self, function_name, udf_db=None, function_spec=None, sync=None, if_exists=True
-    ):
-        """Drop a Hadoop UDF, used for both Hive and Impala"""
-        assert function_name
-        log_level = VVERBOSE if self._dry_run else VERBOSE
-        db_clause = (self.enclose_identifier(udf_db) + ".") if udf_db else ""
-        spec_clause = "" if function_spec is None else "({})".format(function_spec)
-        exists_clause = "" if not if_exists else "IF EXISTS "
-        drop_sql = "DROP FUNCTION %s%s%s%s" % (
-            exists_clause,
-            db_clause,
-            self.enclose_identifier(function_name),
-            spec_clause,
-        )
-        return self.execute_ddl(drop_sql, sync=sync, log_level=log_level)
 
     def _execute_query_fetch_x(
         self,
@@ -596,13 +571,6 @@ class BackendHadoopApi(BackendApiInterface):
             "_get_table_stats() is not implemented for common Hadoop class"
         )
 
-    def _insert_literal_values_format_sql(
-        self, db_name, table_name, column_names, literal_csv_list, split_by_cr=True
-    ):
-        raise NotImplementedError(
-            "_insert_literal_values_format_sql() is not implemented for common Hadoop class"
-        )
-
     def _invalid_identifier_character_re(self):
         return HADOOP_INVALID_IDENTIFIER_CHARS_RE
 
@@ -633,50 +601,6 @@ class BackendHadoopApi(BackendApiInterface):
     def _partition_clause_null_constant(self):
         raise NotImplementedError(
             "_partition_clause_null_constant() is not implemented for common Hadoop class"
-        )
-
-    def _udf_installation_sql(self, udf_db=None):
-        raise NotImplementedError(
-            "_udf_installation_sql() is not implemented for common Hadoop class"
-        )
-
-    def _udf_installation_copy_library_to_hdfs(
-        self, udf_lib_source, udf_lib_destination
-    ):
-        """Copies the UDF library from OFFLOAD_HOME/bin (CWD) to the home directory of hadoop_ssh_user
-        on the edge node and then copies from there into HDFS (local or Cloud Storage)
-        Returns a list of commands executed
-        This is shared code for Hive and Impala
-        """
-
-        self._log("UDF copy source: %s" % udf_lib_source, detail=VVERBOSE)
-        self._log("UDF copy target: %s" % udf_lib_destination, detail=VVERBOSE)
-
-        cmds = []
-        hdfs_client = get_dfs_from_options(
-            self._connection_options, messages=self._messages, dry_run=self._dry_run
-        )
-        if self._connection_options.offload_fs_scheme in OFFLOAD_NON_HDFS_FS_SCHEMES:
-            target_uri = hdfs_client.gen_uri(
-                self._connection_options.offload_fs_scheme,
-                self._connection_options.offload_fs_container,
-                self._connection_options.offload_fs_prefix,
-            )
-        else:
-            target_uri = self._connection_options.hdfs_home
-        # Copy the file to the edge node
-        # UDF library is in OFFLOAD_HOME
-        local_file = os.path.join(os.environ.get("OFFLOAD_HOME"), "bin", udf_lib_source)
-        target_file = os.path.join(target_uri, udf_lib_destination)
-        log_cmd = 'HDFS cmd: copy_from_local("%s", "%s")' % (local_file, target_file)
-        self._log(log_cmd, detail=VERBOSE)
-        hdfs_client.copy_from_local(local_file, target_file, overwrite=True)
-        cmds.append(log_cmd)
-        return cmds
-
-    def _udf_test_sql(self, udf_db=None):
-        raise NotImplementedError(
-            "_udf_test_sql() is not implemented for common Hadoop class"
         )
 
     ###########################################################################
@@ -1248,78 +1172,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" % {
         hive_stats = self._get_hive_stats_table(db_name, table_name)
         return hive_stats.table_partitions()
 
-    def insert_literal_values(
-        self,
-        db_name,
-        table_name,
-        literal_list,
-        column_list=None,
-        max_rows_per_insert=250,
-        split_by_cr=True,
-    ):
-        """Used to insert specific data into a table. The table should already exist.
-        literal_list: A list of rows to insert (a list of lists).
-                      The row level lists should contain the exact right number of columns
-        column_list: The columns to be inserted, if left blank this will default to all columns in the table
-        Disclaimer: This code is used in testing and generating the sequence table. It is not robust enough to
-                    be a part of any Offload Transport
-        """
-
-        def gen_literal(py_val):
-            return str(self.to_backend_literal(py_val))
-
-        def add_cast(literal, formatted_data_type):
-            if formatted_data_type.upper() in [
-                HADOOP_TYPE_STRING,
-                HADOOP_TYPE_TIMESTAMP,
-            ]:
-                return literal
-            elif (
-                self._backend_type == DBTYPE_HIVE
-                and HADOOP_TYPE_VARCHAR in formatted_data_type.upper()
-            ):
-                # No CAST if Hive and VARCHAR2 because UNION ALL failing with NullPointerException.
-                # This is a fudge really but only actually used in testing so not a big issue.
-                return literal
-            return "CAST(%s AS %s)" % (literal, formatted_data_type)
-
-        assert db_name
-        assert table_name
-        assert literal_list and isinstance(literal_list, list)
-        assert isinstance(literal_list[0], list)
-
-        if column_list:
-            assert valid_column_list(column_list), (
-                "Incorrectly formed column_list: %s" % column_list
-            )
-
-        column_list = column_list or self.get_columns(db_name, table_name)
-        column_names = [_.name for _ in column_list]
-        data_type_strs = [_.format_data_type() for _ in column_list]
-
-        cmds = []
-        remaining_rows = literal_list[:]
-        while remaining_rows:
-            this_chunk = remaining_rows[:max_rows_per_insert]
-            remaining_rows = remaining_rows[max_rows_per_insert:]
-            formatted_rows = []
-            for row in this_chunk:
-                formatted_rows.append(
-                    ",".join(
-                        add_cast(gen_literal(py_val), data_type)
-                        for py_val, data_type in zip(row, data_type_strs)
-                    )
-                )
-            sql = self._insert_literal_values_format_sql(
-                db_name,
-                table_name,
-                column_names,
-                formatted_rows,
-                split_by_cr=split_by_cr,
-            )
-            cmds.extend(self.execute_dml(sql, log_level=VVERBOSE))
-        return cmds
-
     def is_valid_partitioning_data_type(self, data_type):
         if not data_type:
             return False
@@ -1374,7 +1226,7 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" % {
         try:
             hive_table = self._get_hive_table(db_name, object_name)
             return hive_table.is_view()
-        except BetterImpylaException as exc:
+        except BetterImpylaException:
             # view does not exist
             return False
 
@@ -1642,47 +1494,6 @@ SELECT %(projection)s%(from_clause)s%(limit_clause)s""" % {
                 return False
             else:
                 raise
-
-    def udf_installation_sql(self, create_udf_db, udf_db=None):
-        if not self.goe_udfs_supported():
-            self._messages.log(
-                "Skipping installation of UDFs due to backend: %s" % self._backend_type
-            )
-            return None
-
-        cmds = []
-        if udf_db and not self.database_exists(udf_db):
-            if create_udf_db:
-                cmds.extend(self.create_database(udf_db))
-            else:
-                raise BackendApiException(
-                    "Database: %s does not exist. Specify --create-backend-db flag to create"
-                    % udf_db
-                )
-
-        cmds.extend(self._udf_installation_sql(udf_db=udf_db))
-        return cmds
-
-    def udf_installation_test(self, udf_db=None):
-        if not self.goe_udfs_supported():
-            self._messages.log(
-                "Skipping test of UDFs due to backend: %s" % self._backend_type
-            )
-            return None
-
-        cmds = []
-        try:
-            for sql in self._udf_test_sql(udf_db=udf_db):
-                cmds.append(sql)
-                row = self.execute_query_fetch_one(
-                    sql, log_level=VVERBOSE, not_when_dry_running=True
-                )
-                if row:
-                    self._log(str(row), detail=VVERBOSE)
-        except HiveServer2Error as exc:
-            self._log(traceback.format_exc(), detail=VVERBOSE)
-            raise BackendApiException(str(exc))
-        return cmds
 
     def valid_canonical_override(self, column, canonical_override):
         assert isinstance(column, HadoopColumn)

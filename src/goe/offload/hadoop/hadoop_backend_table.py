@@ -35,7 +35,6 @@ from goe.offload.hadoop.hadoop_column import (
     HADOOP_TYPE_DOUBLE,
     HADOOP_TYPE_FLOAT,
     HADOOP_TYPE_INT,
-    HADOOP_TYPE_SMALLINT,
     HADOOP_TYPE_STRING,
 )
 from goe.offload.offload_constants import (
@@ -70,9 +69,6 @@ if TYPE_CHECKING:
 ###############################################################################
 # CONSTANTS
 ###############################################################################
-
-GOE_BUCKET_UDF = "GOE_BUCKET"
-GOE_BUCKET_UDF_EXPRESSION = "%(udf_db)sGOE_BUCKET(%(dividend)s,%(divisor)s)"
 
 # Used for test assertions
 COMPUTE_LOAD_TABLE_STATS_LOG_TEXT = "Config requires compute of stats on load table"
@@ -625,11 +621,6 @@ FROM %s.%s""" % (
             return_cast = self._format_staging_column_name(staging_column)
             return return_cast, None, return_cast
 
-    def _synthetic_bucket_filter_non_udf_sql_expression(self):
-        raise NotImplementedError(
-            "_synthetic_bucket_filter_non_udf_sql_expression() is not implemented for common Hadoop class"
-        )
-
     def _tzoffset_to_timestamp_sql_expression(self, col_name):
         raise NotImplementedError(
             "_tzoffset_to_timestamp_sql_expression() is not implemented for common Hadoop class"
@@ -810,10 +801,6 @@ FROM %s.%s""" % (
         else:
             return []
 
-    def default_udf_db_name(self):
-        """By default we support UDF_DB but on Hadoop we use 'default' as a fall back"""
-        return self._udf_db or "default"
-
     def get_default_location(self):
         if self._default_location is None:
             self._default_location = self._db_api.get_table_location(
@@ -834,24 +821,6 @@ FROM %s.%s""" % (
         if not self._load_db_exists():
             self._warning("Staging database %s does not exist" % self._load_db_name)
         return self._load_db_exists()
-
-    def synthetic_bucket_data_type(self):
-        return HADOOP_TYPE_SMALLINT
-
-    def synthetic_bucket_filter_capable_column(self, backend_column):
-        assert backend_column
-        assert isinstance(backend_column, ColumnMetadataInterface)
-        if (
-            self.goe_udfs_supported()
-            and backend_column.is_number_based()
-            and (
-                backend_column.data_type in self._db_api.native_integer_types()
-                or backend_column.data_scale == 0
-            )
-        ):
-            return GOE_BUCKET_UDF, GOE_BUCKET_UDF_EXPRESSION
-        else:
-            return None, self._synthetic_bucket_filter_non_udf_sql_expression()
 
     def predicate_has_rows(self, predicate):
         if not self.exists():

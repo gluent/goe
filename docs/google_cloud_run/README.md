@@ -12,10 +12,10 @@ You must first have:
 ## Helper variables
 
 ```
-GOE_VERSION=1.0.3
+GOE_VERSION=x.y.z
 PROJECT=your-project
-REGION=europe-west1
-NETWORK=goe
+REGION=your-region
+NETWORK=your-network
 BUCKET=your-bucket
 SVC_ACCOUNT="your-goe-service-account@${PROJECT}.iam.gserviceaccount.com"
 ```
@@ -32,11 +32,11 @@ wget -q -O goe.tar.gz \
 https://github.com/gluent/goe/releases/download/v${GOE_VERSION}/goe.tar.gz
 ```
 
-### Include an Offload configuration file
+### Copy a prepared Offload configuration file
 
 For example:
 ```
-scp goe-node:/opt/goe/offload/conf/offload.env ./
+scp your-goe-vm:/opt/goe/offload/conf/offload.env ./
 ```
 
 It is recommended to set OFFLOAD_LOGDIR to a Google Cloud Storage location in your `offload.env` file.

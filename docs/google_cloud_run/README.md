@@ -27,7 +27,7 @@ Follow these steps from within the directory containing the `Dockerfile` and `go
 ### Download a GOE release
 
 For example:
-```
+```sh
 wget -q -O goe.tar.gz \
 https://github.com/gluent/goe/releases/download/v${GOE_VERSION}/goe.tar.gz
 ```

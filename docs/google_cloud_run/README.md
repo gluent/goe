@@ -35,7 +35,7 @@ https://github.com/gluent/goe/releases/download/v${GOE_VERSION}/goe.tar.gz
 ### Copy a prepared Offload configuration file
 
 For example:
-```
+```sh
 scp your-goe-vm:/opt/goe/offload/conf/offload.env ./
 ```
 

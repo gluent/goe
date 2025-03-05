@@ -35,7 +35,7 @@ RUN cd /opt/goe && tar xf goe.tar.gz
 RUN cd ${OFFLOAD_HOME} && python3.11 -m venv ./.venv
 COPY offload.env ${OFFLOAD_HOME}/conf/
 RUN . ${OFFLOAD_HOME}/.venv/bin/activate && pip install --root-user-action=ignore --upgrade pip
-RUN . ${OFFLOAD_HOME}/.venv/bin/activate && pip install --root-user-action=ignore ${OFFLOAD_HOME}/lib/goe-$(cat ${OFFLOAD_HOME}/version)-py3-none-any.whl
+RUN . ${OFFLOAD_HOME}/.venv/bin/activate && pip install --root-user-action=ignore ${OFFLOAD_HOME}/lib/goe_framework-$(awk '{print $1}' ${OFFLOAD_HOME}/version_build)-py3-none-any.whl
 # Entrypoint
 COPY goe.sh /opt/goe/
 RUN chmod 500 /opt/goe/goe.sh

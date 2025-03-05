@@ -43,7 +43,7 @@ It is recommended to set OFFLOAD_LOGDIR to a Google Cloud Storage location in yo
 
 ### Submit the Build
 
-```
+```sh
 gcloud builds submit . --tag gcr.io/${PROJECT}/goe-${GOE_VERSION} \
  --project=${PROJECT} --region=${REGION} \
  --gcs-log-dir=gs://${BUCKET}/gcbr-logs

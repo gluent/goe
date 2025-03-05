@@ -51,7 +51,7 @@ gcloud builds submit . --tag gcr.io/${PROJECT}/goe-${GOE_VERSION} \
 
 ## Example Connect Command
 
-```
+```sh
 JOB_NAME=connect-$(date +'%Y%m%d-%H%M%S')
 
 gcloud run jobs create ${JOB_NAME} \

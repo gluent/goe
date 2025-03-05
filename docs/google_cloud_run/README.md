@@ -68,7 +68,7 @@ gcloud run jobs execute ${JOB_NAME} --wait \
 
 ## Example Offload Command
 
-```
+```sh
 JOB_NAME=offload-ACME-FACT-$(date +'%Y%m%d-%H%M%S')
 
 gcloud run jobs create ${JOB_NAME} \

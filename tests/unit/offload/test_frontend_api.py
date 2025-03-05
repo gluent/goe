@@ -82,7 +82,6 @@ class TestFrontendApi(TestCase):
 
     def _test_capabilities(self):
         self.assertIsInstance(self.api.canonical_date_supported(), bool)
-        self.assertIsInstance(self.api.canonical_float_supported(), bool)
         self.assertIsInstance(self.api.canonical_time_supported(), bool)
         self.assertIsInstance(self.api.case_sensitive_identifiers(), bool)
         self.assertIsInstance(self.api.goe_has_db_code_component(), bool)

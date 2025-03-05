@@ -64,7 +64,6 @@ from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.offload_constants import (
     CAPABILITY_BUCKET_HASH_COLUMN,
     CAPABILITY_CANONICAL_DATE,
-    CAPABILITY_CANONICAL_FLOAT,
     CAPABILITY_CANONICAL_TIME,
     CAPABILITY_CASE_SENSITIVE,
     CAPABILITY_COLUMN_STATS_SET,
@@ -1886,10 +1885,6 @@ FROM   %(db)s.%(table)s%(where_clause)s%(group_by)s%(order_by)s""" % {
         Note that there is an Impala override for this.
         """
         return self.is_capability_supported(CAPABILITY_CANONICAL_DATE)
-
-    def canonical_float_supported(self):
-        """Does the backend have a pure 4 byte binary floating point data type"""
-        return self.is_capability_supported(CAPABILITY_CANONICAL_FLOAT)
 
     def canonical_time_supported(self):
         """Does the backend have a pure time data type (no date part).

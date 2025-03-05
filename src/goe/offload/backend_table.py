@@ -2513,9 +2513,6 @@ class BackendTableInterface(metaclass=ABCMeta):
     def canonical_date_supported(self):
         return self._db_api.canonical_date_supported()
 
-    def canonical_float_supported(self):
-        return self._db_api.canonical_float_supported()
-
     def canonical_time_supported(self):
         return self._db_api.canonical_time_supported()
 

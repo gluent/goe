@@ -53,7 +53,6 @@ from goe.offload.column_metadata import (
     GOE_TYPE_INTEGER_8,
     GOE_TYPE_INTEGER_38,
     GOE_TYPE_DECIMAL,
-    GOE_TYPE_FLOAT,
     GOE_TYPE_DOUBLE,
     GOE_TYPE_DATE,
     GOE_TYPE_TIME,
@@ -817,32 +816,32 @@ FROM %(db_table)s""" % {
                 (date_column, "D", None),
                 [
                     (
-                        f"column(TXN_DATE) = datetime(2010-01-01)",
-                        f"`TXN_DATE` = DATETIME '2010-01-01'",
+                        "column(TXN_DATE) = datetime(2010-01-01)",
+                        "`TXN_DATE` = DATETIME '2010-01-01'",
                     ),
                     (
-                        f"datetime(2010-01-01) = column(TXN_DATE)",
-                        f"DATETIME '2010-01-01' = `TXN_DATE`",
+                        "datetime(2010-01-01) = column(TXN_DATE)",
+                        "DATETIME '2010-01-01' = `TXN_DATE`",
                     ),
                     (
-                        f"column(TXN_DATE) != datetime(2010-01-01)",
-                        f"`TXN_DATE` != DATETIME '2010-01-01'",
+                        "column(TXN_DATE) != datetime(2010-01-01)",
+                        "`TXN_DATE` != DATETIME '2010-01-01'",
                     ),
                     (
-                        f"column(TXN_DATE) < datetime(2010-01-01)",
-                        f"`TXN_DATE` < DATETIME '2010-01-01'",
+                        "column(TXN_DATE) < datetime(2010-01-01)",
+                        "`TXN_DATE` < DATETIME '2010-01-01'",
                     ),
                     (
-                        f"column(TXN_DATE) <= datetime(2010-01-01)",
-                        f"`TXN_DATE` <= DATETIME '2010-01-01'",
+                        "column(TXN_DATE) <= datetime(2010-01-01)",
+                        "`TXN_DATE` <= DATETIME '2010-01-01'",
                     ),
                     (
-                        f"column(TXN_DATE) > datetime(2010-01-01)",
-                        f"`TXN_DATE` > DATETIME '2010-01-01'",
+                        "column(TXN_DATE) > datetime(2010-01-01)",
+                        "`TXN_DATE` > DATETIME '2010-01-01'",
                     ),
                     (
-                        f"column(TXN_DATE) >= datetime(2010-01-01)",
-                        f"`TXN_DATE` >= DATETIME '2010-01-01'",
+                        "column(TXN_DATE) >= datetime(2010-01-01)",
+                        "`TXN_DATE` >= DATETIME '2010-01-01'",
                     ),
                 ],
             ),
@@ -998,10 +997,8 @@ FROM %(db_table)s""" % {
         new_ddl = "\n".join(rename_ddl_fn(_, column_name, new_name) for _ in orig_ddl)
 
         # Rename the column in the SELECT portion and stitch it together as a string
-        rename_sel_fn = (
-            lambda x: "{} AS {}".format(x, new_name)
-            if x.lower() == column_name.lower()
-            else x
+        rename_sel_fn = lambda x: (
+            "{} AS {}".format(x, new_name) if x.lower() == column_name.lower() else x
         )
         projection = "\n,      ".join(rename_sel_fn(_.name) for _ in existing_columns)
         new_ddl += """\nAS
@@ -1033,32 +1030,32 @@ FROM %(db_table)s""" % {
 
         non_sampled_type = self.gen_default_numeric_column("x").format_data_type()
         return {
-            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: BIGQUERY_TYPE_NUMERIC
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: BIGQUERY_TYPE_INT64
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: (
+                BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: (
+                BIGQUERY_TYPE_INT64 if sampling_enabled else non_sampled_type
+            ),
             STORY_TEST_OFFLOAD_NUMS_NUM_4: BIGQUERY_TYPE_INT64,
             STORY_TEST_OFFLOAD_NUMS_NUM_18: BIGQUERY_TYPE_INT64,
             STORY_TEST_OFFLOAD_NUMS_NUM_19: numeric(19, 0),
             STORY_TEST_OFFLOAD_NUMS_NUM_3_2: numeric(3, 2),
-            STORY_TEST_OFFLOAD_NUMS_NUM_STAR_4: BIGQUERY_TYPE_NUMERIC
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_NUM_3_5: bignumeric(5, 5)
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_NUM_STAR_4: (
+                BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_NUM_3_5: (
+                bignumeric(5, 5) if sampling_enabled else non_sampled_type
+            ),
             STORY_TEST_OFFLOAD_NUMS_NUM_10_M5: BIGQUERY_TYPE_INT64,
-            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: numeric(10, 0)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_13_9: numeric(13, 9)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: bignumeric(38, 3)
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: (
+                numeric(10, 0) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_13_9: (
+                numeric(13, 9) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: (
+                bignumeric(38, 3) if sampling_enabled else non_sampled_type
+            ),
         }
 
     def story_test_table_extra_col_info(self):

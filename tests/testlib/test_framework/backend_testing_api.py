@@ -298,9 +298,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def canonical_time_supported(self):
         return self._db_api.canonical_time_supported()
 
-    def canonical_float_supported(self):
-        return self._db_api.canonical_float_supported()
-
     def case_sensitive_identifiers(self):
         return self._db_api.case_sensitive_identifiers()
 

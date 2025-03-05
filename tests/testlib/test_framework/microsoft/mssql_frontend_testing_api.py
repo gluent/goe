@@ -141,9 +141,9 @@ class MSSQLFrontendTestingApi(FrontendTestingApiInterface):
 
     def _goe_types_column_definitions(
         self,
-        all_chars_ascii7=False,
+        ascii_only=False,
         all_chars_notnull=False,
-        backend_supports_canonical_float=True,
+        supported_canonical_types=None,
         include_interval_columns=True,
     ) -> list:
         raise NotImplementedError(

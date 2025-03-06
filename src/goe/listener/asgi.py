@@ -20,7 +20,7 @@ from pathlib import Path
 from cx_Oracle import DatabaseError as OracleDatabaseError
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException, RequestValidationError
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from redis.exceptions import RedisError
@@ -77,7 +77,7 @@ def get_app() -> FastAPI:
         description="GOE Listener",
         terms_of_service="https://goe.com/terms-of-service/",  # todo: update this/embed a page/add text?
         version=strict_version_ready(version()),
-        default_response_class=ORJSONResponse,
+        default_response_class=JSONResponse,
         on_startup=[events.on_startup],
         on_shutdown=[events.on_shutdown],
         logger=logger,

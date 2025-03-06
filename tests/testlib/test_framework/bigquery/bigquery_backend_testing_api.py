@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
-    processing and verification of integration tests.
+"""BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
+processing and verification of integration tests.
 """
 
 import logging
@@ -95,7 +95,6 @@ from tests.testlib.test_framework.backend_testing_api import (
     STORY_TEST_OFFLOAD_NUMS_DEC_38_3,
 )
 from tests.testlib.test_framework.test_constants import UNICODE_NAME_TOKEN
-from tests.testlib.test_framework.test_value_generators import TestDecimal
 
 
 ###############################################################################
@@ -776,6 +775,7 @@ FROM %(db_table)s""" % {
             GOE_TYPE_INTEGER_8: BIGQUERY_TYPE_INT64,
             GOE_TYPE_INTEGER_38: BIGQUERY_TYPE_BIGNUMERIC,
             GOE_TYPE_DECIMAL: numeric_override or BIGQUERY_TYPE_BIGNUMERIC,
+            GOE_TYPE_FLOAT: BIGQUERY_TYPE_FLOAT64,
             GOE_TYPE_DOUBLE: BIGQUERY_TYPE_FLOAT64,
             GOE_TYPE_DATE: BIGQUERY_TYPE_DATE,
             GOE_TYPE_TIME: BIGQUERY_TYPE_TIME,
@@ -817,117 +817,36 @@ FROM %(db_table)s""" % {
                 (date_column, "D", None),
                 [
                     (
-                        f"column(TXN_DATE) = datetime(2010-01-01)",
-                        f"`TXN_DATE` = DATETIME '2010-01-01'",
+                        "column(TXN_DATE) = datetime(2010-01-01)",
+                        "`TXN_DATE` = DATETIME '2010-01-01'",
                     ),
                     (
-                        f"datetime(2010-01-01) = column(TXN_DATE)",
-                        f"DATETIME '2010-01-01' = `TXN_DATE`",
+                        "datetime(2010-01-01) = column(TXN_DATE)",
+                        "DATETIME '2010-01-01' = `TXN_DATE`",
                     ),
                     (
-                        f"column(TXN_DATE) != datetime(2010-01-01)",
-                        f"`TXN_DATE` != DATETIME '2010-01-01'",
+                        "column(TXN_DATE) != datetime(2010-01-01)",
+                        "`TXN_DATE` != DATETIME '2010-01-01'",
                     ),
                     (
-                        f"column(TXN_DATE) < datetime(2010-01-01)",
-                        f"`TXN_DATE` < DATETIME '2010-01-01'",
+                        "column(TXN_DATE) < datetime(2010-01-01)",
+                        "`TXN_DATE` < DATETIME '2010-01-01'",
                     ),
                     (
-                        f"column(TXN_DATE) <= datetime(2010-01-01)",
-                        f"`TXN_DATE` <= DATETIME '2010-01-01'",
+                        "column(TXN_DATE) <= datetime(2010-01-01)",
+                        "`TXN_DATE` <= DATETIME '2010-01-01'",
                     ),
                     (
-                        f"column(TXN_DATE) > datetime(2010-01-01)",
-                        f"`TXN_DATE` > DATETIME '2010-01-01'",
+                        "column(TXN_DATE) > datetime(2010-01-01)",
+                        "`TXN_DATE` > DATETIME '2010-01-01'",
                     ),
                     (
-                        f"column(TXN_DATE) >= datetime(2010-01-01)",
-                        f"`TXN_DATE` >= DATETIME '2010-01-01'",
+                        "column(TXN_DATE) >= datetime(2010-01-01)",
+                        "`TXN_DATE` >= DATETIME '2010-01-01'",
                     ),
                 ],
             ),
         ]
-
-    def goe_type_mapping_generated_table_col_specs(self):
-        definitions = self._goe_type_mapping_column_definitions()
-        goe_type_mapping_cols, goe_type_mapping_names = [], []
-        for col_dict in [
-            definitions[col_name] for col_name in sorted(definitions.keys())
-        ]:
-            backend_column = col_dict["column"]
-            goe_type_mapping_names.append(backend_column.name)
-            if backend_column.data_type in [
-                BIGQUERY_TYPE_BIGNUMERIC,
-                BIGQUERY_TYPE_NUMERIC,
-            ] and col_dict.get("present_options"):
-                # This is a number of some kind and being CAST to something else so we provide specific test data.
-                present_options = col_dict["present_options"]
-                literals = [1, 2, 3]
-                if present_options.get("decimal_columns_type_list"):
-                    precision, scale = present_options["decimal_columns_type_list"][
-                        0
-                    ].split(",")
-                    precision = int(precision)
-                    scale = int(scale)
-                    if backend_column.data_type == BIGQUERY_TYPE_NUMERIC:
-                        if scale < 9:
-                            precision = min(precision, 38 - (9 - scale))
-                        elif scale > 9:
-                            precision = precision - (scale - 9)
-                            scale = 9
-                    literals = [
-                        TestDecimal.min(precision, scale),
-                        TestDecimal.rnd(precision, scale),
-                        TestDecimal.max(precision, scale),
-                    ]
-                elif col_dict["expected_canonical_column"].data_type in [
-                    GOE_TYPE_INTEGER_1,
-                    GOE_TYPE_INTEGER_2,
-                    GOE_TYPE_INTEGER_4,
-                    GOE_TYPE_INTEGER_8,
-                    GOE_TYPE_INTEGER_38,
-                ]:
-                    precision = self._canonical_integer_precision(
-                        col_dict["expected_canonical_column"].data_type
-                    )
-                    if backend_column.data_type == BIGQUERY_TYPE_NUMERIC:
-                        precision = min(precision, 29)
-                    literals = [
-                        TestDecimal.min(precision),
-                        TestDecimal.rnd(precision),
-                        TestDecimal.max(precision),
-                    ]
-                goe_type_mapping_cols.append(
-                    {"column": backend_column, "literals": literals}
-                )
-            elif (
-                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_DS
-            ):
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": self._goe_type_mapping_interval_ds_test_values(),
-                    }
-                )
-            elif (
-                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_YM
-            ):
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": self._goe_type_mapping_interval_ym_test_values(),
-                    }
-                )
-            elif col_dict["expected_canonical_column"].data_type == GOE_TYPE_BINARY:
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": ["binary1", "binary2", "binary3"],
-                    }
-                )
-            else:
-                goe_type_mapping_cols.append({"column": backend_column})
-        return goe_type_mapping_cols, goe_type_mapping_names
 
     def load_table_fs_scheme_is_correct(self, load_db, table_name):
         """BigQuery load tables should always be in GCS"""
@@ -998,10 +917,8 @@ FROM %(db_table)s""" % {
         new_ddl = "\n".join(rename_ddl_fn(_, column_name, new_name) for _ in orig_ddl)
 
         # Rename the column in the SELECT portion and stitch it together as a string
-        rename_sel_fn = (
-            lambda x: "{} AS {}".format(x, new_name)
-            if x.lower() == column_name.lower()
-            else x
+        rename_sel_fn = lambda x: (
+            "{} AS {}".format(x, new_name) if x.lower() == column_name.lower() else x
         )
         projection = "\n,      ".join(rename_sel_fn(_.name) for _ in existing_columns)
         new_ddl += """\nAS
@@ -1033,32 +950,32 @@ FROM %(db_table)s""" % {
 
         non_sampled_type = self.gen_default_numeric_column("x").format_data_type()
         return {
-            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: BIGQUERY_TYPE_NUMERIC
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: BIGQUERY_TYPE_INT64
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: (
+                BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: (
+                BIGQUERY_TYPE_INT64 if sampling_enabled else non_sampled_type
+            ),
             STORY_TEST_OFFLOAD_NUMS_NUM_4: BIGQUERY_TYPE_INT64,
             STORY_TEST_OFFLOAD_NUMS_NUM_18: BIGQUERY_TYPE_INT64,
             STORY_TEST_OFFLOAD_NUMS_NUM_19: numeric(19, 0),
             STORY_TEST_OFFLOAD_NUMS_NUM_3_2: numeric(3, 2),
-            STORY_TEST_OFFLOAD_NUMS_NUM_STAR_4: BIGQUERY_TYPE_NUMERIC
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_NUM_3_5: bignumeric(5, 5)
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_NUM_STAR_4: (
+                BIGQUERY_TYPE_NUMERIC if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_NUM_3_5: (
+                bignumeric(5, 5) if sampling_enabled else non_sampled_type
+            ),
             STORY_TEST_OFFLOAD_NUMS_NUM_10_M5: BIGQUERY_TYPE_INT64,
-            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: numeric(10, 0)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_13_9: numeric(13, 9)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: bignumeric(38, 3)
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: (
+                numeric(10, 0) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_13_9: (
+                numeric(13, 9) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: (
+                bignumeric(38, 3) if sampling_enabled else non_sampled_type
+            ),
         }
 
     def story_test_table_extra_col_info(self):

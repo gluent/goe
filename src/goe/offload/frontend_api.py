@@ -29,7 +29,6 @@ from goe.offload.column_metadata import (
 )
 from goe.offload.offload_constants import (
     CAPABILITY_CANONICAL_DATE,
-    CAPABILITY_CANONICAL_FLOAT,
     CAPABILITY_CANONICAL_TIME,
     CAPABILITY_CASE_SENSITIVE,
     CAPABILITY_GOE_HAS_DB_CODE_COMPONENT,
@@ -830,10 +829,6 @@ class FrontendApiInterface(metaclass=ABCMeta):
         Note that there is an Impala override for this.
         """
         return self.is_capability_supported(CAPABILITY_CANONICAL_DATE)
-
-    def canonical_float_supported(self) -> bool:
-        """Does the frontend have a pure 4 byte binary floating point data type"""
-        return self.is_capability_supported(CAPABILITY_CANONICAL_FLOAT)
 
     def canonical_time_supported(self) -> bool:
         """Does the frontend have a pure time data type (no date part).

@@ -182,11 +182,6 @@ def gen_offload_nulls_create_ddl(
 ):
     ddl = ["DROP TABLE %(schema)s.%(table)s" % {"schema": schema, "table": table_name}]
     if config.db_type == offload_constants.DBTYPE_ORACLE:
-        binary_float = (
-            "\n, bfval binary_float"
-            if backend_api and backend_api.canonical_float_supported()
-            else ""
-        )
         interval_ym = (
             "" if to_allow_query_import else "\n, iyval interval year(9) to month"
         )
@@ -197,20 +192,15 @@ def gen_offload_nulls_create_ddl(
             , vcval VARCHAR2(10)
             , chval CHAR(10)
             , dtval DATE
-            , tmval TIMESTAMP%(float)s
+            , tmval TIMESTAMP
+            , bfval BINARY_FLOAT
             , bdval BINARY_DOUBLE%(interval_ym)s
             , idval INTERVAL DAY(9) TO SECOND(9))"""
             % {
                 "schema": schema,
                 "table": table_name,
-                "float": binary_float,
                 "interval_ym": interval_ym,
             }
-        )
-        binary_float = (
-            "\n,      CAST(NULL as BINARY_FLOAT)"
-            if backend_api and backend_api.canonical_float_supported()
-            else ""
         )
         interval_ym = (
             ""
@@ -225,23 +215,18 @@ def gen_offload_nulls_create_ddl(
             ,      CAST(NULL as VARCHAR2(10))
             ,      CAST(NULL as CHAR(10))
             ,      CAST(NULL as DATE)
-            ,      CAST(NULL as TIMESTAMP)%(float)s
+            ,      CAST(NULL as TIMESTAMP)
+            ,      CAST(NULL as BINARY_FLOAT)
             ,      CAST(NULL as BINARY_DOUBLE)%(interval_ym)s
             ,      CAST(NULL as interval day(9) to second(9))
             FROM   dual"""
             % {
                 "schema": schema,
                 "table": table_name,
-                "float": binary_float,
                 "interval_ym": interval_ym,
             }
         )
     elif config.db_type == offload_constants.DBTYPE_TERADATA:
-        binary_float = (
-            "\n, bfval float"
-            if backend_api and backend_api.canonical_float_supported()
-            else ""
-        )
         # TODO add interval types
         ddl.append(
             """CREATE TABLE %(schema)s.%(table)s
@@ -250,14 +235,10 @@ def gen_offload_nulls_create_ddl(
             , vcval VARCHAR(10)
             , chval CHAR(10)
             , dtval DATE
-            , tmval TIMESTAMP%(float)s
+            , tmval TIMESTAMP
+            , bfval FLOAT
             , bdval DOUBLE PRECISION)"""
-            % {"schema": schema, "table": table_name, "float": binary_float}
-        )
-        binary_float = (
-            "\n,      CAST(NULL AS FLOAT)"
-            if backend_api and backend_api.canonical_float_supported()
-            else ""
+            % {"schema": schema, "table": table_name}
         )
         ddl.append(
             """INSERT INTO %(schema)s.%(table)s
@@ -266,9 +247,10 @@ def gen_offload_nulls_create_ddl(
             ,      CAST(NULL as VARCHAR(10))
             ,      CAST(NULL as CHAR(10))
             ,      CAST(NULL as DATE)
-            ,      CAST(NULL as TIMESTAMP)%(float)s
+            ,      CAST(NULL as TIMESTAMP)
+            ,      CAST(NULL as FLOAT)
             ,      CAST(NULL as DOUBLE PRECISION)"""
-            % {"schema": schema, "table": table_name, "float": binary_float}
+            % {"schema": schema, "table": table_name}
         )
     else:
         raise NotImplementedError(f"Unsupported db_type: {config.db_type}")

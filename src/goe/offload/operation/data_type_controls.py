@@ -22,7 +22,6 @@ from goe.offload.column_metadata import (
     CANONICAL_CHAR_SEMANTICS_UNICODE,
     GOE_TYPE_DECIMAL,
     GOE_TYPE_DOUBLE,
-    GOE_TYPE_FLOAT,
     GOE_TYPE_INTEGER_1,
     GOE_TYPE_INTEGER_2,
     GOE_TYPE_INTEGER_4,
@@ -39,7 +38,6 @@ from goe.offload.offload_constants import (
 from goe.offload.offload_messages import OffloadMessages, VERBOSE, VVERBOSE
 from goe.offload.offload_source_table import DATA_SAMPLE_SIZE_AUTO
 from goe.offload.operation.not_null_columns import apply_not_null_columns_csv
-from goe.offload.oracle.oracle_column import ORACLE_TYPE_BINARY_FLOAT
 
 
 class OffloadDataTypeControlsException(Exception):
@@ -180,15 +178,6 @@ def offload_source_to_canonical_mappings(
         )
         canonical_mappings[tab_col.name] = new_col
 
-        if not offload_target_table.canonical_float_supported() and (
-            tab_col.data_type == ORACLE_TYPE_BINARY_FLOAT
-            or new_col.data_type == GOE_TYPE_FLOAT
-        ):
-            raise OffloadDataTypeControlsException(
-                "4 byte binary floating point data cannot be offloaded to this backend system: %s"
-                % tab_col.name
-            )
-
         if (
             new_col.is_number_based() or new_col.is_date_based()
         ) and new_col.safe_mapping is False:
@@ -259,9 +248,9 @@ def offload_source_to_canonical_mappings(
         if sampled_rdbms_cols:
             for tab_col in sampled_rdbms_cols:
                 # Overwrite any previous canonical mapping with the post sampled version
-                canonical_mappings[
-                    tab_col.name
-                ] = offload_source_table.to_canonical_column(tab_col)
+                canonical_mappings[tab_col.name] = (
+                    offload_source_table.to_canonical_column(tab_col)
+                )
 
         report_data_type_control_options_to_simulate_sampling(
             sampled_rdbms_cols, canonical_mappings, messages

@@ -1936,9 +1936,6 @@ class TestBackendBigQueryDataTypeMappings(TestDataTypeMappings):
         )
 
         for source_column in self.canonical_columns():
-            if source_column.data_type == GOE_TYPE_FLOAT:
-                # No default mapping for 32bit float
-                continue
             expected_column = match_table_column(source_column.name, expected_columns)
             assert expected_column
             new_column = self.test_api.from_canonical_column(source_column)
@@ -2401,9 +2398,6 @@ class TestBackendSnowflakeDataTypeMappings(TestDataTypeMappings):
         )
 
         for source_column in self.canonical_columns():
-            if source_column.data_type == GOE_TYPE_FLOAT:
-                # No default mapping for 32bit float
-                continue
             expected_column = match_table_column(source_column.name, expected_columns)
             assert expected_column
             new_column = self.test_api.from_canonical_column(source_column)

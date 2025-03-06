@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Hadoop implementation of BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
-    processing and verification of integration tests.
+"""Hadoop implementation of BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
+processing and verification of integration tests.
 """
 
 from datetime import datetime
@@ -46,7 +46,6 @@ from goe.offload.column_metadata import (
     GOE_TYPE_DOUBLE,
     GOE_TYPE_DATE,
     GOE_TYPE_TIMESTAMP,
-    GOE_TYPE_TIMESTAMP_TZ,
     GOE_TYPE_INTERVAL_DS,
     GOE_TYPE_INTERVAL_YM,
 )
@@ -1023,52 +1022,6 @@ class BackendHadoopTestingApi(BackendTestingApiInterface):
                 ],
             ),
         ]
-
-    def goe_type_mapping_generated_table_col_specs(self):
-        definitions = self._goe_type_mapping_column_definitions()
-        goe_type_mapping_cols, goe_type_mapping_names = [], []
-        for col_dict in [
-            definitions[col_name] for col_name in sorted(definitions.keys())
-        ]:
-            backend_column = col_dict["column"]
-            goe_type_mapping_names.append(backend_column.name)
-            if backend_column.data_type == HADOOP_TYPE_DECIMAL and (
-                backend_column.data_precision is not None
-                or backend_column.data_scale is not None
-            ):
-                goe_type_mapping_cols.append({"column": backend_column})
-            elif (
-                backend_column.data_type == HADOOP_TYPE_DECIMAL
-                and backend_column.data_precision is None
-                and backend_column.data_scale is None
-            ):
-                # Hadoop DECIMAL defaults to DECIMAL(9,0). Include small literals here to avoid complications later.
-                goe_type_mapping_cols.append(
-                    {"column": backend_column, "literals": [100, 200, 300, 400]}
-                )
-            elif (
-                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_DS
-            ):
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": self._goe_type_mapping_interval_ds_test_values(),
-                    }
-                )
-            elif (
-                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_YM
-            ):
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": self._goe_type_mapping_interval_ym_test_values(),
-                    }
-                )
-            elif backend_column.is_string_based():
-                goe_type_mapping_cols.append({"column": backend_column})
-            else:
-                goe_type_mapping_cols.append({"column": backend_column})
-        return goe_type_mapping_cols, goe_type_mapping_names
 
     def load_table_fs_scheme_is_correct(self, load_db, table_name):
         """Hadoop load tables should always be in HDFS"""

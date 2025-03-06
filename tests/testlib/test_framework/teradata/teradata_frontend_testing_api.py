@@ -33,7 +33,6 @@ from goe.offload.column_metadata import (
     GOE_TYPE_DECIMAL,
     GOE_TYPE_DOUBLE,
     GOE_TYPE_FIXED_STRING,
-    GOE_TYPE_FLOAT,
     GOE_TYPE_INTEGER_1,
     GOE_TYPE_INTEGER_2,
     GOE_TYPE_INTEGER_4,
@@ -1593,7 +1592,6 @@ class TeradataFrontendTestingApi(FrontendTestingApiInterface):
         )
 
         extra_pred = extra_pred or ""
-        subpartition_clause = ""
         extra_cols = ""
         if extra_col_tuples:
             extra_cols = "," + ",".join(

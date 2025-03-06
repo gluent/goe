@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
-    processing and verification of integration tests.
+"""BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
+processing and verification of integration tests.
 """
 
 import logging
@@ -48,6 +48,7 @@ from goe.offload.column_metadata import (
     GOE_TYPE_INTEGER_8,
     GOE_TYPE_INTEGER_38,
     GOE_TYPE_DECIMAL,
+    GOE_TYPE_FLOAT,
     GOE_TYPE_DOUBLE,
     GOE_TYPE_DATE,
     GOE_TYPE_TIME,
@@ -88,7 +89,6 @@ from tests.testlib.test_framework.backend_testing_api import (
     STORY_TEST_OFFLOAD_NUMS_NUM_10_M5,
 )
 from tests.testlib.test_framework.test_constants import UNICODE_NAME_TOKEN
-from tests.testlib.test_framework.test_value_generators import TestDecimal
 
 
 ###############################################################################
@@ -777,6 +777,7 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
             GOE_TYPE_INTEGER_8: SNOWFLAKE_TYPE_NUMBER,
             GOE_TYPE_INTEGER_38: SNOWFLAKE_TYPE_NUMBER,
             GOE_TYPE_DECIMAL: SNOWFLAKE_TYPE_NUMBER,
+            GOE_TYPE_FLOAT: SNOWFLAKE_TYPE_FLOAT,
             GOE_TYPE_DOUBLE: SNOWFLAKE_TYPE_FLOAT,
             GOE_TYPE_DATE: SNOWFLAKE_TYPE_DATE,
             GOE_TYPE_TIME: SNOWFLAKE_TYPE_TIME,
@@ -814,72 +815,6 @@ class BackendSnowflakeTestingApi(BackendTestingApiInterface):
     def expected_std_dim_synthetic_offload_predicates(self) -> list:
         """No partitioning on Snowflake"""
         return []
-
-    def goe_type_mapping_generated_table_col_specs(self):
-        definitions = self._goe_type_mapping_column_definitions()
-        goe_type_mapping_cols, goe_type_mapping_names = [], []
-
-        for col_dict in [
-            definitions[col_name] for col_name in sorted(definitions.keys())
-        ]:
-            backend_column = col_dict["column"]
-            goe_type_mapping_names.append(backend_column.name)
-            if backend_column.data_type == SNOWFLAKE_TYPE_NUMBER:
-                if col_dict.get("present_options"):
-                    # This is a number of some kind and being CAST to something else so we provide specific test data.
-                    literals = [1, 2, 3]
-                    if col_dict["expected_canonical_column"].data_type in [
-                        GOE_TYPE_INTEGER_1,
-                        GOE_TYPE_INTEGER_2,
-                        GOE_TYPE_INTEGER_4,
-                        GOE_TYPE_INTEGER_8,
-                    ]:
-                        precision = self._canonical_integer_precision(
-                            col_dict["expected_canonical_column"].data_type
-                        )
-                        literals = [
-                            TestDecimal.min(precision),
-                            TestDecimal.rnd(precision),
-                            TestDecimal.max(precision),
-                        ]
-                    goe_type_mapping_cols.append(
-                        {"column": backend_column, "literals": literals}
-                    )
-                else:
-                    goe_type_mapping_cols.append({"column": backend_column})
-            elif (
-                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_DS
-            ):
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": self._goe_type_mapping_interval_ds_test_values(),
-                    }
-                )
-            elif (
-                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_YM
-            ):
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": self._goe_type_mapping_interval_ym_test_values(),
-                    }
-                )
-            elif backend_column.is_string_based():
-                goe_type_mapping_cols.append({"column": backend_column})
-            elif col_dict["expected_canonical_column"].data_type in [
-                GOE_TYPE_BINARY,
-                GOE_TYPE_LARGE_BINARY,
-            ]:
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": ["binary1", "binary2", "binary3"],
-                    }
-                )
-            else:
-                goe_type_mapping_cols.append({"column": backend_column})
-        return goe_type_mapping_cols, goe_type_mapping_names
 
     def load_table_fs_scheme_is_correct(self, load_db, table_name):
         """On Snowflake there are no load tables, always returns True."""

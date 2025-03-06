@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
-    processing and verification of integration tests.
+"""BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
+processing and verification of integration tests.
 """
 
 from abc import ABCMeta, abstractmethod
@@ -298,9 +298,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     def canonical_time_supported(self):
         return self._db_api.canonical_time_supported()
 
-    def canonical_float_supported(self):
-        return self._db_api.canonical_float_supported()
-
     def case_sensitive_identifiers(self):
         return self._db_api.case_sensitive_identifiers()
 
@@ -571,82 +568,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
 
     def get_table_sort_columns(self, db_name, table_name):
         return self._db_api.get_table_sort_columns(db_name, table_name)
-
-    def goe_identifiers_generated_table_col_specs(self):
-        """Return a list of column specs matching how test.generated_tables expects and a list of column names.
-        This is not how we want to pass column specs around but it matches existing code in test.
-        Returned lists are sorted by column name.
-        """
-        goe_identifiers_cols = []
-        canonical_columns = [
-            CanonicalColumn("COL_NUM_UPPER", GOE_TYPE_INTEGER_8),
-            CanonicalColumn("COL_STR_UPPER", GOE_TYPE_VARIABLE_STRING, data_length=10),
-            CanonicalColumn("COL_DATE_UPPER", GOE_TYPE_DATE),
-            CanonicalColumn("col_num_lower", GOE_TYPE_INTEGER_8),
-            CanonicalColumn("col_str_lower", GOE_TYPE_VARIABLE_STRING, data_length=10),
-            CanonicalColumn("col_date_lower", GOE_TYPE_DATE),
-            CanonicalColumn("Col_Num_CamelCase", GOE_TYPE_INTEGER_8),
-            CanonicalColumn(
-                "Col_Str_CamelCase", GOE_TYPE_VARIABLE_STRING, data_length=10
-            ),
-            CanonicalColumn("Col_Date_CamelCase", GOE_TYPE_DATE),
-        ]
-        # Commented out lines below until GOE-2136 is actioned
-        # if not self.identifier_contains_invalid_characters('col space'):
-        #     # The backend supports spaces in names so add some columns.
-        #     # This is a good test that all generated SQL has column enclosure.
-        #     canonical_columns.extend([CanonicalColumn('COL NUM SPACE', GOE_TYPE_INTEGER_8),
-        #                               CanonicalColumn('COL STR SPACE', GOE_TYPE_DATE),
-        #                               CanonicalColumn('COL DATE SPACE', GOE_TYPE_DATE)])
-        for column in canonical_columns:
-            backend_column = self._db_api.from_canonical_column(column)
-            if column.is_number_based():
-                literals = [1, 2, 3]
-            elif column.is_string_based():
-                literals = ["blah1", "blah2", "blah3"]
-            else:
-                literals = None
-            goe_identifiers_cols.append(
-                {"column": backend_column, "literals": literals}
-            )
-        goe_identifiers_names = [_["column"].name for _ in goe_identifiers_cols]
-        return goe_identifiers_cols, goe_identifiers_names
-
-    def goe_type_mapping_test_columns(self):
-        """Return a list of column names defined for testing"""
-        definitions = self._goe_type_mapping_column_definitions()
-        return sorted(definitions.keys())
-
-    def goe_type_mapping_present_options(self):
-        """Return a dictionary of present datatype control options/values for testing purposes."""
-        definitions = self._goe_type_mapping_column_definitions()
-        present_options = {}
-        for col_dict in definitions.values():
-            if col_dict.get("present_options"):
-                opts = col_dict["present_options"]
-                self._debug(
-                    "Processing opts for %s: %s" % (col_dict["column"].name, str(opts))
-                )
-                for opt in opts:
-                    if opt in present_options and isinstance(
-                        present_options[opt], list
-                    ):
-                        assert isinstance(
-                            opts[opt], list
-                        ), "Expected type of option value is list, not: %s" % type(
-                            opts[opt]
-                        )
-                        present_options[opt] += opts[opt]
-                    elif opt in present_options:
-                        assert isinstance(
-                            opts[opt], str
-                        ), "Expected type of option value is str, not: %s" % type(
-                            opts[opt]
-                        )
-                        present_options[opt] += "," + opts[opt]
-                    else:
-                        present_options[opt] = opts[opt]
-        return present_options
 
     def goe_column_transformations_supported(self):
         return self._db_api.goe_column_transformations_supported()
@@ -981,13 +902,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def expected_std_dim_synthetic_offload_predicates(self) -> list:
         """Return a list of tuples of GOE offload predicates and expected backend predicate"""
-
-    @abstractmethod
-    def goe_type_mapping_generated_table_col_specs(self):
-        """Return a list of column specs matching how test.generated_tables expects and a list of column names.
-        This is not how we want to pass column specs around but it matches existing code in test.
-        Returned lists are sorted by column name.
-        """
 
     @abstractmethod
     def load_table_fs_scheme_is_correct(self, load_db, table_name):

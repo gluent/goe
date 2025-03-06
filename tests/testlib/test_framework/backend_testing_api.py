@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
-    processing and verification of integration tests.
+"""BackendTestingApi: An extension of BackendApi used purely for code relating to the setup,
+processing and verification of integration tests.
 """
 
 from abc import ABCMeta, abstractmethod
@@ -902,13 +902,6 @@ class BackendTestingApiInterface(metaclass=ABCMeta):
     @abstractmethod
     def expected_std_dim_synthetic_offload_predicates(self) -> list:
         """Return a list of tuples of GOE offload predicates and expected backend predicate"""
-
-    @abstractmethod
-    def goe_type_mapping_generated_table_col_specs(self):
-        """Return a list of column specs matching how test.generated_tables expects and a list of column names.
-        This is not how we want to pass column specs around but it matches existing code in test.
-        Returned lists are sorted by column name.
-        """
 
     @abstractmethod
     def load_table_fs_scheme_is_correct(self, load_db, table_name):

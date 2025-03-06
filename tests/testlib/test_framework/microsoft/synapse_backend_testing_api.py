@@ -15,12 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" BackendSynapseTestingApi: An extension of BackendApi used purely for code relating to the setup,
-    processing and verification of integration tests with a Synapse backend.
+"""BackendSynapseTestingApi: An extension of BackendApi used purely for code relating to the setup,
+processing and verification of integration tests with a Synapse backend.
 """
 
 import logging
-from textwrap import dedent
 
 from goe.offload.microsoft.synapse_column import (
     SynapseColumn,
@@ -74,7 +73,6 @@ from goe.offload.column_metadata import (
     GOE_TYPE_INTERVAL_DS,
     GOE_TYPE_INTERVAL_YM,
 )
-from goe.offload.offload_messages import VVERBOSE
 from tests.testlib.test_framework.backend_testing_api import (
     BackendTestingApiInterface,
     BackendTestingApiException,
@@ -108,11 +106,7 @@ from tests.testlib.test_framework.backend_testing_api import (
     STORY_TEST_OFFLOAD_NUMS_DEC_37_3,
     STORY_TEST_BACKEND_RAW_COL,
 )
-from tests.testlib.test_framework.test_constants import (
-    TEST_GEN_DATA_ASCII7,
-    UNICODE_NAME_TOKEN,
-)
-from tests.testlib.test_framework.test_value_generators import TestDecimal
+from tests.testlib.test_framework.test_constants import UNICODE_NAME_TOKEN
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default
@@ -1845,100 +1839,6 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
         """No synthetic partitioning on Synapse"""
         return []
 
-    def goe_type_mapping_generated_table_col_specs(self):
-        definitions = self._goe_type_mapping_column_definitions()
-        goe_type_mapping_cols, goe_type_mapping_names = [], []
-
-        for col_dict in [
-            definitions[col_name] for col_name in sorted(definitions.keys())
-        ]:
-            backend_column = col_dict["column"]
-            goe_type_mapping_names.append(backend_column.name)
-            if backend_column.data_type in [
-                SYNAPSE_TYPE_DECIMAL,
-                SYNAPSE_TYPE_NUMERIC,
-                SYNAPSE_TYPE_MONEY,
-                SYNAPSE_TYPE_SMALLMONEY,
-            ]:
-                if col_dict.get("present_options"):
-                    # This is a number of some kind and being CAST to something else so we provide simple test data.
-                    literals = [1, 2, 3, None, 4]
-                    if col_dict["expected_canonical_column"].data_type in [
-                        GOE_TYPE_INTEGER_1,
-                        GOE_TYPE_INTEGER_2,
-                        GOE_TYPE_INTEGER_4,
-                        GOE_TYPE_INTEGER_8,
-                    ]:
-                        precision = self._canonical_integer_precision(
-                            col_dict["expected_canonical_column"].data_type
-                        )
-                        literals = [
-                            TestDecimal.min(precision),
-                            TestDecimal.rnd(precision),
-                            TestDecimal.max(precision),
-                        ]
-                    goe_type_mapping_cols.append(
-                        {"column": backend_column, "literals": literals}
-                    )
-                else:
-                    goe_type_mapping_cols.append({"column": backend_column})
-            elif backend_column.data_type == SYNAPSE_TYPE_TINYINT:
-                # TINYINT does not cover all values covered by canonical INTEGER_1, therefore provide a simple list.
-                goe_type_mapping_cols.append(
-                    {"column": backend_column, "literals": [1, 2, 3]}
-                )
-            elif backend_column.data_type == SYNAPSE_TYPE_UNIQUEIDENTIFIER:
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": [
-                            "6F9619FF-8B86-D011-B42D-00C04FC964FF",
-                            "0E984725-C51C-4BF4-9960-E1C80E27ABA0",
-                            None,
-                        ],
-                    }
-                )
-            elif (
-                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_DS
-            ):
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": self._goe_type_mapping_interval_ds_test_values(),
-                    }
-                )
-            elif (
-                col_dict["expected_canonical_column"].data_type == GOE_TYPE_INTERVAL_YM
-            ):
-                goe_type_mapping_cols.append(
-                    {
-                        "column": backend_column,
-                        "literals": self._goe_type_mapping_interval_ym_test_values(),
-                    }
-                )
-            elif col_dict["expected_canonical_column"].data_type in [
-                GOE_TYPE_BINARY,
-                GOE_TYPE_LARGE_BINARY,
-            ]:
-                if (backend_column.data_length or backend_column.char_length) > 6:
-                    goe_type_mapping_cols.append(
-                        {
-                            "column": backend_column,
-                            "literals": ["binary1", "binary2", "binary3", None],
-                        }
-                    )
-                else:
-                    goe_type_mapping_cols.append(
-                        {"column": backend_column, "literals": ["b1", "b2", "b3", None]}
-                    )
-            elif backend_column.data_type in [SYNAPSE_TYPE_CHAR, SYNAPSE_TYPE_VARCHAR]:
-                goe_type_mapping_cols.append(
-                    {"column": backend_column, "constant": TEST_GEN_DATA_ASCII7}
-                )
-            else:
-                goe_type_mapping_cols.append({"column": backend_column})
-        return goe_type_mapping_cols, goe_type_mapping_names
-
     def load_table_fs_scheme_is_correct(self, load_db, table_name):
         """On Synapse the load table scheme is hidden inside a DATA_SOURCE, always return True."""
         return True
@@ -1997,12 +1897,12 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
 
         non_sampled_type = self.gen_default_numeric_column("x").format_data_type()
         return {
-            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: number(4, 3)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: SYNAPSE_TYPE_SMALLINT
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_BARE_NUM: (
+                number(4, 3) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_BARE_FLT: (
+                SYNAPSE_TYPE_SMALLINT if sampling_enabled else non_sampled_type
+            ),
             STORY_TEST_OFFLOAD_NUMS_NUM_4: SYNAPSE_TYPE_SMALLINT,
             STORY_TEST_OFFLOAD_NUMS_NUM_18: SYNAPSE_TYPE_BIGINT,
             STORY_TEST_OFFLOAD_NUMS_NUM_19: number(38, 0),
@@ -2011,18 +1911,18 @@ class BackendSynapseTestingApi(BackendTestingApiInterface):
             STORY_TEST_OFFLOAD_NUMS_NUM_3_5: number(5, 5),
             # NUM_10_M5 is NUMBER(10,0) which maps to 8-BYTE integer
             STORY_TEST_OFFLOAD_NUMS_NUM_10_M5: SYNAPSE_TYPE_BIGINT,
-            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: number(10, 0)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_36_3: number(36, 3)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_37_3: number(37, 3)
-            if sampling_enabled
-            else non_sampled_type,
-            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: number(38, 3)
-            if sampling_enabled
-            else non_sampled_type,
+            STORY_TEST_OFFLOAD_NUMS_DEC_10_0: (
+                number(10, 0) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_36_3: (
+                number(36, 3) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_37_3: (
+                number(37, 3) if sampling_enabled else non_sampled_type
+            ),
+            STORY_TEST_OFFLOAD_NUMS_DEC_38_3: (
+                number(38, 3) if sampling_enabled else non_sampled_type
+            ),
         }
 
     def story_test_table_extra_col_info(self):

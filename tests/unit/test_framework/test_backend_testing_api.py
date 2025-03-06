@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TestBackendTestingApi: Unit test library to test the testing API for all supported backends
-    This is split into two categories
-    1) For all possible backends test API calls that do not need to connect to the system
-       Because there is no connection we can fake any backend and test functionality
-       These classes have the system in the name: TestHiveBackendApi, TestImpalaBackendApi, etc
-    2) For the current backend test API calls that need to connect to the system
-       This class has Current in the name: TestCurrentBackendApi
+"""TestBackendTestingApi: Unit test library to test the testing API for all supported backends
+This is split into two categories
+1) For all possible backends test API calls that do not need to connect to the system
+   Because there is no connection we can fake any backend and test functionality
+   These classes have the system in the name: TestHiveBackendApi, TestImpalaBackendApi, etc
+2) For the current backend test API calls that need to connect to the system
+   This class has Current in the name: TestCurrentBackendApi
 """
 
 from unittest import TestCase, main
@@ -97,17 +97,6 @@ class TestBackendTestingApi(TestCase):
             list,
         )
 
-    def _test_goe_type_mapping_generated_table_col_specs(self):
-        self.assertIsInstance(
-            self.test_api.goe_type_mapping_generated_table_col_specs(), tuple
-        )
-        self.assertIsInstance(
-            self.test_api.goe_type_mapping_generated_table_col_specs()[0], list
-        )
-        self.assertIsInstance(
-            self.test_api.goe_type_mapping_generated_table_col_specs()[1], list
-        )
-
     def _test_unit_test_query_options(self):
         self.assertIsInstance(self.test_api.unit_test_query_options(), dict)
 
@@ -115,7 +104,6 @@ class TestBackendTestingApi(TestCase):
         if not self.test_api:
             return
         self._test_create_table_as_select()
-        self._test_goe_type_mapping_generated_table_col_specs()
         self._test_unit_test_query_options()
 
 

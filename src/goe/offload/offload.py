@@ -652,6 +652,14 @@ def get_offload_options(opt):
         ),
     )
     opt.add_option(
+        "--offload-transport-snapshot",
+        dest="offload_transport_snapshot",
+        help=(
+            "Override RDBMS snapshot (SCN) used for transport query consistency. "
+            "This defaults to the system snapshot prior to copying data if not overridden by this option."
+        ),
+    )
+    opt.add_option(
         "--offload-transport-spark-properties",
         dest="offload_transport_spark_properties",
         default=orchestration_defaults.offload_transport_spark_properties_default(),

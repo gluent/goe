@@ -60,7 +60,6 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         offload_options: "OrchestrationConfig",
         messages: "OffloadMessages",
         dfs_client,
-        rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
         self._offload_transport_method = OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD
@@ -71,7 +70,6 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
         # For spark-submit we need to pass compression in as a config to the driver program
         self._load_table_compression_pyspark_settings()

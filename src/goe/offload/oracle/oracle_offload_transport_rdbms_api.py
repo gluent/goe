@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OffloadTransportOracleApi: Library for logic/interaction with source Oracle system during offload transport.
-"""
+"""OffloadTransportOracleApi: Library for logic/interaction with source Oracle system during offload transport."""
 
 from contextlib import contextmanager
 from itertools import groupby
@@ -535,28 +534,6 @@ FROM  (
         ).strip()
         return f"/*+ NO_PARALLEL {opt_param_hints} */"
 
-    def get_rdbms_scn(self):
-        self.debug("get_rdbms_scn()")
-        ora_curs = None
-        ora_conn = self._get_adm_connection()
-        try:
-            ora_curs = ora_conn.cursor()
-            scn = ora_curs.execute("SELECT current_scn FROM v$database").fetchone()[0]
-            ora_curs.close()
-            self._close_adm_connection()
-            return scn
-        except:
-            try:
-                if ora_curs:
-                    ora_curs.close()
-                self._close_adm_connection()
-            except Exception as exc:
-                self.log(
-                    "Failed to close RDBMS session after error: %s" % str(exc),
-                    detail=VVERBOSE,
-                )
-            raise
-
     def get_transport_split_type(
         self,
         partition_chunk: "OffloadSourcePartitions",
@@ -656,11 +633,23 @@ FROM  (
         assert partition_by in self._transport_row_source_query_split_methods
         return partition_by, tuned_parallelism
 
+    def get_snapshot_clause(self, transport_scn: int, consistent_read: bool) -> str:
+        if consistent_read:
+            self.log(
+                f"Using RDBMS snapshot {transport_scn} for consistent data retrieval",
+                detail=VVERBOSE,
+            )
+            scn_clause = f" AS OF SCN {transport_scn}"
+        else:
+            scn_clause = ""
+        return scn_clause
+
     def get_transport_row_source_query(
         self,
         partition_by_prm: str,
         rdbms_table: "OffloadSourceTableInterface",
-        consistent_read,
+        consistent_read: bool,
+        transport_scn: int,
         parallelism,
         offload_by_subpartition,
         mod_column,
@@ -688,19 +677,9 @@ FROM  (
                 "RDBMS extent splitting is not supported for IOTs"
             )
 
-        if consistent_read:
-            # Do this before anything else, we want the SCN captured before any other preamble.
-            transport_scn = self.get_rdbms_scn()
-            self.log(
-                "Using RDBMS SCN %s for consistent data retrieval" % str(transport_scn),
-                detail=VVERBOSE,
-            )
-            scn_clause = " AS OF SCN %s" % str(transport_scn)
-        else:
-            scn_clause = ""
-
         owner_table = '"%s"."%s"' % (self._rdbms_owner, self._rdbms_table_name)
         partition_by = partition_by_prm
+        scn_clause = self.get_snapshot_clause(transport_scn, consistent_read)
         union_all = self._row_source_query_union_all_clause(pad)
 
         if partition_by in (

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OffloadTransportTeradataApi: Library for logic/interaction with source Oracle system during offload transport.
-"""
+"""OffloadTransportTeradataApi: Library for logic/interaction with source Oracle system during offload transport."""
 
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
@@ -284,9 +283,6 @@ class OffloadTransportTeradataApi(OffloadTransportRdbmsApiInterface):
         """No hints on Teradata"""
         return ""
 
-    def get_rdbms_scn(self):
-        raise NotImplementedError("Teradata get_rdbms_scn() not implemented")
-
     def get_id_column_for_range_splitting(
         self, rdbms_table: "OffloadSourceTableInterface"
     ) -> "ColumnMetadataInterface":
@@ -298,6 +294,9 @@ class OffloadTransportTeradataApi(OffloadTransportRdbmsApiInterface):
         if pk_col.is_number_based() or pk_col.is_date_based():
             return pk_col
         return None
+
+    def get_snapshot_clause(self, transport_scn: int, consistent_read: bool) -> str:
+        return ""
 
     def get_transport_split_type(
         self,
@@ -409,7 +408,8 @@ class OffloadTransportTeradataApi(OffloadTransportRdbmsApiInterface):
         self,
         partition_by_prm,
         rdbms_table,
-        consistent_read,
+        consistent_read: bool,
+        transport_scn: int,
         parallelism,
         offload_by_subpartition,
         mod_column,

@@ -68,7 +68,6 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
         offload_options,
         messages,
         dfs_client,
-        rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
         self._offload_transport_method = OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY
@@ -79,7 +78,6 @@ class OffloadTransportSparkLivy(OffloadTransportSpark):
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
         assert (
             offload_options.offload_transport_livy_api_url

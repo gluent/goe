@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OracleSourceTable: Library for logic/interaction with Oracle source of an offload
-"""
+"""OracleSourceTable: Library for logic/interaction with Oracle source of an offload"""
 
 from datetime import date, datetime
 import logging
@@ -106,7 +105,6 @@ logger.addHandler(logging.NullHandler())
 # CONSTANTS
 ###############################################################################
 
-MAX_SCN_SCAN_TABLE_SIZE = 1e9  # GB
 MAX_UNIONS_IN_MIN_PARTITION_CHECK = 1000
 
 ORACLE_SUPPORTED_RANGE_DATA_TYPES = [
@@ -934,32 +932,10 @@ class OracleSourceTable(OffloadSourceTableInterface):
         """
         self._offload_by_subpartition = desired_state
 
-    def get_current_scn(self, return_none_on_failure=False):
-        """ORA_ROWSCN might not be available when VPD or FGA policies are in play. Therefore
-        return_none_on_failure can be used to silently fail.
-        return_none_on_failure was introduced rather than expect the caller to handle errors
-        because this check is already made optional inside this code by checking the size,
-        therefore it felt right to continue the theme.
-        """
-        logger.debug("get_current_scn: %s, %s" % (self.owner, self.table_name))
-        if (self._size_in_bytes or 0) < MAX_SCN_SCAN_TABLE_SIZE:
-            try:
-                q = 'SELECT MAX(ora_rowscn) FROM "%s"."%s"' % (
-                    self.owner.upper(),
-                    self.table_name.upper(),
-                )
-                rows = self._db_api.execute_query_fetch_one(q)
-                return rows[0] if rows else rows
-            except DatabaseError as e:
-                if return_none_on_failure:
-                    self._messages.warning(
-                        "Unable to retrieve current SCN: %s" % str(e)
-                    )
-                    logger.warn(str(e))
-                else:
-                    raise
-        else:
-            return None
+    def get_current_scn(self) -> int:
+        """Return the current system change number for the source RDBMS."""
+        row = self._db_api.execute_query_fetch_one("SELECT current_scn FROM v$database")
+        return row[0] if row else row
 
     def get_hash_bucket_candidate(self):
         if not self._hash_bucket_candidate:

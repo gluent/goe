@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TeradataSourceTable: Library for logic/interaction with Teradata source of an offload
-"""
+"""TeradataSourceTable: Library for logic/interaction with Teradata source of an offload"""
 
 from datetime import date, datetime
 import logging
@@ -762,7 +761,7 @@ class TeradataSourceTable(OffloadSourceTableInterface):
     def gen_default_numeric_column(self, column_name):
         return self.gen_column(column_name, TERADATA_TYPE_NUMBER)
 
-    def get_current_scn(self, return_none_on_failure=False):
+    def get_current_scn(self) -> int:
         """Current System Change Number irrelevant for Teradata support"""
         return None
 

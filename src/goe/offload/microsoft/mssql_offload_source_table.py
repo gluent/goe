@@ -345,11 +345,6 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
             "MSSQL enable_offload_by_subpartition() not implemented."
         )
 
-    def get_current_scn(self) -> int:
-        # TODO: Is min_active_rowversion() for database equivalent to v$database.current_scn?
-        # https://www.mssqltips.com/sqlservertip/3423/sql-server-rowversion-functions-minactiverowversion-vs-dbts/
-        raise NotImplementedError("MSSQL get_current_scn not implemented.")
-
     def get_hash_bucket_candidate(self):
         return self._hash_bucket_candidate
 

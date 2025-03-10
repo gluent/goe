@@ -524,10 +524,9 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
         else:
             return match[0]
 
-    @abstractmethod
     def get_current_scn(self):
         """Return the current system change number for the source RDBMS."""
-        pass
+        return self._db_api.get_current_scn()
 
     def get_partition_column_data_types(self):
         return [col.data_type for col in self.partition_columns]

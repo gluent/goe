@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TestFrontendApi: Unit test library to test API for all supported RDBMSs
-    1) For all possible frontends test API calls that do not need to connect to the system
-       Because there is no connection we can fake any frontend and test functionality
-       These classes have the system in the name, e.g.: TestOracleFrontendApi, TestMSSQLFrontendApi, etc
+"""TestFrontendApi: Unit test library to test API for all supported RDBMSs
+1) For all possible frontends test API calls that do not need to connect to the system
+   Because there is no connection we can fake any frontend and test functionality
+   These classes have the system in the name, e.g.: TestOracleFrontendApi, TestMSSQLFrontendApi, etc
 """
 
 from datetime import datetime
@@ -200,6 +200,13 @@ class TestFrontendApi(TestCase):
             if column_list:
                 self.assertIsInstance(column_list[0], ColumnMetadataInterface)
 
+    def _test_get_current_scn(self):
+        if self.connect_to_frontend:
+            try:
+                self.assertIsInstance(self.api.get_current_scn(), int)
+            except NotImplementedError:
+                pass
+
     def _test_get_db_unique_name(self):
         if self.connect_to_frontend:
             try:
@@ -329,6 +336,7 @@ class TestFrontendApi(TestCase):
         self._test_goe_db_component_version()
         self._test_get_column_names()
         self._test_get_columns()
+        self._test_get_current_scn()
         self._test_get_db_unique_name()
         self._test_get_distinct_column_values()
         self._test_get_partition_columns()

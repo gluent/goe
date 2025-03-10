@@ -932,11 +932,6 @@ class OracleSourceTable(OffloadSourceTableInterface):
         """
         self._offload_by_subpartition = desired_state
 
-    def get_current_scn(self) -> int:
-        """Return the current system change number for the source RDBMS."""
-        row = self._db_api.execute_query_fetch_one("SELECT current_scn FROM v$database")
-        return row[0] if row else row
-
     def get_hash_bucket_candidate(self):
         if not self._hash_bucket_candidate:
             self._hash_bucket_candidate = self._get_hash_bucket_candidate()

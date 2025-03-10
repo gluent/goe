@@ -761,10 +761,6 @@ class TeradataSourceTable(OffloadSourceTableInterface):
     def gen_default_numeric_column(self, column_name):
         return self.gen_column(column_name, TERADATA_TYPE_NUMBER)
 
-    def get_current_scn(self) -> int:
-        """Current System Change Number irrelevant for Teradata support"""
-        return None
-
     def get_hash_bucket_candidate(self):
         if not self._hash_bucket_candidate:
             self._hash_bucket_candidate = self._get_hash_bucket_candidate()

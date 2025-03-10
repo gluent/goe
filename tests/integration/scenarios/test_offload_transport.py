@@ -17,6 +17,7 @@
 import pytest
 
 from goe.filesystem.goe_dfs_factory import get_dfs_from_options
+from goe.offload import offload_constants
 from goe.offload.offload_functions import (
     convert_backend_identifier_case,
     data_db_name,
@@ -80,6 +81,7 @@ LOAD_TABLE_COMP_DIM2 = "STORY_OT_LOADT_COMP2"
 POLL_VALIDATION_SLIVY = "STORY_OTRANSP_POLLVAL_SL"
 POLL_VALIDATION_SSUBMIT = "STORY_OTRANSP_POLLVAL_SS"
 POLL_VALIDATION_STHRIFT = "STORY_OTRANSP_POLLVAL_ST"
+QI_DIM = "STORY_OTRANSP_QI"
 SPARK_BATCHES_DIM = "STORY_OTRANSP_SPARK_BATCHES"
 SPARK_DATAPROC_DIM = "STORY_OTRANSP_SPARK_DATAPROC"
 SPARK_SUBMIT_DIM = "STORY_OTRANSP_SPARK_SUBMIT"
@@ -107,7 +109,14 @@ def data_db(schema, config):
 
 
 def simple_offload_test(
-    config, schema, data_db, table_name, transport_method, messages, test_id
+    config,
+    schema,
+    data_db,
+    table_name,
+    transport_method,
+    messages,
+    test_id,
+    with_snapshot=False,
 ):
     frontend_api = get_frontend_testing_api(config, messages, trace_action=test_id)
     backend_api = get_backend_testing_api(config, messages)
@@ -138,6 +147,11 @@ def simple_offload_test(
         "execute": True,
     }
 
+    current_scn = None
+    if with_snapshot and config.db_type == offload_constants.DBTYPE_ORACLE:
+        current_scn = frontend_api.get_current_scn()
+        options["offload_transport_snapshot"] = current_scn
+
     if transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY:
         # Setting timeout low to allow any subsequent test to reset config and not re-use session.
         offload_messages = run_offload(
@@ -159,6 +173,17 @@ def simple_offload_test(
         table_name,
         offload_messages=offload_messages,
     )
+    if current_scn:
+        assert text_in_log(
+            offload_messages,
+            f"AS OF SCN {current_scn}",
+            messages,
+        )
+        assert text_in_log(
+            offload_messages,
+            f"'OFFLOAD_SNAPSHOT': {current_scn}",
+            messages,
+        )
 
     # Connections are being left open, explicitly close them.
     frontend_api.close()
@@ -320,9 +345,24 @@ def offload_transport_polling_validation_tests(
     frontend_api.close()
 
 
+def test_offload_transport_query_import(config, schema, data_db):
+    """Test simple offload with Query Import."""
+    id = "test_offload_transport_query_import"
+    with get_test_messages_ctx(config, id) as messages:
+        simple_offload_test(
+            config,
+            schema,
+            data_db,
+            QI_DIM,
+            OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT,
+            messages,
+            id,
+            with_snapshot=True,
+        )
+
+
 def test_offload_transport_spark_submit(config, schema, data_db):
     """Test simple offload with spark-submit."""
-    # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_spark_submit"
     with get_test_messages_ctx(config, id) as messages:
         if not is_spark_submit_available(config, None, messages=messages):
@@ -341,7 +381,6 @@ def test_offload_transport_spark_submit(config, schema, data_db):
 
 def test_offload_transport_dataproc_cluster(config, schema, data_db):
     """Test simple offload with Dataproc."""
-    # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_dataproc_cluster"
     with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
@@ -360,7 +399,6 @@ def test_offload_transport_dataproc_cluster(config, schema, data_db):
 
 def test_offload_transport_dataproc_batches(config, schema, data_db):
     """Test simple offload with Dataproc."""
-    # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_dataproc_batches"
     with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_batches_available(config, None, messages=messages):
@@ -374,12 +412,12 @@ def test_offload_transport_dataproc_batches(config, schema, data_db):
             OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD,
             messages,
             id,
+            with_snapshot=True,
         )
 
 
 def test_offload_transport_spark_thrift(config, schema, data_db):
     """Test simple offload with Spark Thriftserver."""
-    # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_spark_thrift"
     with get_test_messages_ctx(config, id) as messages:
         if not is_spark_thrift_available(config, None, messages=messages):
@@ -398,7 +436,6 @@ def test_offload_transport_spark_thrift(config, schema, data_db):
 
 def test_offload_transport_spark_livy(config, schema, data_db):
     """Test simple offload with Spark Livy."""
-    # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_spark_livy"
     with get_test_messages_ctx(config, id) as messages:
         if not is_livy_available(config, None, messages=messages):
@@ -417,7 +454,6 @@ def test_offload_transport_spark_livy(config, schema, data_db):
 
 def test_offload_transport_sqoop_table(config, schema, data_db):
     """Test simple offload with table centric Sqoop."""
-    # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_sqoop_table"
     with get_test_messages_ctx(config, id) as messages:
         if not is_sqoop_available(None, config, messages=messages):
@@ -436,7 +472,6 @@ def test_offload_transport_sqoop_table(config, schema, data_db):
 
 def test_offload_transport_sqoop_by_query(config, schema, data_db):
     """Test simple offload with Sqoop by query."""
-    # We don't need an equivalent for Query Import because most others tests use that method.
     id = "test_offload_transport_sqoop_by_query"
     with get_test_messages_ctx(config, id) as messages:
         if not is_sqoop_by_query_available(config, messages=messages):

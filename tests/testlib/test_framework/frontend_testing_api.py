@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" FrontendTestingApi: An extension of (not yet created) FrontendApi used purely for code relating to the setup,
-    processing and verification of integration tests.
+"""FrontendTestingApi: An extension of (not yet created) FrontendApi used purely for code relating to the setup,
+processing and verification of integration tests.
 """
 
 import logging
@@ -376,6 +376,9 @@ class FrontendTestingApiInterface(metaclass=ABCMeta):
 
     def get_columns(self, schema, table_name):
         return self._db_api.get_columns(schema, table_name)
+
+    def get_current_scn(self) -> int:
+        return self._db_api.get_current_scn()
 
     def get_max_range_partition_name_and_hv(
         self, schema: str, table_name: str

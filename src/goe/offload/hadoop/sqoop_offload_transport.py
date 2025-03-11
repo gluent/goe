@@ -61,7 +61,6 @@ class OffloadTransportStandardSqoop(OffloadTransport):
         offload_options,
         messages,
         dfs_client,
-        rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
         self._offload_transport_method = OFFLOAD_TRANSPORT_METHOD_SQOOP
@@ -73,7 +72,6 @@ class OffloadTransportStandardSqoop(OffloadTransport):
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
 
         if offload_options.db_type == DBTYPE_MSSQL:
@@ -459,7 +457,6 @@ class OffloadTransportSqoopByQuery(OffloadTransportStandardSqoop):
         offload_options,
         messages,
         dfs_client,
-        rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
         self._offload_transport_method = OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY
@@ -470,7 +467,6 @@ class OffloadTransportSqoopByQuery(OffloadTransportStandardSqoop):
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
 
     ###########################################################################

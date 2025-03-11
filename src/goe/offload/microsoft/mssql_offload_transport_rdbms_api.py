@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OffloadTransportMSSQLApi: Library for logic/interaction with source MSSQL system during offload transport.
-"""
+"""OffloadTransportMSSQLApi: Library for logic/interaction with source MSSQL system during offload transport."""
 
 from contextlib import contextmanager
 
@@ -114,8 +113,8 @@ class OffloadTransportMSSQLApi(OffloadTransportRdbmsApiInterface):
         """No session setup hints required on MSSQL"""
         return ""
 
-    def get_rdbms_scn(self):
-        raise NotImplementedError("MSSQL get_rdbms_scn() not implemented.")
+    def get_snapshot_clause(self, transport_scn: int, consistent_read: bool) -> str:
+        return ""
 
     def get_transport_split_type(
         self,
@@ -134,7 +133,8 @@ class OffloadTransportMSSQLApi(OffloadTransportRdbmsApiInterface):
         self,
         partition_by_prm,
         rdbms_table,
-        consistent_read,
+        consistent_read: bool,
+        transport_scn: int,
         parallelism,
         offload_by_subpartition,
         mod_column,

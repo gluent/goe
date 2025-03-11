@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TestOffloadTransportRdbmsApi: Unit tests for each Offload Transport RDBMS API.
-"""
+"""TestOffloadTransportRdbmsApi: Unit tests for each Offload Transport RDBMS API."""
 import pytest
 
 from goe.offload.factory.offload_transport_rdbms_api_factory import (
@@ -102,6 +101,9 @@ def test_oracle_ot_rdbms_api(oracle_config, messages):
         rdbms_owner, rdbms_table, oracle_config, messages, dry_run=True
     )
     non_connecting_tests(api)
+    assert isinstance(api.get_snapshot_clause(123456, True), str)
+    assert "123456" in api.get_snapshot_clause(123456, True)
+    assert "123456" not in api.get_snapshot_clause(123456, False)
 
 
 def test_teradata_ot_rdbms_api(messages):

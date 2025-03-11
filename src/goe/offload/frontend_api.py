@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" FrontendApiInterface: Library for logic/interaction with an RDBMS frontend.
-    This module enforces an interface with common, high level, methods and an implementation
-    for each supported RDBMS, e.g. Oracle, MSSQL
+"""FrontendApiInterface: Library for logic/interaction with an RDBMS frontend.
+This module enforces an interface with common, high level, methods and an implementation
+for each supported RDBMS, e.g. Oracle, MSSQL
 """
 
 import logging
@@ -402,6 +402,10 @@ class FrontendApiInterface(metaclass=ABCMeta):
         Example might be:
             [OracleColumn(...), OracleColumn(...)]
         """
+
+    @abstractmethod
+    def get_current_scn(self):
+        """Return the current system change number for the frontend."""
 
     @abstractmethod
     def get_db_unique_name(self) -> str:

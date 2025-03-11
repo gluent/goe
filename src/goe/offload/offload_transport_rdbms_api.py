@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OffloadTransportRdbmsApi: Library for logic/interaction with source RDBMS during offload transport
-"""
+"""OffloadTransportRdbmsApi: Library for logic/interaction with source RDBMS during offload transport"""
 
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
@@ -188,7 +187,7 @@ class OffloadTransportRdbmsApiInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_rdbms_scn(self):
+    def get_snapshot_clause(self, transport_scn: int, consistent_read: bool) -> str:
         pass
 
     @abstractmethod
@@ -210,6 +209,7 @@ class OffloadTransportRdbmsApiInterface(metaclass=ABCMeta):
         partition_by_prm: str,
         rdbms_table: "OffloadSourceTableInterface",
         consistent_read,
+        transport_scn: int,
         parallelism,
         offload_by_subpartition,
         mod_column,

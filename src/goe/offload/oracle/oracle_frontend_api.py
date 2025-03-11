@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OracleFrontendApi: Library for logic/interaction with an Oracle frontend.
-    Implements abstract methods from FrontendApiInterface.
+"""OracleFrontendApi: Library for logic/interaction with an Oracle frontend.
+Implements abstract methods from FrontendApiInterface.
 """
 
 # Standard Library
@@ -907,6 +907,11 @@ class OracleFrontendApi(FrontendApiInterface):
             col = OracleColumn.from_oracle(row)
             cols.append(col)
         return cols
+
+    def get_current_scn(self) -> int:
+        """Return the current system change number for the source RDBMS."""
+        row = self.execute_query_fetch_one("SELECT current_scn FROM v$database")
+        return row[0] if row else row
 
     def get_db_unique_name(self) -> str:
         sql = dedent(

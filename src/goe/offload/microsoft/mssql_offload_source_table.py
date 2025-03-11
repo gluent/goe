@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" MSSQLSourceTable: Library for logic/interaction with MSSQL source of an offload
-"""
+"""MSSQLSourceTable: Library for logic/interaction with MSSQL source of an offload"""
 
 import inspect
 import logging
@@ -345,11 +344,6 @@ class MSSQLSourceTable(OffloadSourceTableInterface):
         raise NotImplementedError(
             "MSSQL enable_offload_by_subpartition() not implemented."
         )
-
-    def get_current_scn(self, return_none_on_failure=False):
-        # TODO: Can get min_active_rowversion() for database which is equivalent to ORA_ROWSCN?
-        # https://www.mssqltips.com/sqlservertip/3423/sql-server-rowversion-functions-minactiverowversion-vs-dbts/
-        raise NotImplementedError("MSSQL get_current_scn not implemented.")
 
     def get_hash_bucket_candidate(self):
         return self._hash_bucket_candidate

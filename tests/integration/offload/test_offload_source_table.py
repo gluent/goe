@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TestOffloadSourceTable: Unit test library to test API for all supported frontend RDBMSs
-    This is split into two categories:
-    1) For all possible frontends test API calls that do not need to connect to the system.
-       Because there is no connection we can fake any backend and test functionality. These classes
-       have the system in the name: TestOracleOffloadSourceTable, TestMSSQLOffloadSourceTable, etc
-    2) For the current backend test API calls that need to connect to the system.
-       This class has Current in the name: TestCurrentOffloadSourceTable
+"""TestOffloadSourceTable: Unit test library to test API for all supported frontend RDBMSs
+This is split into two categories:
+1) For all possible frontends test API calls that do not need to connect to the system.
+   Because there is no connection we can fake any backend and test functionality. These classes
+   have the system in the name: TestOracleOffloadSourceTable, TestMSSQLOffloadSourceTable, etc
+2) For the current backend test API calls that need to connect to the system.
+   This class has Current in the name: TestCurrentOffloadSourceTable
 """
 from unittest import TestCase, main
 

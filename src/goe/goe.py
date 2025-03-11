@@ -220,7 +220,6 @@ EXPECTED_OFFLOAD_ARGS = [
     "offload_predicate_modify_hybrid_view",
     "offload_stats_method",
     "offload_transport_method",
-    "offload_type",
     "offload_transport_consistent_read",
     "offload_transport_dsn",
     "offload_transport_fetch_size",
@@ -228,8 +227,10 @@ EXPECTED_OFFLOAD_ARGS = [
     "offload_transport_queue_name",
     "offload_transport_parallelism",
     "offload_transport_small_table_threshold",
+    "offload_transport_snapshot",
     "offload_transport_spark_properties",
     "offload_transport_validation_polling_interval",
+    "offload_type",
     "older_than_date",
     "older_than_days",
     "operation_name",
@@ -940,6 +941,11 @@ def normalise_offload_transport_user_options(options):
         "OFFLOAD_TRANSPORT_FETCH_SIZE/--offload-transport-fetch-size",
         options.offload_transport_fetch_size,
     )
+    if options.offload_transport_snapshot:
+        options.offload_transport_snapshot = check_opt_is_posint(
+            "--offload-transport-snapshot",
+            options.offload_transport_snapshot,
+        )
 
     verify_json_option(
         "OFFLOAD_TRANSPORT_SPARK_PROPERTIES/--offload-transport-spark-properties",
@@ -2242,6 +2248,7 @@ class OffloadOperation(BaseOperation):
             offload_transport_queue_name=options.offload_transport_queue_name,
             offload_transport_parallelism=options.offload_transport_parallelism,
             offload_transport_small_table_threshold=options.offload_transport_small_table_threshold,
+            offload_transport_snapshot=options.offload_transport_snapshot,
             offload_transport_spark_properties=options.offload_transport_spark_properties,
             offload_transport_validation_polling_interval=options.offload_transport_validation_polling_interval,
             offload_type=options.offload_type,
@@ -2416,6 +2423,7 @@ class OffloadOperation(BaseOperation):
                 "offload_transport_small_table_threshold",
                 orchestration_defaults.offload_transport_small_table_threshold_default(),
             ),
+            offload_transport_snapshot=operation_dict.get("offload_transport_snapshot"),
             offload_transport_spark_properties=operation_dict.get(
                 "offload_transport_spark_properties",
                 orchestration_defaults.offload_transport_spark_properties_default(),
@@ -2841,13 +2849,6 @@ def offload_table(
 
     rows_offloaded = None
 
-    pre_offload_snapshot = None
-    if offload_options.db_type == offload_constants.DBTYPE_ORACLE:
-        # Pre-offload SCN will be stored in metadata.
-        pre_offload_snapshot = offload_source_table.get_current_scn(
-            return_none_on_failure=True
-        )
-
     create_final_backend_table_step(offload_target_table, offload_operation)
 
     data_transport_client = offload_transport_factory(
@@ -2859,6 +2860,11 @@ def offload_table(
         messages,
         dfs_client,
     )
+
+    pre_offload_snapshot = None
+    if offload_options.db_type == offload_constants.DBTYPE_ORACLE:
+        # Pre-offload SCN will be stored in metadata.
+        pre_offload_snapshot = data_transport_client.get_transport_snapshot()
 
     offload_target_table.set_final_table_casts(
         offload_source_table.columns,

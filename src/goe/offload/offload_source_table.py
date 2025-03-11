@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OffloadSourceTable: Library for logic/interaction with source of an offload
-"""
+"""OffloadSourceTable: Library for logic/interaction with source of an offload"""
 
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
@@ -525,9 +524,9 @@ class OffloadSourceTableInterface(metaclass=ABCMeta):
         else:
             return match[0]
 
-    @abstractmethod
     def get_current_scn(self):
-        pass
+        """Return the current system change number for the source RDBMS."""
+        return self._db_api.get_current_scn()
 
     def get_partition_column_data_types(self):
         return [col.data_type for col in self.partition_columns]

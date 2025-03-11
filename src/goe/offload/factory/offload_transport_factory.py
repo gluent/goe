@@ -35,7 +35,6 @@ def offload_transport_factory(
     offload_options,
     messages,
     dfs_client,
-    rdbms_columns_override=None,
 ):
     """Constructs and returns an appropriate data transport object based on user inputs and RDBMS table"""
     if offload_transport_method == OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT:
@@ -51,7 +50,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SQOOP:
         from goe.offload.hadoop.sqoop_offload_transport import (
@@ -68,7 +66,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SQOOP_BY_QUERY:
         from goe.offload.hadoop.sqoop_offload_transport import (
@@ -85,7 +82,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT:
         from goe.offload.offload_transport import OffloadTransportSparkThrift
@@ -100,7 +96,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT:
         from goe.offload.offload_transport import OffloadTransportSparkSubmit
@@ -115,7 +110,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_DATAPROC_GCLOUD:
         from goe.offload.spark.dataproc_offload_transport import (
@@ -133,7 +127,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_BATCHES_GCLOUD:
         from goe.offload.spark.dataproc_offload_transport import (
@@ -150,7 +143,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
     elif offload_transport_method == OFFLOAD_TRANSPORT_METHOD_SPARK_LIVY:
         from goe.offload.spark.livy_offload_transport import OffloadTransportSparkLivy
@@ -165,7 +157,6 @@ def offload_transport_factory(
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
     else:
         raise NotImplementedError(

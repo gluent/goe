@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" MSSQLFrontendApi: Library for logic/interaction with an MSSQL frontend.
-    Implements abstract methods from FrontendApiInterface.
+"""MSSQLFrontendApi: Library for logic/interaction with an MSSQL frontend.
+Implements abstract methods from FrontendApiInterface.
 """
 
 # Standard Library
@@ -452,6 +452,11 @@ class MSSQLFrontendApi(FrontendApiInterface):
             col = MSSQLColumn.from_mssql(row)
             cols.append(col)
         return cols
+
+    def get_current_scn(self) -> int:
+        # TODO: Is min_active_rowversion() for database equivalent to v$database.current_scn?
+        # https://www.mssqltips.com/sqlservertip/3423/sql-server-rowversion-functions-minactiverowversion-vs-dbts/
+        raise NotImplementedError("MSSQL get_current_scn not implemented.")
 
     def get_db_unique_name(self) -> str:
         return self._connection_options.rdbms_dsn.split("=")[1]

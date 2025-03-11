@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OffloadTransport: Library for offloading data from an RDBMS frontend to a cloud backend.
-"""
+"""OffloadTransport: Library for offloading data from an RDBMS frontend to a cloud backend."""
 
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
@@ -54,7 +53,6 @@ from goe.offload.offload_constants import (
 from goe.offload.offload_messages import VERBOSE, VVERBOSE
 from goe.offload.oracle.oracle_column import (
     ORACLE_TYPE_TIMESTAMP_TZ,
-    ORACLE_TYPE_INTERVAL_YM,
     ORACLE_TYPE_XMLTYPE,
 )
 from goe.offload.offload_transport_functions import (
@@ -724,7 +722,6 @@ class OffloadTransport(object, metaclass=ABCMeta):
         offload_options,
         messages: "OffloadMessages",
         dfs_client,
-        rdbms_columns_override=None,
     ):
         # not decided how to deal with offload_options, below is a temporary measure
         self._offload_options = offload_options
@@ -735,13 +732,19 @@ class OffloadTransport(object, metaclass=ABCMeta):
         # Details of the source of the offload
         self._rdbms_owner = offload_source_table.owner
         self._rdbms_table_name = offload_source_table.table_name
-        self._rdbms_columns = rdbms_columns_override or offload_source_table.columns
+        self._rdbms_columns = offload_source_table.columns
         self._rdbms_is_iot = offload_source_table.is_iot()
         self._rdbms_partition_type = offload_source_table.partition_type
         self._rdbms_pk_cols = offload_source_table.get_primary_key_columns()
         self._fetchmany_takes_fetch_size = (
             offload_source_table.fetchmany_takes_fetch_size()
         )
+        if offload_operation.offload_transport_snapshot:
+            self._offload_transport_snapshot = (
+                offload_operation.offload_transport_snapshot
+            )
+        else:
+            self._offload_transport_snapshot = offload_source_table.get_current_scn()
         self._offload_by_subpartition = offload_operation.offload_by_subpartition
         self._rdbms_table = offload_source_table
         self._rdbms_offload_predicate = offload_operation.inflight_offload_predicate
@@ -1147,6 +1150,7 @@ class OffloadTransport(object, metaclass=ABCMeta):
             partition_by,
             self._rdbms_table,
             self._offload_transport_consistent_read,
+            self._offload_transport_snapshot,
             self._offload_transport_parallelism,
             self._offload_by_subpartition,
             mod_column,
@@ -1417,6 +1421,10 @@ FROM (%(row_source_subquery)s) %(table_alias)s) v2""" % {
         """Return a dict used to pass contextual information back from transport()"""
         return self._transport_context.get(TRANSPORT_CXT_BYTES)
 
+    def get_transport_snapshot(self) -> Union[int, None]:
+        """Return RDBMS SCN applied to this operation."""
+        return self._offload_transport_snapshot
+
     def get_staging_file(self):
         return self._staging_file
 
@@ -1441,7 +1449,6 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
         offload_options,
         messages,
         dfs_client,
-        rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
         super(OffloadTransportSpark, self).__init__(
@@ -1451,7 +1458,6 @@ class OffloadTransportSpark(OffloadTransport, metaclass=ABCMeta):
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
         self._OffloadTransportSqlStatsThread = None
         self._convert_nans_to_nulls = convert_nans_to_nulls(
@@ -1953,7 +1959,6 @@ class OffloadTransportSparkThrift(OffloadTransportSpark):
         offload_options,
         messages,
         dfs_client,
-        rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
         self._offload_transport_method = OFFLOAD_TRANSPORT_METHOD_SPARK_THRIFT
@@ -1964,7 +1969,6 @@ class OffloadTransportSparkThrift(OffloadTransportSpark):
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
         assert (
             offload_options.offload_transport_spark_thrift_host
@@ -2356,7 +2360,6 @@ class OffloadTransportSparkSubmit(OffloadTransportSpark):
         offload_options,
         messages,
         dfs_client,
-        rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
         self._offload_transport_method = OFFLOAD_TRANSPORT_METHOD_SPARK_SUBMIT
@@ -2367,7 +2370,6 @@ class OffloadTransportSparkSubmit(OffloadTransportSpark):
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
         # For spark-submit we need to pass compression in as a config to the driver program
         self._load_table_compression_pyspark_settings()
@@ -2718,7 +2720,6 @@ class OffloadTransportQueryImport(OffloadTransport):
         offload_options,
         messages,
         dfs_client,
-        rdbms_columns_override=None,
     ):
         """CONSTRUCTOR"""
         self._offload_transport_method = OFFLOAD_TRANSPORT_METHOD_QUERY_IMPORT
@@ -2729,7 +2730,6 @@ class OffloadTransportQueryImport(OffloadTransport):
             offload_options,
             messages,
             dfs_client,
-            rdbms_columns_override=rdbms_columns_override,
         )
         self._offload_transport_parallelism = 1
         # Cap fetch size at 1000
@@ -2795,7 +2795,15 @@ class OffloadTransportQueryImport(OffloadTransport):
             )
             source_query = "SELECT %s\nFROM (%s)" % (sql_projection, row_source)
         else:
-            source_query = "SELECT %s\nFROM   %s" % (sql_projection, table_name)
+            snapshot_clause = self._rdbms_api.get_snapshot_clause(
+                self._offload_transport_snapshot,
+                self._offload_transport_consistent_read,
+            )
+            source_query = "SELECT %s\nFROM   %s%s" % (
+                sql_projection,
+                table_name,
+                snapshot_clause,
+            )
         if self._rdbms_offload_predicate:
             source_query += (
                 "\nWHERE (%s)"

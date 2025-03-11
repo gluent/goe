@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TeradataFrontendApi: Library for logic/interaction with an Oracle frontend.
-    Implements abstract methods from FrontendApiInterface.
+"""TeradataFrontendApi: Library for logic/interaction with an Oracle frontend.
+Implements abstract methods from FrontendApiInterface.
 """
 
 # Standard Library
@@ -740,6 +740,9 @@ class TeradataFrontendApi(FrontendApiInterface):
         raise NotImplementedError(
             "Teradata get_command_execution_steps is not implemented."
         )
+
+    def get_current_scn(self) -> int:
+        return None
 
     def get_partition_columns(self, schema, table_name):
         """Return columns in the first row partition expression, i.e. we skip columnar partitioning."""

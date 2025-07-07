@@ -668,6 +668,13 @@ The data extraction tools available to Offload are:
 
 Dataproc Serverless is the recommended extraction tool.
 
+Data is staged to cloud storage and requires a small amount of configuration:
+
+- `OFFLOAD_FS_SCHEME`: The storage scheme to which the offloaded data will be staged. For Google BigQuery the only recommended setting is `gs`. An ad hoc override is available with the `--offload-fs-scheme` option
+- `OFFLOAD_FS_CONTAINER`: The name of the bucket or container to be used for offloads. An ad hoc override is available with the `--offload-fs-container` option
+- `OFFLOAD_FS_PREFIX`: The storage subdirectory defined within the bucket/container (or can be an empty string if preferred). An ad hoc override is available with the `--offload-fs-prefix` option
+
+
 ### Google Cloud Platform Dataproc
 
 Two flavours of Dataproc are supported by GOE:
@@ -698,9 +705,11 @@ The number of tasks in an offload transport job is defined by `OFFLOAD_TRANSPORT
 
 ### Apache Spark
 
-Two interfaces to Spark are supported by Offload: Spark Submit and Spark Thrift Server. The interface used by Offload is chosen automatically, based on configuration. If multiple interfaces are configured for use, the order of priority is Spark Thrift Server then Spark Submit. SparkSQL is used in all cases (via a PySpark script for Spark Submit, or as pure SQL for Spark Thrift Server) to extract the data to be offloaded from the source RDBMS table.
+It is possible to use any Spark service with GOE but please note that for Google BigQuery offloads, Dataproc Serverless is the recommended Spark service.
 
-When offloading to cloud warehouses such as Google BigQuery, it is typical to use Spark Standalone (Gluent Data Platform includes a Transport package containing Spark Standalone components for this purpose), although an existing Spark cluster can be utilized if available.
+When using Apache Spark directly, two interfaces to Spark are supported: Spark Submit and Spark Thrift Server. The interface used by Offload is chosen automatically, based on configuration. If multiple interfaces are configured for use, the order of priority is Spark Thrift Server then Spark Submit. SparkSQL is used in all cases (via a PySpark script for Spark Submit, or as pure SQL for Spark Thrift Server) to extract the data to be offloaded from the source RDBMS table.
+
+When offloading to cloud warehouses such as Google BigQuery, it is typical to use Spark Standalone (GOE includes a Transport package containing Spark Standalone components for this purpose), although an existing Spark cluster can be utilized if available.
 
 Spark Submit is available for use by Offload if `OFFLOAD_TRANSPORT_CMD_HOST` and `OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE` are defined. When using a Spark Standalone cluster jobs will be submitted to the cluster defined in `OFFLOAD_TRANSPORT_SPARK_SUBMIT_MASTER_URL`.
 
@@ -724,12 +733,118 @@ Connections to the source RDBMS are made to the address defined in `OFFLOAD_TRAN
 
 Concurrent offload transport processes open independent sessions in the source RDBMS. If a high value for `OFFLOAD_TRANSPORT_PARALLELISM` is required then consideration should be given to any session limits in the RDBMS. The `OFFLOAD_TRANSPORT_CONSISTENT_READ` parameter or the per offload option `--offload-transport-consistent-read` can be used to ensure that all concurrent extraction queries reference a specific point in time. When set to true, extraction queries will include an `AS OF SCN` clause. When the source RDBMS table or input partitions are known to be cold (i.e. not subject to any data modifications), this can be set to false to reduce resource consumption.
 
-If there is a requirement to modify offload transport RDBMS session settings, such as setting an Oracle Database initialization parameter (under the guidance of Gluent Support), then modification of `OFFLOAD_TRANSPORT_RDBMS_SESSION_PARAMETERS` will be required.
-
 
 ## Validate Staged Data
 
+Once data has been staged, it is validated to ensure that the number of staged rows matches the number of rows read from the source RDBMS. While doing this Offload might also:
+
+- Check for `NULL` values in any custom partition scheme defined using the `--partition-columns` option. A positive match results in a warning
+- Check for `NULL` values in any column defined as mandatory (i.e. `NOT NULL`)
+- Check for any NaN (Not a Number) special values if the source table has floating point numeric data types. This is because source RDBMS and target backend systems do not necessarily treat NaN values consistently. A positive match results in a warning
+- Check for lossy decimal rounding as described in [Decimal Scale Rounding](decimal-scale-rounding)
+- Check for source data that is invalid for the chosen backend partition scheme (if applicable), such as numeric data outside of any `--partition-lower-value`/`--partition-upper-value` range. A positive match results in a warning
+
+
 ## Validate Type Conversions
 
+Data types used for staging data will rarely match those of the backend target table. Data is converted to the correct type when it is loaded into the final target table. This stage therefore verifies that there will be no invalid conversions when loading. While this is a duplication of type conversions in the [Load Staged Data](load-staged-data) phase, it provides the advantage of checking the data before the more compute-intensive data load and is able to report all columns with data issues in a single pass.
+
+### Example 19: Catching Invalid Data Type Conversions
+
+In the following example, the SH.SALES table is offloaded to a Hadoop cluster with an invalid data type for two columns: the data in the PROD_ID and CUST_ID columns is not compatible with the user requested single-byte integer data type.
+
+```shell
+$ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --integer-1-columns=PROD_ID,CUST_ID
+```
+
+This results in the following exception:
+
+```
+CAST() of load data will cause data loss due to lack of precision in target data type in 6887232 rows
+Failing casts are:
+    (`prod_id` IS NOT NULL AND CAST(`prod_id` AS TINYINT) IS NULL)
+    (`cust_id` IS NOT NULL AND CAST(`cust_id` AS TINYINT) IS NULL)
+The SQL below will assist identification of problem data:
+SELECT PROD_ID
+,      CUST_ID
+FROM   `sh_load`.`sales`
+WHERE  (`prod_id` IS NOT NULL AND CAST(`prod_id` AS TINYINT) IS NULL)
+OR     (`cust_id` IS NOT NULL AND CAST(`cust_id` AS TINYINT) IS NULL)
+LIMIT 50
+```
+
+The exception provides three important pieces of information:
+
+- The number of rows with issues
+- The columns/conversions with issues
+- A SQL statement to use offline to review a sample of the problematic data
+
+
 ## Load Staged Data
+
+In this phase of an offload staged data is converted to correct data types as described in [Validate Type Conversions](validate-type-conversions) and inserted into the target backend table. Where available, performance metrics from the backend system are recorded in the Offload log file written to `$OFFLOAD_HOME/log`.
+
+## Offload Transport Chunks
+
+The source RDBMS data is offloaded in “chunks”. A chunk can comprise an entire table or a set of one or more partitions. The sequence of four operations described above are executed for each chunk until the whole input set has been offloaded. A final task in this phase, for backend systems that support it, is to update statistics on the freshly offloaded data.
+
+For partitioned RDBMS tables, data is offloaded in sets of partitions. Input partitions are grouped into chunks, based on either the number of partitions or cumulative partition size (including subpartitions where relevant). For non-partitioned tables the table itself is considered a single chunk.
+
+The size limit for a partition chunk is defined by `MAX_OFFLOAD_CHUNK_SIZE` or per offload with the `--max-offload-chunk-size` option. The maximum number of partitions in a chunk is defined by `MAX_OFFLOAD_CHUNK_COUNT` or per offload with the `--max-offload-chunk-count` option. Both size and count thresholds are active at the same time, therefore the first threshold to be breached is the one that closes the chunk. If the first partition in a chunk breaches the size threshold then it will be included for offload and that chunk will be greater in size than the configured threshold.
+
+Sets of partitions are an effective way of managing resource consumption. For example, if a source RDBMS typically has partitions of 8GB in size and the backend system can comfortably load 64GB of data at a time without impacting other users, `MAX_OFFLOAD_CHUNK_SIZE` can be set to `64G` and roughly 8 partitions will be offloaded per chunk.
+
+When calculating the cumulative size of partitions Offload uses RDBMS segment sizes. This is important to note because compressed data in the RDBMS may increase in size when extracted and staged.
+
+Partitions are considered for chunking in the logical order they are defined in the source RDBMS. For example, partitions from an Oracle Database range-partitioned table are split into chunks while maintaining the order of oldest to most recent partition. Offload does not attempt to optimize chunking by shuffling the order of partitions because that would offload partitions out of sequence and be a risk to atomicity.
+
+# Managing Data Distribution
+
+Offload also provides options to manage the offloaded data distribution:
+
+- Backend partitioning: See [Managing Backend Partitioning](managing-backend-partitioning)
+- Data distribution: See [Backend Data Distribution and Sorting/Clustering](backend-data-distribution-and-sorting-clustering)
+
+## Managing Backend Partitioning
+
+When offloading data, backend tables can be partitioned in several ways, depending on the backend platform and user preferences:
+
+- [Inherited Partitioning](inherited-partitioning)
+- [User-Defined Partitioning](user-defined-partitioning)
+
+### Inherited Partitioning
+
+Tables offloaded with Partition-Based Offload or Subpartition-Based Offload are automatically partitioned in the backend with the (sub)partition key of the source table, unless overridden by the user. The granularity of the inherited (sub)partitions can be different to the source RDBMS (sub)partitions if required. In some cases it is mandatory to specify the granularity of the backend partition scheme (see [Partition Granularity](partition-granularity) below for details)
+
+For Google BigQuery, only the leading (sub)partition key column will be used. In some cases, the backend partitioning might be implemented by a synthetic partition key column, but not always. See [Synthetic Partitioning](synthetic-partitioning) below for details.
+
+### User-Defined Partitioning
+
+Tables can be offloaded with the `--partition-columns` option to define a custom partitioning scheme for the backend table. This enables non-partitioned RDBMS tables to be partitioned in the backend if required, in addition to allowing (sub)partitioned RDBMS tables to be offloaded with a different partitioning scheme in the backend. It is also possible (and in some cases mandatory) to specify the granularity of the backend partitions (see [Partition Granularity](partition-granularity) for details below) and user-defined partitioning supports more RDBMS data types than inherited partitioning.
+
+#### Example 20: Offload with User-Defined Partitioning
+
+```shell
+$ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --partition-columns=TIME_ID,PROD_ID --partition-granularity=Y,1000
+```
+
+When offloading to Google BigQuery, user-defined partitioning can include date/timestamp, numeric or string columns, but only one partition key column can be defined. In some cases, the backend partitioning will be implemented by a synthetic partition key column, but not always. See [Synthetic Partitioning](synthetic-partitioning) below for details.
+
+### Synthetic Partitioning
+Synthetic columns are used to partition backend tables instead of the corresponding natural columns. Depending on the data type and backend system, Offload will sometimes implement inherited and user-defined partitioning schemes with additional synthetic columns (one per source (sub)partition column). This is usually when:
+
+- The backend system has no native partitioning support for the data type of the partition key column
+- The backend system has no native partitioning support for the change in granularity requested for the offloaded partitions
+
+Synthetic partition keys are used internally by Offload to ensure that the backend partition columns remain consistent across multiple Partition-Based Offload or Subpartition-Based Offload operations.
+
+Synthetic partition key columns are named by Gluent Offload Engine as a derivative of the corresponding source column name (e.g. `GL_PART_M_TIME_ID` or `GL_PART_U0_SOURCE_CODE`).
+
+When a table is offloaded with partitioning to Google BigQuery, a synthetic partition key will only be generated when the natural partition column is of a `NUMERIC`, `BIGNUMERIC` or `STRING` BigQuery data type, and the resulting synthetic partition key column will be created as an INT64 type (the integral magnitude of the source numeric data must not exceed the `INT64` limits). For `STRING` columns, or for extreme `[BIG]NUMERIC` data that cannot be reduced to INT64 values with `--partition-granularity` (i.e. the granularity itself would need to exceed `INT64` limits), a custom user-defined function (UDF) must be created and used to enable Gluent Offload Engine to create an INT64 synthetic partition key representation of the source data (see [Partition Functions](partition-functions)). Native BigQuery partitioning will be used when the natural partition column has a data type of `INT64`, `DATE`, `DATETIME` or `TIMESTAMP`.
+
+Offload populates synthetic partition key columns with generated data when offloading based on the type and granularity of the data or based on the type and a custom partition function.
+
+
+
+
 

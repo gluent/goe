@@ -38,7 +38,7 @@ dependencies = [
     "filelock",
     "lark-parser",
     "numpy",
-    "orjson",
+    "msgspec",
     "python-dateutil",
     "PyYAML",
     "requests",

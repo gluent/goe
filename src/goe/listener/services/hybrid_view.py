@@ -22,7 +22,7 @@ API over orchestration code that fetches information based on a hybrid view
 import logging
 
 # Third Party Libraries
-import orjson as json
+import json
 
 # GOE
 from goe.config.orchestration_config import OrchestrationConfig

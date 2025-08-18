@@ -25,7 +25,7 @@ import json
 import logging
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
-
+import msgspec
 # GOE
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.offload_messages import VVERBOSE
@@ -51,19 +51,26 @@ if TYPE_CHECKING:
 ###########################################################################
 # GLOBAL FUNCTIONS
 ###########################################################################
-
-
+def _default(value: Any) -> str:
+    if isinstance(value, (decimal.Decimal, datetime.datetime, ExecutionId)):
+        return str(value)
+    elif isinstance(value, GenericPredicate):
+        return value.dsl
+    try:
+        val = str(value)
+    except Exception as exc:  # noqa: BLE001
+        raise TypeError from exc
+    else:
+        return val
+# it's best to instantiate as few custom encoders as needed
+_msgspec_json_encoder = msgspec.json.Encoder(enc_hook=_default)
 def type_safe_json_dumps(d) -> str:
-    """JSON dump to str that caters for Decimal and datetime, taken from orjson README and modified to suit."""
+    """
+    Encodes json with the optimized msgspec package
 
-    def default(obj):
-        if isinstance(obj, (decimal.Decimal, datetime.datetime, ExecutionId)):
-            return str(obj)
-        elif isinstance(obj, GenericPredicate):
-            return obj.dsl
-        raise TypeError
-
-    return json.dumps(d, default=default)
+    Msgspec encode returns bytearray, so you can't pass it directly as json_serializer
+    """    
+    return _msgspec_json_encoder.encode(d).decode()
 
 
 logger = logging.getLogger(__name__)

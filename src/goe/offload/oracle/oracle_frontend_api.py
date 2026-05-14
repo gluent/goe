@@ -264,12 +264,10 @@ class OracleFrontendApi(FrontendApiInterface):
             )
 
         sql = (
-            dedent(
-                """\
+            dedent("""\
             CREATE TABLE %(owner_table)s (
                 %(col_projection)s
-            )%(partition_clause)s"""
-            )
+            )%(partition_clause)s""")
             % {
                 "owner_table": self.enclose_object_reference(schema, table_name),
                 "col_projection": col_projection,
@@ -590,9 +588,7 @@ class OracleFrontendApi(FrontendApiInterface):
         if remap_schema:
             remap_command = "dbms_metadata.set_remap_param(th, 'REMAP_SCHEMA', :owner, :remap_schema);"
             params["remap_schema"] = remap_schema
-        q = (
-            dedent(
-                """\
+        q = dedent("""\
                 DECLARE
                   h   NUMBER;
                   th  NUMBER;
@@ -605,10 +601,7 @@ class OracleFrontendApi(FrontendApiInterface):
                   th := dbms_metadata.add_transform(h,'DDL');
                   :ddl := dbms_metadata.fetch_clob(h);
                   dbms_metadata.close(h);
-                END;"""
-            )
-            % {"remap_command": remap_command}
-        )
+                END;""") % {"remap_command": remap_command}
         self._log(
             "Fetch %s %s.%s SQL:\n%s" % (object_type.lower(), schema, object_name, q),
             detail=VVERBOSE,
@@ -645,14 +638,12 @@ class OracleFrontendApi(FrontendApiInterface):
             "dba_subpart_key_columns" if subpartition_level else "dba_part_key_columns"
         )
         q = (
-            dedent(
-                """\
+            dedent("""\
             SELECT UPPER(pk.column_name)
             FROM   %(dba_part_key_columns)s pk
             WHERE  pk.owner = :owner
             AND    pk.name = :table_name
-            ORDER BY pk.column_position"""
-            )
+            ORDER BY pk.column_position""")
             % {"dba_part_key_columns": dba_part_key_columns}
         )
         return [
@@ -738,12 +729,15 @@ class OracleFrontendApi(FrontendApiInterface):
                         "ORA-3113",
                         "ORA-03114",
                         "ORA-3114",
+                        "ORA-03135",
+                        "ORA-3135",
                     )
                 ):
                     # Reconnect and try again (not in a loop, just try once and if we can't get going again then fail)
                     # "ORA-02396: exceeded maximum idle time, please connect again": Session sniped due to profile.
                     # "ORA-03113: end-of-file on communication channel: comes hand in hand with ORA-03114.
                     # "ORA-03114: not connected to Oracle": e.g. when a firewall rule severs an idle session.
+                    # "ORA-03135: connection lost contact": e.g. when a firewall rule severs an idle session.
                     # Sometimes error codes are not padded with a zero, for example:
                     #    DPI-1080: connection was closed by ORA-2396
                     self._log(
@@ -790,8 +784,7 @@ class OracleFrontendApi(FrontendApiInterface):
     def agg_validate_sample_column_names(
         self, schema, table_name, num_required: int = 5
     ) -> list:
-        sql = dedent(
-            """\
+        sql = dedent("""\
         SELECT column_name
         FROM  (
                SELECT column_name
@@ -804,8 +797,7 @@ class OracleFrontendApi(FrontendApiInterface):
                AND    hidden_column = 'NO'
               )
         WHERE  column_id IN (1, last_column_id)
-        OR     ndv_rank <= :REQUIRED_NO"""
-        )
+        OR     ndv_rank <= :REQUIRED_NO""")
         binds = [
             QueryParameter(param_name="OWNER", param_value=schema),
             QueryParameter(param_name="TABLE_NAME", param_value=table_name),
@@ -914,8 +906,7 @@ class OracleFrontendApi(FrontendApiInterface):
         return row[0] if row else row
 
     def get_db_unique_name(self) -> str:
-        sql = dedent(
-            """\
+        sql = dedent("""\
         SELECT SYS_CONTEXT('USERENV', 'DB_UNIQUE_NAME') ||
                CASE
                   WHEN version >= 12
@@ -928,8 +919,7 @@ class OracleFrontendApi(FrontendApiInterface):
                SELECT TO_NUMBER(REGEXP_SUBSTR(version, '[0-9]+')) AS version
                FROM   v$instance
               )
-        """
-        )
+        """)
         row = self.execute_query_fetch_one(sql)
         return row[0] if row else row
 

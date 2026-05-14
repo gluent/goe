@@ -2,9 +2,8 @@ Offload supports several scenarios for offloading data from the RDBMS:
 
 - [Full Offload](#full-offload)
 - [Partition-Based Offload](#partition-based-offload)
-- Subpartition-Based Offload
-- Predicate-Based Offload
-- Offloading Joins
+- [Subpartition-Based Offload](#subpartition-based-offload)
+- [Predicate-Based Offload](#predicate-based-offload)
 
 # Full Offload
 

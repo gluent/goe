@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OrchestrationConfig: Class of configuration attributes for Orchestration commands.
-    These are not attributes we expect an end user to change/provide on a command by command basis,
-    it is config coming from configuration files.
+"""OrchestrationConfig: Class of configuration attributes for Orchestration commands.
+These are not attributes we expect an end user to change/provide on a command by command basis,
+it is config coming from configuration files.
 """
 
 import logging
@@ -46,7 +46,6 @@ from goe.offload.offload_constants import (
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import hs2_connection_log_message
 from goe.util.password_tools import PasswordToolsException
-
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default

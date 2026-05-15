@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OracleOrchestrationRepoClient: Oracle implementation of API for get/put of orchestration metadata.
-"""
+"""OracleOrchestrationRepoClient: Oracle implementation of API for get/put of orchestration metadata."""
 
 # Standard Library
 import json

@@ -95,7 +95,6 @@ from goe.offload.oracle.oracle_column import (
 from goe.offload.oracle import oracle_predicate
 from goe.util.goe_version import GOEVersion
 
-
 logger = logging.getLogger(__name__)
 # Disabling logging by default
 logger.addHandler(logging.NullHandler())
@@ -763,9 +762,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
                     FROM   all_tab_cols
                     WHERE  owner = :owner
                     AND    table_name = :table_name
-                    AND    column_name = :column_name""" % {
-                    "fn": raw_fn
-                }
+                    AND    column_name = :column_name""" % {"fn": raw_fn}
                 row = self._db_api.execute_query_fetch_one(q, query_params=params)
             elif col.is_date_based():
                 row = self._db_api.oracle_get_column_low_high_dates(

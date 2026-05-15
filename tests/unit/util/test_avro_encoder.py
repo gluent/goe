@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TestAvroEncoder: Unit test library to test avro_encoder module.
-"""
+"""TestAvroEncoder: Unit test library to test avro_encoder module."""
+
 from unittest import TestCase, main
 import os.path
 from textwrap import dedent
@@ -26,19 +26,16 @@ from goe.offload.oracle.oracle_column import OracleColumn, ORACLE_TYPE_VARCHAR2
 from goe.util.avro_encoder import AvroEncoder
 from goe.util.misc_functions import get_temp_path
 
-
 FETCH_SIZE = 5
 # Row count enough to cause two batches and stop mid batch
 ROW_COUNT = 8
-SCHEMA_JSON = dedent(
-    """\
+SCHEMA_JSON = dedent("""\
     { "type" : "record",
       "name" : "no_table",
       "namespace" : "sh_test",
       "fields" : [{"name":"COLUMN_NAME","type":"string"}],
       "tableName" : "sh_test.no_table"
-    }"""
-)
+    }""")
 
 
 class FakeDb(object):

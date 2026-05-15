@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Execute ORACLE query and return results
-"""
+"""Execute ORACLE query and return results"""
 
 import datetime
 import inspect
@@ -76,7 +75,9 @@ def get_oracle_connection(
     else:
         if ora_proxy_user:
             ora_conn = oracledb.connect(
-                user="%s[%s]" % (ora_user, ora_proxy_user), password=ora_pass, dsn=ora_dsn
+                user="%s[%s]" % (ora_user, ora_proxy_user),
+                password=ora_pass,
+                dsn=ora_dsn,
             )
         else:
             ora_conn = oracledb.connect(user=ora_user, password=ora_pass, dsn=ora_dsn)
@@ -111,9 +112,7 @@ class OracleQuery(OffloadMessagesMixin, object):
         self._err = None  # ... Error message
 
         self._my_cursor = False  # Marker: "this object created oracledb cursors"
-        self._my_connection = (
-            False  # Marker: "this object created oracledb connection"
-        )
+        self._my_connection = False  # Marker: "this object created oracledb connection"
 
         self._messages = kwargs["messages"] if "messages" in kwargs else None
         super(OracleQuery, self).__init__(self._messages, logger)
@@ -162,7 +161,9 @@ class OracleQuery(OffloadMessagesMixin, object):
         )
 
         try:
-            self._db_handle = oracledb.connect(user=self._user, password=self._password, dsn=self._dsn)
+            self._db_handle = oracledb.connect(
+                user=self._user, password=self._password, dsn=self._dsn
+            )
             self._cursor = self._db_handle.cursor()
             self._my_cursor = True
             self._my_connection = True
@@ -404,9 +405,7 @@ class OracleQuery(OffloadMessagesMixin, object):
                     logger.debug("Exception: %s when closing DB connection" % str(e))
             self._my_connection = False
         else:
-            logger.debug(
-                "We re-used an external oracledb connection, no need to close"
-            )
+            logger.debug("We re-used an external oracledb connection, no need to close")
 
     def to_rdbms_literal(self, py_var):
         """Translate a Python value to an Oracle literal, only dates are impacted, other types just pass through"""

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OffloadTransportFunctions: Library of functions used in goe.py and data transport modules
-"""
+"""OffloadTransportFunctions: Library of functions used in goe.py and data transport modules"""
 
 import decimal
 import logging

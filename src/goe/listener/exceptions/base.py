@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """HTTP exception and handler for FastAPI."""
+
 # Standard Library
 from typing import Any, Dict, Optional, Union
 
@@ -93,11 +94,13 @@ class ApplicationError(BaseApplicationError):
         BaseApplicationError.__init__(  # noqa: WPS609
             self,
             status_code,
-            content=schemas.ErrorMessage(code=status_code, message=message).dict(
-                exclude_none=True,
-            )
-            if isinstance(message, str)
-            else message,
+            content=(
+                schemas.ErrorMessage(code=status_code, message=message).dict(
+                    exclude_none=True,
+                )
+                if isinstance(message, str)
+                else message
+            ),
         )
 
 

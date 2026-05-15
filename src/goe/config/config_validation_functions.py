@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" config_validation_functions: Library of functions used in goe.py and OrchestrationConfig
-"""
+"""config_validation_functions: Library of functions used in goe.py and OrchestrationConfig"""
 
 import json
 import random
@@ -423,7 +422,9 @@ def normalise_rdbms_oracle_options(options, exc_cls=OrchestrationConfigException
             try:
                 oracledb.init_oracle_client()
             except Exception as exc:
-                raise exc_cls(f"Failed to initialize oracledb thick mode: {exc}") from exc
+                raise exc_cls(
+                    f"Failed to initialize oracledb thick mode: {exc}"
+                ) from exc
 
     if not options.oracle_dsn:
         raise exc_cls("Oracle connection options required")

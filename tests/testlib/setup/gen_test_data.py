@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Library of functions generating data for test tables.
-"""
+"""Library of functions generating data for test tables."""
 
 from datetime import datetime, date, timedelta
 import decimal
@@ -21,7 +20,6 @@ import random
 import uuid
 
 import oracledb as cxo
-
 
 ###############################################################################
 # CONSTANTS

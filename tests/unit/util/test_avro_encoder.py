@@ -42,7 +42,7 @@ SCHEMA_JSON = dedent(
 
 
 class FakeDb(object):
-    """Pretends to be a cx_Oracle cursor over a single string column table so we can test without needing a database"""
+    """Pretends to be a oracledb cursor over a single string column table so we can test without needing a database"""
 
     def __init__(self, row_count):
         assert row_count

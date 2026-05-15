@@ -26,7 +26,7 @@ from goe.util.polling_thread import PollingThread
 class TestPollingThread(TestCase):
     def test_OffloadTransportSqlStatsThread(self):
         """Test the OffloadTransportSqlStatsThread implementation of PollingThread
-        using cx_Oracle output data
+        using oracledb output data
         """
         test_payload = [
             [],

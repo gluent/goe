@@ -738,6 +738,11 @@ def use_oracle_wallet_default() -> bool:
     return bool_option_from_string("USE_ORACLE_WALLET", str_val)
 
 
+def oracledb_thick_mode_default() -> bool:
+    str_val = os.environ.get("ORACLEDB_THICK_MODE") or os.environ.get("USE_ORACLE_WALLET") or "false"
+    return bool_option_from_string("ORACLEDB_THICK_MODE", str_val)
+
+
 def offload_transport_auth_using_oracle_wallet_default() -> bool:
     str_val = os.environ.get("OFFLOAD_TRANSPORT_AUTH_USING_ORACLE_WALLET") or "false"
     return bool_option_from_string(

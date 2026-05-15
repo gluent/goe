@@ -23,7 +23,7 @@ import logging
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 # Third Party Libraries
-import cx_Oracle
+import oracledb
 
 # GOE
 from goe.listener.schemas.system import (
@@ -134,7 +134,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         frontend_name = frontend_name.upper()
         metadata_obj = self._frontend_api.execute_function(
             "offload_repo.get_offload_metadata",
-            return_type=cx_Oracle.OBJECT,
+            return_type=oracledb.DB_TYPE_OBJECT,
             return_type_name=self._get_ora_type_object_name(
                 OFFLOAD_METADATA_ORA_TYPE_NAME
             ),
@@ -146,7 +146,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         return None
 
     def _get_offload_metadata_ora_type_object(self):
-        """This subverts FrontendApi because it has knowledge about cx-Oracle. We are in an Oracle only class
+        """This subverts FrontendApi because it has knowledge about oracledb. We are in an Oracle only class
         so this is slightly less terrible but still not ideal.
         """
         return self._get_ora_type_object(OFFLOAD_METADATA_ORA_TYPE_NAME)

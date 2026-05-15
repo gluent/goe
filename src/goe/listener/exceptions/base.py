@@ -17,7 +17,7 @@
 from typing import Any, Dict, Optional, Union
 
 # Third Party Libraries
-from cx_Oracle import DatabaseError as OracleDatabaseError
+from oracledb import DatabaseError as OracleDatabaseError
 from fastapi import Request, status
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import ORJSONResponse

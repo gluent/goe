@@ -53,7 +53,7 @@ dependencies = [
     "azure-storage-blob",
 
     # For Oracle frontend
-    "cx-Oracle",
+    "oracledb",
 
     # For BigQuery backend
     "google-cloud-bigquery",

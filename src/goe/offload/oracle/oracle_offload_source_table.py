@@ -21,7 +21,7 @@ import logging
 import re
 from typing import Union
 
-from cx_Oracle import DatabaseError
+from oracledb import DatabaseError
 from numpy import datetime64
 
 from goe.offload import offload_constants

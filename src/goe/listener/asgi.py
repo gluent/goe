@@ -17,7 +17,7 @@ import multiprocessing
 from pathlib import Path
 
 # Third Party Libraries
-from cx_Oracle import DatabaseError as OracleDatabaseError
+from oracledb import DatabaseError as OracleDatabaseError
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import ORJSONResponse

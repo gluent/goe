@@ -16,7 +16,7 @@ import os
 import sys
 import traceback
 
-from cx_Oracle import DatabaseError
+from oracledb import DatabaseError
 
 from goe.connect.connect_functions import (
     FatalTestFailure,

@@ -25,6 +25,7 @@ from goe.connect.connect_functions import (
     log,
     success,
     test_header,
+    warning,
 )
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload import offload_constants
@@ -140,7 +141,7 @@ def test_oracle(orchestration_config, messages):
             'NLS_LANG not specified in environment, this will be set at offload time to "%s"'
             % os.environ["NLS_LANG"]
         )
-        failure(test_name)
+        warning(test_name)
     else:
         if not nls_lang_has_charset():
             detail(

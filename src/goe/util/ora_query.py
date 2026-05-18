@@ -14,13 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Execute ORACLE query and return results
-"""
+"""Execute ORACLE query and return results"""
 
 import datetime
 import inspect
 import logging
-import cx_Oracle
+import oracledb
 from numpy import datetime64
 
 from goe.offload.offload_messages import OffloadMessagesMixin, VERBOSE
@@ -54,10 +53,10 @@ def output_type_handler(cursor, name, defaultType, size, precision, scale):
     which streaming is the only supported method.
     Docs: https://cx-oracle.readthedocs.io/en/latest/user_guide/lob_data.html
     """
-    if defaultType in (cx_Oracle.CLOB, cx_Oracle.LOB):
-        return cursor.var(cx_Oracle.LONG_STRING, arraysize=cursor.arraysize)
-    if defaultType == cx_Oracle.BLOB:
-        return cursor.var(cx_Oracle.LONG_BINARY, arraysize=cursor.arraysize)
+    if defaultType == oracledb.DB_TYPE_CLOB:
+        return cursor.var(oracledb.DB_TYPE_LONG_STRING, arraysize=cursor.arraysize)
+    if defaultType == oracledb.DB_TYPE_BLOB:
+        return cursor.var(oracledb.DB_TYPE_LONG_RAW, arraysize=cursor.arraysize)
 
 
 def get_oracle_connection(
@@ -70,16 +69,18 @@ def get_oracle_connection(
 ):
     if ora_wallet:
         if ora_proxy_user:
-            ora_conn = cx_Oracle.connect("[%s]" % ora_proxy_user, dsn=ora_dsn)
+            ora_conn = oracledb.connect(user="[%s]" % ora_proxy_user, dsn=ora_dsn)
         else:
-            ora_conn = cx_Oracle.connect(dsn=ora_dsn)
+            ora_conn = oracledb.connect(dsn=ora_dsn)
     else:
         if ora_proxy_user:
-            ora_conn = cx_Oracle.connect(
-                "%s[%s]" % (ora_user, ora_proxy_user), ora_pass, ora_dsn
+            ora_conn = oracledb.connect(
+                user="%s[%s]" % (ora_user, ora_proxy_user),
+                password=ora_pass,
+                dsn=ora_dsn,
             )
         else:
-            ora_conn = cx_Oracle.connect(ora_user, ora_pass, ora_dsn)
+            ora_conn = oracledb.connect(user=ora_user, password=ora_pass, dsn=ora_dsn)
     session_cursor = ora_conn.cursor()
     try:
         session_cursor.execute(
@@ -110,10 +111,8 @@ class OracleQuery(OffloadMessagesMixin, object):
         self._retcode = None  # Last operation return code
         self._err = None  # ... Error message
 
-        self._my_cursor = False  # Marker: "this object created cx_Oracle cursors"
-        self._my_connection = (
-            False  # Marker: "this object created cx_Oracle connection"
-        )
+        self._my_cursor = False  # Marker: "this object created oracledb cursors"
+        self._my_connection = False  # Marker: "this object created oracledb connection"
 
         self._messages = kwargs["messages"] if "messages" in kwargs else None
         super(OracleQuery, self).__init__(self._messages, logger)
@@ -156,18 +155,20 @@ class OracleQuery(OffloadMessagesMixin, object):
     ###############################################################################
 
     def _connect(self):
-        """Connect to ORACLE db and initialize cx_Oracle handle objects"""
+        """Connect to ORACLE db and initialize oracledb handle objects"""
         logger.debug(
             "Connecting to ORACLE dsn: %s with user: %s" % (self._dsn, self._user)
         )
 
         try:
-            self._db_handle = cx_Oracle.connect(self._user, self._password, self._dsn)
+            self._db_handle = oracledb.connect(
+                user=self._user, password=self._password, dsn=self._dsn
+            )
             self._cursor = self._db_handle.cursor()
             self._my_cursor = True
             self._my_connection = True
             logger.debug("Successfully connected to dsn: %s" % self._dsn)
-        except cx_Oracle.Error as e:
+        except oracledb.Error as e:
             (error,) = e.args
             self._retcode = error.code
             self._err = str(error)
@@ -216,7 +217,7 @@ class OracleQuery(OffloadMessagesMixin, object):
                 "Executing %s ORACLE SQL [%s]: %s in db: %s - SUCCESS"
                 % (bulk_type, sql_command, sql, self._dsn)
             )
-        except cx_Oracle.Error as e:
+        except oracledb.Error as e:
             logger.debug(
                 "Executing %s ORACLE SQL [%s]: %s in db: %s - EXCEPTION: %s"
                 % (bulk_type, sql_command, sql, self._dsn, e)
@@ -375,16 +376,16 @@ class OracleQuery(OffloadMessagesMixin, object):
 
     def disconnect(self):
         """Close current connection and cursor
-        Strictly speaking this is unnecessary as cx_Oracle will close them upon __del__
+        Strictly speaking this is unnecessary as oracledb will close them upon __del__
         Nice to have the option though
         """
         logger.debug(
             "Disconnecting from ORACLE. User: %s DSN: %s" % (self._user, self._dsn)
         )
         if self._my_cursor:
-            # This object created cx_Oracle AND cursor object
+            # This object created oracledb AND cursor object
             if self._cursor:
-                logger.debug("Destroying cx_Oracle cursor allocated by this instance")
+                logger.debug("Destroying oracledb cursor allocated by this instance")
                 try:
                     self._cursor.close()
                     self._cursor = None
@@ -392,11 +393,11 @@ class OracleQuery(OffloadMessagesMixin, object):
                     logger.debug("Exception: %s when closing cursor" % str(e))
             self._my_cursor = False
         else:
-            logger.debug("We re-used an external cx_Oracle cursor, no need to close")
+            logger.debug("We re-used an external oracledb cursor, no need to close")
 
         if self._my_connection:
             if self._db_handle:
-                logger.debug("Closing cx_Oracle connection allocated by this instance")
+                logger.debug("Closing oracledb connection allocated by this instance")
                 try:
                     self._db_handle.close()
                     self._db_handle = None
@@ -404,9 +405,7 @@ class OracleQuery(OffloadMessagesMixin, object):
                     logger.debug("Exception: %s when closing DB connection" % str(e))
             self._my_connection = False
         else:
-            logger.debug(
-                "We re-used an external cx_Oracle connection, no need to close"
-            )
+            logger.debug("We re-used an external oracledb connection, no need to close")
 
     def to_rdbms_literal(self, py_var):
         """Translate a Python value to an Oracle literal, only dates are impacted, other types just pass through"""

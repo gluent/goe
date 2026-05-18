@@ -26,7 +26,7 @@ import traceback
 from typing import Optional
 
 # Third Party Libraries
-import cx_Oracle as cxo
+import oracledb as cxo
 from numpy import datetime64
 
 # GOE
@@ -176,10 +176,10 @@ class OracleFrontendApi(FrontendApiInterface):
     def _connection_output_type_handler(
         self, cursor, name, default_type, size, precision, scale
     ):
-        if default_type == cxo.CLOB:
-            return cursor.var(cxo.LONG_STRING, arraysize=cursor.arraysize)
-        if default_type == cxo.BLOB:
-            return cursor.var(cxo.LONG_BINARY, arraysize=cursor.arraysize)
+        if default_type == cxo.DB_TYPE_CLOB:
+            return cursor.var(cxo.DB_TYPE_LONG_STRING, arraysize=cursor.arraysize)
+        if default_type == cxo.DB_TYPE_BLOB:
+            return cursor.var(cxo.DB_TYPE_LONG_RAW, arraysize=cursor.arraysize)
 
     def _connect(self):
         made_new_connection = False
@@ -189,7 +189,6 @@ class OracleFrontendApi(FrontendApiInterface):
         else:
             # Option based connection
             dsn = self._connection_options.rdbms_dsn
-            threaded = True  # todo: set this dyanmically
             if self._connection_options.use_oracle_wallet:
                 if (
                     self._conn_user_override
@@ -203,24 +202,21 @@ class OracleFrontendApi(FrontendApiInterface):
                         "Proxying to DSN [%s]%s" % (self._conn_user_override, dsn)
                     )
                     self._db_conn = cxo.connect(
-                        "[%s]" % self._conn_user_override, dsn=dsn, threaded=threaded
+                        user="[%s]" % self._conn_user_override, dsn=dsn
                     )
                 else:
                     self._debug("Connecting to DSN %s" % dsn)
-                    self._db_conn = cxo.connect(dsn=dsn, threaded=threaded)
+                    self._db_conn = cxo.connect(dsn=dsn)
             elif self._conn_user_override:
                 conn_user, conn_pass = self._conn_user_and_pass_for_override()
                 self._debug("Connecting to %s" % conn_user)
-                self._db_conn = cxo.connect(
-                    conn_user, conn_pass, dsn, threaded=threaded
-                )
+                self._db_conn = cxo.connect(user=conn_user, password=conn_pass, dsn=dsn)
             else:
                 self._debug("Connecting to %s" % self._connection_options.ora_adm_user)
                 self._db_conn = cxo.connect(
-                    self._connection_options.ora_adm_user,
-                    self._connection_options.ora_adm_pass,
-                    dsn,
-                    threaded=threaded,
+                    user=self._connection_options.ora_adm_user,
+                    password=self._connection_options.ora_adm_pass,
+                    dsn=dsn,
                 )
             made_new_connection = True
         self._db_conn.module = FRONTEND_TRACE_MODULE
@@ -358,7 +354,7 @@ class OracleFrontendApi(FrontendApiInterface):
         not_when_dry_running=False,
         commit=False,
     ):
-        """Wrapper over cx_Oracle callfunc to additionally get and close a cursor"""
+        """Wrapper over oracledb callfunc to additionally get and close a cursor"""
         logger.debug("Calling SQL function %s" % sql_fn)
         self._open_cursor()
         try:
@@ -375,11 +371,12 @@ class OracleFrontendApi(FrontendApiInterface):
 
             if return_type:
                 # FUNCTION call with a return value
-                return_val = self._db_curs.var(return_type, typename=return_type_name)
+                if return_type == cxo.DB_TYPE_OBJECT and return_type_name:
+                    return_type = self._db_conn.gettype(return_type_name)
                 if arg_list:
-                    self._db_curs.callfunc(sql_fn, return_val, arg_list)
+                    return_val = self._db_curs.callfunc(sql_fn, return_type, arg_list)
                 else:
-                    self._db_curs.callfunc(sql_fn, return_val)
+                    return_val = self._db_curs.callfunc(sql_fn, return_type)
                 return self._cx_getvalue(return_val)
             else:
                 # PROCEDURE call with no return value
@@ -608,7 +605,7 @@ class OracleFrontendApi(FrontendApiInterface):
         )
         self._open_cursor()
         try:
-            ddl = self._db_curs.var(cxo.CLOB)
+            ddl = self._db_curs.var(cxo.DB_TYPE_CLOB)
             params["ddl"] = ddl
             self._db_curs.execute(q, params)
             ddl_val = ddl.getvalue()
@@ -661,7 +658,7 @@ class OracleFrontendApi(FrontendApiInterface):
         def get_cpu_s():
             logger.debug("Fetching CPU time from DB")
             cpu = self._execute_plsql_function(
-                "DBMS_UTILITY.GET_CPU_TIME", return_type=cxo.NUMBER
+                "DBMS_UTILITY.GET_CPU_TIME", return_type=cxo.DB_TYPE_NUMBER
             )
             return float(cpu) / 100
 
@@ -753,7 +750,7 @@ class OracleFrontendApi(FrontendApiInterface):
             self._db_curs = None
 
     def _to_native_query_params(self, query_params):
-        """Using a dict for cx-Oracle binds.
+        """Using a dict for oracledb binds.
         For convenience, if it is already a dict then turning a blind eye and returning it, this allows code
         migrated here from OffloadSourceTable to remain unchanged.
         """
@@ -814,7 +811,9 @@ class OracleFrontendApi(FrontendApiInterface):
     ):
         self._debug("Making new connection with user %s" % user_name)
         client = cxo.connect(
-            user_name, user_password, self._connection_options.rdbms_dsn
+            user=user_name,
+            password=user_password,
+            dsn=self._connection_options.rdbms_dsn,
         )
         client.module = FRONTEND_TRACE_MODULE
         client.action = trace_action_override or self._trace_action
@@ -1122,8 +1121,8 @@ class OracleFrontendApi(FrontendApiInterface):
         self._open_cursor()
         try:
             # Convert RAW DATEs to actual values and reconstruct row before returning
-            low = self._db_curs.var(cxo.DATETIME)
-            high = self._db_curs.var(cxo.DATETIME)
+            low = self._db_curs.var(cxo.DB_TYPE_DATE)
+            high = self._db_curs.var(cxo.DB_TYPE_DATE)
             self._db_curs.callproc(
                 "offload.get_column_low_high_dates",
                 [schema, table_name, column_name, low, high],
@@ -1138,9 +1137,9 @@ class OracleFrontendApi(FrontendApiInterface):
             self._close_cursor()
 
     def oracle_get_type_object(self, type_owner_name):
-        """Returns a cx-Oracle type object.
+        """Returns a oracledb type object.
         Only ever likely to be implemented for Oracle hence the name of the method and absence of abstractmethod.
-        Wanted the code in here so cx-Oracle is not directly exposed to higher level APIs, although you could
+        Wanted the code in here so oracledb is not directly exposed to higher level APIs, although you could
         argue that returning the type object is just as bad.
         """
         ora_type = self._db_conn.gettype(type_owner_name)

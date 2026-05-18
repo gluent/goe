@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OrchestrationConfig: Class of configuration attributes for Orchestration commands.
-    These are not attributes we expect an end user to change/provide on a command by command basis,
-    it is config coming from configuration files.
+"""OrchestrationConfig: Class of configuration attributes for Orchestration commands.
+These are not attributes we expect an end user to change/provide on a command by command basis,
+it is config coming from configuration files.
 """
 
 import logging
@@ -46,7 +46,6 @@ from goe.offload.offload_constants import (
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import hs2_connection_log_message
 from goe.util.password_tools import PasswordToolsException
-
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default
@@ -201,6 +200,7 @@ EXPECTED_CONFIG_ARGS = [
     "teradata_repo_user",
     "use_ssl",
     "use_oracle_wallet",
+    "oracledb_thick_mode",
     "webhdfs_host",
     "webhdfs_port",
     "verbose",
@@ -288,6 +288,7 @@ class OrchestrationConfig:
     offload_transport_spark_submit_executable: Optional[str]
     offload_transport_spark_thrift_host: Optional[str]
     use_oracle_wallet: bool
+    oracledb_thick_mode: bool
 
     def __init__(self, do_not_connect=False, **kwargs):
         """Do not expect to construct directly via __init__.
@@ -589,6 +590,13 @@ class OrchestrationConfig:
                 orchestration_defaults.bool_option_from_string(
                     "USE_ORACLE_WALLET",
                     orchestration_defaults.use_oracle_wallet_default(),
+                ),
+            ),
+            oracledb_thick_mode=config_dict.get(
+                "oracledb_thick_mode",
+                orchestration_defaults.bool_option_from_string(
+                    "ORACLEDB_THICK_MODE",
+                    orchestration_defaults.oracledb_thick_mode_default(),
                 ),
             ),
             offload_transport_auth_using_oracle_wallet=config_dict.get(

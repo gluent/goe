@@ -16,7 +16,7 @@ import os
 import sys
 import traceback
 
-from cx_Oracle import DatabaseError
+from oracledb import DatabaseError
 
 from goe.connect.connect_functions import (
     FatalTestFailure,
@@ -25,6 +25,7 @@ from goe.connect.connect_functions import (
     log,
     success,
     test_header,
+    warning,
 )
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload import offload_constants
@@ -40,7 +41,6 @@ from goe.goe import (
     verbose,
     NLS_LANG_MISSING_CHARACTER_SET_EXCEPTION_TEMPLATE,
 )
-
 
 GOE_MINIMUM_ORACLE_VERSION = "10.2.0.1"
 
@@ -141,7 +141,7 @@ def test_oracle(orchestration_config, messages):
             'NLS_LANG not specified in environment, this will be set at offload time to "%s"'
             % os.environ["NLS_LANG"]
         )
-        failure(test_name)
+        warning(test_name)
     else:
         if not nls_lang_has_charset():
             detail(

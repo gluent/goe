@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Library of functions generating data for test tables.
-"""
+"""Library of functions generating data for test tables."""
 
 from datetime import datetime, date, timedelta
 import decimal
 import random
 import uuid
 
-import cx_Oracle as cxo
-
+import oracledb as cxo
 
 ###############################################################################
 # CONSTANTS
@@ -297,18 +295,18 @@ def gen_cxo_type_spec(col_type, length=None, precision=None, scale=None):
     # elif col_type == 'NUMBER' and precision == 38 and scale in [0, None]: # workaround for cx_Oracle 7.3.0 putting signed integers of 38 digits in as garbage
     #    return cxo.STRING
     elif col_type in ("NUMBER", "FLOAT"):
-        return cxo.NUMBER
+        return cxo.DB_TYPE_NUMBER
     elif "DATE" in col_type:
-        return cxo.DATETIME
+        return cxo.DB_TYPE_DATE
     elif "TIMESTAMP" in col_type:
-        return cxo.TIMESTAMP
+        return cxo.DB_TYPE_TIMESTAMP
     elif col_type in ("BINARY_FLOAT", "BINARY_DOUBLE"):
-        return cxo.NATIVE_FLOAT
+        return cxo.DB_TYPE_BINARY_DOUBLE
     elif col_type == "BLOB":
-        return cxo.BLOB
+        return cxo.DB_TYPE_BLOB
     elif col_type == "CLOB":
-        return cxo.CLOB
+        return cxo.DB_TYPE_CLOB
     elif col_type == "NCLOB":
-        return cxo.NCLOB
+        return cxo.DB_TYPE_NCLOB
     elif col_type == "RAW":
-        return cxo.BINARY
+        return cxo.DB_TYPE_RAW

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TestPollingThread: Unit test library to test polling_thread module.
-"""
+"""TestPollingThread: Unit test library to test polling_thread module."""
+
 import threading
 import time
 import traceback
@@ -26,7 +26,7 @@ from goe.util.polling_thread import PollingThread
 class TestPollingThread(TestCase):
     def test_OffloadTransportSqlStatsThread(self):
         """Test the OffloadTransportSqlStatsThread implementation of PollingThread
-        using cx_Oracle output data
+        using oracledb output data
         """
         test_payload = [
             [],

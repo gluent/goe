@@ -327,7 +327,7 @@ class OrchestrationRunner:
         """
         Initialize an orchestration command.
         Sets execution_id, messages in state and returns repo_client.
-        We do NOT store repo_client in state because of multiprocess issues with cx_Oracle.
+        We do NOT store repo_client in state because of multiprocess issues with oracledb.
         """
         self._init_command_log(command, params, reuse_log=reuse_log)
         self._execution_id = self._get_execution_id(execution_id=execution_id)

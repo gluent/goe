@@ -21,7 +21,7 @@ import logging
 import re
 from typing import Union
 
-from cx_Oracle import DatabaseError
+from oracledb import DatabaseError
 from numpy import datetime64
 
 from goe.offload import offload_constants
@@ -94,7 +94,6 @@ from goe.offload.oracle.oracle_column import (
 )
 from goe.offload.oracle import oracle_predicate
 from goe.util.goe_version import GOEVersion
-
 
 logger = logging.getLogger(__name__)
 # Disabling logging by default
@@ -763,9 +762,7 @@ class OracleSourceTable(OffloadSourceTableInterface):
                     FROM   all_tab_cols
                     WHERE  owner = :owner
                     AND    table_name = :table_name
-                    AND    column_name = :column_name""" % {
-                    "fn": raw_fn
-                }
+                    AND    column_name = :column_name""" % {"fn": raw_fn}
                 row = self._db_api.execute_query_fetch_one(q, query_params=params)
             elif col.is_date_based():
                 row = self._db_api.oracle_get_column_low_high_dates(
@@ -1016,8 +1013,8 @@ class OracleSourceTable(OffloadSourceTableInterface):
         return self.gen_column(column_name, ORACLE_TYPE_DATE)
 
     def get_minimum_partition_key_data(self):
-        """Returns lowest point of data stored in source Oracle table
-        Impyla & cx_Oracle both truncate nanoseconds hence TIMESTAMP columns are returned as string
+        """Returns lowest point of data stored in source Oracle table.
+        Impyla and oracledb both truncate nanoseconds hence TIMESTAMP columns are returned as string.
         """
 
         def to_char_ts_col(col_name, data_type):

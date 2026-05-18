@@ -82,3 +82,24 @@ gcloud run jobs create ${JOB_NAME} \
 gcloud run jobs execute ${JOB_NAME} --wait \
 --project=${PROJECT} --region=${REGION}
 ```
+
+## Advanced: Oracle Thick Client Support (e.g., Oracle Wallet)
+
+By default, GOE uses `oracledb` in Thin mode, which connects directly to Oracle databases without native client libraries. If your environment requires Thick client capabilities (such as connecting via an Oracle Wallet), you can re-enable Thick mode by setting `ORACLEDB_THICK_MODE=true` in your `offload.env` configuration and adding the Oracle Instant Client dependencies to your `Dockerfile`.
+
+For example, add the following steps to your `Dockerfile` before installing GOE:
+
+```dockerfile
+# Oracle client prerequisites for Thick mode
+RUN apt-get update && apt-get -y install libaio1 libaio-dev unzip wget
+RUN wget -q https://download.oracle.com/otn_software/linux/instantclient/218000/instantclient-sdk-linux.x64-21.8.0.0.0dbru.zip && \
+    wget -q https://download.oracle.com/otn_software/linux/instantclient/218000/instantclient-basic-linux.x64-21.8.0.0.0dbru.zip && \
+    wget -q https://download.oracle.com/otn_software/linux/instantclient/218000/instantclient-tools-linux.x64-21.8.0.0.0dbru.zip && \
+    mkdir /opt/oracle && \
+    unzip instantclient-sdk-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
+    unzip instantclient-basic-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
+    unzip instantclient-tools-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/
+ENV ORACLE_HOME=/opt/oracle/instantclient_21_8
+ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_8
+```
+

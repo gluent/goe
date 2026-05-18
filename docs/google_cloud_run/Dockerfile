@@ -14,19 +14,8 @@
 
 FROM google/cloud-sdk:slim
 RUN apt-get update
-# Oracle client
-RUN apt-get -y install libaio1 libaio-dev unzip wget
-RUN wget -q https://download.oracle.com/otn_software/linux/instantclient/218000/instantclient-sdk-linux.x64-21.8.0.0.0dbru.zip && \
-    wget -q https://download.oracle.com/otn_software/linux/instantclient/218000/instantclient-basic-linux.x64-21.8.0.0.0dbru.zip && \
-    wget -q https://download.oracle.com/otn_software/linux/instantclient/218000/instantclient-tools-linux.x64-21.8.0.0.0dbru.zip && \
-    mkdir /opt/oracle && \
-    unzip instantclient-sdk-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
-    unzip instantclient-basic-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
-    unzip instantclient-tools-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/
-ENV ORACLE_HOME=/opt/oracle/instantclient_21_8
-ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_8
-# Python pre-reqs (gcc for cx_Oracle)
-RUN apt-get install python3.11 python3.11-venv gcc -y
+# Python pre-reqs
+RUN apt-get install python3.11 python3.11-venv -y
 # Install GOE
 ENV OFFLOAD_HOME=/opt/goe/offload
 RUN mkdir /opt/goe

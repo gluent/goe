@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from itertools import groupby
 from typing import TYPE_CHECKING
 
-import cx_Oracle as cxo
+import oracledb as cxo
 
 from goe.offload.column_metadata import match_table_column
 from goe.offload.frontend_api import FRONTEND_TRACE_ID
@@ -980,7 +980,7 @@ ORDER BY seconds DESC"""
         rdbms_session_setup_commands,
     ):
         def cx_type_handler(cursor, name, default_type, size, precision, scale):
-            if default_type == cxo.NUMBER:
+            if default_type == cxo.DB_TYPE_NUMBER:
                 staging_column = match_table_column(name, staging_columns)
                 if (
                     not staging_column
@@ -989,9 +989,9 @@ ORDER BY seconds DESC"""
                 ):
                     # We are offloading to string and should convert the value to string
                     return cursor.var(str, 255, cursor.arraysize)
-            elif default_type in (cxo.STRING, cxo.FIXED_CHAR):
+            elif default_type in (cxo.DB_TYPE_VARCHAR, cxo.DB_TYPE_CHAR):
                 return cursor.var(str, size, cursor.arraysize)
-            elif default_type in (cxo.DATETIME, cxo.TIMESTAMP):
+            elif default_type in (cxo.DB_TYPE_DATE, cxo.DB_TYPE_TIMESTAMP):
                 return cursor.var(str, 255, cursor.arraysize)
 
         def setup_rdbms_session(ora_cursor):

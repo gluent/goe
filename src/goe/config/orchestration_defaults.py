@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OrchestrationDefaults: Library of functions providing default values for command line options.
-    This is a temporary measure in order to get the code out of goe.py and into a single location, in the
-    future we expect to refactor all option processing, including defaults, and this module will hopefully become
-    redundant at that time.
+"""OrchestrationDefaults: Library of functions providing default values for command line options.
+This is a temporary measure in order to get the code out of goe.py and into a single location, in the
+future we expect to refactor all option processing, including defaults, and this module will hopefully become
+redundant at that time.
 """
 
 # Standard Library
@@ -736,6 +736,15 @@ def offload_transport_default() -> str:
 def use_oracle_wallet_default() -> bool:
     str_val = os.environ.get("USE_ORACLE_WALLET") or "false"
     return bool_option_from_string("USE_ORACLE_WALLET", str_val)
+
+
+def oracledb_thick_mode_default() -> bool:
+    str_val = (
+        os.environ.get("ORACLEDB_THICK_MODE")
+        or os.environ.get("USE_ORACLE_WALLET")
+        or "false"
+    )
+    return bool_option_from_string("ORACLEDB_THICK_MODE", str_val)
 
 
 def offload_transport_auth_using_oracle_wallet_default() -> bool:

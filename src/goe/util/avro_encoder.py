@@ -48,7 +48,7 @@ class AvroEncoder(QueryImportInterface):
     to an existing HDFS file. This should allow us to support streaming to HDFS in the future.
 
     Writing to AVRO_TYPE_INT and AVRO_TYPE_LONG first converts the value with int()/long() respectively. The reason
-    for this is that cx_Oracle does not recognise NUMBER with negative scale as an integral value. It is safe for us
+    for this is that oracledb does not recognise NUMBER with negative scale as an integral value. It is safe for us
     to coerce the type because we will only stage to INT/LONG if we trust the source schema enforces scale=0.
 
     This is not library code - it contains some fairly strong coupling to data formats in the offload process.

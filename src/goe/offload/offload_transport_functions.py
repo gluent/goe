@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OffloadTransportFunctions: Library of functions used in goe.py and data transport modules
-"""
+"""OffloadTransportFunctions: Library of functions used in goe.py and data transport modules"""
 
 import decimal
 import logging
@@ -26,7 +25,7 @@ from subprocess import PIPE, STDOUT
 import sys
 from typing import Optional, TYPE_CHECKING
 
-import cx_Oracle as cxo
+import oracledb as cxo
 
 from goe.offload.frontend_api import FRONTEND_TRACE_MODULE
 from goe.offload.offload_constants import (
@@ -146,7 +145,7 @@ def get_rdbms_connection_for_oracle(
     if use_oracle_wallet:
         ora_conn = cxo.connect(dsn=ora_dsn)
     else:
-        ora_conn = cxo.connect(ora_user, ora_pass, ora_dsn)
+        ora_conn = cxo.connect(user=ora_user, password=ora_pass, dsn=ora_dsn)
     session_cursor = ora_conn.cursor()
     try:
         session_cursor.execute(

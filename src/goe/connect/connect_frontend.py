@@ -16,7 +16,7 @@ import os
 import sys
 import traceback
 
-from cx_Oracle import DatabaseError
+from oracledb import DatabaseError
 
 from goe.connect.connect_functions import (
     FatalTestFailure,
@@ -40,7 +40,6 @@ from goe.goe import (
     verbose,
     NLS_LANG_MISSING_CHARACTER_SET_EXCEPTION_TEMPLATE,
 )
-
 
 GOE_MINIMUM_ORACLE_VERSION = "10.2.0.1"
 

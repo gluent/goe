@@ -1042,12 +1042,12 @@ class OffloadSourceDataInterface(metaclass=ABCMeta):
         return source_partitions[hv_partition_index + 1]
 
     def _select_target_table_max(self):
-        """Get highest point of data stored in target table and store in state
-        Impyla/cx_Oracle both truncate nanoseconds hence TIMESTAMP columns are returned as string
-        optimistic_prune_clause is used to limit the partitions scanned when looking for existing rows
+        """Get highest point of data stored in target table and store in state.
+        Impyla and oracledb both truncate nanoseconds hence TIMESTAMP columns are returned as string.
+        optimistic_prune_clause is used to limit the partitions scanned when looking for existing rows:
             If no data is returned then we resort to scanning without the clause
             optimistic_prune_clause is only applicable for single column partition schemes
-        Also returns the max value for convenience
+        Also returns the max value for convenience.
         """
         if not self._target_table_exists():
             return None

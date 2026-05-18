@@ -1013,8 +1013,8 @@ class OracleSourceTable(OffloadSourceTableInterface):
         return self.gen_column(column_name, ORACLE_TYPE_DATE)
 
     def get_minimum_partition_key_data(self):
-        """Returns lowest point of data stored in source Oracle table
-        Impyla & cx_Oracle both truncate nanoseconds hence TIMESTAMP columns are returned as string
+        """Returns lowest point of data stored in source Oracle table.
+        Impyla and oracledb both truncate nanoseconds hence TIMESTAMP columns are returned as string.
         """
 
         def to_char_ts_col(col_name, data_type):

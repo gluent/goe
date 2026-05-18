@@ -1,7 +1,7 @@
 # Action Plan: Migrating from `cx_Oracle` to `oracledb`
 
 ## 1. Executive Summary
-The goal of this initiative is to resolve [Issue #4](https://github.com/gluent/goe/issues/4) by migrating the GOE framework's Oracle database connectivity layer from the legacy `cx_Oracle` driver to its modern successor, `oracledb` (python-oracledb). 
+The goal of this initiative is to resolve [Issue #4](https://github.com/gluent/goe/issues/4) by migrating the GOE framework's Oracle database connectivity layer from the legacy `cx_Oracle` driver to its modern successor, `oracledb` (python-oracledb).
 
 Oracle has rebranded and advanced `cx_Oracle` into `oracledb`, which introduces significant architectural improvements—most notably a default "Thin" mode that connects directly to Oracle databases without requiring native Oracle Instant Client libraries. This migration will simplify deployment, reduce container image footprint, and ensure long-term support and compatibility with modern Python ecosystems.
 
@@ -14,7 +14,7 @@ Oracle has rebranded and advanced `cx_Oracle` into `oracledb`, which introduces 
 *   **Thick Mode (Optional)**: Enabled by invoking `oracledb.init_oracle_client()` at application startup. This mode wraps the Oracle Instant Client libraries (identical to `cx_Oracle`'s architecture) and is required only for advanced legacy features or specific client configurations (such as advanced Oracle Wallet/mTLS setups, Oracle Advanced Queuing, or certain older XMLType workflows).
 
 ### Strategic Recommendation for GOE
-GOE should adopt **Thin Mode** by default for standard frontend and transport operations to maximize ease of deployment (especially in cloud environments like Google Cloud Run). 
+GOE should adopt **Thin Mode** by default for standard frontend and transport operations to maximize ease of deployment (especially in cloud environments like Google Cloud Run).
 
 To ensure seamless backward compatibility for enterprise environments that rely on advanced Oracle Instant Client capabilities (such as external Oracle Wallets), we will introduce a new environment configuration variable:
 ```bash
@@ -43,7 +43,7 @@ A comprehensive audit of the GOE codebase identified references to `cx_Oracle` a
     ```python
     # Legacy cx_Oracle
     cx_Oracle.connect(ora_user, ora_pass, ora_dsn)
-    
+
     # Modern oracledb
     oracledb.connect(user=ora_user, password=ora_pass, dsn=ora_dsn)
     ```
@@ -109,7 +109,7 @@ GOE stores orchestration metadata in Oracle user-defined types (`OFFLOAD_METADAT
     ```
 2.  **Integration Testing**: Execute core offload scenarios (`offload`, `connect`) against an active Oracle instance to validate Thin mode connectivity, metadata UDT persistence, and LOB fetching:
     ```bash
-    export OFFLOAD_HOME=/usr/local/google/home/neiljohnson/goe/offload
+    export OFFLOAD_HOME=${HOME}/goe/offload
     pytest -n 4 tests/integration
     ```
 

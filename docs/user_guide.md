@@ -4,6 +4,8 @@ Offload supports several scenarios for offloading data from the RDBMS:
 - [Partition-Based Offload](#partition-based-offload)
 - [Subpartition-Based Offload](#subpartition-based-offload)
 - [Predicate-Based Offload](#predicate-based-offload)
+- [Offload Data Types](#offload-data-types)
+- [Offload Transport](#offload-transport)
 
 # Full Offload
 
@@ -439,17 +441,17 @@ The predicate DSL currently supports columns of the following Oracle Database da
 
 # Offload Data Types
 
-When offloading data, Offload will map data types from the source RDBMS to the backend database automatically. However, as with most operations in Offload, it is possible to override many of the default data type mappings if required. See Tables 4 and 6 below for details.
+When offloading data, Offload will map data types from the source RDBMS to the backend database automatically. However, it is possible to override many of the default data type mappings. See Tables 3 and 6 below for details.
 
 ## Supported Data Types
 
-GOE currently supports all of the Oracle Database data types listed in Table 4 below. Oracle Database tables that contain columns of any data type not listed cannot currently be offloaded.
+GOE currently supports all of the Oracle Database data types listed in Table 3 below. Oracle Database tables that contain columns of any data type not listed cannot currently be offloaded.
 
 ## Default Data Type Mappings
 
-Table 4 lists the default data type mappings when offloading data from Oracle Database to Impala (Cloudera Data Hub, Cloudera Data Platform), Google BigQuery, Snowflake or Azure Synapse Analytics.
+Table 3 lists the default data type mappings when offloading data from Oracle Database to Impala (Cloudera Data Hub, Cloudera Data Platform), Google BigQuery, Snowflake or Azure Synapse Analytics.
 
-### Table 4: Offload Default Data Type Mappings (Oracle Database)
+### Table 3: Offload Default Data Type Mappings (Oracle Database)
 
 ***
 
@@ -623,7 +625,7 @@ Not all backend systems support floating point special values such as NaN and In
 
 To summarize, the potentially-lossy offload operations and their corresponding options are as follows:
 
-- Rounding decimals: Using the --allow-decimal-scale-rounding option to round decimals that exceed the backend specification for decimal data
+- Rounding decimals: Using the `--allow-decimal-scale-rounding` option to round decimals that exceed the backend specification for decimal data
 - Offloading sub-microsecond timestamps: Using the --allow-nanosecond-timestamp-columns option to offload columns with a sub-microsecond specification to a backend system that doesn’t support the same level of precision
 - Converting data to a 64-bit floating point number: Using the `--double-columns` option to offload decimal or 32-bit floating-point data that would not otherwise be possible
 
@@ -824,7 +826,7 @@ Tables can be offloaded with the `--partition-columns` option to define a custom
 #### Example 20: Offload with User-Defined Partitioning
 
 ```shell
-$ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --partition-columns=TIME_ID,PROD_ID --partition-granularity=Y,1000
+$ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --partition-columns=TIME_ID --partition-granularity=Y
 ```
 
 When offloading to Google BigQuery, user-defined partitioning can include date/timestamp, numeric or string columns, but only one partition key column can be defined. In some cases, the backend partitioning will be implemented by a synthetic partition key column, but not always. See [Synthetic Partitioning](synthetic-partitioning) below for details.

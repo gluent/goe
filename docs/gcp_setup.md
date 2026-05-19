@@ -12,12 +12,12 @@ A service account should be provisioned from the GCP project. This service accou
 
 A Google Cloud Storage (GCS) bucket is required to stage data before ingesting it into BigQuery. Ensure the bucket is in a location compatible with the target BigQuery dataset.
 
-### Dataproc (Spark)
+### Managed Service for Apache Spark
 
 For tables of a non-trivial size, GOE uses Spark to copy data from the source database to cloud storage. In a GCP setting this is likely to be provided by one of two services:
 
-1. Dataproc Batches
-1. Dataproc
+1. Managed Service for Apache Spark (serverless)
+1. Managed Service for Apache Spark (permanent)
 
 ### Roles
 
@@ -29,8 +29,8 @@ The role names below are used throughput this page but can be changed to suit co
 | `goe_bq_core_role`  |      Y    | Core permissions to interact with BigQuery, list datasets/tables/etc.<br />No data read/write permissions.<br />Will be granted at the project level. |
 | `goe_bq_app_role`   |      Y    | Permissions to read/write data in the final dataset.<br />Optionally can include table create/drop permissions.<br />Locked down at dataset level. |
 | `goe_bq_stg_role`   |      Y    | Permissions to read data and create/drop staging tables in the staging dataset.<br />Locked down at dataset level. |
-| `goe_dataproc_role` |      N    | Permissions to interact with a permanent Dataproc cluster.                      |
-| `goe_batches_role`  |      N    | Permissions to interact with Dataproc Batches service.                          |
+| `goe_dataproc_role` |      N    | Permissions to interact with a permanent Managed Service for Apache Spark (permanent). |
+| `goe_batches_role`  |      N    | Permissions to interact with Managed Service for Apache Spark (serverless).     |
 
 ### Compute Engine Virtual Machine
 
@@ -74,9 +74,9 @@ gcloud storage buckets create gs://${BUCKET} --project ${PROJECT} \
 --uniform-bucket-level-access
 ```
 
-### Dataproc Batches
+### Managed Service for Apache Spark (serverless)
 
-Optional commands if using Dataproc Batches.
+Optional commands if using Managed Service for Apache Spark (serverless).
 
 ```
 gcloud compute networks subnets update ${SUBNET} \
@@ -88,9 +88,9 @@ gcloud projects add-iam-policy-binding ${PROJECT} \
 --role=roles/dataproc.worker
 ```
 
-### Dataproc
+### Managed Service for Apache Spark (permanent)
 
-Optional commands if using Dataproc.
+Optional commands if using Managed Service for Apache Spark (permanent).
 
 Enable required services:
 ```

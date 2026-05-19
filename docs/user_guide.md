@@ -667,7 +667,7 @@ The data extraction tools available to Offload are:
 - [Apache Spark](apache-spark)
 - [Query Import](query-import)
 
-Dataproc Serverless is the recommended extraction tool.
+Managed Service for Apache Spark (serverless) is the recommended extraction tool.
 
 Data is staged to cloud storage and requires a small amount of configuration:
 
@@ -680,12 +680,12 @@ Data is staged to cloud storage and requires a small amount of configuration:
 
 Two flavours of Dataproc are supported by GOE:
 
-- Dataproc Serverless
-- Dataproc
+- Managed Service for Apache Spark (serverless)
+- Managed Service for Apache Spark (permanent)
 
 `gcloud` is used as an interface for both services.
 
-To use Dataproc Serverless, at a minimum, the following configurations should be defined:
+To use Managed Service for Apache Spark (serverless), at a minimum, the following configurations should be defined:
 
 - `GOOGLE_DATAPROC_PROJECT`
 - `GOOGLE_DATAPROC_REGION`
@@ -701,12 +701,13 @@ To use Dataproc, at a minimum, the following configurations should be defined:
 
 Please review your `offload.env` file to see other options.
 
-The number of tasks in an offload transport job is defined by `OFFLOAD_TRANSPORT_PARALLELISM` or per offload with the `--offload-transport-parallelism` option. In Dataproc Serverless the requested configuration will be scaled up to match `OFFLOAD_TRANSPORT_PARALLELISM` automatically. It should be noted that in standard Dataproc defining more tasks than there are available Spark executors will result in queuing. Therefore, `OFFLOAD_TRANSPORT_PARALLELISM` should ideally be no more than the number of available executors.
+The number of tasks in an offload transport job is defined by `OFFLOAD_TRANSPORT_PARALLELISM` or per offload with the `--offload-transport-parallelism` option. In Managed Service for Apache Spark (serverless), the requested configuration will be scaled up to match `OFFLOAD_TRANSPORT_PARALLELISM` automatically. It should be noted that in standard Managed Service for Apache Spark (permanent) defining more tasks than there are available Spark executors will result in queuing. Therefore, `OFFLOAD_TRANSPORT_PARALLELISM` should ideally be no more than the number of available executors.
 
 
 ### Apache Spark
 
-It is possible to use any Spark service with GOE but please note that for Google BigQuery offloads, Dataproc Serverless is the recommended Spark service.
+It is possible to use any Spark service with GOE but please note that for Google BigQuery offloads, Managed Service for Apache Spark (serverless) is the recommended Spark service.
+
 
 When using Apache Spark directly, two interfaces to Spark are supported: Spark Submit and Spark Thrift Server. The interface used by Offload is chosen automatically, based on configuration. If multiple interfaces are configured for use, the order of priority is Spark Thrift Server then Spark Submit. SparkSQL is used in all cases (via a PySpark script for Spark Submit, or as pure SQL for Spark Thrift Server) to extract the data to be offloaded from the source RDBMS table.
 

@@ -25,7 +25,7 @@ Backend tables can be optionally partitioned, even if the source RDBMS table is 
 It is possible to rename the target backend table when offloading with the `--target-name` option. This can be useful for a number of reasons, including when:
 - The source RDBMS table name includes a character that is not supported by the backend (for example, Oracle Database allows `$` to be used for identifiers but this is not supported by Impala or BigQuery)
 - The naming standards used for applications in the backend system are different to the source RDBMS application (either for database names or object names)
-- The backend idenfieier limitchema cannot accommodate necessary Offload extensions such as when using `DB_NAME_PREFIX`
+- The backend identifier limit/schema cannot accommodate necessary Offload extensions such as when using `DB_NAME_PREFIX`
 
 ## Example 2: Change the Offload Target Name
 The following example offloads a RDBMS table named `SH.SALES$` to a backend that doesn’t support the `$` character in table names, meaning that the target table needs to be renamed to remove the `$`.
@@ -40,10 +40,10 @@ Partition-Based Offload enables some or all partitions of a partitioned table to
 
 Partition-Based Offload can be used for the following scenarios:
 
-- [Offloading Range-Partitioned Tables](offloading-range-partitioned-tables)
-- [Offloading Interval-Partitioned Tables](offloading-interval-partitioned-tables)
-- [Offloading List-Partitioned Tables](offloading-list-partitioned-tables)
-- [Offloading List-Partitioned Tables as Range](offloading-list-partitioned-tables-as-range)
+- [Offloading Range-Partitioned Tables](#offloading-range-partitioned-tables)
+- [Offloading Interval-Partitioned Tables](#offloading-interval-partitioned-tables)
+- [Offloading List-Partitioned Tables](#offloading-list-partitioned-tables)
+- [Offloading List-Partitioned Tables as Range](#offloading-list-partitioned-tables-as-range)
 
 ## Offloading Range-Partitioned Tables
 
@@ -93,7 +93,7 @@ By default, Example 3 above will use the RDBMS partition key column as the backe
 ### Offloading with Numeric Partition Boundaries
 For range-partitioned tables with numeric partition keys, the partition granularity of the backend table must be specified. The command syntax differs slightly according to the target backend, as the following examples demonstrate.
 
-#### Example 5: Offload a Range of Numeric Partitions (BigQuery)
+#### Example 4: Offload a Range of Numeric Partitions (BigQuery)
 For Google BigQuery, the full range of potential partition key values must be specified when creating a table with numeric partitions, hence the additional Offload options in the following example.
 
 ```shell
@@ -114,7 +114,7 @@ __NOTE:__ Any partition key data that falls outside the range specified by the l
 
 Google BigQuery does not support partitioning on STRING columns; therefore the source partition column data must be converted to `INT64` with a custom partition function (see `--partition-functions`) to enable the backend table to be synthetically partitioned.
 
-#### Example 7: Offload a Range of String Partitions (BigQuery)
+#### Example 5: Offload a Range of String Partitions (BigQuery)
 
 Google BigQuery does not have native `STRING` partitioning support, but the source string data can still be used to partition the backend table synthetically if a custom UDF is provided to convert the string data to an INT64 type. The following example shows a `VARCHAR2` partition key used as the source for Google BigQuery partitioning. A custom UDF is provided to generate an ASCII value for the first character of the source data and the resulting INT64 value is used to partition the backend table. The full range of potential partition key values must be specified when offloading a table with a `VARCHAR2` partition column.
 
@@ -192,9 +192,9 @@ Partitions in a list-partitioned table can be offloaded using either of the opti
 --partition-names=TRANSACTIONS_P2015Q1,TRANSACTIONS_P2015Q2
 ```
 
-When using `--equal-to-values`, each partition must have its own option specification, as shown above and in Example 8 below.
+When using `--equal-to-values`, each partition must have its own option specification, as shown above and in Example 6 below.
 
-### Example 8: Offloading Partitions from a List-Partitioned Table
+### Example 6: Offloading Partitions from a List-Partitioned Table
 
 The following example offloads two partitions from a date list-partitioned table:
 
@@ -202,7 +202,7 @@ The following example offloads two partitions from a date list-partitioned table
 $ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --equal-to-values=2015-01-01 --equal-to-values=2015-01-02
 ```
 
-### Example 9: Offloading Multi-Valued Partitions from a List-Partitioned Table
+### Example 7: Offloading Multi-Valued Partitions from a List-Partitioned Table
 When using `--equal-to-values`, each option must equal the full high values specification for a single partition. The following example offloads two multi-valued list partitions where the partition key is a numeric representation of year-month:
 
 ```shell
@@ -211,7 +211,7 @@ $ $OFFLOAD_HOME/bin/offload -t SH.TRANSACTIONS -x --equal-to-values=201501,20150
 
 Offloads for tables with numeric list-partition keys does not require the `--partition-granularity` option, but for offloading to Google BigQuery the `--partition-lower-value` and `--partition-upper-value` options must still be used. See [Managing Backend Partitioning](#managing-backend-partitioning) for details.
 
-### Example 10: Offloading List-Partitions by Partition Name
+### Example 8: Offloading List-Partitions by Partition Name
 
 The `--partition-names` option is an alternative way to specify multiple partitions to offload and can be useful if partition names are well-formed and known. The following example offloads four partitions from a table that is list-partitioned on financial quarter:
 
@@ -235,17 +235,17 @@ __NOTE:__ Offloading the DEFAULT partition for a table will prevent any further 
 
 ## Offloading List-Partitioned Tables as Range
 
-In cases where a list-partitioned table has been structured to mimic range partitioning, the table can be offloaded exactly as described in [Offloading Range-Partitioned Tables](offloading-range-partitioned-tables). To use this feature the table should adhere to the following:
+In cases where a list-partitioned table has been structured to mimic range partitioning, the table can be offloaded exactly as described in [Offloading Range-Partitioned Tables](#offloading-range-partitioned-tables). To use this feature the table should adhere to the following:
 
 - Each partition must have a single literal as its high value
 - All new partitions must be added with high values that are greater than those that have already been offloaded
-- Supported data types must match those referenced in [Offloading Range-Partitioned Tables](offloading-range-partitioned-tables)
+- Supported data types must match those referenced in [Offloading Range-Partitioned Tables](#offloading-range-partitioned-tables)
 
 In this scenario, a `DEFAULT` list partition will be treated in the same way that a `MAXVALUE` partition is treated for range partition offload (see [MAXVALUE` Partition Considerations](#maxvalue-partition-considerations) for details).
 
 Backend partition granularities differ between range-partitioned tables and list-partitioned tables offloaded as range. See [Managing Backend Partitioning](#managing-backend-partitioning) for details.
 
-### Example 11: Offload a Set of List Partitions Using a Date Range Partition Boundary
+### Example 9: Offload a Set of List Partitions Using a Date Range Partition Boundary
 
 The following example offloads all list partitions with a partition key value of less than 2015-02-01.
 
@@ -267,7 +267,7 @@ Subpartition-Based Offload is useful for tables that are organized with ranged d
 
 When offloading a subpartitioned table with Partition-Based Offload, all subpartitions within the identified range or list partition(s) are offloaded as standard.
 
-## Example 12: Offload a Set of Range Subpartitions Using a Date Range Boundary
+## Example 10: Offload a Set of Range Subpartitions Using a Date Range Boundary
 
 The following example demonstrates offloading all subpartitions below a date threshold of 2015-07-01:
 
@@ -294,15 +294,15 @@ Offload supports the offloading of subsets of data (or an entire table) by predi
 
 With this feature, three offloading patterns are possible:
 
-- [Simple Predicate-Based Offload](simple-predicate-based-offload): Offload one or more non-overlapping subsets of data from a table
-- [Late-Arriving Predicate-Based Offload](late-arriving-predicate-based-offload): Offload one or more late-arriving subsets of data from a table or partition that has already been offloaded
-- [Intra-Day Predicate-Based Offload](intra-day-predicate-based-offload): Offload a new partition in non-overlapping subsets as soon as each subset of data is loaded
+- [Simple Predicate-Based Offload](#simple-predicate-based-offload): Offload one or more non-overlapping subsets of data from a table
+- [Late-Arriving Predicate-Based Offload](#late-arriving-predicate-based-offload): Offload one or more late-arriving subsets of data from a table or partition that has already been offloaded
+- [Intra-Day Predicate-Based Offload](#intra-day-predicate-based-offload): Offload a new partition in non-overlapping subsets as soon as each subset of data is loaded
 
-Predicates are provided using a simple grammar as described in [Predicate Grammar](predicate-grammar).
+Predicates are provided using a simple grammar as described in [Predicate Grammar](#predicate-grammar).
 
 ## Simple Predicate-Based Offload
 
-### Example 13: Offload a Subset of Data from a Table Using a Predicate
+### Example 11: Offload a Subset of Data from a Table Using a Predicate
 
 The following example demonstrates a simple Predicate-Based Offload scenario by offloading all data for the ‘Electronics’ category.
 
@@ -329,7 +329,7 @@ The late-arriving scenario caters for tables or (sub)partitions that sometimes h
 
 The following examples demonstrate Late-Arriving Predicate-Based Offload for a table previously offloaded with Full Offload and a set of partitions previously offloaded with Partition-Based Offload.
 
-### Example 14: Offload a Late-Arriving Subset of Data from a Previously-Offloaded Table
+### Example 12: Offload a Late-Arriving Subset of Data from a Previously-Offloaded Table
 
 In the following example, the SH.CUSTOMERS table has been fully-offloaded using Full Offload. The Predicate-Based Offload command below is used to additionally offload a small set of data for new customers that have been inserted since the original offload took place.
 
@@ -340,7 +340,7 @@ $ $OFFLOAD_HOME/bin/offload -t SH.CUSTOMERS -x \
 
 All data matching this predicate will be offloaded but the predicate itself will not be added to the hybrid view or its metadata.
 
-### Example 15: Offload a Late-Arriving Subset of Data from a Previously-Offloaded Range Partition
+### Example 13: Offload a Late-Arriving Subset of Data from a Previously-Offloaded Range Partition
 In the following example, the SH.SALES table has previously been offloaded using Partition-Based Offload up to and including data for `2019-01-15`. The Predicate-Based Offload command below is used to additionally offload a small set of data for product 123 that has arrived late and been loaded into a partition that has already been offloaded.
 
 ```shell
@@ -355,7 +355,7 @@ All data matching this predicate will be offloaded but the predicate itself will
 
 This offload pattern can be used to switch between Partition-Based Offload and Predicate-Based Offload as required. It can be useful as a means to offload the majority of a partitioned table by partition boundaries, but swap to offloading subsets of data for a new partition as soon as they arrive (rather than wait for the entire partition to be loaded before offloading). This can ensure that data is available in the target backend earlier than would otherwise be possible. This pattern can only be used with range-partitioned tables or list-partitioned tables offloaded with range partition semantics.
 
-### Example 16: Offload a Subset of Data for a New Range Partition (Intra-Day Offloading)
+### Example 14: Offload a Subset of Data for a New Range Partition (Intra-Day Offloading)
 
 In the following example, the historical data for the SH.SALES table is offloaded by Partition-Based Offload (range partitioned by TIME_ID) at time T0 to begin the offload lifecycle for this table. For new data, rather than wait a full day for an entire partition of data to be ready, data is instead offloaded as soon as each product set is loaded into the new partition (3 separate loads at times T1, T2, T3). When all loads and offloads have completed, the table metadata is reset (at time T4) and the table is ready to repeat the same Predicate-Based Offload pattern for the next processing cycle.
 
@@ -369,7 +369,7 @@ In the following example, the historical data for the SH.SALES table is offloade
 
 The Predicate-Based Offload commands for T1-T3 require that the `--offload-predicate` option includes a predicate for the Partition-Based Offload partition key and that it matches the value of the new data (`TIME_ID=2020-07-01` in this example). The `--offload-predicate-type` option must also be used (see option reference for valid values).
 
-When the metadata is reset after the end of a sequence of Predicate-Based Offload commands (as per T4 above), either the same pattern of offloading can continue for the next partition or, if preferred, Partition-Based Offload can resume (i.e. wait for the next partition to be fully-loaded before offloading in one command as described in [Partition-Based Offload](partitioned-based-offload)).
+When the metadata is reset after the end of a sequence of Predicate-Based Offload commands (as per T4 above), either the same pattern of offloading can continue for the next partition or, if preferred, Partition-Based Offload can resume (i.e. wait for the next partition to be fully-loaded before offloading in one command as described in [Partition-Based Offload](#partition-based-offload)).
 
 ## Predicate Grammar
 
@@ -474,16 +474,16 @@ __NOTE:__ All backends other than Google BigQuery are currently disabled.
 | `NUMBER(<=4,0)` | `BIGINT` | `INT64` | `NUMBER(p,0)` | `smallint` | |
 | `NUMBER([5-9],0)` | `BIGINT` | `INT64` | `NUMBER(p,0)` | `int` | |
 | `NUMBER([10-18],0)` | `BIGINT` | `INT64` | `NUMBER(p,0)` | `bigint` |  |
-| `NUMBER(>18,0)` | `DECIMAL(38,0)` | `NUMERIC` `BIGNUMERIC` | `NUMBER(38,0)` | `numeric(38,0)` | See [Offloading Numeric Data to Google BigQuery](offloading-numeric-data-to-google-bigquery) |
-| `NUMBER(*,*)` | `DECIMAL(38,s)` | `NUMERIC` `BIGNUMERIC` | `NUMBER(p,s)` | `numeric(p,s)` | See [Offloading Numeric Data to Google BigQuery](offloading-numeric-data-to-google-bigquery) |
+| `NUMBER(>18,0)` | `DECIMAL(38,0)` | `NUMERIC` `BIGNUMERIC` | `NUMBER(38,0)` | `numeric(38,0)` | See [Offloading Numeric Data to Google BigQuery](#offloading-numeric-data-to-google-bigquery) |
+| `NUMBER(*,*)` | `DECIMAL(38,s)` | `NUMERIC` `BIGNUMERIC` | `NUMBER(p,s)` | `numeric(p,s)` | See [Offloading Numeric Data to Google BigQuery](#offloading-numeric-data-to-google-bigquery) |
 | `FLOAT` | `DECIMAL` | `NUMERIC` | `NUMBER(p,s)` | `numeric(38,18)` | |
-| `BINARY_FLOAT` | `FLOAT` | \- | \- | `real` | See [Floating Point Data Types in Google BigQuery](offload-floating-point-data-types-in-google-bigquery) |
+| `BINARY_FLOAT` | `FLOAT` | \- | \- | `real` | See [Floating Point Data Types in Google BigQuery](#floating-point-data-types-in-google-bigquery) |
 | `BINARY_DOUBLE` | `DOUBLE` | `FLOAT64` | `FLOAT` | `float` | |
 | `DATE` | `TIMESTAMP` | `DATETIME` | `TIMESTAMP_NTZ` | `datetime2` | |
-| `TIMESTAMP` | `TIMESTAMP` | `DATETIME` | `TIMESTAMP_NTZ` | `datetime2` | See [Offloading High-Precision Timestamp Data to Google BigQuery and Azure Synapse Analytics](offload-offloading-high-precision-timestamp-data-to-google-bigquery) |
-| `TIMESTAMP WITH TIME ZONE` | `TIMESTAMP` | `TIMESTAMP` | `TIMESTAMP_TZ` | `datetimeoffset` | See [Offloading High-Precision Timestamp Data to Google BigQuery and Azure Synapse Analytics](offload-offloading-high-precision-timestamp-data-to-google-bigquery) and [Offloading Time Zoned Data](offload-offloading-time-zoned-data) |
-| `INTERVAL DAY TO SECOND` | `STRING` | `STRING` | `VARCHAR` | `varchar` | See [Offloading Interval Data Types](offload-offloading-interval-data-types) |
-| `INTERVAL YEAR TO MONTH` | `STRING` | `STRING` | `VARCHAR` | `varchar` | See [Offloading Interval Data Types](offload-offloading-interval-data-types) |
+| `TIMESTAMP` | `TIMESTAMP` | `DATETIME` | `TIMESTAMP_NTZ` | `datetime2` | See [Offloading High-Precision Timestamp Data to Google BigQuery](#offloading-high-precision-timestamp-data-to-google-bigquery) |
+| `TIMESTAMP WITH TIME ZONE` | `TIMESTAMP` | `TIMESTAMP` | `TIMESTAMP_TZ` | `datetimeoffset` | See [Offloading High-Precision Timestamp Data to Google BigQuery](#offloading-high-precision-timestamp-data-to-google-bigquery) and [Offloading Time Zoned Data](#offloading-time-zoned-data) |
+| `INTERVAL DAY TO SECOND` | `STRING` | `STRING` | `VARCHAR` | `varchar` | See [Offloading Interval Data Types](#offloading-interval-data-types) |
+| `INTERVAL YEAR TO MONTH` | `STRING` | `STRING` | `VARCHAR` | `varchar` | See [Offloading Interval Data Types](#offloading-interval-data-types) |
 
 ## Data Sampling During Offload
 
@@ -510,7 +510,7 @@ Care should be taken when propagating constraints for columns that cannot be gua
 
 Google BigQuery provides two decimal data types: `NUMERIC` and `BIGNUMERIC`. The `NUMERIC` data type has a specification of `(38,9)` with a fixed decimal point, meaning a maximum of 29 digits to the left of the decimal point and a maximum of 9 digits to the right. The BIGNUMERIC data type has a specification of `(76,38)` with a fixed decimal point, meaning a maximum of 38 digits to the left of the decimal point and a maximum of 38 digits to the right (more precisely, the specification of `BIGNUMERIC` is `(76,38)`, allowing for some numbers with 39-digits to the left of the decimal point).
 
-When offloading numeric data such as decimals or large integrals to Google BigQuery, Offload determines which BigQuery type is most appropriate, based on either the known precision and scale of Oracle columns of type `NUMBER(p,s)` or from sampled data for Oracle columns of unbounded type `NUMBER`. Data that offloads to NUMERIC by default can be offloaded to `BIGNUMERIC` with the `--decimal-columns` and `--decimal-columns-type` override options (see [Table 6: Offload Override Data Type Mappings (Oracle Database)](offload-override-data-type-mappings-oracle-database) below).
+When offloading numeric data such as decimals or large integrals to Google BigQuery, Offload determines which BigQuery type is most appropriate, based on either the known precision and scale of Oracle columns of type `NUMBER(p,s)` or from sampled data for Oracle columns of unbounded type `NUMBER`. Data that offloads to NUMERIC by default can be offloaded to `BIGNUMERIC` with the `--decimal-columns` and `--decimal-columns-type` override options (see [Table 6: Offload Override Data Type Mappings (Oracle Database)](#table-6-offload-override-data-type-mappings-oracle-database) below).
 
 For numeric data that exceeds the specifications of NUMERIC and BIGNUMERIC, Offload offers two options:
 
@@ -524,7 +524,7 @@ __NOTE:__ Both of these options result in some data change and it will be for us
 ***
 
 ## Floating Point Data Types in Google BigQuery
-Google BigQuery provides a single 64-bit floating point data type (`FLOAT64`). This means that the Oracle Database 32-bit `BINARY_FLOAT` data type does not have a corresponding type and will be offloaded to the 64-bit floating point data type. This has potential to be lossy - see [Lossy Data Operations](lossy-data-operations) (see below).
+Google BigQuery provides a single 64-bit floating point data type (`FLOAT64`). This means that the Oracle Database 32-bit `BINARY_FLOAT` data type does not have a corresponding type and will be offloaded to the 64-bit floating point data type. This has potential to be lossy - see [Lossy Data Operations](#lossy-data-operations) (see below).
 
 ## Offloading High-Precision Timestamp Data to Google BigQuery
 
@@ -532,7 +532,7 @@ At the time of writing, Google BigQuery’s `DATETIME` and `TIMESTAMP` data type
 
 ***
 
-__NOTE:__ Allowing high-precision timestamp columns to be offloaded to Google BigQuery is potentially lossy (see [Lossy Data Operations](lossy-data-operations) below for the implications of this).
+__NOTE:__ Allowing high-precision timestamp columns to be offloaded to Google BigQuery is potentially lossy (see [Lossy Data Operations](#lossy-data-operations) below for the implications of this).
 
 ***
 
@@ -556,7 +556,7 @@ Oracle Database `INTERVAL DAY TO SECOND` and `INTERVAL YEAR TO MONTH` data types
 
 When initially offloading a table, it is possible to override some of the default data type mappings to change the specification of the backend table. Table 6 lists the override mappings and associated options that are available when offloading data.
 
-Table 6: Offload Override Data Type Mappings (Oracle Database)
+### Table 6: Offload Override Data Type Mappings (Oracle Database)
 
 | Oracle Database | Offload Option | BigQuery | Comments |
 | :---- | :---- | :---- | :---- |
@@ -575,11 +575,11 @@ Table 6: Offload Override Data Type Mappings (Oracle Database)
 |  | `--integer-8-columns` | `INT64` | Use for `NUMBER([10-18],0)` |
 |  | `--integer-38-columns` | `INT64` | Use for `NUMBER(>18,0)` |
 |  | `--decimal-columns` | `NUMERIC` `BIGNUMERIC` | Use for `NUMBER(p,s)` |
-|  | `--double-columns` | `FLOAT64` | See [Converting Numeric Data to Double](offload-converting-numeric-data-to-double) |
-| `FLOAT` | `--double-columns` | `FLOAT64` | See [Converting Numeric Data to Double](offload-converting-numeric-data-to-double) |
-| `BINARY_FLOAT` | `--double-columns` | \- | See [Converting Numeric Data to Double](offload-converting-numeric-data-to-double) |
+|  | `--double-columns` | `FLOAT64` | See [Converting Numeric Data to Double](#converting-numeric-data-to-double) |
+| `FLOAT` | `--double-columns` | `FLOAT64` | See [Converting Numeric Data to Double](#converting-numeric-data-to-double) |
+| `BINARY_FLOAT` | `--double-columns` | \- | See [Converting Numeric Data to Double](#converting-numeric-data-to-double) |
 
-### Example 18: Overriding Data Types During an Offload
+### Example 15: Overriding Data Types During an Offload
 
 In the following example, the SH.SALES table is offloaded with several data type overrides.
 
@@ -652,10 +652,10 @@ The two-phased approach of staging and loading data provides two main benefits:
 
 The transport phase of an offload is split into four main operations:
 
-- [Transport Data to Staging](transport-data-to-staging)
-- [Validate Staged Data](validate-staged-data)
-- [Validate Type Conversions](validate-type-conversions)
-- [Load Staged Data](load-staged-data)
+- [Transport Data to Staging](#transport-data-to-staging)
+- [Validate Staged Data](#validate-staged-data)
+- [Validate Type Conversions](#validate-type-conversions)
+- [Load Staged Data](#load-staged-data)
 
 ## Transport Data to Staging
 
@@ -665,9 +665,9 @@ Data is staged in either Avro or Parquet format (depending on the backend platfo
 
 The data extraction tools available to Offload are:
 
-- [Google Cloud Platform Dataproc](google-cloud-platform-dataproc)
-- [Apache Spark](apache-spark)
-- [Query Import](query-import)
+- [Google Cloud Platform Dataproc](#google-cloud-platform-dataproc)
+- [Apache Spark](#apache-spark)
+- [Query Import](#query-import)
 
 Managed Service for Apache Spark (serverless) is the recommended extraction tool.
 
@@ -729,7 +729,7 @@ Default configuration is appropriate for the majority of offloads but occasional
 
 ### Query Import
 
-Query Import is used for for low-volume offloads. Data is extracted and staged by Offload itself and not using an external tool. This avoids delays incurred when invoking Spark Submit. Non-partitioned tables with a source RDBMS size smaller than `--offload-transport-small-table-threshold` are eligible for Query Import. Query Import does not run in parallel, i.e. `OFFLOAD_TRANSPORT_PARALLELISM` is ignored.
+Query Import is used for low-volume offloads. Data is extracted and staged by Offload itself and not using an external tool. This avoids delays incurred when invoking Spark Submit. Non-partitioned tables with a source RDBMS size smaller than `--offload-transport-small-table-threshold` are eligible for Query Import. Query Import does not run in parallel, i.e. `OFFLOAD_TRANSPORT_PARALLELISM` is ignored.
 
 ### RDBMS Options
 
@@ -745,15 +745,15 @@ Once data has been staged, it is validated to ensure that the number of staged r
 - Check for `NULL` values in any custom partition scheme defined using the `--partition-columns` option. A positive match results in a warning
 - Check for `NULL` values in any column defined as mandatory (i.e. `NOT NULL`)
 - Check for any NaN (Not a Number) special values if the source table has floating point numeric data types. This is because source RDBMS and target backend systems do not necessarily treat NaN values consistently. A positive match results in a warning
-- Check for lossy decimal rounding as described in [Decimal Scale Rounding](decimal-scale-rounding)
+- Check for lossy decimal rounding as described in [Decimal Scale Rounding](#decimal-scale-rounding)
 - Check for source data that is invalid for the chosen backend partition scheme (if applicable), such as numeric data outside of any `--partition-lower-value`/`--partition-upper-value` range. A positive match results in a warning
 
 
 ## Validate Type Conversions
 
-Data types used for staging data will rarely match those of the backend target table. Data is converted to the correct type when it is loaded into the final target table. This stage therefore verifies that there will be no invalid conversions when loading. While this is a duplication of type conversions in the [Load Staged Data](load-staged-data) phase, it provides the advantage of checking the data before the more compute-intensive data load and is able to report all columns with data issues in a single pass.
+Data types used for staging data will rarely match those of the backend target table. Data is converted to the correct type when it is loaded into the final target table. This stage therefore verifies that there will be no invalid conversions when loading. While this is a duplication of type conversions in the [Load Staged Data](#load-staged-data) phase, it provides the advantage of checking the data before the more compute-intensive data load and is able to report all columns with data issues in a single pass.
 
-### Example 19: Catching Invalid Data Type Conversions
+### Example 16: Catching Invalid Data Type Conversions
 
 In the following example, the SH.SALES table is offloaded to a Hadoop cluster with an invalid data type for two columns: the data in the PROD_ID and CUST_ID columns is not compatible with the user requested single-byte integer data type.
 
@@ -786,7 +786,7 @@ The exception provides three important pieces of information:
 
 ## Load Staged Data
 
-In this phase of an offload staged data is converted to correct data types as described in [Validate Type Conversions](validate-type-conversions) and inserted into the target backend table. Where available, performance metrics from the backend system are recorded in the Offload log file written to `$OFFLOAD_HOME/log`.
+In this phase of an offload staged data is converted to correct data types as described in [Validate Type Conversions](#validate-type-conversions) and inserted into the target backend table. Where available, performance metrics from the backend system are recorded in the Offload log file written to `$OFFLOAD_HOME/log`.
 
 ## Offload Transport Chunks
 
@@ -806,33 +806,33 @@ Partitions are considered for chunking in the logical order they are defined in 
 
 Offload also provides options to manage the offloaded data distribution:
 
-- Backend partitioning: See [Managing Backend Partitioning](managing-backend-partitioning)
-- Data distribution: See [Backend Data Distribution and Sorting/Clustering](backend-data-distribution-and-sorting-clustering)
+- Backend partitioning: See [Managing Backend Partitioning](#managing-backend-partitioning)
+- Data distribution: See [Backend Data Sorting/Clustering](#backend-data-sortingclustering)
 
 ## Managing Backend Partitioning
 
 When offloading data, backend tables can be partitioned in several ways, depending on the backend platform and user preferences:
 
-- [Inherited Partitioning](inherited-partitioning)
-- [User-Defined Partitioning](user-defined-partitioning)
+- [Inherited Partitioning](#inherited-partitioning)
+- [User-Defined Partitioning](#user-defined-partitioning)
 
 ### Inherited Partitioning
 
-Tables offloaded with Partition-Based Offload or Subpartition-Based Offload are automatically partitioned in the backend with the (sub)partition key of the source table, unless overridden by the user. The granularity of the inherited (sub)partitions can be different to the source RDBMS (sub)partitions if required. In some cases it is mandatory to specify the granularity of the backend partition scheme (see [Partition Granularity](partition-granularity) below for details)
+Tables offloaded with Partition-Based Offload or Subpartition-Based Offload are automatically partitioned in the backend with the (sub)partition key of the source table, unless overridden by the user. The granularity of the inherited (sub)partitions can be different to the source RDBMS (sub)partitions if required. In some cases it is mandatory to specify the granularity of the backend partition scheme (see [Partition Granularity](#partition-granularity) below for details)
 
-For Google BigQuery, only the leading (sub)partition key column will be used. In some cases, the backend partitioning might be implemented by a synthetic partition key column, but not always. See [Synthetic Partitioning](synthetic-partitioning) below for details.
+For Google BigQuery, only the leading (sub)partition key column will be used. In some cases, the backend partitioning might be implemented by a synthetic partition key column, but not always. See [Synthetic Partitioning](#synthetic-partitioning) below for details.
 
 ### User-Defined Partitioning
 
-Tables can be offloaded with the `--partition-columns` option to define a custom partitioning scheme for the backend table. This enables non-partitioned RDBMS tables to be partitioned in the backend if required, in addition to allowing (sub)partitioned RDBMS tables to be offloaded with a different partitioning scheme in the backend. It is also possible (and in some cases mandatory) to specify the granularity of the backend partitions (see [Partition Granularity](partition-granularity) for details below) and user-defined partitioning supports more RDBMS data types than inherited partitioning.
+Tables can be offloaded with the `--partition-columns` option to define a custom partitioning scheme for the backend table. This enables non-partitioned RDBMS tables to be partitioned in the backend if required, in addition to allowing (sub)partitioned RDBMS tables to be offloaded with a different partitioning scheme in the backend. It is also possible (and in some cases mandatory) to specify the granularity of the backend partitions (see [Partition Granularity](#partition-granularity) for details below) and user-defined partitioning supports more RDBMS data types than inherited partitioning.
 
-#### Example 20: Offload with User-Defined Partitioning
+#### Example 17: Offload with User-Defined Partitioning
 
 ```shell
 $ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --partition-columns=TIME_ID --partition-granularity=Y
 ```
 
-When offloading to Google BigQuery, user-defined partitioning can include date/timestamp, numeric or string columns, but only one partition key column can be defined. In some cases, the backend partitioning will be implemented by a synthetic partition key column, but not always. See [Synthetic Partitioning](synthetic-partitioning) below for details.
+When offloading to Google BigQuery, user-defined partitioning can include date/timestamp, numeric or string columns, but only one partition key column can be defined. In some cases, the backend partitioning will be implemented by a synthetic partition key column, but not always. See [Synthetic Partitioning](#synthetic-partitioning) below for details.
 
 ### Synthetic Partitioning
 Synthetic columns are used to partition backend tables instead of the corresponding natural columns. Depending on the data type and backend system, Offload will sometimes implement inherited and user-defined partitioning schemes with additional synthetic columns (one per source (sub)partition column). This is usually when:
@@ -844,7 +844,7 @@ Synthetic partition keys are used internally by Offload to ensure that the backe
 
 Synthetic partition key columns are named by Gluent Offload Engine as a derivative of the corresponding source column name (e.g. `GL_PART_M_TIME_ID` or `GL_PART_U0_SOURCE_CODE`).
 
-When a table is offloaded with partitioning to Google BigQuery, a synthetic partition key will only be generated when the natural partition column is of a `NUMERIC`, `BIGNUMERIC` or `STRING` BigQuery data type, and the resulting synthetic partition key column will be created as an INT64 type (the integral magnitude of the source numeric data must not exceed the `INT64` limits). For `STRING` columns, or for extreme `[BIG]NUMERIC` data that cannot be reduced to INT64 values with `--partition-granularity` (i.e. the granularity itself would need to exceed `INT64` limits), a custom user-defined function (UDF) must be created and used to enable Gluent Offload Engine to create an INT64 synthetic partition key representation of the source data (see [Partition Functions](partition-functions)). Native BigQuery partitioning will be used when the natural partition column has a data type of `INT64`, `DATE`, `DATETIME` or `TIMESTAMP`.
+When a table is offloaded with partitioning to Google BigQuery, a synthetic partition key will only be generated when the natural partition column is of a `NUMERIC`, `BIGNUMERIC` or `STRING` BigQuery data type, and the resulting synthetic partition key column will be created as an INT64 type (the integral magnitude of the source numeric data must not exceed the `INT64` limits). For `STRING` columns, or for extreme `[BIG]NUMERIC` data that cannot be reduced to INT64 values with `--partition-granularity` (i.e. the granularity itself would need to exceed `INT64` limits), a custom user-defined function (UDF) must be created and used to enable Gluent Offload Engine to create an INT64 synthetic partition key representation of the source data (see [Partition Functions](#partition-functions)). Native BigQuery partitioning will be used when the natural partition column has a data type of `INT64`, `DATE`, `DATETIME` or `TIMESTAMP`.
 
 Offload populates synthetic partition key columns with generated data when offloading based on the type and granularity of the data or based on the type and a custom partition function.
 
@@ -862,7 +862,7 @@ When offloading with partitioning to Google BigQuery, the following granularity 
 ### Partition Functions
 The Partition Functions feature is only available when offloading to Google BigQuery. This extensibility feature allows users to provide a custom user-defined function (UDF) for Gluent Offload Engine to use when synthetically partitioning offloaded data. It enables users to choose a source partitioning column that would otherwise not be usable as a partition key in the backend system. For example, there is no native partitioning option for `STRING` data in BigQuery, which means that Gluent Offload Engine’s standard synthetic partitioning cannot be used. Also, some extreme `[BIG]NUMERIC` data cannot be reduced to `INT64` values with Offload’s standard synthetic partitioning scheme (i.e. with the `--partition-granularity` option). The Partition Functions feature provides a way for users to create an `INT64` representation of the source partitioning data to use as a synthetic partition key in both of these cases.
 
-Example 21: Offloading with Partition Functions
+Example 18: Offloading with Partition Functions
 
 In the following example, the SH.CUSTOMERS table is offloaded to BigQuery and synthetically partitioned by the CUST_LAST_NAME column. Because the source column is `VARCHAR2`, the Partition Functions feature is required. First, the BigQuery UDF must be created (or already exist) to enable Offload to generate an `INT64` representation of the source string data. In this example, the backend table will be partitioned according to the first letter of the CUST_LAST_NAME data, using the following BigQuery SQL UDF:
 
@@ -885,7 +885,7 @@ With this command, Offload will apply the UDFS.CUST_NAME_TO_PART_KEY function to
 
 ***
 
-__NOTE:__ In addition to Full Offload (as shown in Example 21), Partition Functions can also be used with (Sub)Partition-Based Offload (see [Example 7: Offload a Range of String Partitions (BigQuery)](#example-7-offload-a-range-of-string-partitions-bigquery)) and [Predicate-Based Offload](#predicate-based-offload).
+__NOTE:__ In addition to Full Offload (as shown in Example 18), Partition Functions can also be used with (Sub)Partition-Based Offload (see [Example 5: Offload a Range of String Partitions (BigQuery)](#example-5-offload-a-range-of-string-partitions-bigquery)) and [Predicate-Based Offload](#predicate-based-offload).
 
 ***
 
@@ -904,7 +904,7 @@ When creating a UDF for use with Partition Functions, the following conditions m
 - The UDF return data type must be `INT64`
 - The UDF must have a single parameter of data type `STRING`, `[BIG]NUMERIC` or `INT64`
 - The UDF must be deterministic (i.e. the same input will always yield the same output)
-- Synthetic backend partitioning is range partitioning; therefore, the SQL UDF must retain the same ordering relationship and characteristics of the source data. This is especially critical if the source partition column is likely to be queried with range operators (`<`, `<=`, `>`, `>=` `BETWEEN`), else the query can yield wrong results. In Example 21 above, the CUST_NAME_TO_PART_KEY function preserves the ordering of the CUST_LAST_NAME data (i.e. all names beginning ‘A’ - ASCII 65 - are less than names beginning with ‘B’ - ASCII 66 and so on)
+- Synthetic backend partitioning is range partitioning; therefore, the SQL UDF must retain the same ordering relationship and characteristics of the source data. This is especially critical if the source partition column is likely to be queried with range operators (`<`, `<=`, `>`, `>=` `BETWEEN`), else the query can yield wrong results. In Example 18 above, the CUST_NAME_TO_PART_KEY function preserves the ordering of the CUST_LAST_NAME data (i.e. all names beginning ‘A’ - ASCII 65 - are less than names beginning with ‘B’ - ASCII 66 and so on)
 - See [Google BigQuery Custom Partition Functions](https://cloud.google.com/bigquery/docs/user-defined-functions#custom-partition-functions) for permissions and other installation requirements
 
 # Backend Data Sorting/Clustering

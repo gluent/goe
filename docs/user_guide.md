@@ -6,6 +6,8 @@ Offload supports several scenarios for offloading data from the RDBMS:
 - [Predicate-Based Offload](#predicate-based-offload)
 - [Offload Data Types](#offload-data-types)
 - [Offload Transport](#offload-transport)
+- [Backend Data Sorting/Clustering](#backend-data-sortingclustering)
+- [Resetting an Offloaded Table](#resetting-an-offloaded-table)
 
 # Full Offload
 
@@ -847,6 +849,75 @@ When a table is offloaded with partitioning to Google BigQuery, a synthetic part
 Offload populates synthetic partition key columns with generated data when offloading based on the type and granularity of the data or based on the type and a custom partition function.
 
 
+### Partition Granularity
+Partition granularity defines the range or contents of a single backend partition. In some cases, granularity must be defined (using the `--partition-granularity` option) when offloading an RDBMS table for the first time, but in many cases, Offload will choose a default granularity based on several factors (including the type of RDBMS partitioning, the RDBMS (sub)partition key type and the backend platform). Any defaults chosen by Offload can be overridden with the `--partition-granularity` option if required.
 
+When offloading with partitioning to Google BigQuery, the following granularity behavior applies.
 
+- Date/datetime/timestamp partition data defaults to daily granularity
+- Google BigQuery’s native hourly granularity for date/datetime/timestamp partitions is not supported by Offload
+- If the RDBMS table is list-partitioned and the partition scheme is inherited, numeric partitioning defaults to a granularity of 1. In all other scenarios, numeric partitioning requires the `--partition-granularity` option. In all scenarios, the `--partition-lower-value` and `--partition-upper-value` options must be specified
+- String partition data requires the `--partition-functions` option along with options `--partition-granularity`, `--partition-lower-value` and `--partition-upper-value`
 
+### Partition Functions
+The Partition Functions feature is only available when offloading to Google BigQuery. This extensibility feature allows users to provide a custom user-defined function (UDF) for Gluent Offload Engine to use when synthetically partitioning offloaded data. It enables users to choose a source partitioning column that would otherwise not be usable as a partition key in the backend system. For example, there is no native partitioning option for `STRING` data in BigQuery, which means that Gluent Offload Engine’s standard synthetic partitioning cannot be used. Also, some extreme `[BIG]NUMERIC` data cannot be reduced to `INT64` values with Offload’s standard synthetic partitioning scheme (i.e. with the `--partition-granularity` option). The Partition Functions feature provides a way for users to create an `INT64` representation of the source partitioning data to use as a synthetic partition key in both of these cases.
+
+Example 21: Offloading with Partition Functions
+
+In the following example, the SH.CUSTOMERS table is offloaded to BigQuery and synthetically partitioned by the CUST_LAST_NAME column. Because the source column is `VARCHAR2`, the Partition Functions feature is required. First, the BigQuery UDF must be created (or already exist) to enable Offload to generate an `INT64` representation of the source string data. In this example, the backend table will be partitioned according to the first letter of the CUST_LAST_NAME data, using the following BigQuery SQL UDF:
+
+```
+CREATE FUNCTION UDFS.CUST_NAME_TO_PART_KEY (str STRING) RETURNS INT64 AS (ASCII(UPPER(str)));
+```
+
+With this UDF, Gluent Offload Engine is able to offload the SH.CUSTOMERS table and add a synthetic partition key with an `INT64` representation of the CUST_LAST_NAME source data as follows:
+
+```shell
+$ $OFFLOAD_HOME/bin/offload -t SH.CUSTOMERS -x \
+      --partition-columns=CUST_LAST_NAME \
+      --partition-functions=UDFS.CUST_NAME_TO_PART_KEY \
+      --partition-lower-value=65 \
+      --partition-upper-value=90 \
+      --partition-granularity=1
+```
+
+With this command, Offload will apply the UDFS.CUST_NAME_TO_PART_KEY function to the CUST_LAST_NAME column to generate a synthetic INT64 partition key value between 65 and 90 (capital letters) and each backend synthetic partition will have a range of 1.
+
+***
+
+__NOTE:__ In addition to Full Offload (as shown in Example 21), Partition Functions can also be used with (Sub)Partition-Based Offload (see [Example 7: Offload a Range of String Partitions (BigQuery)](#example-7-offload-a-range-of-string-partitions-bigquery)) and [Predicate-Based Offload](#predicate-based-offload).
+
+***
+
+There are several ways to reference and qualify the name and location of a custom UDF for use as a partition function:
+
+- Fully-qualified in the `--partition-functions` option (e.g. `--partition-functions=MY_UDF_DATASET.MY_UDF_NAME`)
+- If the dataset name is not provided in the `--partition-functions` option (e.g. `--partition-functions=MY_UDF_NAME`
+  - If `OFFLOAD_UDF_DB` is set in the `offload.env` configuration file, Offload will use this to identify the UDF dataset
+  - If `OFFLOAD_UDF_DB` is not set in the `offload.env` configuration file, Offload will assume the UDF is in the same dataset as the offloaded table
+
+Google BigQuery identifiers are case-sensitive, so in all cases the dataset and UDF values must be provided in the correct case.
+
+When creating a UDF for use with Partition Functions, the following conditions must be met:
+
+- The UDF must be a Google BigQuery SQL UDF (JavaScript UDFs are not supported)
+- The UDF return data type must be `INT64`
+- The UDF must have a single parameter of data type `STRING`, `[BIG]NUMERIC` or `INT64`
+- The UDF must be deterministic (i.e. the same input will always yield the same output)
+- Synthetic backend partitioning is range partitioning; therefore, the SQL UDF must retain the same ordering relationship and characteristics of the source data. This is especially critical if the source partition column is likely to be queried with range operators (`<`, `<=`, `>`, `>=` `BETWEEN`), else the query can yield wrong results. In Example 21 above, the CUST_NAME_TO_PART_KEY function preserves the ordering of the CUST_LAST_NAME data (i.e. all names beginning ‘A’ - ASCII 65 - are less than names beginning with ‘B’ - ASCII 66 and so on)
+- See [Google BigQuery Custom Partition Functions](https://cloud.google.com/bigquery/docs/user-defined-functions#custom-partition-functions) for permissions and other installation requirements
+
+# Backend Data Sorting/Clustering
+
+In addition to partitioning, offloaded data can optionally be sorted or clustered according to options provided by the backend. This can lead to more efficient data access for users of the offloaded data.
+
+To enable data sorting and clustering for Google BigQuery, set the `OFFLOAD_SORT_ENABLED` configuration parameter to `true`. Alternatively, this can be managed for individual offloads by adding the `--offload-sort-enabled` option to the `offload` command (set to true), along with the `--sort-columns` option to specify the columns for distributing the data in the backend. Google BigQuery tables can be clustered by up to four columns
+
+# Resetting an Offloaded Table
+Offload provides a `--reset-backend-table` option that can be added to an offload command to fully reset a previously offloaded table. This option is useful when refreshing small offloaded tables such as reference tables or dimensions. This option will cause Offload to drop all offloaded data from the backend, so it should be used carefully.
+
+***
+
+__IMPORTANT:__ The `--reset-backend-table` option will drop the existing backend table and supporting objects. This option must only be used when it is certain that resetting the backend table will not cause data loss. Care must be taken to ensure that this option is never used if some of the previously-offloaded data cannot be replaced (for example, partitions that are dropped from the source RDBMS after offloading to the backend).
+
+***

@@ -16,17 +16,17 @@
 name = "goe-framework"
 version = "1.0.10.dev0"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 maintainers = [
   {name = "Neil Johnson", email = "neiljohnson@google.com"},
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Operating System :: OS Independent"
 ]
 dependencies = [
@@ -53,7 +53,7 @@ dependencies = [
     "azure-storage-blob",
 
     # For Oracle frontend
-    "cx-Oracle",
+    "oracledb",
 
     # For BigQuery backend
     "google-cloud-bigquery",

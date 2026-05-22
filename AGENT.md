@@ -3,7 +3,7 @@
 You are an AI coding assistant helping develop the GOE framework repository. Always adhere to the following guidelines when researching, planning, and writing code.
 
 ## 1. Tech Stack & Environment
-- **Language**: Python (>=3.7, supporting up to 3.11)
+- **Language**: Python.
 - **Core Domain**: Data offloading and copying from Oracle Database to cloud data warehouses (Google BigQuery, Snowflake, Azure Synapse, Teradata) and Hadoop.
 - **Supporting Infrastructure**: Relies on Spark/Dataproc, Cloud Storage (GCS, S3, Azure Blob), and Oracle RDBMS.
 
@@ -41,5 +41,6 @@ You are an AI coding assistant helping develop the GOE framework repository. Alw
 - `tests/`: Unit, integration, and test library infrastructure.
 - `docs/`: Public and internal documentation.
 - `bin/`: Executable CLI entrypoints (e.g., `offload`, `connect`).
-- `tools/`: Helper tools, transport scripts, and Spark Listener (Scala/SBT).
 - `sql/`: Supporting database setup scripts.
+- `templates/conf/`: Templates used to construct the `offload.env` configuration file.
+- `tools/`: Helper tools, transport scripts, and Spark Listener (Scala/SBT).

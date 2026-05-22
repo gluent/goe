@@ -20,8 +20,10 @@
 
 from datetime import datetime
 from unittest import TestCase, main
+import unittest.mock as mock
 
 from numpy import datetime64
+import oracledb as cxo
 
 from goe.offload.column_metadata import ColumnMetadataInterface
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
@@ -376,6 +378,72 @@ class TestOracleFrontendApi(TestFrontendApi):
 
     def test_all_non_connecting_oracle_tests(self):
         self._run_all_tests()
+
+    def test_oracle_reconnect(self):
+        error_codes = [
+            "ORA-02396",
+            "ORA-2396",
+            "ORA-03113",
+            "ORA-3113",
+            "ORA-03114",
+            "ORA-3114",
+            "ORA-03135",
+            "ORA-3135",
+        ]
+
+        for error_code in error_codes:
+            with self.subTest(error_code=error_code):
+                # 1. Mock the database connection and cursor
+                mock_conn = mock.Mock()
+                mock_cursor = mock.Mock()
+                mock_conn.cursor.return_value = mock_cursor
+
+                # Set the mocked connection on the frontend API
+                self.api._db_conn = mock_conn
+
+                # 2. Mock _connect and _disconnect to avoid actual connection attempts
+                self.api._connect = mock.Mock()
+                self.api._disconnect = mock.Mock()
+
+                # 3. Configure the cursor execute to raise DatabaseError on the first call
+                # and succeed (return None) on the second call.
+                exc = cxo.DatabaseError(f"{error_code}: connection lost or session sniped")
+                mock_cursor.execute.side_effect = [exc, None]
+
+                # 4. Call _open_cursor and verify it triggers reconnect
+                self.api._open_cursor()
+
+                # 5. Assertions
+                self.api._disconnect.assert_called_once_with(force=True)
+                self.api._connect.assert_called_once()
+                self.assertEqual(mock_cursor.execute.call_count, 2)
+                self.assertEqual(self.api._db_curs, mock_cursor)
+
+    def test_oracle_no_reconnect_on_other_errors(self):
+        # 1. Mock the database connection and cursor
+        mock_conn = mock.Mock()
+        mock_cursor = mock.Mock()
+        mock_conn.cursor.return_value = mock_cursor
+
+        # Set the mocked connection on the frontend API
+        self.api._db_conn = mock_conn
+
+        # 2. Mock _connect and _disconnect
+        self.api._connect = mock.Mock()
+        self.api._disconnect = mock.Mock()
+
+        # 3. Configure the cursor execute to raise DatabaseError for a different error (e.g. ORA-00942)
+        exc = cxo.DatabaseError("ORA-00942: table or view does not exist")
+        mock_cursor.execute.side_effect = exc
+
+        # 4. Verify it propagates the exception and does not attempt to reconnect
+        with self.assertRaises(cxo.DatabaseError):
+            self.api._open_cursor()
+
+        # 5. Assertions
+        self.api._disconnect.assert_not_called()
+        self.api._connect.assert_not_called()
+        self.assertEqual(mock_cursor.execute.call_count, 1)
 
 
 class TestTeradataFrontendApi(TestFrontendApi):

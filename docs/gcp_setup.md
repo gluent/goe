@@ -8,6 +8,22 @@ This page details Google Cloud Platform (GCP) components required, with recommen
 
 A service account should be provisioned from the GCP project. This service account can be used by any service that will execute GOE commands, for example it could be attached to a Google Compute Engine (GCE) virtual machine.
 
+#### Service Account Authentication & Troubleshooting
+
+To verify which GCP account or service account is active in your current shell session, use:
+```bash
+gcloud auth list
+```
+
+If you are executing GOE on an external node using a service account key file, you must activate the service account and set your default project. Run:
+```bash
+gcloud auth activate-service-account SERVICE_ACCOUNT_EMAIL \
+  --key-file=/path/to/service-account-key.json \
+  --project=GOOGLE_PROJECT_ID
+```
+Replace `SERVICE_ACCOUNT_EMAIL` with your service account's email, `/path/to/service-account-key.json` with the path to your credentials file, and `GOOGLE_PROJECT_ID` with the ID of your GCP project.
+
+
 ### Cloud Storage Bucket
 
 A Google Cloud Storage (GCS) bucket is required to stage data before ingesting it into BigQuery. Ensure the bucket is in a location compatible with the target BigQuery dataset.

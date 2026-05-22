@@ -54,29 +54,29 @@ To offload a contiguous range of partitions from a range-partitioned table, one 
 
 - `--older-than-date`: Offload `DATE` or `TIMESTAMP` partitions with a high water mark less than this value. Synonym for `--less-than-value`, e.g.
 
-```
---older-than-date=2015-10-01
-```
+    ```
+    --older-than-date=2015-10-01
+    ```
 
 - `--older-than-days`: Offload partitions older than this number of days (exclusive, i.e. the boundary partition is not offloaded). This option is suitable for keeping data up to a certain age in the source table and is an alternative to the `--older-than-date` option. If both are supplied, `--older-than-date` will be used, e.g.
 
-```
---older-than-days=90
-```
+    ```
+    --older-than-days=90
+    ```
 
 - `--less-than-value`: Offload partitions with a high water mark less than this value. Will accept integer, string or date values and allows intraday date and timestamp values to be specified, e.g.
 
-```
---less-than-value=100000000
---less-than-value=2015-01-01
---less-than-value="2015-01-01 12:00:00"
---less-than-value=M
-```
+    ```
+    --less-than-value=100000000
+    --less-than-value=2015-01-01
+    --less-than-value="2015-01-01 12:00:00"
+    --less-than-value=M
+    ```
 - `--partition-names`: Offload partitions with a high water mark matching that of the named partition, e.g.
 
-```
---partition-names=P201509
-```
+    ```
+    --partition-names=P201509
+    ```
 
 Boundary options for range-partitioned tables are exclusive and the partition that contains data for the specified high water mark will not be offloaded. Furthermore, Offload will not offload partial partitions. For example, suppose a partition has data with a value range of 2000-01-01 to 2000-01-31. Using `--older-than-date=2000-01-15` will not offload data from 2000-01-01 to 2000-01-14 because the partition has the potential for data up to and including 2000-01-31. Instead, data will be offloaded up to the boundary of the previous range partition. To offload the example partition, an `--older-than-date=2000-02-01` value must be used, but only when loading for the entire partition has completed.
 
@@ -180,17 +180,17 @@ Partitions in a list-partitioned table can be offloaded using either of the opti
 
 - `--equal-to-values`: Offload partitions by partition key value, accepting partition key literals that match the RDBMS partitions, e.g.
 
-```
---equal-to-values=2015-01-01
---equal-to-values=US --equal-to-values=AP --equal-to-values=EU
---equal-to-values=201501,201502,201503
-```
+    ```
+    --equal-to-values=2015-01-01
+    --equal-to-values=US --equal-to-values=AP --equal-to-values=EU
+    --equal-to-values=201501,201502,201503
+    ```
 
 - `--partition-names`: Offload partitions by partition name, e.g.
 
-```
---partition-names=TRANSACTIONS_P2015Q1,TRANSACTIONS_P2015Q2
-```
+    ```
+    --partition-names=TRANSACTIONS_P2015Q1,TRANSACTIONS_P2015Q2
+    ```
 
 When using `--equal-to-values`, each partition must have its own option specification, as shown above and in Example 6 below.
 
@@ -286,7 +286,7 @@ Boundary options are exclusive and will not offload subpartitions with a key tha
 
 ## Other Subpartition-Based Offload Behavior
 
-Subpartition-Based Offload behavior is the same as Partition-Based Offload in almost all cases. Considerations such as `MAXVALUE` subpartitions, full offloading with `--offload-type`, moving the high water mark in the hybrid view, using multi-column subpartition keys and so on are the same for range subpartitions as they are for range partitions. See Offloading Range-Partitioned Tables for details. Note that any examples would need the `--offload-by-subpartition` option to apply the same principle to range-subpartitioned tables.
+Subpartition-Based Offload behavior is the same as Partition-Based Offload in almost all cases. Considerations such as `MAXVALUE` subpartitions, full offloading with `--offload-type`, using multi-column subpartition keys and so on are the same for range subpartitions as they are for range partitions. See Offloading Range-Partitioned Tables for details. Note that any examples would need the `--offload-by-subpartition` option to apply the same principle to range-subpartitioned tables.
 
 # Predicate-Based Offload
 

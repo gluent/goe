@@ -246,9 +246,7 @@ Backend partition granularities differ between range-partitioned tables and list
 
 ### Example 9: Offload a Set of List Partitions Using a Date Range Partition Boundary
 
-The following example offloads all list partitions with a partition key value of less than 2015-02-01.
-
-An example using `--older-than-date`:
+The following example uses `--older-than-date` to offload all list partitions with a partition key value of less than 2015-02-01:
 
 ```shell
 $OFFLOAD_HOME/bin/offload -t SH.SALES -x --older-than-date=2015-02-01
@@ -277,7 +275,7 @@ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --older-than-date=2015-07-01 --offload-
 ## Subpartition Boundary Options
 The Offload options for specifying subpartition boundaries are the same as for range partition offloading. See [Partition Boundary Options](#partition-boundary-options) for details.
 
-Subpartition-Based Offload has an additional restriction, such that the boundary option value must guarantee that no subpartitions have potential for more data to be added. For example, suppose every partition in a table contains two range subpartitions with high values of 90 and 100. In this case, the boundary option of --less-than-value=100 identifies a common subpartition boundary across the entire partition set and this guarantees that all subpartitions below this threshold are “complete” and ready for offloading. However, suppose just one of the partitions has range subpartitions with high values of 90 and 110. In this case, `--less-than-value=100` option would not be able to offload all subpartitions below this threshold because the boundary is not common (i.e. the subpartition with a high value of 110 cannot be guaranteed to be “complete”).
+Subpartition-Based Offload has an additional restriction, such that the boundary option value must guarantee that no subpartitions have potential for more data to be added. For example, suppose every partition in a table contains two range subpartitions with high values of 90 and 100. In this case, the boundary option of `--less-than-value=100` identifies a common subpartition boundary across the entire partition set and this guarantees that all subpartitions below this threshold are “complete” and ready for offloading. However, suppose just one of the partitions has range subpartitions with high values of 90 and 110. In this case, `--less-than-value=100` option would not be able to offload all subpartitions below this threshold because the boundary is not common (i.e. the subpartition with a high value of 110 cannot be guaranteed to be “complete”).
 
 In cases where the specified boundary is not valid, Offload will terminate with a warning and recommend that a common boundary is identified and used. In many cases it is possible to project the boundary value forward until a value is found that guarantees the safe offloading and appending of “complete” subpartitions.
 
@@ -340,7 +338,7 @@ $OFFLOAD_HOME/bin/offload -t SH.CUSTOMERS -x \
 All data matching this predicate will be offloaded but the predicate itself will not be added to the hybrid view or its metadata.
 
 ### Example 13: Offload a Late-Arriving Subset of Data from a Previously-Offloaded Range Partition
-In the following example, the SH.SALES table has previously been offloaded using Partition-Based Offload up to and including data for `2019-01-15`. The Predicate-Based Offload command below is used to additionally offload a small set of data for product 123 that has arrived late and been loaded into a partition that has already been offloaded.
+In the following example, the SH.SALES table has previously been offloaded using Partition-Based Offload up to and including data for 2019-01-15. The Predicate-Based Offload command below is used to additionally offload a small set of data for product 123 that has arrived late and been loaded into a partition that has already been offloaded.
 
 ```shell
 $OFFLOAD_HOME/bin/offload -t SH.SALES -x \

@@ -131,8 +131,7 @@ $OFFLOAD_HOME/bin/offload -t SH.VARCHAR2_PARTITIONED_FACT -x \
 
 Range-partitioned tables are also supported for full offload, using either the `--offload-type` option with a value of `FULL` or by excluding any of the partition boundary options described above. The following option combinations will fully offload a range-partitioned table:
 
-- `--offload-type=FULL`: Offloads all partitions and creates a simple hybrid view that queries all the data from the backend
-- `--offload-type=FULL` plus one of the boundary options: Offloads all partitions and data to the backend but creates a composite hybrid view that queries the data below the specified boundary from the backend and data above the specified boundary from the RDBMS
+- `--offload-type=FULL`: Offloads all partitions
 - None of the offload type or partition boundary options described above: This is the same as specifying `--offload-type=FULL`
 
 ### MAXVALUE Partition Considerations

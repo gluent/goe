@@ -301,7 +301,7 @@ Predicates are provided using a simple grammar as described in [Predicate Gramma
 
 ### Example 11: Offload a Subset of Data from a Table Using a Predicate
 
-The following example demonstrates a simple Predicate-Based Offload scenario by offloading all data for the ‘Electronics’ category.
+The following example demonstrates a simple Predicate-Based Offload scenario by offloading all data for the 'Electronics' category.
 
 ```shell
 $OFFLOAD_HOME/bin/offload -t SH.PRODUCTS -x --offload-predicate='column(PROD_CATEGORY) = string("Electronics")'
@@ -335,7 +335,7 @@ $OFFLOAD_HOME/bin/offload -t SH.CUSTOMERS -x \
   --offload-predicate='column(CUST_CREATED_DATE) > datetime(2019-01-15 13:23:34)'
 ```
 
-All data matching this predicate will be offloaded but the predicate itself will not be added to the hybrid view or its metadata.
+All data matching this predicate will be offloaded but the predicate itself will not be added to metadata.
 
 ### Example 13: Offload a Late-Arriving Subset of Data from a Previously-Offloaded Range Partition
 In the following example, the SH.SALES table has previously been offloaded using Partition-Based Offload up to and including data for 2019-01-15. The Predicate-Based Offload command below is used to additionally offload a small set of data for product 123 that has arrived late and been loaded into a partition that has already been offloaded.
@@ -346,7 +346,7 @@ $OFFLOAD_HOME/bin/offload -t SH.SALES -x \
   --offload-predicate-type=RANGE
 ```
 
-All data matching this predicate will be offloaded but the predicate itself will not be added to the offload boundary or metadata for the hybrid view (only the existing Partition-Based Offload boundary will be used).
+All data matching this predicate will be offloaded but the predicate itself will not be added to the offload boundary or metadata (only the existing Partition-Based Offload boundary will be used).
 
 ## Intra-Day Predicate-Based Offload
 
@@ -511,8 +511,8 @@ When offloading numeric data such as decimals or large integrals to Google BigQu
 
 For numeric data that exceeds the specifications of NUMERIC and BIGNUMERIC, Offload offers two options:
 
-- Use decimal rounding options during offload (see Decimal Scale Rounding below)
-- Offload numeric data to a floating point type (see Converting Numeric Data to Double below)
+- Use decimal rounding options during offload (see [Decimal Scale Rounding](#decimal-scale-rounding) below)
+- Offload numeric data to a floating point type (see [Converting Numeric Data to Double](#converting-numeric-data-to-double) below)
 
 ***
 

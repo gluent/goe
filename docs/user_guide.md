@@ -174,7 +174,7 @@ Offload supports interval-partitioned tables in exactly the same way as range-pa
 
 Tables that are list-partitioned on `DATE`, `TIMESTAMP`, `NUMBER`, `[N]VARCHAR2` or `[N]CHAR` columns can be partially or fully offloaded. Discrete sets of one or more partitions can be offloaded by specifying either partition key values or partition names in the `offload` command. Additional partitions can be offloaded in subsequent offloads without affecting historical partitions.
 
-List Partition Specification
+### List Partition Specification
 Partitions in a list-partitioned table can be offloaded using either of the options below:
 
 - `--equal-to-values`: Offload partitions by partition key value, accepting partition key literals that match the RDBMS partitions, e.g.
@@ -219,7 +219,7 @@ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --partition-names=SALES_P2015Q1,SALES_P
 ```
 
 ### DEFAULT Partition Considerations
-Offloads for list-partitioned tables with a DEFAULT partition will behave differently depending on the offload options used, as follows:
+Offloads for list-partitioned tables with a `DEFAULT` partition will behave differently depending on the offload options used, as follows:
 
 - If neither the `--offload-type` nor any of the partition identification options (`--equal-to-values`, `--partition-names`) are specified, the `DEFAULT` partition will be offloaded
 - If `--offload-type=FULL` is specified, either with or without a partition identification option, the `DEFAULT` partition will be offloaded
@@ -228,7 +228,7 @@ Offloads for list-partitioned tables with a DEFAULT partition will behave differ
 
 ***
 
-__NOTE:__ Offloading the DEFAULT partition for a table will prevent any further partition-based offloads for that table.
+__NOTE:__ Offloading the `DEFAULT` partition for a table will prevent any further partition-based offloads for that table.
 
 ***
 
@@ -240,7 +240,7 @@ In cases where a list-partitioned table has been structured to mimic range parti
 - All new partitions must be added with high values that are greater than those that have already been offloaded
 - Supported data types must match those referenced in [Offloading Range-Partitioned Tables](#offloading-range-partitioned-tables)
 
-In this scenario, a `DEFAULT` list partition will be treated in the same way that a `MAXVALUE` partition is treated for range partition offload (see [MAXVALUE` Partition Considerations](#maxvalue-partition-considerations) for details).
+In this scenario, a `DEFAULT` list partition will be treated in the same way that a `MAXVALUE` partition is treated for range partition offload (see [`MAXVALUE` Partition Considerations](#maxvalue-partition-considerations) for details).
 
 Backend partition granularities differ between range-partitioned tables and list-partitioned tables offloaded as range. See [Managing Backend Partitioning](#managing-backend-partitioning) for details.
 

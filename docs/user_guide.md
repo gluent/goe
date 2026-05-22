@@ -47,7 +47,7 @@ Partition-Based Offload can be used for the following scenarios:
 
 ## Offloading Range-Partitioned Tables
 
-Tables that are range-partitioned on `DATE`, `TIMESTAMP`, `NUMBER` or `[N]VARCHAR2` columns can be fully or partially offloaded. Partitions can be offloaded contiguously up to a boundary by specifying a high water mark in the offload command. Partition boundaries can be increased in subsequent offloads to append additional partitions without affecting historical partitions.
+Tables that are range-partitioned on `DATE`, `TIMESTAMP`, `NUMBER` or `[N]VARCHAR2` columns can be fully or partially offloaded. Partitions can be offloaded contiguously up to a boundary by specifying a high water mark in the `offload` command. Partition boundaries can be increased in subsequent offloads to append additional partitions without affecting historical partitions.
 
 ### Partition Boundary Options
 To offload a contiguous range of partitions from a range-partitioned table, one of the following boundary options must be used:
@@ -285,7 +285,7 @@ Boundary options are exclusive and will not offload subpartitions with a key tha
 
 ## Other Subpartition-Based Offload Behavior
 
-Subpartition-Based Offload behavior is the same as Partition-Based Offload in almost all cases. Considerations such as `MAXVALUE` subpartitions, full offloading with `--offload-type`, using multi-column subpartition keys and so on are the same for range subpartitions as they are for range partitions. See Offloading Range-Partitioned Tables for details. Note that any examples would need the `--offload-by-subpartition` option to apply the same principle to range-subpartitioned tables.
+Subpartition-Based Offload behavior is the same as Partition-Based Offload in almost all cases. Considerations such as `MAXVALUE` subpartitions, full offloading with `--offload-type`, using multi-column subpartition keys and so on are the same for range subpartitions as they are for range partitions. See [Offloading Range-Partitioned Tables](#offloading-range-partitioned-tables) for details. Note that any examples would need the `--offload-by-subpartition` option to apply the same principle to range-subpartitioned tables.
 
 # Predicate-Based Offload
 
@@ -309,7 +309,7 @@ The following example demonstrates a simple Predicate-Based Offload scenario by 
 $OFFLOAD_HOME/bin/offload -t SH.PRODUCTS -x --offload-predicate='column(PROD_CATEGORY) = string("Electronics")'
 ```
 
-All data matching this predicate will be offloaded and the predicate will be added to the offload boundary in the hybrid view. Predicates are additive and any predicate that has been offloaded will not be re-offloaded, even if specified in future offload commands.
+All data matching this predicate will be offloaded and the predicate will be added to the offload boundary in Offload metadata. Predicates are additive and any predicate that has been offloaded will not be re-offloaded, even if specified in future `offload` commands.
 
 Backend tables can be optionally partitioned when using simple Predicate-Based Offload. See [Managing Backend Partitioning](#managing-backend-partitioning) for more details.
 
@@ -488,9 +488,9 @@ __NOTE:__ All backends other than Google BigQuery are currently disabled.
 
 GOE fine-tunes the default data mappings by sampling data for all columns in the source RDBMS table that are either date or timestamp-based or defined as a number without a precision and scale.
 
-Offload bases the volume of data to be sampled on the size of the RDBMS table. This can be overridden by adding the `--data-sample-percent` option to the offload command (specifying a percentage between 0 and 100, where 0 disables sampling altogether).
+Offload bases the volume of data to be sampled on the size of the RDBMS table. This can be overridden by adding the `--data-sample-percent` option to the `offload` command (specifying a percentage between 0 and 100, where 0 disables sampling altogether).
 
-Offload determines the degree of parallelism to use when sampling data from the value of `DATA_SAMPLE_PARALLELISM`. This can be overridden by adding the `--data-sample-parallelism` option to the offload command (specifying a degree of 0 or a positive integer, where 0 disables parallelism)
+Offload determines the degree of parallelism to use when sampling data from the value of `DATA_SAMPLE_PARALLELISM`. This can be overridden by adding the `--data-sample-parallelism` option to the `offload` command (specifying a degree of 0 or a positive integer, where 0 disables parallelism)
 
 ## Offloading Not Null Columns to Google BigQuery
 
@@ -501,7 +501,7 @@ Offload only considers columns to be mandatory if they are defined by Oracle Dat
 - Columns with user-defined check constraints rather than a `NOT NULL` definition (e.g. `CHECK (column_name IS NOT NULL)`)
 - Columns defined with `NOT NULL ENABLE NOVALIDATE`
 
-To override the global `OFFLOAD_NOT_NULL_PROPAGATION` configuration value, or to include columns with mandatory constraints that are not automatically propagated, the `--not-null-columns` option can be added to an Offload command. This option accepts a list of one or more valid columns, one or more wildcards, or a combination of the two. Offload will define all specified columns as `NOT NULL` when creating the backend table, regardless of their status in the RDBMS.
+To override the global `OFFLOAD_NOT_NULL_PROPAGATION` configuration value, or to include columns with mandatory constraints that are not automatically propagated, the `--not-null-columns` option can be added to an `offload` command. This option accepts a list of one or more valid columns, one or more wildcards, or a combination of the two. Offload will define all specified columns as `NOT NULL` when creating the backend table, regardless of their status in the RDBMS.
 
 Care should be taken when propagating constraints for columns that cannot be guaranteed to contain no NULLs. During validation of the staging data, Offload will specifically check for NULLs for any column that is defined as mandatory in the backend.
 
@@ -606,7 +606,7 @@ When exceptional data is detected, Offload will in most cases terminate with an 
 
 ***
 
-__NOTE:__ Offload will never attempt to automatically offload exceptional data when it would cause a potential data loss to do so. In all cases, the user must provide an explicit course of action by providing the appropriate options with the offload command.
+__NOTE:__ Offload will never attempt to automatically offload exceptional data when it would cause a potential data loss to do so. In all cases, the user must provide an explicit course of action by providing the appropriate options with the `offload` command.
 
 ***
 
@@ -913,7 +913,7 @@ In addition to partitioning, offloaded data can optionally be sorted or clustere
 To enable data sorting and clustering for Google BigQuery, set the `OFFLOAD_SORT_ENABLED` configuration parameter to `true`. Alternatively, this can be managed for individual offloads by adding the `--offload-sort-enabled` option to the `offload` command (set to true), along with the `--sort-columns` option to specify the columns for distributing the data in the backend. Google BigQuery tables can be clustered by up to four columns
 
 # Resetting an Offloaded Table
-Offload provides a `--reset-backend-table` option that can be added to an offload command to fully reset a previously offloaded table. This option is useful when refreshing small offloaded tables such as reference tables or dimensions. This option will cause Offload to drop all offloaded data from the backend, so it should be used carefully.
+Offload provides a `--reset-backend-table` option that can be added to an `offload` command to fully reset a previously offloaded table. This option is useful when refreshing small offloaded tables such as reference tables or dimensions. This option will cause Offload to drop all offloaded data from the backend, so it should be used carefully.
 
 ***
 

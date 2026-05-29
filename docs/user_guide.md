@@ -116,11 +116,11 @@ __NOTE:__ Any partition key data that falls outside the range specified by the l
 
 ### Offloading with String Partition Boundaries
 
-Google BigQuery does not support partitioning on STRING columns; therefore the source partition column data must be converted to `INT64` with a custom partition function (see [Partition Functions](#partition-functions)) to enable the backend table to be synthetically partitioned.
+Google BigQuery does not support partitioning on `STRING` columns; therefore the source partition column data must be converted to `INT64` with a custom partition function (see [Partition Functions](#partition-functions)) to enable the backend table to be synthetically partitioned.
 
 #### Example 5: Offload a Range of String Partitions (BigQuery)
 
-Google BigQuery does not have native `STRING` partitioning support, but the source string data can still be used to partition the backend table synthetically if a custom UDF is provided to convert the string data to an INT64 type. The following example shows a `VARCHAR2` partition key used as the source for Google BigQuery partitioning. A custom UDF is provided to generate an ASCII value for the first character of the source data and the resulting INT64 value is used to partition the backend table. The full range of potential partition key values must be specified when offloading a table with a `VARCHAR2` partition column.
+Google BigQuery does not have native `STRING` partitioning support, but the source string data can still be used to partition the backend table synthetically if a custom UDF is provided to convert the string data to an `INT64` type. The following example shows a `VARCHAR2` partition key used as the source for Google BigQuery partitioning. A custom UDF is provided to generate an ASCII value for the first character of the source data and the resulting INT64 value is used to partition the backend table. The full range of potential partition key values must be specified when offloading a table with a `VARCHAR2` partition column.
 
 ```shell
 $OFFLOAD_HOME/bin/offload -t SH.VARCHAR2_PARTITIONED_FACT -x \
@@ -623,12 +623,6 @@ To summarize, the potentially-lossy offload operations and their corresponding o
 - Offloading sub-microsecond timestamps: Using the `--allow-nanosecond-timestamp-columns` option to offload columns with a sub-microsecond specification to a backend system that doesn’t support the same level of precision
 - Converting data to a 64-bit floating point number: Using the `--double-columns` option to offload decimal or 32-bit floating-point data that would not otherwise be possible
 
-***
-
-__NOTE:__ Enabling lossy offloads can cause wrong results with some hybrid queries when data loss has occurred; such as when Smart Connector pushes down an equality or inequality predicate containing values from the lossy column(s). It is not advised to enable lossy data type overrides for columns that are likely to be used in hybrid query predicates or joins unless the offload was known to be lossless.
-
-***
-
 # Offload Transport
 
 Offload Transport describes the part of the offload process that:
@@ -653,11 +647,11 @@ The transport phase of an offload is split into four main operations:
 
 GOE uses one of a number of tools to extract data from the source RDBMS. The appropriate tool will be chosen automatically based on configuration preferences. Each tool reads the source data to offload and attempts to split the source data equally and in a non-overlapping way between concurrent reader processes.
 
-Data is staged in either Avro or Parquet format (depending on the backend platform) and native data types are used where possible. For Avro staging files, `STRING` is used where there is no identical match between Avro and the source RDBMS table. For example, Oracle Database `DATE`, `TIMESTAMP` and `NUMBER` data types have no direct equivalent in Avro; therefore data is staged as STRING and converted to the appropriate backend data type during the final loading phase.
+Data is staged in either Avro or Parquet format (depending on the backend platform) and native data types are used where possible. For Avro staging files, `STRING` is used where there is no identical match between Avro and the source RDBMS table. For example, Oracle Database `DATE`, `TIMESTAMP` and `NUMBER` data types have no direct equivalent in Avro; therefore data is staged as `STRING` and converted to the appropriate backend data type during the final loading phase.
 
 The data extraction tools available to Offload are:
 
-- [Google Cloud Platform Dataproc](#google-cloud-platform-dataproc)
+- [Google Cloud Platform Managed Service for Apache Spark](#google-cloud-platform-managed-service-for-apache-spark)
 - [Apache Spark](#apache-spark)
 - [Query Import](#query-import)
 
@@ -670,14 +664,14 @@ Data is staged to cloud storage and requires a small amount of configuration:
 - `OFFLOAD_FS_PREFIX`: The storage subdirectory defined within the bucket/container (or can be an empty string if preferred). An ad hoc override is available with the `--offload-fs-prefix` option
 
 
-### Google Cloud Platform Dataproc
+### Google Cloud Platform Managed Service for Apache Spark
 
-Two flavours of Dataproc are supported by GOE:
+Two Spark execution environments are supported by GOE:
 
 - Managed Service for Apache Spark (serverless)
 - Managed Service for Apache Spark (permanent)
 
-`gcloud` is used as an interface for both services.
+Both services use `gcloud` as an interface.
 
 To use Managed Service for Apache Spark (serverless), at a minimum, the following configurations should be defined:
 
@@ -686,14 +680,14 @@ To use Managed Service for Apache Spark (serverless), at a minimum, the followin
 - `GOOGLE_DATAPROC_SERVICE_ACCOUNT`
 - `GOOGLE_DATAPROC_BATCHES_VERSION`
 
-To use Dataproc, at a minimum, the following configurations should be defined:
+To use Managed Service for Apache Spark (permanent), at a minimum, the following configurations should be defined:
 
 - `GOOGLE_DATAPROC_CLUSTER`
 - `GOOGLE_DATAPROC_PROJECT`
 - `GOOGLE_DATAPROC_REGION`
 - `GOOGLE_DATAPROC_SERVICE_ACCOUNT`
 
-Please review your `offload.env` file to see other options.
+Other options can be reviewed in the `offload.env` configuration file.
 
 The number of tasks in an offload transport job is defined by `OFFLOAD_TRANSPORT_PARALLELISM` or per offload with the `--offload-transport-parallelism` option. In Managed Service for Apache Spark (serverless), the requested configuration will be scaled up to match `OFFLOAD_TRANSPORT_PARALLELISM` automatically. It should be noted that in standard Managed Service for Apache Spark (permanent) defining more tasks than there are available Spark executors will result in queuing. Therefore, `OFFLOAD_TRANSPORT_PARALLELISM` should ideally be no more than the number of available executors.
 

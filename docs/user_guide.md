@@ -81,19 +81,23 @@ To offload a contiguous range of partitions from a range-partitioned table, one 
 Boundary options for range-partitioned tables are exclusive and the partition that contains data for the specified high water mark will not be offloaded. Furthermore, Offload will not offload partial partitions. For example, suppose a partition has data with a value range of 2000-01-01 to 2000-01-31. Using `--older-than-date=2000-01-15` will not offload data from 2000-01-01 to 2000-01-14 because the partition has the potential for data up to and including 2000-01-31. Instead, data will be offloaded up to the boundary of the previous range partition. To offload the example partition, an `--older-than-date=2000-02-01` value must be used, but only when loading for the entire partition has completed.
 
 ### Offloading with Date Partition Boundaries
+
 The following is an example of offloading all partitions below a given date boundary.
 
 #### Example 3: Offload a Range of Date Partitions
+
 ```shell
 $OFFLOAD_HOME/bin/offload -t SH.SALES -x --older-than-date=2015-10-01
 ```
 
-By default, Example 3 above will use the RDBMS partition key column as the backend partition column for backends that support partitioning (they can be different if required; see [User-Defined Partitioning](#user-defined-partitioning) for details). It is common to use a different granularity for the backend partitions, especially useful when the backend system better supports either larger or fewer partitions. For example, an RDBMS table partitioned by day might be better offloaded to monthly partitions in a Google BigQuery-based backend. See `--partition-granularity` for details of the default granularities for various scenarios and backends.
+By default, Example 3 above will use the RDBMS partition key column as the backend partition column for backends that support partitioning (they can be different if required; see [User-Defined Partitioning](#user-defined-partitioning) for details). It is common to use a different granularity for the backend partitions, especially useful when the backend system better supports either larger or fewer partitions. For example, an RDBMS table partitioned by day might be better offloaded to monthly partitions in a Google BigQuery-based backend.
 
 ### Offloading with Numeric Partition Boundaries
+
 For range-partitioned tables with numeric partition keys, the partition granularity of the backend table must be specified. The command syntax differs slightly according to the target backend, as the following examples demonstrate.
 
 #### Example 4: Offload a Range of Numeric Partitions (BigQuery)
+
 For Google BigQuery, the full range of potential partition key values must be specified when creating a table with numeric partitions, hence the additional Offload options in the following example.
 
 ```shell
@@ -112,7 +116,7 @@ __NOTE:__ Any partition key data that falls outside the range specified by the l
 
 ### Offloading with String Partition Boundaries
 
-Google BigQuery does not support partitioning on STRING columns; therefore the source partition column data must be converted to `INT64` with a custom partition function (see `--partition-functions`) to enable the backend table to be synthetically partitioned.
+Google BigQuery does not support partitioning on STRING columns; therefore the source partition column data must be converted to `INT64` with a custom partition function (see [Partition Functions](#partition-functions)) to enable the backend table to be synthetically partitioned.
 
 #### Example 5: Offload a Range of String Partitions (BigQuery)
 
@@ -129,10 +133,7 @@ $OFFLOAD_HOME/bin/offload -t SH.VARCHAR2_PARTITIONED_FACT -x \
 
 ### Fully Offloading Range-Partitioned Tables with Offload Type
 
-Range-partitioned tables are also supported for full offload, using either the `--offload-type` option with a value of `FULL` or by excluding any of the partition boundary options described above. The following option combinations will fully offload a range-partitioned table:
-
-- `--offload-type=FULL`: Offloads all partitions
-- None of the offload type or partition boundary options described above: This is the same as specifying `--offload-type=FULL`
+Range-partitioned tables are also supported for full offload, using either the `--offload-type` option with a value of `FULL` or by excluding any of the partition boundary options described above.
 
 ### MAXVALUE Partition Considerations
 
@@ -165,7 +166,6 @@ Or:
 
 When offloading a multi-column partitioned table to Google BigQuery, the generated BigQuery table will be partitioned according to the leading partition key column only. The `--partition-columns` option will only allow one column to be specified when offloading to Google BigQuery.
 
-
 ## Offloading Interval-Partitioned Tables
 
 Offload supports interval-partitioned tables in exactly the same way as range-partitioned tables.
@@ -175,6 +175,7 @@ Offload supports interval-partitioned tables in exactly the same way as range-pa
 Tables that are list-partitioned on `DATE`, `TIMESTAMP`, `NUMBER`, `[N]VARCHAR2` or `[N]CHAR` columns can be partially or fully offloaded. Discrete sets of one or more partitions can be offloaded by specifying either partition key values or partition names in the `offload` command. Additional partitions can be offloaded in subsequent offloads without affecting historical partitions.
 
 ### List Partition Specification
+
 Partitions in a list-partitioned table can be offloaded using either of the options below:
 
 - `--equal-to-values`: Offload partitions by partition key value, accepting partition key literals that match the RDBMS partitions, e.g.
@@ -202,6 +203,7 @@ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --equal-to-values=2015-01-01 --equal-to
 ```
 
 ### Example 7: Offloading Multi-Valued Partitions from a List-Partitioned Table
+
 When using `--equal-to-values`, each option must equal the full high values specification for a single partition. The following example offloads two multi-valued list partitions where the partition key is a numeric representation of year-month:
 
 ```shell
@@ -219,6 +221,7 @@ $OFFLOAD_HOME/bin/offload -t SH.SALES -x --partition-names=SALES_P2015Q1,SALES_P
 ```
 
 ### DEFAULT Partition Considerations
+
 Offloads for list-partitioned tables with a `DEFAULT` partition will behave differently depending on the offload options used, as follows:
 
 - If neither the `--offload-type` nor any of the partition identification options (`--equal-to-values`, `--partition-names`) are specified, the `DEFAULT` partition will be offloaded
@@ -240,7 +243,7 @@ In cases where a list-partitioned table has been structured to mimic range parti
 - All new partitions must be added with high values that are greater than those that have already been offloaded
 - Supported data types must match those referenced in [Offloading Range-Partitioned Tables](#offloading-range-partitioned-tables)
 
-In this scenario, a `DEFAULT` list partition will be treated in the same way that a `MAXVALUE` partition is treated for range partition offload (see [`MAXVALUE` Partition Considerations](#maxvalue-partition-considerations) for details).
+In this scenario, a `DEFAULT` list partition will be treated in the same way that a `MAXVALUE` partition is treated for range partition offload (see [MAXVALUE Partition Considerations](#maxvalue-partition-considerations) for details).
 
 Backend partition granularities differ between range-partitioned tables and list-partitioned tables offloaded as range. See [Managing Backend Partitioning](#managing-backend-partitioning) for details.
 
@@ -354,15 +357,17 @@ This offload pattern can be used to switch between Partition-Based Offload and P
 
 ### Example 14: Offload a Subset of Data for a New Range Partition (Intra-Day Offloading)
 
-In the following example, the historical data for the SH.SALES table is offloaded by Partition-Based Offload (range partitioned by TIME_ID) at time T0 to begin the offload lifecycle for this table. For new data, rather than wait a full day for an entire partition of data to be ready, data is instead offloaded as soon as each product set is loaded into the new partition (3 separate loads at times T1, T2, T3). When all loads and offloads have completed, the table metadata is reset (at time T4) and the table is ready to repeat the same Predicate-Based Offload pattern for the next processing cycle.
+In this example, the historical data for the SH.SALES table is offloaded by Partition-Based Offload (range partitioned by TIME_ID) at time T0 to begin the offload lifecycle for this table. For new data, rather than wait a full day for an entire partition of data to be ready, data is instead offloaded as soon as each product set is loaded into the new partition (3 separate loads at times T1, T2, T3). When all loads and offloads have completed, the table metadata is reset (at time T4) and the table is ready to repeat the same Predicate-Based Offload pattern for the next processing cycle. The timeline and example commands for this scenario are listed in Table 1 below.
+
+#### Table 1: Timeline and Commands for Example 14
 
 | Time | Description | Command |
 | :---- | :---- | :---- |
-| T0 | Offload all history by range partition | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --older-than-date=2020-07-01`  |
-| T1 | Offload first set of products loaded at time T1 | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --offload-predicate='column(TIME_ID) = datetime(2020-07-01) and column(PROD_ID) in (numeric(123), numeric(234))'        --offload-predicate-type=RANGE_AND_PREDICATE`  |
-| T2 | Offload second set of products loaded at time T2 | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --offload-predicate='column(TIME_ID) = datetime(2020-07-01) and column(PROD_ID) in (numeric(345), numeric(456))'        --offload-predicate-type=RANGE_AND_PREDICATE`  |
-| T3 | Offload third set of products loaded at time T3 | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --offload-predicate='column(TIME_ID) = datetime(2020-07-01) and column(PROD_ID) in (numeric(567), numeric(678))'        --offload-predicate-type=RANGE_AND_PREDICATE`  |
-| T4 | All products now loaded and offloaded, reset the metadata for the table | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --older-than-date=2020-07-02`  |
+| T0 | Offload all history by range partition | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --older-than-date=2020-07-01` |
+| T1 | Offload first set of products loaded at time T1 | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --offload-predicate='column(TIME_ID) = datetime(2020-07-01) and column(PROD_ID) in (numeric(123), numeric(234))' --offload-predicate-type=RANGE_AND_PREDICATE` |
+| T2 | Offload second set of products loaded at time T2 | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --offload-predicate='column(TIME_ID) = datetime(2020-07-01) and column(PROD_ID) in (numeric(345), numeric(456))' --offload-predicate-type=RANGE_AND_PREDICATE` |
+| T3 | Offload third set of products loaded at time T3 | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --offload-predicate='column(TIME_ID) = datetime(2020-07-01) and column(PROD_ID) in (numeric(567), numeric(678))' --offload-predicate-type=RANGE_AND_PREDICATE` |
+| T4 | All products now loaded and offloaded, reset the metadata for the table | `$OFFLOAD_HOME/bin/offload -t SH.SALES -x --older-than-date=2020-07-02` |
 
 The Predicate-Based Offload commands for T1-T3 require that the `--offload-predicate` option includes a predicate for the Partition-Based Offload partition key and that it matches the value of the new data (`TIME_ID=2020-07-01` in this example). The `--offload-predicate-type` option must also be used (see option reference for valid values).
 
@@ -388,6 +393,7 @@ The DSL allows specification of any number of predicates in a range of forms, wh
 Parentheses are required to form logical predicate groups, as shown in the second example above. Whitespace is insignificant.
 
 ### Column Form
+
 Predicates always contain a single column written with the `column` keyword and a “function-call” syntax. Columns are not case-sensitive and can include aliases. The following examples are all valid:
 
 - `column(CUST_ID)`
@@ -400,7 +406,7 @@ Columns must exist in the table being offloaded and expressions/functions are no
 
 The basic SQL operators are supported and are written as in SQL. Member operators and null-value expressions are also supported. The full range is as follows:
 
-- `=, !=, <, <=, >, >=`
+- `=`, `!=`, `<`, `<=`, `>`, `>=`
 - `[NOT] IN`
 - `IS [NOT] NULL`
 
@@ -416,7 +422,7 @@ String values use the `string` keyword and double-quotes as shown above. Double-
 
 Numeric values use the `numeric` keyword and both signed integral and signed decimal values are supported with the same keyword.
 
-Date/time values use the `datetime` keyword and can be specified at several levels of precision from dates to timestamps with nanosecond precision. The following are all valid examples of a `datetime` value:
+Date/time values use the `datetime` keyword and can be specified using ANSI formats at several levels of precision from dates to timestamps with nanosecond precision. The following are all valid examples of a `datetime` value:
 
 - `datetime(2020-07-01)`
 - `datetime(2020-07-01 13:01:01)`
@@ -437,7 +443,6 @@ The predicate DSL currently supports columns of the following Oracle Database da
 | Numeric | `NUMBER`, `FLOAT`, `BINARY_FLOAT`, `BINARY_DOUBLE` |
 | Datetime | `DATE`, `TIMESTAMP` |
 
-
 # Offload Data Types
 
 When offloading data, Offload will map data types from the source RDBMS to the backend database automatically. However, it is possible to override many of the default data type mappings. See Tables 3 and 6 below for details.
@@ -451,12 +456,6 @@ GOE currently supports all of the Oracle Database data types listed in Table 3 b
 Table 3 lists the default data type mappings when offloading data from Oracle Database to Impala (Cloudera Data Hub, Cloudera Data Platform), Google BigQuery, Snowflake or Azure Synapse Analytics.
 
 ### Table 3: Offload Default Data Type Mappings (Oracle Database)
-
-***
-
-__NOTE:__ All backends other than Google BigQuery are currently disabled.
-
-***
 
 | Oracle Database | Impala | Google BigQuery | Snowflake | Azure Synapse Analytics | Comments |
 | :---- | :---- | :---- | :---- | :---- | :---- |
@@ -587,7 +586,7 @@ $OFFLOAD_HOME/bin/offload -t SH.SALES -x \
   --decimal-columns-type=10,2 --decimal-columns=AMOUNT_SOLD
 ```
 
-Each override can be given one or more columns. The `--decimal-columns` override can be used to choose a BigQuery `BIGNUMERIC` over `NUMERIC` (or vice-versa if required). This override option behaves differently to the others in that it must be paired with a `--decimal-columns-type` option to define the precision and scale for the columns listed. Multiple different names/type pairings can be provided in the same command (see `--decimal-columns` for further details).
+Each override can be given one or more columns. The `--decimal-columns` override can be used to choose a BigQuery `BIGNUMERIC` over `NUMERIC` (or vice-versa if required). This override option behaves differently to the others in that it must be paired with a `--decimal-columns-type` option to define the precision and scale for the columns listed. Multiple different names/type pairings can be provided in the same command.
 
 Data type override options support use of the wildcard character `*`. This is useful when a logical model has column naming rules indicating the data they contain. The example above could use `--decimal-columns=AMOUNT*` to match multiple columns containing monetary values.
 

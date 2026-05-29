@@ -491,7 +491,7 @@ Offload determines the degree of parallelism to use when sampling data from the 
 
 ## Offloading Not Null Columns to Google BigQuery
 
-Google BigQuery allow columns to be defined as mandatory (i.e. NOT NULL). When offloading a table to Google BigQuery for the first time, by default Offload will copy mandatory column definitions from the RDBMS to the backend. This behavior is defined globally by the `OFFLOAD_NOT_NULL_PROPAGATION` configuration option, which defaults to `AUTO` (i.e. propagate all `NOT NULL` constraints from the RDBMS to the backend). To avoid propagating any `NOT NULL` constraints, this option can be set to `NONE`.
+Google BigQuery allow columns to be defined as mandatory (i.e. `NOT NULL`). When offloading a table to Google BigQuery for the first time, by default Offload will copy mandatory column definitions from the RDBMS to the backend. This behavior is defined globally by the `OFFLOAD_NOT_NULL_PROPAGATION` configuration option, which defaults to `AUTO` (i.e. propagate all `NOT NULL` constraints from the RDBMS to the backend). To avoid propagating any `NOT NULL` constraints, this option can be set to `NONE`.
 
 Offload only considers columns to be mandatory if they are defined by Oracle Database as not nullable (`DBA_TAB_COLUMNS.NULLABLE = 'NO'`). The following `NOT NULL` Oracle Database columns are not automatically propagated by Offload:
 
@@ -500,7 +500,7 @@ Offload only considers columns to be mandatory if they are defined by Oracle Dat
 
 To override the global `OFFLOAD_NOT_NULL_PROPAGATION` configuration value, or to include columns with mandatory constraints that are not automatically propagated, the `--not-null-columns` option can be added to an `offload` command. This option accepts a list of one or more valid columns, one or more wildcards, or a combination of the two. Offload will define all specified columns as `NOT NULL` when creating the backend table, regardless of their status in the RDBMS.
 
-Care should be taken when propagating constraints for columns that cannot be guaranteed to contain no NULL values. During validation of the staging data, Offload will specifically check for NULL values for any column that is defined as mandatory in the backend.
+Care should be taken when propagating constraints for columns that cannot be guaranteed to contain no `NULL` values. During validation of the staging data, Offload will specifically check for `NULL` values for any column that is defined as mandatory in the backend.
 
 ## Offloading Numeric Data to Google BigQuery
 
@@ -694,14 +694,18 @@ The number of tasks in an offload transport job is defined by `OFFLOAD_TRANSPORT
 
 ### Apache Spark
 
-It is possible to use any Spark service with GOE but please note that for Google BigQuery offloads, Managed Service for Apache Spark (serverless) is the recommended Spark service.
+It is possible to use any Spark service with GOE but note that for Google BigQuery offloads, Managed Service for Apache Spark (serverless) is the recommended Spark service.
 
+When using Apache Spark directly, two interfaces to Spark are supported:
 
-When using Apache Spark directly, two interfaces to Spark are supported: Spark Submit and Spark Thrift Server. The interface used by Offload is chosen automatically, based on configuration. If multiple interfaces are configured for use, the order of priority is Spark Thrift Server then Spark Submit. SparkSQL is used in all cases (via a PySpark script for Spark Submit, or as pure SQL for Spark Thrift Server) to extract the data to be offloaded from the source RDBMS table.
+- Spark Submit
+- Spark Thrift Server
+
+The interface used by Offload is chosen automatically, based on configuration. If multiple interfaces are configured for use, the order of priority is Spark Thrift Server then Spark Submit. SparkSQL is used in all cases (via a PySpark script for Spark Submit, or as pure SQL for Spark Thrift Server) to extract the data to be offloaded from the source RDBMS table.
 
 When offloading to cloud warehouses such as Google BigQuery, it is typical to use Spark Standalone (GOE includes a Transport package containing Spark Standalone components for this purpose), although an existing Spark cluster can be utilized if available.
 
-Spark Submit is available for use by Offload if `OFFLOAD_TRANSPORT_CMD_HOST` and `OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE` are defined. When using a Spark Standalone cluster jobs will be submitted to the cluster defined in `OFFLOAD_TRANSPORT_SPARK_SUBMIT_MASTER_URL`.
+Spark Submit is available for use by Offload if `OFFLOAD_TRANSPORT_CMD_HOST` and `OFFLOAD_TRANSPORT_SPARK_SUBMIT_EXECUTABLE` are defined. When using a Spark Standalone cluster, jobs will be submitted to the cluster defined in `OFFLOAD_TRANSPORT_SPARK_SUBMIT_MASTER_URL`.
 
 Spark Thrift Server is available for use by Offload if `OFFLOAD_TRANSPORT_SPARK_THRIFT_HOST` and `OFFLOAD_TRANSPORT_SPARK_THRIFT_PORT` are defined. The Spark Thrift server can be configured to keep Spark executors alive between offloads, thereby removing process startup costs and providing low-latency offloads. At higher volumes this benefit becomes negligible.
 
@@ -709,7 +713,7 @@ The number of tasks in an offload transport Spark job is defined by `OFFLOAD_TRA
 
 Default configuration is appropriate for the majority of offloads but occasionally the nature of the source RDBMS table requires tuning of the following:
 
-- `--offload-transport-fetch-size` can be used on a per offload basis to override `OFFLOAD_TRANSPORT_FETCH_SIZE`. This can be useful to manage memory requirements for tables with a large row size (such as when offloading Oracle LOB data), by reducing the fetch size
+- `--offload-transport-fetch-size` can be used per offload to override `OFFLOAD_TRANSPORT_FETCH_SIZE`. This can be useful to manage memory requirements for tables with a large row size (such as when offloading Oracle LOB data), by reducing the fetch size
 - `OFFLOAD_TRANSPORT_SPARK_OVERRIDES` or the per offload option `--offload-transport-jvm-overrides` can be used to inject JVM parameters into the Spark Submit command line. This has no effect for Spark Thrift Server because its configuration is managed independently
 - `OFFLOAD_TRANSPORT_SPARK_PROPERTIES` or the per offload option `--offload-transport-spark-properties` can be used to modify Spark attributes. Note that because Spark Thrift Server configuration is managed independently, some attributes do not have any effect
 
@@ -730,7 +734,7 @@ Once data has been staged, it is validated to ensure that the number of staged r
 
 - Check for `NULL` values in any custom partition scheme defined using the `--partition-columns` option. A positive match results in a warning
 - Check for `NULL` values in any column defined as mandatory (i.e. `NOT NULL`)
-- Check for any NaN (Not a Number) special values if the source table has floating point numeric data types. This is because source RDBMS and target backend systems do not necessarily treat NaN values consistently. A positive match results in a warning
+- Check for any `NaN` special values if the source table has floating point numeric data types. This is because source RDBMS and target backend systems do not necessarily treat `NaN` values consistently. A positive match results in a warning
 - Check for lossy decimal rounding as described in [Decimal Scale Rounding](#decimal-scale-rounding)
 - Check for source data that is invalid for the chosen backend partition scheme (if applicable), such as numeric data outside of any `--partition-lower-value`/`--partition-upper-value` range. A positive match results in a warning
 

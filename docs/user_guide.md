@@ -120,7 +120,7 @@ Google BigQuery does not support partitioning on `STRING` columns; therefore the
 
 #### Example 5: Offload a Range of String Partitions (BigQuery)
 
-Google BigQuery does not have native `STRING` partitioning support, but the source string data can still be used to partition the backend table synthetically if a custom UDF is provided to convert the string data to an `INT64` type. The following example shows a `VARCHAR2` partition key used as the source for Google BigQuery partitioning. A custom UDF is provided to generate an ASCII value for the first character of the source data and the resulting INT64 value is used to partition the backend table. The full range of potential partition key values must be specified when offloading a table with a `VARCHAR2` partition column.
+Google BigQuery does not have native `STRING` partitioning support, but the source string data can still be used to partition the backend table synthetically if a custom UDF is provided to convert the string data to an `INT64` type. The following example shows a `VARCHAR2` partition key used as the source for Google BigQuery partitioning. A custom UDF is provided to generate an ASCII value for the first character of the source data and the resulting `INT64` value is used to partition the backend table. The full range of potential partition key values must be specified when offloading a table with a `VARCHAR2` partition column.
 
 ```shell
 $OFFLOAD_HOME/bin/offload -t SH.VARCHAR2_PARTITIONED_FACT -x \
@@ -745,25 +745,22 @@ Data types used for staging data will rarely match those of the backend target t
 
 ### Example 16: Catching Invalid Data Type Conversions
 
-In the following example, the SH.SALES table is offloaded to a Hadoop cluster with an invalid data type for two columns: the data in the PROD_ID and CUST_ID columns is not compatible with the user requested single-byte integer data type.
+In the following example, the SH.SALES table is offloaded to BigQuery with an invalid data type for one column: the data in the AMOUNT_SOLD column is not compatible with the user requested 8-byte integer data type.
 
 ```shell
-$OFFLOAD_HOME/bin/offload -t SH.SALES -x --integer-1-columns=PROD_ID,CUST_ID
+$OFFLOAD_HOME/bin/offload -t SH.SALES -x --integer-8-columns=AMOUNT_SOLD
 ```
 
 This results in the following exception:
 
 ```
-CAST() of load data will cause data loss due to lack of precision in target data type in 6887232 rows
+CAST() of load data will cause data loss due to lack of precision in target data type in 1779123 rows
 Failing casts are:
-    (`prod_id` IS NOT NULL AND CAST(`prod_id` AS TINYINT) IS NULL)
-    (`cust_id` IS NOT NULL AND CAST(`cust_id` AS TINYINT) IS NULL)
+(`AMOUNT_SOLD` IS NOT NULL AND SAFE_CAST(`AMOUNT_SOLD` AS INT64) IS NULL)
 The SQL below will assist identification of problem data:
-SELECT PROD_ID
-,      CUST_ID
-FROM   `sh_load`.`sales`
-WHERE  (`prod_id` IS NOT NULL AND CAST(`prod_id` AS TINYINT) IS NULL)
-OR     (`cust_id` IS NOT NULL AND CAST(`cust_id` AS TINYINT) IS NULL)
+SELECT `AMOUNT_SOLD`
+FROM   `goe-project.sh_load.sales`
+WHERE  (`AMOUNT_SOLD` IS NOT NULL AND SAFE_CAST(`AMOUNT_SOLD` AS INT64) IS NULL)
 LIMIT 50
 ```
 
@@ -832,9 +829,9 @@ Synthetic columns are used to partition backend tables instead of the correspond
 
 Synthetic partition keys are used internally by Offload to ensure that the backend partition columns remain consistent across multiple Partition-Based Offload or Subpartition-Based Offload operations.
 
-Synthetic partition key columns are named by Gluent Offload Engine as a derivative of the corresponding source column name (e.g. `GL_PART_M_TIME_ID` or `GL_PART_U0_SOURCE_CODE`).
+Synthetic partition key columns are named as a derivative of the corresponding source column name (e.g. `GL_PART_M_TIME_ID` or `GL_PART_U0_SOURCE_CODE`).
 
-When a table is offloaded with partitioning to Google BigQuery, a synthetic partition key will only be generated when the natural partition column is of a `NUMERIC`, `BIGNUMERIC` or `STRING` BigQuery data type, and the resulting synthetic partition key column will be created as an INT64 type (the integral magnitude of the source numeric data must not exceed the `INT64` limits). For `STRING` columns, or for extreme `[BIG]NUMERIC` data that cannot be reduced to INT64 values with `--partition-granularity` (i.e. the granularity itself would need to exceed `INT64` limits), a custom user-defined function (UDF) must be created and used to enable Gluent Offload Engine to create an INT64 synthetic partition key representation of the source data (see [Partition Functions](#partition-functions)). Native BigQuery partitioning will be used when the natural partition column has a data type of `INT64`, `DATE`, `DATETIME` or `TIMESTAMP`.
+When a table is offloaded with partitioning to Google BigQuery, a synthetic partition key will only be generated when the natural partition column is of a `NUMERIC`, `BIGNUMERIC` or `STRING` BigQuery data type, and the resulting synthetic partition key column will be created as an `INT64` type (the integral magnitude of the source numeric data must not exceed the `INT64` limits). For `STRING` columns, or for extreme `[BIG]NUMERIC` data that cannot be reduced to `INT64` values with `--partition-granularity` (i.e. the granularity itself would need to exceed `INT64` limits), a custom user-defined function (UDF) must be created and used to create an `INT64` synthetic partition key representation of the source data (see [Partition Functions](#partition-functions)). Native BigQuery partitioning will be used when the natural partition column has a data type of `INT64`, `DATE`, `DATETIME` or `TIMESTAMP`.
 
 Offload populates synthetic partition key columns with generated data when offloading based on the type and granularity of the data or based on the type and a custom partition function.
 
@@ -850,7 +847,7 @@ When offloading with partitioning to Google BigQuery, the following granularity 
 - String partition data requires the `--partition-functions` option along with options `--partition-granularity`, `--partition-lower-value` and `--partition-upper-value`
 
 ### Partition Functions
-The Partition Functions feature is only available when offloading to Google BigQuery. This extensibility feature allows users to provide a custom user-defined function (UDF) for Gluent Offload Engine to use when synthetically partitioning offloaded data. It enables users to choose a source partitioning column that would otherwise not be usable as a partition key in the backend system. For example, there is no native partitioning option for `STRING` data in BigQuery, which means that Gluent Offload Engine’s standard synthetic partitioning cannot be used. Also, some extreme `[BIG]NUMERIC` data cannot be reduced to `INT64` values with Offload’s standard synthetic partitioning scheme (i.e. with the `--partition-granularity` option). The Partition Functions feature provides a way for users to create an `INT64` representation of the source partitioning data to use as a synthetic partition key in both of these cases.
+This extensibility feature allows users to provide a custom user-defined function (UDF) to use when synthetically partitioning offloaded data. It enables users to choose a source partitioning column that would otherwise not be usable as a partition key in the backend system. For example, there is no native partitioning option for `STRING` data in BigQuery, which means that GOE’s standard synthetic partitioning cannot be used. Also, some extreme `[BIG]NUMERIC` data cannot be reduced to `INT64` values with Offload’s standard synthetic partitioning scheme (i.e. with the `--partition-granularity` option). The Partition Functions feature provides a way for users to create an `INT64` representation of the source partitioning data to use as a synthetic partition key in both of these cases.
 
 Example 18: Offloading with Partition Functions
 
@@ -860,7 +857,7 @@ In the following example, the SH.CUSTOMERS table is offloaded to BigQuery and sy
 CREATE FUNCTION UDFS.CUST_NAME_TO_PART_KEY (str STRING) RETURNS INT64 AS (ASCII(UPPER(str)));
 ```
 
-With this UDF, Gluent Offload Engine is able to offload the SH.CUSTOMERS table and add a synthetic partition key with an `INT64` representation of the CUST_LAST_NAME source data as follows:
+With this UDF, GOE is able to offload the SH.CUSTOMERS table and add a synthetic partition key with an `INT64` representation of the CUST_LAST_NAME source data as follows:
 
 ```shell
 $OFFLOAD_HOME/bin/offload -t SH.CUSTOMERS -x \
@@ -871,7 +868,7 @@ $OFFLOAD_HOME/bin/offload -t SH.CUSTOMERS -x \
   --partition-granularity=1
 ```
 
-With this command, Offload will apply the UDFS.CUST_NAME_TO_PART_KEY function to the CUST_LAST_NAME column to generate a synthetic INT64 partition key value between 65 and 90 (capital letters) and each backend synthetic partition will have a range of 1.
+With this command, Offload will apply the UDFS.CUST_NAME_TO_PART_KEY function to the CUST_LAST_NAME column to generate a synthetic `INT64` partition key value between 65 and 90 (capital letters) and each backend synthetic partition will have a range of 1.
 
 ***
 

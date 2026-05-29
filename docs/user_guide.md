@@ -453,33 +453,33 @@ GOE currently supports all of the Oracle Database data types listed in Table 3 b
 
 ## Default Data Type Mappings
 
-Table 3 lists the default data type mappings when offloading data from Oracle Database to Impala (Cloudera Data Hub, Cloudera Data Platform), Google BigQuery, Snowflake or Azure Synapse Analytics.
+Table 3 lists the default data type mappings when offloading data from Oracle Database to Google BigQuery.
 
 ### Table 3: Offload Default Data Type Mappings (Oracle Database)
 
-| Oracle Database | Impala | Google BigQuery | Snowflake | Azure Synapse Analytics | Comments |
-| :---- | :---- | :---- | :---- | :---- | :---- |
-| `CHAR` | `STRING` | `STRING` | `VARCHAR` | `char` | |
-| `NCHAR` | `STRING` | `STRING` | `VARCHAR` | `nchar` | |
-| `CLOB` | `STRING` | `STRING` | `VARCHAR` | `varchar(max)` | |
-| `NCLOB` | `STRING` | `STRING` | `VARCHAR` | `nvarchar(max)` | |
-| `VARCHAR2` | `STRING` | `STRING` | `VARCHAR` | `varchar` | |
-| `NVARCHAR2` | `STRING` | `STRING` | `VARCHAR` | `nvarchar` | |
-| `RAW` | `STRING` | `BYTES` | `BINARY` | `varbinary` | |
-| `BLOB` | `STRING` | `BYTES` | `BINARY` | `varbinary(max)` | |
-| `NUMBER(<=4,0)` | `BIGINT` | `INT64` | `NUMBER(p,0)` | `smallint` | |
-| `NUMBER([5-9],0)` | `BIGINT` | `INT64` | `NUMBER(p,0)` | `int` | |
-| `NUMBER([10-18],0)` | `BIGINT` | `INT64` | `NUMBER(p,0)` | `bigint` |  |
-| `NUMBER(>18,0)` | `DECIMAL(38,0)` | `NUMERIC` `BIGNUMERIC` | `NUMBER(38,0)` | `numeric(38,0)` | See [Offloading Numeric Data to Google BigQuery](#offloading-numeric-data-to-google-bigquery) |
-| `NUMBER(*,*)` | `DECIMAL(38,s)` | `NUMERIC` `BIGNUMERIC` | `NUMBER(p,s)` | `numeric(p,s)` | See [Offloading Numeric Data to Google BigQuery](#offloading-numeric-data-to-google-bigquery) |
-| `FLOAT` | `DECIMAL` | `NUMERIC` | `NUMBER(p,s)` | `numeric(38,18)` | |
-| `BINARY_FLOAT` | `FLOAT` | \- | \- | `real` | See [Floating Point Data Types in Google BigQuery](#floating-point-data-types-in-google-bigquery) |
-| `BINARY_DOUBLE` | `DOUBLE` | `FLOAT64` | `FLOAT` | `float` | |
-| `DATE` | `TIMESTAMP` | `DATETIME` | `TIMESTAMP_NTZ` | `datetime2` | |
-| `TIMESTAMP` | `TIMESTAMP` | `DATETIME` | `TIMESTAMP_NTZ` | `datetime2` | See [Offloading High-Precision Timestamp Data to Google BigQuery](#offloading-high-precision-timestamp-data-to-google-bigquery) |
-| `TIMESTAMP WITH TIME ZONE` | `TIMESTAMP` | `TIMESTAMP` | `TIMESTAMP_TZ` | `datetimeoffset` | See [Offloading High-Precision Timestamp Data to Google BigQuery](#offloading-high-precision-timestamp-data-to-google-bigquery) and [Offloading Time Zoned Data](#offloading-time-zoned-data) |
-| `INTERVAL DAY TO SECOND` | `STRING` | `STRING` | `VARCHAR` | `varchar` | See [Offloading Interval Data Types](#offloading-interval-data-types) |
-| `INTERVAL YEAR TO MONTH` | `STRING` | `STRING` | `VARCHAR` | `varchar` | See [Offloading Interval Data Types](#offloading-interval-data-types) |
+| Oracle Database | Google BigQuery | Comments |
+| :---- | :---- | :---- |
+| `CHAR` | `STRING` | |
+| `NCHAR` | `STRING` | |
+| `CLOB` | `STRING` | |
+| `NCLOB` | `STRING` | |
+| `VARCHAR2` | `STRING` | |
+| `NVARCHAR2` | `STRING` | |
+| `RAW` | `BYTES` | |
+| `BLOB` | `BYTES` | |
+| `NUMBER(<=4,0)` | `INT64` | |
+| `NUMBER([5-9],0)` | `INT64` | |
+| `NUMBER([10-18],0)` | `INT64` |  |
+| `NUMBER(>18,0)` | `NUMERIC` `BIGNUMERIC` | See [Offloading Numeric Data to Google BigQuery](#offloading-numeric-data-to-google-bigquery) |
+| `NUMBER(*,*)` | `NUMERIC` `BIGNUMERIC` | See [Offloading Numeric Data to Google BigQuery](#offloading-numeric-data-to-google-bigquery) |
+| `FLOAT` | `NUMERIC` | |
+| `BINARY_FLOAT` | \- | See [Floating Point Data Types in Google BigQuery](#floating-point-data-types-in-google-bigquery) |
+| `BINARY_DOUBLE` | `FLOAT64` | |
+| `DATE` | `DATETIME` | |
+| `TIMESTAMP` | `DATETIME` | See [Offloading High-Precision Timestamp Data to Google BigQuery](#offloading-high-precision-timestamp-data-to-google-bigquery) |
+| `TIMESTAMP WITH TIME ZONE` | `TIMESTAMP` | See [Offloading High-Precision Timestamp Data to Google BigQuery](#offloading-high-precision-timestamp-data-to-google-bigquery) and [Offloading Time Zoned Data](#offloading-time-zoned-data) |
+| `INTERVAL DAY TO SECOND` | `STRING` | See [Offloading Interval Data Types](#offloading-interval-data-types) |
+| `INTERVAL YEAR TO MONTH` | `STRING` | See [Offloading Interval Data Types](#offloading-interval-data-types) |
 
 ## Data Sampling During Offload
 
@@ -487,7 +487,7 @@ GOE fine-tunes the default data mappings by sampling data for all columns in the
 
 Offload bases the volume of data to be sampled on the size of the RDBMS table. This can be overridden by adding the `--data-sample-percent` option to the `offload` command (specifying a percentage between 0 and 100, where 0 disables sampling altogether).
 
-Offload determines the degree of parallelism to use when sampling data from the value of `DATA_SAMPLE_PARALLELISM`. This can be overridden by adding the `--data-sample-parallelism` option to the `offload` command (specifying a degree of 0 or a positive integer, where 0 disables parallelism)
+Offload determines the degree of parallelism to use when sampling data from the value of `DATA_SAMPLE_PARALLELISM`. This can be overridden by adding the `--data-sample-parallelism` option to the `offload` command (specifying a degree of 0 or a positive integer, where 0 disables parallelism).
 
 ## Offloading Not Null Columns to Google BigQuery
 
@@ -500,15 +500,15 @@ Offload only considers columns to be mandatory if they are defined by Oracle Dat
 
 To override the global `OFFLOAD_NOT_NULL_PROPAGATION` configuration value, or to include columns with mandatory constraints that are not automatically propagated, the `--not-null-columns` option can be added to an `offload` command. This option accepts a list of one or more valid columns, one or more wildcards, or a combination of the two. Offload will define all specified columns as `NOT NULL` when creating the backend table, regardless of their status in the RDBMS.
 
-Care should be taken when propagating constraints for columns that cannot be guaranteed to contain no NULLs. During validation of the staging data, Offload will specifically check for NULLs for any column that is defined as mandatory in the backend.
+Care should be taken when propagating constraints for columns that cannot be guaranteed to contain no NULL values. During validation of the staging data, Offload will specifically check for NULL values for any column that is defined as mandatory in the backend.
 
 ## Offloading Numeric Data to Google BigQuery
 
-Google BigQuery provides two decimal data types: `NUMERIC` and `BIGNUMERIC`. The `NUMERIC` data type has a specification of `(38,9)` with a fixed decimal point, meaning a maximum of 29 digits to the left of the decimal point and a maximum of 9 digits to the right. The BIGNUMERIC data type has a specification of `(76,38)` with a fixed decimal point, meaning a maximum of 38 digits to the left of the decimal point and a maximum of 38 digits to the right (more precisely, the specification of `BIGNUMERIC` is `(76,38)`, allowing for some numbers with 39-digits to the left of the decimal point).
+Google BigQuery provides two decimal data types: `NUMERIC` and `BIGNUMERIC`. The `NUMERIC` data type has a specification of `(38,9)` with a fixed decimal point, meaning a maximum of 29 digits to the left of the decimal point and a maximum of 9 digits to the right. The `BIGNUMERIC` data type has a specification of `(76,38)` with a fixed decimal point, meaning a maximum of 38 digits to the left of the decimal point and a maximum of 38 digits to the right.
 
-When offloading numeric data such as decimals or large integrals to Google BigQuery, Offload determines which BigQuery type is most appropriate, based on either the known precision and scale of Oracle columns of type `NUMBER(p,s)` or from sampled data for Oracle columns of unbounded type `NUMBER`. Data that offloads to NUMERIC by default can be offloaded to `BIGNUMERIC` with the `--decimal-columns` and `--decimal-columns-type` override options (see [Table 6: Offload Override Data Type Mappings (Oracle Database)](#table-6-offload-override-data-type-mappings-oracle-database) below).
+When offloading numeric data such as decimals or large integrals to Google BigQuery, Offload determines which BigQuery type is most appropriate, based on either the known precision and scale of Oracle columns of type `NUMBER(p,s)` or from sampled data for Oracle columns of unbounded type `NUMBER`. Data that offloads to `NUMERIC` by default can be offloaded to `BIGNUMERIC` with the `--decimal-columns` and `--decimal-columns-type` override options (see [Table 6: Offload Override Data Type Mappings (Oracle Database)](#table-6-offload-override-data-type-mappings-oracle-database) below).
 
-For numeric data that exceeds the specifications of NUMERIC and BIGNUMERIC, Offload offers two options:
+For numeric data that exceeds the specifications of `NUMERIC` and `BIGNUMERIC`, Offload offers two options:
 
 - Use decimal rounding options during offload (see [Decimal Scale Rounding](#decimal-scale-rounding) below)
 - Offload numeric data to a floating point type (see [Converting Numeric Data to Double](#converting-numeric-data-to-double) below)

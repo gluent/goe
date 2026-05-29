@@ -520,7 +520,7 @@ __NOTE:__ Both of these options result in some data change and it will be for us
 ***
 
 ## Floating Point Data Types in Google BigQuery
-Google BigQuery provides a single 64-bit floating point data type (`FLOAT64`). This means that the Oracle Database 32-bit `BINARY_FLOAT` data type does not have a corresponding type and will be offloaded to the 64-bit floating point data type. This has potential to be lossy - see [Lossy Data Operations](#lossy-data-operations) (see below).
+Google BigQuery provides a single 64-bit floating point data type (`FLOAT64`). This means that the Oracle Database 32-bit `BINARY_FLOAT` data type does not have a corresponding type and will be offloaded to the 64-bit floating point data type. This has potential to be lossy, described in [Lossy Data Operations](#lossy-data-operations) below.
 
 ## Offloading High-Precision Timestamp Data to Google BigQuery
 
@@ -609,22 +609,18 @@ __NOTE:__ Offload will never attempt to automatically offload exceptional data w
 
 ## Decimal Scale Rounding
 
-The Oracle Database `NUMBER` data type is extremely flexible and caters for high-scale decimal data that exceeds the limits available in some target backend systems (such as Snowflake). To offload decimal data that exceeds the specification of the backend system, the `--allow-decimal-scale-rounding` option must be used in conjunction with the `--decimal-columns-type` and `--decimal-columns` options to define the target type for the data. By using the rounding option, the user acknowledges that some data loss due to decimal rounding is likely and acceptable.
+The Oracle Database `NUMBER` data type is extremely flexible and caters for high-scale decimal data that exceeds the limits available in some target backend systems. To offload decimal data that exceeds the specification of the backend system, the `--allow-decimal-scale-rounding` option must be used in conjunction with the `--decimal-columns-type` and `--decimal-columns` options to define the target type for the data. By using the rounding option, the user acknowledges that some data loss due to decimal rounding is likely and acceptable.
 
 ## Converting Numeric Data to Double
 
 Using the `--double-columns` override option to offload high-precision/scale numeric data or 32-bit floating point data to a 64-bit double can lead to data loss and should only be considered when there is no alternative and the consequences are both understood and acceptable.
-
-## Converting Floating Point Special Values
-
-Not all backend systems support floating point special values such as NaN and Infinity. For such systems, Offload will not allow `BINARY_FLOAT` or `BINARY_DOUBLE` columns to be offloaded without the `--allow-floating-point-conversions` override option. Using this option will enable Offload to convert special floating point values to `NULL`. This option currently applies only to Azure Synapse Analytics.
 
 ## Lossy Data Operations
 
 To summarize, the potentially-lossy offload operations and their corresponding options are as follows:
 
 - Rounding decimals: Using the `--allow-decimal-scale-rounding` option to round decimals that exceed the backend specification for decimal data
-- Offloading sub-microsecond timestamps: Using the --allow-nanosecond-timestamp-columns option to offload columns with a sub-microsecond specification to a backend system that doesn’t support the same level of precision
+- Offloading sub-microsecond timestamps: Using the `--allow-nanosecond-timestamp-columns` option to offload columns with a sub-microsecond specification to a backend system that doesn’t support the same level of precision
 - Converting data to a 64-bit floating point number: Using the `--double-columns` option to offload decimal or 32-bit floating-point data that would not otherwise be possible
 
 ***

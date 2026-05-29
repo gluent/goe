@@ -881,7 +881,7 @@ __NOTE:__ In addition to Full Offload (as shown in Example 18), Partition Functi
 There are several ways to reference and qualify the name and location of a custom UDF for use as a partition function:
 
 - Fully-qualified in the `--partition-functions` option (e.g. `--partition-functions=MY_UDF_DATASET.MY_UDF_NAME`)
-- If the dataset name is not provided in the `--partition-functions` option (e.g. `--partition-functions=MY_UDF_NAME`
+- If the dataset name is not provided in the `--partition-functions` option (e.g. `--partition-functions=MY_UDF_NAME`):
   - If `OFFLOAD_UDF_DB` is set in the `offload.env` configuration file, Offload will use this to identify the UDF dataset
   - If `OFFLOAD_UDF_DB` is not set in the `offload.env` configuration file, Offload will assume the UDF is in the same dataset as the offloaded table
 
@@ -893,7 +893,7 @@ When creating a UDF for use with Partition Functions, the following conditions m
 - The UDF return data type must be `INT64`
 - The UDF must have a single parameter of data type `STRING`, `[BIG]NUMERIC` or `INT64`
 - The UDF must be deterministic (i.e. the same input will always yield the same output)
-- Synthetic backend partitioning is range partitioning; therefore, the SQL UDF must retain the same ordering relationship and characteristics of the source data. This is especially critical if the source partition column is likely to be queried with range operators (`<`, `<=`, `>`, `>=` `BETWEEN`), else the query can yield wrong results. In Example 18 above, the CUST_NAME_TO_PART_KEY function preserves the ordering of the CUST_LAST_NAME data (i.e. all names beginning ‘A’ - ASCII 65 - are less than names beginning with ‘B’ - ASCII 66 and so on)
+- Synthetic backend partitioning is range partitioning; therefore, the SQL UDF must retain the same ordering relationship and characteristics of the source data. This is especially critical if the source partition column is likely to be queried with range operators (`<`, `<=`, `>`, `>=` `BETWEEN`), else the query can yield wrong results. In Example 18 above, the CUST_NAME_TO_PART_KEY function preserves the ordering of the CUST_LAST_NAME data (i.e. all names beginning 'A' - ASCII 65 - are less than names beginning with 'B' - ASCII 66 and so on)
 - See [Google BigQuery Custom Partition Functions](https://cloud.google.com/bigquery/docs/user-defined-functions#custom-partition-functions) for permissions and other installation requirements
 
 # Backend Data Sorting/Clustering

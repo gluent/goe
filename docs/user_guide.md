@@ -900,11 +900,11 @@ When creating a UDF for use with Partition Functions, the following conditions m
 
 In addition to partitioning, offloaded data can optionally be sorted or clustered according to options provided by the backend. This can lead to more efficient data access for users of the offloaded data.
 
-To enable data sorting and clustering for Google BigQuery, set the `OFFLOAD_SORT_ENABLED` configuration parameter to `true`. Alternatively, this can be managed for individual offloads by adding the `--offload-sort-enabled` option to the `offload` command (set to true), along with the `--sort-columns` option to specify the columns for distributing the data in the backend. Google BigQuery tables can be clustered by up to four columns
+To enable data sorting and clustering for Google BigQuery, set the `OFFLOAD_SORT_ENABLED` configuration parameter to `true`. Alternatively, this can be managed for individual offloads by adding the `--offload-sort-enabled` option to the `offload` command (set to `true`), along with the `--sort-columns` option to specify the columns for distributing the data in the backend. Google BigQuery tables can be clustered by up to four columns.
 
 # Resetting an Offloaded Table
 
-Offload provides a `--reset-backend-table` option that can be added to an `offload` command to fully reset a previously offloaded table. This option is useful when refreshing small offloaded tables such as reference tables or dimensions. This option will cause Offload to drop all offloaded data from the backend, so it should be used carefully.
+Offload provides a `--reset-backend-table` option that can be added to an `offload` command to fully reset a previously offloaded table. This option is useful when refreshing small offloaded tables such as reference tables or dimensions. This option will cause Offload to drop all offloaded data for the table from the backend, so it should be used carefully.
 
 ***
 

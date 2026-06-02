@@ -14,6 +14,7 @@ Offload supports several scenarios for offloading data from the RDBMS:
 Heap, partitioned and index-organized tables can be fully-offloaded from the RDBMS as follows.
 
 ## Example 1: Offload a Full Table
+
 ```shell
 $OFFLOAD_HOME/bin/offload -t SH.PRODUCTS -x
 ```
@@ -23,11 +24,13 @@ A log file containing all of the steps in the offload process will be generated 
 Backend tables can be optionally partitioned, even if the source RDBMS table is not partitioned. See [Managing Backend Partitioning](#managing-backend-partitioning) for details.
 
 It is possible to rename the target backend table when offloading with the `--target-name` option. This can be useful for a number of reasons, including when:
-- The source RDBMS table name includes a character that is not supported by the backend (for example, Oracle Database allows `$` to be used for identifiers but this is not supported by Impala or BigQuery)
+
+- The source RDBMS table name includes a character that is not supported by the backend (for example, Oracle Database allows `$` to be used for identifiers but this is not supported by BigQuery)
 - The naming standards used for applications in the backend system are different to the source RDBMS application (either for database names or object names)
 - The backend identifier limit/schema cannot accommodate necessary Offload extensions such as when using `DB_NAME_PREFIX`
 
 ## Example 2: Change the Offload Target Name
+
 The following example offloads a RDBMS table named `SH.SALES$` to a backend that doesn’t support the `$` character in table names, meaning that the target table needs to be renamed to remove the `$`.
 
 ```shell
@@ -50,6 +53,7 @@ Partition-Based Offload can be used for the following scenarios:
 Tables that are range-partitioned on `DATE`, `TIMESTAMP`, `NUMBER` or `[N]VARCHAR2` columns can be fully or partially offloaded. Partitions can be offloaded contiguously up to a boundary by specifying a high water mark in the `offload` command. Partition boundaries can be increased in subsequent offloads to append additional partitions without affecting historical partitions.
 
 ### Partition Boundary Options
+
 To offload a contiguous range of partitions from a range-partitioned table, one of the following boundary options must be used:
 
 - `--older-than-date`: Offload `DATE` or `TIMESTAMP` partitions with a high water mark less than this value. Synonym for `--less-than-value`, e.g.
@@ -520,6 +524,7 @@ __NOTE:__ Both of these options result in some data change and it will be for us
 ***
 
 ## Floating Point Data Types in Google BigQuery
+
 Google BigQuery provides a single 64-bit floating point data type (`FLOAT64`). This means that the Oracle Database 32-bit `BINARY_FLOAT` data type does not have a corresponding type and will be offloaded to the 64-bit floating point data type. This has potential to be lossy, described in [Lossy Data Operations](#lossy-data-operations) below.
 
 ## Offloading High-Precision Timestamp Data to Google BigQuery
@@ -533,6 +538,7 @@ __NOTE:__ Allowing high-precision timestamp columns to be offloaded to Google Bi
 ***
 
 ## Offloading Time Zoned Data
+
 For Oracle Database columns of `TIMESTAMP WITH TIME ZONE` data type, data is normalized to Coordinated Universal Time (UTC) during offload to Google BigQuery. Offload converts named time zones, e.g. `2016-01-14 22:39:44 US/Pacific`, to time zone offsets, e.g. `2016-01-14 10:39:44 -8:00` to ensure backend systems can process the values regardless of their time zone database edition.
 
 ## Offloading Interval Data Types

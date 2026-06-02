@@ -6,47 +6,49 @@ This page details Google Cloud Platform (GCP) components required, with recommen
 
 ### Service Account
 
-A service account should be provisioned from the GCP project. This service account can be used by any service that will execute GOE commands, for example it could be attached to a Google Compute Engine (GCE) virtual machine.
+A service account should be provisioned from the GCP project. This service account can be used by any service that will execute GOE commands, for example it could be attached to a Google Compute Engine (GCE) virtual machine (VM).
 
 #### Service Account Authentication & Troubleshooting
 
 To verify which GCP account or service account is active in your current shell session, use:
-```bash
+
+```shell
 gcloud auth list
 ```
 
 If you are executing GOE on an external node using a service account key file, you must activate the service account and set your default project. Run:
-```bash
+
+```shell
 gcloud auth activate-service-account SERVICE_ACCOUNT_EMAIL \
   --key-file=/path/to/service-account-key.json \
   --project=GOOGLE_PROJECT_ID
 ```
-Replace `SERVICE_ACCOUNT_EMAIL` with your service account's email, `/path/to/service-account-key.json` with the path to your credentials file, and `GOOGLE_PROJECT_ID` with the ID of your GCP project.
 
+Replace `SERVICE_ACCOUNT_EMAIL` with your service account's email, `/path/to/service-account-key.json` with the path to your credentials file, and `GOOGLE_PROJECT_ID` with the ID of your GCP project.
 
 ### Cloud Storage Bucket
 
 A Google Cloud Storage (GCS) bucket is required to stage data before ingesting it into BigQuery. Ensure the bucket is in a location compatible with the target BigQuery dataset.
 
-### Dataproc (Spark)
+### Managed Service for Apache Spark
 
 For tables of a non-trivial size, GOE uses Spark to copy data from the source database to cloud storage. In a GCP setting this is likely to be provided by one of two services:
 
-1. Dataproc Batches
-1. Dataproc
+1. Managed Service for Apache Spark (serverless)
+1. Managed Service for Apache Spark (permanent)
 
 ### Roles
 
 The role names below are used throughput this page but can be changed to suit company policies. These roles will provide adequate access to stage data in cloud storage and load it into BigQuery.
 
 | Role                | Mandatory | Purpose                                                                         |
-| ------------------- | ----------| ------------------------------------------------------------------------------- |
-| `goe_gcs_role`      |      Y    | Permissions to read/write on the GOE staging bucket.                            |
-| `goe_bq_core_role`  |      Y    | Core permissions to interact with BigQuery, list datasets/tables/etc.<br />No data read/write permissions.<br />Will be granted at the project level. |
-| `goe_bq_app_role`   |      Y    | Permissions to read/write data in the final dataset.<br />Optionally can include table create/drop permissions.<br />Locked down at dataset level. |
-| `goe_bq_stg_role`   |      Y    | Permissions to read data and create/drop staging tables in the staging dataset.<br />Locked down at dataset level. |
-| `goe_dataproc_role` |      N    | Permissions to interact with a permanent Dataproc cluster.                      |
-| `goe_batches_role`  |      N    | Permissions to interact with Dataproc Batches service.                          |
+| :------------------ | :-------: | :------------------------------------------------------------------------------ |
+| `goe_gcs_role`      |     Y     | - Permissions to read/write on the GOE staging bucket.                            |
+| `goe_bq_core_role`  |     Y     | - Core permissions to interact with BigQuery, list datasets/tables/etc.<br />- No data read/write permissions.<br />- Will be granted at the project level. |
+| `goe_bq_app_role`   |     Y     | - Permissions to read/write data in the final dataset.<br />- Optionally can include table create/drop permissions.<br />- Locked down at dataset level. |
+| `goe_bq_stg_role`   |     Y     | - Permissions to read data and create/drop staging tables in the staging dataset.<br />- Locked down at dataset level. |
+| `goe_dataproc_role` |     N     | - Permissions to interact with a permanent Managed Service for Apache Spark (permanent). |
+| `goe_batches_role`  |     N     | - Permissions to interact with Managed Service for Apache Spark (serverless).     |
 
 ### Compute Engine Virtual Machine
 
@@ -62,7 +64,7 @@ These examples can be used to create the components described above.
 
 Note that the location below must be compatible with the BigQuery dataset location.
 
-```
+```shell
 PROJECT=<your-project>
 REGION=<your-region>
 SVC_ACCOUNT=<your-service-account-name>
@@ -73,7 +75,7 @@ TARGET_DATASET=<your-target-dataset>
 
 ### Service Account
 
-```
+```shell
 gcloud iam service-accounts create ${SVC_ACCOUNT} \
 --project ${PROJECT} \
 --description="GOE service account"
@@ -84,17 +86,18 @@ gcloud projects add-iam-policy-binding ${PROJECT} \
 ```
 
 ### Cloud Storage Bucket
-```
+
+```shell
 gcloud storage buckets create gs://${BUCKET} --project ${PROJECT} \
 --location=${LOCATION} \
 --uniform-bucket-level-access
 ```
 
-### Dataproc Batches
+### Managed Service for Apache Spark (serverless)
 
-Optional commands if using Dataproc Batches.
+Optional commands if using Managed Service for Apache Spark (serverless).
 
-```
+```shell
 gcloud compute networks subnets update ${SUBNET} \
 --project=${PROJECT} --region=${REGION} \
 --enable-private-ip-google-access
@@ -104,18 +107,20 @@ gcloud projects add-iam-policy-binding ${PROJECT} \
 --role=roles/dataproc.worker
 ```
 
-### Dataproc
+### Managed Service for Apache Spark (permanent)
 
-Optional commands if using Dataproc.
+Optional commands if using Managed Service for Apache Spark (permanent).
 
 Enable required services:
-```
+
+```shell
 gcloud services enable dataproc.googleapis.com --project ${PROJECT}
 gcloud services enable iamcredentials.googleapis.com --project=${PROJECT}
 ```
 
 Values supplied below are examples only, changes will likely be required for each use case:
-```
+
+```shell
 SUBNET=<your-subnet>
 CLUSTER_NAME=<cluster-name>
 DP_SVC_ACCOUNT=goe-dataproc
@@ -149,7 +154,8 @@ gcloud dataproc clusters create ${CLUSTER_NAME} \
 #### goe_gcs_role
 
 Note that the role grant is bound to the staging bucket. No project-wide access is granted.
-```
+
+```shell
 gcloud iam roles create goe_gcs_role --project ${PROJECT} \
 --title="GOE Cloud Storage Access" \
 --description="GOE permissions to access staging Cloud Storage bucket" \
@@ -164,8 +170,10 @@ gcloud storage buckets add-iam-policy-binding gs://${BUCKET} \
 ```
 
 #### goe_bq_core_role
+
 Note that this role is granted at the project level.
-```
+
+```shell
 gcloud iam roles create goe_bq_core_role --project ${PROJECT} \
 --title="GOE Core BigQuery Access" \
 --description="GOE permissions for core access to BigQuery" \
@@ -181,16 +189,23 @@ gcloud projects add-iam-policy-binding ${PROJECT} \
 ```
 
 If GOE is permitted to create datasets then add these privileges:
-```
+
+```shell
 gcloud iam roles update goe_bq_core_role --project ${PROJECT} \
 --add-permissions=bigquery.datasets.create
 ```
 
 #### goe_bq_app_role
+
 Note that the role grant is bound to the target BigQuery dataset. No project-wide access is granted. The `bq` utility is used to grant the role because `gcloud` does not support these granular grants.
 
-Also note that the target dataset must be created *before* executing these commands (see [Generating Dataset DDL](#generating-dataset-ddl) for details).
-```
+***
+
+__NOTE:__ The target dataset must be created *before* executing these commands (see [Generating Dataset DDL](#generating-dataset-ddl) for details).
+
+***
+
+```shell
 gcloud iam roles create goe_bq_app_role --project ${PROJECT} \
 --title="GOE Data Update Access" \
 --description="Grants GOE permissions to read and modify data in an application dataset" \
@@ -204,22 +219,30 @@ TO \"serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com\";
 ```
 
 If GOE is permitted to create tables then add these privileges:
-```
+
+```shell
 gcloud iam roles update goe_bq_app_role --project ${PROJECT} \
 --add-permissions=bigquery.tables.create,bigquery.tables.update
 ```
 
 If GOE is permitted to drop tables then add these privileges:
-```
+
+```shell
 gcloud iam roles update goe_bq_app_role --project ${PROJECT} \
 --add-permissions=bigquery.tables.delete
 ```
 
 #### goe_bq_stg_role
+
 Note that the role grant is bound to the staging BigQuery dataset (which has the same name as the target dataset but with a "_load" suffix). No project-wide access is granted. The `bq` utility is used to grant the role because `gcloud` does not support these granular grants.
 
-Also note that the staging dataset must be created *before* executing these commands (see [Generating Dataset DDL](#generating-dataset-ddl) for details).
-```
+***
+
+__NOTE:__ The staging dataset must be created *before* executing these commands (see [Generating Dataset DDL](#generating-dataset-ddl) for details).
+
+***
+
+```shell
 gcloud iam roles create goe_bq_stg_role --project ${PROJECT} \
 --title="GOE Data Staging Access" \
 --description="Grants GOE permissions to manage objects in a staging dataset" \
@@ -234,7 +257,8 @@ TO \"serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com\";
 ```
 
 #### goe_dataproc_role
-```
+
+```shell
 gcloud iam roles create goe_dataproc_role --project ${PROJECT} \
 --title="GOE Dataproc Access" --description="GOE Dataproc Access" \
 --permissions=dataproc.clusters.get,dataproc.clusters.use,\
@@ -252,7 +276,8 @@ gcloud projects add-iam-policy-binding ${PROJECT} \
 ```
 
 #### goe_batches_role
-```
+
+```shell
 gcloud iam roles create goe_batches_role --project ${PROJECT} \
 --title="GOE Dataproc Access" --description="GOE Dataproc Access" \
 --permissions=dataproc.batches.create,dataproc.batches.get \
@@ -264,8 +289,10 @@ gcloud projects add-iam-policy-binding ${PROJECT} \
 ```
 
 ## Compute Engine Virtual Machine
+
 Values supplied below are examples only. Changes are likely to be required for each use case:
-```
+
+```shell
 INSTANCE_NAME=goe-node
 ZONE=<instance-zone>
 SUBNET=<your-subnet>
@@ -292,8 +319,8 @@ gcloud compute instances create ${INSTANCE_NAME} \
 
 DDL to create BigQuery datasets can be generated using the `--ddl-file` Offload option. For example:
 
-```
-bin/offload -t schema1.table1 --create-backend-db --ddl-file=/tmp/schema1.table1.sql
+```shell
+$OFFLOAD_HOME/bin/offload -t schema1.table1 --create-backend-db --ddl-file=/tmp/schema1.table1.sql
 ```
 
 After running the command above the file `/tmp/schema1.table1.sql` will contain:

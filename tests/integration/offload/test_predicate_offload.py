@@ -15,7 +15,7 @@
 # limitations under the License.
 
 """
-    Offload predicate test code.
+Offload predicate test code.
 """
 
 from copy import copy
@@ -42,7 +42,6 @@ from tests.testlib.test_framework.test_functions import (
     get_frontend_testing_api,
     get_test_messages,
 )
-
 
 DIM_NAME = "INTEG_PBO_DIM"
 FACT_NAME = "INTEG_PBO_FACT"
@@ -74,17 +73,14 @@ def create_and_offload_dim_table(config, frontend_api, messages, schema):
         messages,
         frontend_api.standard_dimension_frontend_ddl(schema, DIM_NAME),
     )
-    # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
-    try:
-        run_offload(
-            {
-                "owner_table": schema + "." + DIM_NAME,
-                "create_backend_db": True,
-                "execute": True,
-            }
-        )
-    except OffloadException:
-        # If this one fails then we let the exception bubble up.
+    # If the table has already been offloaded previously then we'll re-use it.
+    if not run_offload(
+        {
+            "owner_table": schema + "." + DIM_NAME,
+            "create_backend_db": True,
+            "execute": True,
+        }
+    ):
         run_offload(
             {
                 "owner_table": schema + "." + DIM_NAME,

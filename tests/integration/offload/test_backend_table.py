@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TestBackendTable: Unit test library to test table level API for the configured backend.
-    Because there are so few table level methods that do not need a database we do not
-    skim all backends like we do for BackendApi testing.
-    A good number of methods are not unit tested because they need detailed inputs, such
-    as RDBMS columns, cast information, staging file details. For these we continue to
-    rely on integration tests.
+"""TestBackendTable: Unit test library to test table level API for the configured backend.
+Because there are so few table level methods that do not need a database we do not
+skim all backends like we do for BackendApi testing.
+A good number of methods are not unit tested because they need detailed inputs, such
+as RDBMS columns, cast information, staging file details. For these we continue to
+rely on integration tests.
 """
+
 from datetime import datetime
 import decimal
 import logging
@@ -56,7 +57,6 @@ from tests.testlib.test_framework.factory.backend_testing_api_factory import (
 from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
     frontend_testing_api_factory,
 )
-
 
 FACT_NAME = "INTEG_BACKEND_TABLE_FACT"
 
@@ -142,17 +142,14 @@ class TestCurrentBackendTable(TestCase):
                 self.schema, FACT_NAME, simple_partition_names=True
             ),
         )
-        # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
-        try:
-            run_offload(
-                {
-                    "owner_table": self.schema + "." + FACT_NAME,
-                    "create_backend_db": True,
-                    "execute": True,
-                }
-            )
-        except OffloadException:
-            # If this one fails then we let the exception bubble up.
+        # If the table has already been offloaded previously then we'll re-use it.
+        if not run_offload(
+            {
+                "owner_table": self.schema + "." + FACT_NAME,
+                "create_backend_db": True,
+                "execute": True,
+            }
+        ):
             run_offload(
                 {
                     "owner_table": self.schema + "." + FACT_NAME,

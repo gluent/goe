@@ -43,7 +43,6 @@ from tests.unit.test_functions import (
     FAKE_ORACLE_BQ_ENV,
 )
 
-
 FRONTEND_COLUMNS = [
     OracleColumn(
         "COL_VARCHAR2",
@@ -356,6 +355,18 @@ def test_dataproc_batches_describe_cmd(config, messages, oracle_table, fake_oper
   "stateMessage": "Job failed with message [SyntaxError: invalid syntax]. Additional details can be found at:\\nhttps://console.cloud.google.com/dataproc/batches/west1/goe-batch-20240426080958?project=p\\ngcloud dataproc batches wait 'goe-batch-20240426080958' --region 'west1' --project 'p'\\nhttps://console.cloud.google.com/storage/browser/dataproc-staging-west1-123-l/batch-3347f/\\ngs://dataproc-staging-west1-123-l/google-cloud-dataproc-metainfo/2ad11/jobs/srvls-batch-3347f/driveroutput.*",
   "stateTime": "2024-04-26T10:27:48.237750Z",
   "uuid": "12cea"
+}""",
+            True,
+        ),
+        # Describe output for a job failing with 'Task was not acquired'.
+        (
+            """{
+    "createTime": "2026-05-13T08:05:33Z",
+    "creator": "sa@p.iam.gserviceaccount.com",
+    "name": "projects/p/locations/west1/batches/goe-batch-canary",
+    "state": "FAILED",
+    "stateMessage": "Task was not acquired.",
+    "uuid": "12cea"
 }""",
             True,
         ),

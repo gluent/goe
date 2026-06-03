@@ -47,6 +47,7 @@ if TYPE_CHECKING:
 GCLOUD_PROPERTY_SEPARATOR = ",GSEP,"
 GCLOUD_BATCHES_STATE_CANCELLED = "CANCELLED"
 GCLOUD_BATCHES_STATE_FAILED = "FAILED"
+GCLOUD_BATCHES_STATE_MESSAGE_TASK_NOT_ACQUIRED = "Task was not acquired"
 
 
 class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
@@ -362,13 +363,19 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             self.log(f"Exception describing Dataproc batch: {str(exc)}", detail=VERBOSE)
             return False
         state = reponse_dict.get("state")
+        state_message = reponse_dict.get("stateMessage", "")
         if state and state in [
             GCLOUD_BATCHES_STATE_CANCELLED,
             GCLOUD_BATCHES_STATE_FAILED,
         ]:
             if state == GCLOUD_BATCHES_STATE_CANCELLED:
                 raise OffloadTransportException(
-                    "Dataproc Batch is incomplete due to TTL, increase GOOGLE_DATAPROC_BATCHES_TTL"
+                    "Dataproc batch is incomplete due to TTL, increase GOOGLE_DATAPROC_BATCHES_TTL"
+                )
+            elif GCLOUD_BATCHES_STATE_MESSAGE_TASK_NOT_ACQUIRED in state_message:
+                raise OffloadTransportException(
+                    f"Dataproc batch failed with stateMessage containing '{GCLOUD_BATCHES_STATE_MESSAGE_TASK_NOT_ACQUIRED}'. "
+                    "The likely cause is missing VPC network/firewall prerequisites for Dataproc Serverless"
                 )
             else:
                 raise OffloadTransportException(

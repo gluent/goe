@@ -110,5 +110,3 @@ Data transport validation tests that the data processing cluster can fetch data 
 To simplify transitions between Gluent software releases, `connect` provides an automated upgrade routine:
 * When executed with `--upgrade-environment-file`, it compares the user's active `offload.env` against the reference template.
 * It appends any newly introduced configuration parameters (along with default values and template documentation comments) to the end of the user's `offload.env`.
-* > [!WARNING]
-  * > **Known Bug**: The current parser implementation only extracts the *value* portion of the template variables when compiling the list of missing variables. As a result, running this utility appends malformed, key-less value strings to the end of the `offload.env` file. A fix is required to append variables as `KEY=value` pairs.

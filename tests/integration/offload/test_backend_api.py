@@ -37,7 +37,6 @@ from tests.testlib.test_framework.factory.frontend_testing_api_factory import (
 from tests.testlib.test_framework.test_functions import get_test_messages
 from tests.unit.offload.test_backend_api import TestBackendApi
 
-
 DIM_NAME = "INTEG_BACKEND_API_DIM"
 FACT_NAME = "INTEG_BACKEND_API_FACT"
 
@@ -89,17 +88,14 @@ class TestCurrentBackendApi(TestBackendApi):
             messages,
             frontend_api.standard_dimension_frontend_ddl(self.schema, DIM_NAME),
         )
-        # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
-        try:
-            run_offload(
-                {
-                    "owner_table": self.schema + "." + self.table,
-                    "create_backend_db": True,
-                    "execute": True,
-                }
-            )
-        except OffloadException:
-            # If this one fails then we let the exception bubble up.
+        # If the table has already been offloaded previously then we'll re-use it.
+        if not run_offload(
+            {
+                "owner_table": self.schema + "." + self.table,
+                "create_backend_db": True,
+                "execute": True,
+            }
+        ):
             run_offload(
                 {
                     "owner_table": self.schema + "." + self.table,
@@ -118,16 +114,12 @@ class TestCurrentBackendApi(TestBackendApi):
                 self.schema, self.part_table, simple_partition_names=True
             ),
         )
-        # Ignore return status, if the table has already been offloaded previously then we'll re-use it.
-        try:
-            run_offload(
-                {
-                    "owner_table": self.schema + "." + self.part_table,
-                    "execute": True,
-                },
-            )
-        except OffloadException:
-            # If this one fails then we let the exception bubble up.
+        if not run_offload(
+            {
+                "owner_table": self.schema + "." + self.part_table,
+                "execute": True,
+            },
+        ):
             run_offload(
                 {
                     "owner_table": self.schema + "." + self.part_table,

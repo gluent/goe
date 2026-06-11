@@ -63,9 +63,6 @@ graph TD
 * **Component Version Matching**: Compares the version of the installed database components (compiled schema packages) against the client binary version to ensure they are synchronized.
 * **Metadata & Parameters (Informational)**:
   * Queries session attributes (`DB_UNIQUE_NAME`, `SESSION_USER`) and character sets (`NLS_CHARACTERSET`, `NLS_NCHAR_CHARACTERSET`).
-  * Queries database parameters: `processes`, `sessions`, `query_rewrite_enabled`, and `_optimizer_cartesian_enabled`.
-  * > [!NOTE]
-  * > The database parameters are collected for diagnostic and informational purposes only. No threshold assertions are applied. This section is slated for removal in a future release per **GitHub Issue #265**.
 
 ### 3.3. Backend Checks (BigQuery)
 * **API Access & Connection**: Instantiates the BigQuery backend API client and queries the backend user identity to confirm that the BigQuery API is enabled and accessible.

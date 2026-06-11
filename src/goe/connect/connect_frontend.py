@@ -224,34 +224,6 @@ def test_oracle(orchestration_config, messages):
             detail(exc)
             failure(test_name)
 
-    test_name = "Oracle Parameters"
-    test_header(test_name)
-
-    db_parameters = [
-        "processes",
-        "sessions",
-        "query_rewrite_enabled",
-        "_optimizer_cartesian_enabled",
-    ]
-    binds = {}
-
-    for count, value in enumerate(db_parameters):
-        binds["b" + str(count)] = value
-
-    sql = (
-        "select name, value from gv$parameter where name in (%s) group by name, value order by 1,2"
-        % ",".join([":" + _ for _ in binds])
-    )
-    db_parameter_values = frontend_api.execute_query_fetch_all(sql, query_params=binds)
-    col1_width = max(
-        max([len(row[0]) for row in db_parameter_values]), len("Parameter")
-    )
-    col2_width = max(max([len(row[1]) for row in db_parameter_values]), len("Value"))
-    parameter_format = "{0:" + str(col1_width) + "}     {1:>" + str(col2_width) + "}"
-    detail(parameter_format.format("Parameter", "Value"))
-    for row in db_parameter_values:
-        detail(parameter_format.format(row[0], row[1]))
-
     cx.close()
 
 

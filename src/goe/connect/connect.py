@@ -69,7 +69,6 @@ from goe.util.goe_log import log_exception
 from goe.util.misc_functions import unsurround
 from goe.util.redis_tools import RedisClient
 
-
 OS_RELEASE_FILE_REDHAT = "/etc/redhat-release"
 OS_RELEASE_FILE_SUSE = "/etc/SuSE-release"
 OS_RELEASE_FILE_DEBIAN = "/etc/os-release"

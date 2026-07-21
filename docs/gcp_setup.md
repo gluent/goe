@@ -1,5 +1,11 @@
 # Google Cloud Platform Setup for a BigQuery Target
 
+- [Overview](#overview)
+- [Example Commands](#example-commands)
+- [Managed Spark version implications](#managed-spark-version-implications)
+- [Compute Engine Virtual Machine](#compute-engine-virtual-machine)
+- [Generating Dataset DDL](#generating-dataset-ddl)
+
 ## Overview
 
 This page details Google Cloud Platform (GCP) components required, with recommended minimal privileges, to use GOE in your GCP project.
@@ -286,6 +292,38 @@ gcloud iam roles create goe_spark_serverless_role --project ${PROJECT} \
 gcloud projects add-iam-policy-binding ${PROJECT} \
 --member=serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com \
 --role=projects/${PROJECT}/roles/goe_spark_serverless_role
+```
+
+## Managed Spark version implications
+
+### Avro driver support
+
+The version of Spark in the Managed Spark environment dictates the version of the Avro driver to use:
+
+| GOOGLE_DATAPROC_BATCHES_VERSION | Avro driver                            |
+| :------------------------------ | :------------------------------------- |
+| 1.1                             | org.apache.spark:spark-avro_2.12:3.3.0 |
+| 1.2                             | org.apache.spark:spark-avro_2.12:3.5.1 |
+| 2.1                             | org.apache.spark:spark-avro_2.13:3.5.1 |
+| 2.2                             | org.apache.spark:spark-avro_2.13:3.5.3 |
+
+`OFFLOAD_TRANSPORT_SPARK_PROPERTIES` should be updated accordingly.
+
+### GOE Spark Listener
+
+The GOE Spark listener is used to collect performance metrics from the Spark jobs created by Offload. The listener is only invoked when using the Spark transport method.
+
+| GOOGLE_DATAPROC_BATCHES_VERSION | Listener JAR file                     |
+| :------------------------------ | :------------------------------------ |
+| 1.1                             | goe-spark-3.3.0-listener_2.12-1.0.jar |
+| 1.2                             | goe-spark-3.5.1-listener_2.12-1.0.jar |
+| 2.1                             | goe-spark-3.5.1-listener_2.13-1.0.jar |
+| 2.2                             | goe-spark-3.5.3-listener_2.13-1.0.jar |
+
+The correct JAR file should be copied into place inside the `$OFFLOAD_HOME/lib/` directory, e.g.:
+
+```shell
+cp ${OFFLOAD_HOME}/lib/goe-spark-3.5.3-listener_2.13-1.0.jar ${OFFLOAD_HOME}/lib/goe-spark-listener.jar
 ```
 
 ## Compute Engine Virtual Machine

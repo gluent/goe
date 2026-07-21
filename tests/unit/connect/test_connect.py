@@ -20,6 +20,7 @@ from goe.connect.connect import (
     OS_RELEASE_FILE_DEBIAN,
     OS_RELEASE_FILE_REDHAT,
     OS_RELEASE_FILE_SUSE,
+    upgrade_environment_file,
 )
 
 
@@ -81,3 +82,21 @@ def test__os_release_file_exists():
 )
 def test__os_version_from_file_content(path, content, expected_version):
     assert _os_version_from_file_content(path, content) == expected_version
+
+
+def test_upgrade_environment_file(tmpdir):
+    """Test that upgrade_environment_file correctly appends missing variables.
+
+    Ensures that missing variables from a template are successfully appended
+    to an existing environment configuration file without stripping keys.
+    """
+    env_file = tmpdir.join("offload.env")
+    env_file.write("FRONTEND_DISTRIBUTION=ORACLE\n")
+
+    template_file = tmpdir.join("offload.env.template")
+    template_file.write("FRONTEND_DISTRIBUTION=ORACLE\nDATA_SAMPLE_PARALLELISM=0\n")
+
+    upgrade_environment_file(str(env_file), str(template_file))
+
+    content = env_file.read()
+    assert "DATA_SAMPLE_PARALLELISM=0\n" in content

@@ -377,7 +377,7 @@ def upgrade_environment_file(environment_file, template_file):
             )
             for key in sorted(set(template.keys()) - set(configuration.keys())):
                 detail("Adding %s" % key)
-                f.write(template[key])
+                f.write(f"{key}={template[key]}\n")
 
         log("%s has been updated" % environment_file, ansi_code="green")
     else:

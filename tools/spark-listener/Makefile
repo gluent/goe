@@ -29,16 +29,16 @@ all: spark-listener
 spark-listener: $(TARGET_JAR_FOR_SPARK_330) $(TARGET_JAR_FOR_SPARK_320) $(TARGET_JAR_FOR_SPARK_312) $(TARGET_JAR_FOR_SPARK_301)
 
 $(TARGET_JAR_FOR_SPARK_330):
-	sbt -DsparkVersion=3.3.0 package
+	sbt -DsparkVersion=3.3.0 "reload; package"
 
 $(TARGET_JAR_FOR_SPARK_320):
-	sbt -DsparkVersion=3.2.0 package
+	sbt -DsparkVersion=3.2.0 "reload; package"
 
 $(TARGET_JAR_FOR_SPARK_312):
-	sbt -DsparkVersion=3.1.2 package
+	sbt -DsparkVersion=3.1.2 "reload; package"
 
 $(TARGET_JAR_FOR_SPARK_301):
-	sbt -DsparkVersion=3.0.1 package
+	sbt -DsparkVersion=3.0.1 "reload; package"
 
 target: $(INSTALL_DIR) spark-listener
 	cp $(TARGET_JAR_FOR_SPARK_330) $(INSTALL_DIR)/goe-$(JAR_FOR_SPARK_330)

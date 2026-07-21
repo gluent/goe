@@ -53,12 +53,12 @@ Variables you will want to pay attention to are:
 - OFFLOAD_FS_CONTAINER
 - OFFLOAD_FS_PREFIX
 
-If using Dataproc to provide Spark:
+If using Google Managed Service for Apache Spark:
 - GOOGLE_DATAPROC_CLUSTER
 - GOOGLE_DATAPROC_SERVICE_ACCOUNT
 - GOOGLE_DATAPROC_REGION
 
-If using Dataproc Batches to provide Spark:
+If using Google Managed Service for Apache Spark serverless:
 - GOOGLE_DATAPROC_BATCHES_VERSION
 - GOOGLE_DATAPROC_SERVICE_ACCOUNT
 - GOOGLE_DATAPROC_REGION

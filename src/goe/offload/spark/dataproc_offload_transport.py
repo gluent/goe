@@ -51,7 +51,7 @@ GCLOUD_BATCHES_STATE_MESSAGE_TASK_NOT_ACQUIRED = "Task was not acquired"
 
 
 class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
-    """Submit PySpark to Dataproc via gcloud to transport data."""
+    """Submit PySpark to Managed Spark via gcloud to transport data."""
 
     def __init__(
         self,
@@ -143,7 +143,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         return gcloud_cmd
 
     def _get_batch_name(self) -> str:
-        """Return a Dataproc Batch name.
+        """Return a Managed Spark serverless name.
 
         Valid names only accept a simple set of characters and are 4-63 characters in length only.
         """
@@ -295,7 +295,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         return rows_imported
 
     def _tune_dataproc_for_parallelism(self) -> list:
-        """Modify Spark Dataproc settings to cater for Offload parallelism.
+        """Modify Managed Spark settings to cater for Offload parallelism.
 
         As of 2024-05-01 the default value for spark.executor.cores is 4 and value values are 4, 8 and 16 only.
         This is specifying cores per executor instance, spark.executor.instances, which defaults to 2.
@@ -328,7 +328,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
         ):
             # If the user has not configured spark.executor.cores/instances then
             # increase them from defaults to cater for offload_transport_parallelism.
-            # This only applies to Dataproc Batches and therefore is not injected
+            # This only applies to Managed Spark serverless and therefore is not injected
             # into self._spark_config_properties.
             props = []
             if executor_cores():
@@ -360,7 +360,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
             reponse_dict = json.loads(describe_output)
         except Exception as exc:
             # If we can't decode the output then log it and fall back to submit output checking.
-            self.log(f"Exception describing Dataproc batch: {str(exc)}", detail=VERBOSE)
+            self.log(f"Exception describing Managed Spark batch: {str(exc)}", detail=VERBOSE)
             return False
         state = reponse_dict.get("state")
         state_message = reponse_dict.get("stateMessage", "")
@@ -374,12 +374,12 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
                 )
             elif GCLOUD_BATCHES_STATE_MESSAGE_TASK_NOT_ACQUIRED in state_message:
                 raise OffloadTransportException(
-                    f"Dataproc batch failed with stateMessage containing '{GCLOUD_BATCHES_STATE_MESSAGE_TASK_NOT_ACQUIRED}'. "
-                    "The likely cause is missing VPC network/firewall prerequisites for Dataproc Serverless"
+                    f"Managed Spark batch failed with stateMessage containing '{GCLOUD_BATCHES_STATE_MESSAGE_TASK_NOT_ACQUIRED}'. "
+                    "The likely cause is missing VPC network/firewall prerequisites for Managed Spark serverless"
                 )
             else:
                 raise OffloadTransportException(
-                    f"Dataproc batch failed with state: {state}"
+                    f"Managed Spark batch failed with state: {state}"
                 )
 
     def _verify_rdbms_connectivity(self):
@@ -430,7 +430,7 @@ class OffloadTransportSparkBatchesGcloud(OffloadTransportSpark):
 
 
 class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGcloud):
-    """Validate Spark Dataproc Serverless connectivity"""
+    """Validate Managed Spark serverless connectivity"""
 
     def __init__(self, offload_options, messages):
         """CONSTRUCTOR
@@ -495,8 +495,8 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
         self._staging_format = None
 
     def _get_batch_name(self) -> str:
-        """Return a Dataproc Batch name for canary check."""
-        # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
+        """Return a Managed Spark serverless batch name for canary check."""
+        # Managed Spark serverless batch names only accept a simple set of characters and 4-63 characters in length
         return self._get_transport_app_name(
             sep="-", ts=True, name_override="canary"
         ).lower()[:64]
@@ -510,7 +510,7 @@ class OffloadTransportSparkBatchesGcloudCanary(OffloadTransportSparkBatchesGclou
 
 
 class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
-    """Submit PySpark to Dataproc via gcloud to transport data."""
+    """Submit PySpark to Managed Spark via gcloud to transport data."""
 
     def _gcloud_dataproc_submit_command(self, id: str = None) -> list:
         gcloud_cmd = [
@@ -536,16 +536,16 @@ class OffloadTransportSparkDataprocGcloud(OffloadTransportSparkBatchesGcloud):
         return gcloud_cmd
 
     def _tune_dataproc_for_parallelism(self) -> list:
-        # No-op when not Dataproc Batches.
+        # No-op when not Managed Spark serverless.
         return []
 
     def _verify_batch(self, batch_name: str):
-        # No-op when not Dataproc Batches.
+        # No-op when not Managed Spark serverless.
         pass
 
 
 class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcloud):
-    """Validate Dataproc connectivity"""
+    """Validate Managed Spark connectivity"""
 
     def __init__(self, offload_options, messages):
         """CONSTRUCTOR
@@ -606,8 +606,8 @@ class OffloadTransportSparkDataprocGcloudCanary(OffloadTransportSparkDataprocGcl
         self._staging_format = None
 
     def _get_batch_name(self) -> str:
-        """Return a Dataproc Batch name for canary check."""
-        # Dataproc batch names only accept a simple set of characters and 4-63 characters in length
+        """Return a Managed Spark serverless batch name for canary check."""
+        # Managed Spark serverless batch names only accept a simple set of characters and 4-63 characters in length
         return self._get_transport_app_name(
             sep="-", ts=True, name_override="canary"
         ).lower()[:64]

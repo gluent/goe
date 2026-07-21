@@ -43,12 +43,12 @@ The role names below are used throughput this page but can be changed to suit co
 
 | Role                | Mandatory | Purpose                                                                         |
 | :------------------ | :-------: | :------------------------------------------------------------------------------ |
-| `goe_gcs_role`      |     Y     | - Permissions to read/write on the GOE staging bucket.                            |
-| `goe_bq_core_role`  |     Y     | - Core permissions to interact with BigQuery, list datasets/tables/etc.<br />- No data read/write permissions.<br />- Will be granted at the project level. |
-| `goe_bq_app_role`   |     Y     | - Permissions to read/write data in the final dataset.<br />- Optionally can include table create/drop permissions.<br />- Locked down at dataset level. |
-| `goe_bq_stg_role`   |     Y     | - Permissions to read data and create/drop staging tables in the staging dataset.<br />- Locked down at dataset level. |
-| `goe_dataproc_role` |     N     | - Permissions to interact with a permanent Managed Service for Apache Spark (permanent). |
-| `goe_batches_role`  |     N     | - Permissions to interact with Managed Service for Apache Spark (serverless).     |
+| `goe_gcs_role`           |     Y     | - Permissions to read/write on the GOE staging bucket.                            |
+| `goe_bq_core_role`       |     Y     | - Core permissions to interact with BigQuery, list datasets/tables/etc.<br />- No data read/write permissions.<br />- Will be granted at the project level. |
+| `goe_bq_app_role`        |     Y     | - Permissions to read/write data in the final dataset.<br />- Optionally can include table create/drop permissions.<br />- Locked down at dataset level. |
+| `goe_bq_stg_role`        |     Y     | - Permissions to read data and create/drop staging tables in the staging dataset.<br />- Locked down at dataset level. |
+| `goe_spark_role`           |     N     | - Permissions to interact with a permanent Managed Service for Apache Spark (permanent). |
+| `goe_spark_serverless_role`  |     N     | - Permissions to interact with Managed Service for Apache Spark (serverless).     |
 
 ### Compute Engine Virtual Machine
 
@@ -123,12 +123,12 @@ Values supplied below are examples only, changes will likely be required for eac
 ```shell
 SUBNET=<your-subnet>
 CLUSTER_NAME=<cluster-name>
-DP_SVC_ACCOUNT=goe-dataproc
+DP_SVC_ACCOUNT=goe-managed-spark
 ZONE=<your-zone>
 
 gcloud iam service-accounts create ${DP_SVC_ACCOUNT} \
 --project=${PROJECT} \
---description="GOE Dataproc service account"
+--description="GOE Managed Spark service account"
 
 gcloud projects add-iam-policy-binding ${PROJECT} \
 --member=serviceAccount:${DP_SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com \
@@ -256,11 +256,11 @@ TO \"serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com\";
 " | bq query --project_id=${PROJECT} --nouse_legacy_sql --location=${LOCATION}
 ```
 
-#### goe_dataproc_role
+#### goe_spark_role
 
 ```shell
-gcloud iam roles create goe_dataproc_role --project ${PROJECT} \
---title="GOE Dataproc Access" --description="GOE Dataproc Access" \
+gcloud iam roles create goe_spark_role --project ${PROJECT} \
+--title="GOE Managed Spark Access" --description="GOE Managed Spark Access" \
 --permissions=dataproc.clusters.get,dataproc.clusters.use,\
 dataproc.jobs.create,dataproc.jobs.get,\
 iam.serviceAccounts.getAccessToken \
@@ -268,24 +268,24 @@ iam.serviceAccounts.getAccessToken \
 
 gcloud projects add-iam-policy-binding ${PROJECT} \
 --member=serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com \
---role=projects/${PROJECT}/roles/goe_dataproc_role
+--role=projects/${PROJECT}/roles/goe_spark_role
 
 gcloud projects add-iam-policy-binding ${PROJECT} \
 --member=serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com \
 --role=roles/iam.serviceAccountUser
 ```
 
-#### goe_batches_role
+#### goe_spark_serverless_role
 
 ```shell
-gcloud iam roles create goe_batches_role --project ${PROJECT} \
---title="GOE Dataproc Access" --description="GOE Dataproc Access" \
+gcloud iam roles create goe_spark_serverless_role --project ${PROJECT} \
+--title="GOE Managed Spark Access" --description="GOE Managed Spark Access" \
 --permissions=dataproc.batches.create,dataproc.batches.get \
 --stage=GA
 
 gcloud projects add-iam-policy-binding ${PROJECT} \
 --member=serviceAccount:${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com \
---role=projects/${PROJECT}/roles/goe_batches_role
+--role=projects/${PROJECT}/roles/goe_spark_serverless_role
 ```
 
 ## Compute Engine Virtual Machine

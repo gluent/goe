@@ -195,7 +195,7 @@ def spark_livy_jdbc_connectivity_checker(offload_options, messages):
 
 
 def spark_dataproc_jdbc_connectivity_checker(offload_options, messages):
-    """Connect needs a cut down client to simply check RDBMS connectivity from Dataproc
+    """Connect needs a cut down client to simply check RDBMS connectivity from Managed Spark
     back to the source RDBMS is correctly configured
     """
     from goe.offload.spark.dataproc_offload_transport import (
@@ -207,8 +207,8 @@ def spark_dataproc_jdbc_connectivity_checker(offload_options, messages):
 
 
 def spark_dataproc_batches_jdbc_connectivity_checker(offload_options, messages):
-    """Connect needs a cut down client to simply check RDBMS connectivity from Dataproc Batches
-    back to the source RDBMS is correctly configured
+    """Connect needs a cut down client to simply check RDBMS connectivity from Managed
+    Spark serverless back to the source RDBMS is correctly configured
     """
     from goe.offload.spark.dataproc_offload_transport import (
         OffloadTransportSparkBatchesGcloudCanary,

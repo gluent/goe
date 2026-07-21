@@ -287,7 +287,7 @@ def test_spark_gcloud(orchestration_config, messages):
         log("Skipping Spark gcloud tests due to absent config", detail=VVERBOSE)
         return
 
-    test_name = "Spark Dataproc settings"
+    test_name = "Google Managed Spark settings"
     test_header(test_name)
     if spark_submit_executable_exists(
         orchestration_config,
@@ -309,7 +309,7 @@ def test_spark_gcloud(orchestration_config, messages):
             orchestration_config, messages
         )
         verify_offload_transport_rdbms_connectivity(
-            data_transport_client, "Spark Dataproc"
+            data_transport_client, "Google Managed Spark"
         )
 
     if is_spark_gcloud_batches_available(orchestration_config, None, messages=messages):
@@ -317,7 +317,7 @@ def test_spark_gcloud(orchestration_config, messages):
             orchestration_config, messages
         )
         verify_offload_transport_rdbms_connectivity(
-            data_transport_client, "Spark Dataproc Batches"
+            data_transport_client, "Google Managed Spark serverless"
         )
 
 

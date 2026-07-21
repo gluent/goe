@@ -183,7 +183,7 @@ def test_dataproc_cmd(config, messages, oracle_table, fake_operation):
     assert (
         f"--region={config.google_dataproc_region}" in cmd
     ), f"region option is missing from cmd: {cmd}"
-    # batch option should NOT be in standard Dataproc job commands.
+    # batch option should NOT be in standard Managed Spark job commands.
     assert all(
         "--batch=" not in _ for _ in cmd
     ), f"batch option is incorrectly in cmd: {cmd}"

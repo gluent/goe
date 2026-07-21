@@ -17,7 +17,9 @@ You are an AI coding assistant helping develop the GOE framework repository. Alw
 - **Formatter**: Python files must be formatted using `black`. Always format modified files before declaring a task complete.
 - **Conventions**:
   - Write clean, modular, and well-documented Python code.
-  - Maintain compatibility with Python 3.7+.
+  - Maintain compatibility with Python 3.8+.
+  - Always place all imports at the top of the file, rather than within function scopes.
+  - Ensure all newly added functions and methods have clear docstrings explaining their purpose, following PEP 257 standard conventions (i.e., a one-line summary, a blank line, and a detailed description for multi-line docstrings).
 
 ## 4. Testing Workflow
 - **Environment Preparation**: Always ensure the following environment variable is set prior to executing tests:
@@ -28,7 +30,6 @@ You are an AI coding assistant helping develop the GOE framework repository. Alw
   ```bash
   pytest tests/unit
   ```
-  Alternatively, `nox -s unit` can be used to run unit tests across multiple Python versions.
 - **Integration Tests**: Located in `tests/integration`. These require an active database and specific environment setup (e.g., `GOE_TEST_USER_PASS`). You may also need to export `GOOGLE_CLOUD_PROJECT` before running integration tests. Run with `pytest tests/integration -n 4`.
 - **Test Requirements**: New features and bug fixes must be covered by corresponding unit tests in the `tests/unit/` hierarchy.
 

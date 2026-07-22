@@ -72,13 +72,13 @@ graph TD
 
 ### 3.4. Data Transport Checks (Spark)
 Data transport validation tests that the data processing cluster can fetch data from the source Oracle database.
-* **GCP Dataproc / Dataproc Batches**:
+* **Google Managed Spark / Managed Spark serverless**:
   * Validates availability of the `gcloud` command-line executable.
-  * Checks integration with Google Dataproc (clusters) or Google Dataproc Batches (serverless Spark).
+  * Checks integration with Google Managed Spark (clusters) or Google Managed Spark (serverless).
 * **Generic Spark Submit**: Validates the availability of `spark-submit` executable if configured.
 * **RDBMS Connection Callback (Loopback Ping)**:
   * For the active transport method, `connect` triggers a remote Spark task that attempts to establish a JDBC connection back to the source Oracle Database (`ping_source_rdbms()`).
-  * If the remote job cannot connect back (e.g., due to firewall blockages between the Dataproc network and the Oracle database host), the test reports a **Failure**.
+  * If the remote job cannot connect back (e.g., due to firewall blockages between the Managed Spark network and the Oracle database host), the test reports a **Failure**.
 
 ### 3.5. Local Checks
 * **OS Distribution & Kernel Check**: Reads `/etc/redhat-release`, `/etc/SuSE-release`, or `/etc/os-release` and executes `uname -r`. Fails if the operating system distribution is unrecognized.
@@ -96,7 +96,7 @@ Data transport validation tests that the data processing cluster can fetch data 
 | :--- | :--- | :--- |
 | **`0`** | Success | All executed checks completed successfully. |
 | **`1`** | Fatal | A critical/uncaught exception occurred (e.g., completely unable to connect to Oracle RDBMS during startup). |
-| **`2`** | Failure | One or more active validation checks failed (e.g., Dataproc callback failed, KMS key disabled). |
+| **`2`** | Failure | One or more active validation checks failed (e.g., Managed Spark callback failed, KMS key disabled). |
 | **`3`** | Warning | No failures occurred, but one or more warnings were detected (e.g., incorrect `offload.env` permissions). |
 
 ---

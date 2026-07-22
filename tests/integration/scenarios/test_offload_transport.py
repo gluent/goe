@@ -380,11 +380,11 @@ def test_offload_transport_spark_submit(config, schema, data_db):
 
 
 def test_offload_transport_dataproc_cluster(config, schema, data_db):
-    """Test simple offload with Dataproc."""
+    """Test simple offload with Managed Spark."""
     id = "test_offload_transport_dataproc_cluster"
     with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_dataproc_available(config, None, messages=messages):
-            pytest.skip(f"Skipping {id} because Dataproc is not configured")
+            pytest.skip(f"Skipping {id} because Managed Spark is not configured")
 
         simple_offload_test(
             config,
@@ -398,11 +398,11 @@ def test_offload_transport_dataproc_cluster(config, schema, data_db):
 
 
 def test_offload_transport_dataproc_batches(config, schema, data_db):
-    """Test simple offload with Dataproc."""
+    """Test simple offload with Managed Spark serverless."""
     id = "test_offload_transport_dataproc_batches"
     with get_test_messages_ctx(config, id) as messages:
         if not is_spark_gcloud_batches_available(config, None, messages=messages):
-            pytest.skip(f"Skipping {id} because Dataproc Batches is not configured")
+            pytest.skip(f"Skipping {id} because Managed Spark serverless is not configured")
 
         simple_offload_test(
             config,

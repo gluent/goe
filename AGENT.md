@@ -5,7 +5,7 @@ You are an AI coding assistant helping develop the GOE framework repository. Alw
 ## 1. Tech Stack & Environment
 - **Language**: Python.
 - **Core Domain**: Data offloading and copying from Oracle Database to cloud data warehouses (Google BigQuery, Snowflake, Azure Synapse, Teradata) and Hadoop.
-- **Supporting Infrastructure**: Relies on Spark/Dataproc, Cloud Storage (GCS, S3, Azure Blob), and Oracle RDBMS.
+- **Supporting Infrastructure**: Relies on Spark, Cloud Storage (GCS, S3, Azure Blob), and Oracle RDBMS.
 
 ## 2. Environment & Dependency Management
 - **Virtual Environment**: The development virtual environment is located in a local `.venv` directory. Always assume activation via `source .venv/bin/activate`.

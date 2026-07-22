@@ -15,7 +15,7 @@
 */
 
 ThisBuild / organization := "com.goe"
-ThisBuild / scalaVersion := "2.12.14"
+ThisBuild / scalaVersion := sys.props.getOrElse("scalaVersion", "2.12.18")
 ThisBuild / version      := "1.0"
 
 val sparkVersion = sys.props.getOrElse("sparkVersion", "3.2.0")

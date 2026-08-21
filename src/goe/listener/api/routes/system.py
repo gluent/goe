@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Third Party Libraries
-import orjson as json
+import json
 from fastapi import APIRouter, status
 
 # GOE

@@ -1,17 +1,38 @@
 name: release
+
 on:
-  release:
-    types:
-      - created
+  push:
+    branches:
+      - main
 
 env:
   PYTHONUNBUFFERED: "1"
   FORCE_COLOR: "1"
 
 jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
   package-goe:
     name: Package GOE artefacts required for installation
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,18 +62,25 @@ jobs:
         run: make package
 
       - name: Move package to `dist/`
-        run: mv goe_*.tar.gz dist/goe.tar.gz
+        run: |
+          mkdir -p dist
+          mv goe_*.tar.gz dist/
 
       - uses: actions/upload-artifact@v4
         with:
           name: artifacts
-          path: dist/goe.tar.gz
+          path: dist/goe_*.tar.gz
           if-no-files-found: error
+
   publish:
     name: Publish release
     needs:
+      - release-please
       - package-goe
+    if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -62,10 +90,13 @@ jobs:
       - name: Add package to current release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/goe.tar.gz
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: dist/goe_*.tar.gz
 
   pypi-publish:
     name: Publish release to PyPI
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

@@ -67,7 +67,7 @@ dependencies = [
     "uvicorn==0.17.6",
     "redis==4.4.4",
     "gunicorn==20.1.0",
-    "brotli==1.0.9",
+    "brotli==1.2.0",
     "tenacity==8.0.1",
     "uvloop",
     "httptools",

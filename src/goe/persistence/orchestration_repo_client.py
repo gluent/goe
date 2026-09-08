@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OrchestrationRepoClientInterface: Base interface of API to interact with orchestration metadata repository.
-    Each frontend/metadata system will have its own implementation.
+"""OrchestrationRepoClientInterface: Base interface of API to interact with orchestration metadata repository.
+Each frontend/metadata system will have its own implementation.
 """
 
 # Standard Library
@@ -387,6 +387,7 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         Record the completion of offload transport for an offload chunk.
         chunk_id: The identifier returned from start_offload_chunk.
         """
+
     # GENERAL REPO INTROSPECTION
     #
     @abstractmethod

@@ -260,6 +260,8 @@ options = None
 log_fh = None
 suppress_stdout_override = False
 execution_id = ""
+
+
 def ansi(line, ansi_code):
     return OffloadMessages.ansi_wrap(line, ansi_code, options.ansi)
 

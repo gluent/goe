@@ -186,12 +186,10 @@ class MSSQLFrontendApi(FrontendApiInterface):
             )
 
         sql = (
-            dedent(
-                """\
+            dedent("""\
             CREATE TABLE %(owner_table)s (
             %(col_projection)s
-            )"""
-            )
+            )""")
             % {
                 "owner_table": self.enclose_object_reference(schema, table_name),
                 "col_projection": col_projection,
@@ -485,6 +483,7 @@ class MSSQLFrontendApi(FrontendApiInterface):
         remap_schema=None,
     ):
         raise NotImplementedError("MSSQL get_object_ddl not implemented.")
+
     def get_command_step_codes(self) -> list:
         raise NotImplementedError("MSSQL get_command_step_codes is not implemented.")
 
@@ -601,26 +600,22 @@ class MSSQLFrontendApi(FrontendApiInterface):
         )
 
     def schema_exists(self, schema) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
                      SELECT schema_name
                      FROM information_schema.schemata
-                     WHERE schema_name = '%s'"""
-        )
+                     WHERE schema_name = '%s'""")
         row = self.execute_query_fetch_one(
             sql, query_params=(schema,), log_level=VVERBOSE
         )
         return bool(row)
 
     def table_exists(self, schema, table_name) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
                      SELECT table_name
                      FROM information_schema.tables
                      WHERE table_type = 'BASE TABLE'
                      AND table_schema = '%s'
-                     AND table_name = '%s'"""
-        )
+                     AND table_name = '%s'""")
         row = self.execute_query_fetch_one(
             sql, query_params=(schema, table_name), log_level=VVERBOSE
         )
@@ -634,14 +629,12 @@ class MSSQLFrontendApi(FrontendApiInterface):
         return new_py_val
 
     def view_exists(self, schema, view_name) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
                      SELECT table_name
                      FROM information_schema.tables
                      WHERE table_type = 'VIEW'
                      AND table_schema = '%s'
-                     AND table_name = '%s'"""
-        )
+                     AND table_name = '%s'""")
         row = self.execute_query_fetch_one(
             sql, query_params=(schema, view_name), log_level=VVERBOSE
         )

@@ -904,4 +904,3 @@ def sqoop_password_file_default() -> Optional[str]:
 
 def sqoop_queue_name_default() -> Optional[str]:
     return os.environ.get("SQOOP_QUEUE_NAME")
-

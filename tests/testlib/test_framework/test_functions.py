@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Functions used in both "test --setup", "test_runner" and "test_setup".
-    Allows us to share code but also keep scripts trim and healthy.
+"""Functions used in both "test --setup", "test_runner" and "test_setup".
+Allows us to share code but also keep scripts trim and healthy.
 """
 
 from contextlib import contextmanager

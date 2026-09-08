@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" TeradataOrchestrationRepoClient: Teradata implementation of API for get/put of orchestration metadata.
-"""
+"""TeradataOrchestrationRepoClient: Teradata implementation of API for get/put of orchestration metadata."""
 
 import json
 import logging
@@ -82,8 +81,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
         logger.debug(f"Dropping metadata: {frontend_owner}, {frontend_name}")
         assert frontend_owner
         assert frontend_name
-        sql = dedent(
-            f"""\
+        sql = dedent(f"""\
             DELETE {self._repo_user}.offload_metadata om
             WHERE  om.frontend_object_id = (
                 SELECT fo.id
@@ -91,8 +89,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
                 WHERE  fo.object_owner = ?
                 AND    fo.object_name = ?
                 );
-            """
-        )
+            """)
         self._frontend_api.execute_dml(
             sql, query_params=[frontend_owner, frontend_name], log_level=VERBOSE
         )
@@ -103,8 +100,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
         assert frontend_name
         # Columns will be in a specific order due to ALL_METADATA_ATTRIBUTES being a list
         projection = ",".join(ALL_METADATA_ATTRIBUTES)
-        sql = dedent(
-            f"""\
+        sql = dedent(f"""\
             SELECT {projection}
             FROM   {self._repo_user}.offload_metadata om
             WHERE  om.frontend_object_id = (
@@ -113,8 +109,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
                 WHERE  fo.object_owner = ?
                 AND    fo.object_name = ?
                 );
-            """
-        )
+            """)
         row = self._frontend_api.execute_query_fetch_one(
             sql, query_params=[frontend_owner, frontend_name], log_level=VVERBOSE
         )
@@ -170,8 +165,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
             if _ not in [OFFLOADED_OWNER, OFFLOADED_TABLE]
         )
         insert_parameters = [prep_value(_, metadata) for _ in ALL_METADATA_ATTRIBUTES]
-        sql = dedent(
-            f"""\
+        sql = dedent(f"""\
             MERGE INTO {self._repo_user}.offload_metadata {target_alias}
             USING VALUES ({parameter_markers}) AS src ({unaliased_columns})
             ON ({source_alias}.{OFFLOADED_OWNER} = {target_alias}.{OFFLOADED_OWNER}
@@ -184,8 +178,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
             ({unaliased_columns})
             VALUES
             ({source_columns})
-            """
-        )
+            """)
         self._frontend_api.execute_dml(
             sql, query_params=insert_parameters, log_level=VERBOSE
         )
@@ -335,4 +328,3 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
         raise NotImplementedError(
             "Teradata get_command_executions pending implementation"
         )
-

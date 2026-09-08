@@ -26,7 +26,6 @@ from goe.persistence.orchestration_repo_client import type_safe_json_dumps
 from goe.offload.predicate_offload import GenericPredicate
 from goe.orchestration.execution_id import ExecutionId
 
-
 GB = 1024**3
 
 

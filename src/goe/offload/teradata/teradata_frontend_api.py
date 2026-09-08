@@ -76,14 +76,12 @@ def teradata_get_primary_partition_expression(
     to drive offloads. Only RANGE_N is supported.
     The result is cached in state because we'll need to decode this data for multiple reasons.
     """
-    sql = dedent(
-        """\
+    sql = dedent("""\
         SELECT ConstraintText
         FROM   DBC.PartitioningConstraintsV
         WHERE  ConstraintType = 'Q'
         AND    DatabaseName = ?
-        AND    TableName = ?"""
-    )
+        AND    TableName = ?""")
     row = query_runner.execute_query_fetch_one(sql, query_params=[owner, table_name])
     if not row:
         return None
@@ -237,12 +235,10 @@ class TeradataFrontendApi(FrontendApiInterface):
             )
 
         sql = (
-            dedent(
-                """\
+            dedent("""\
             CREATE TABLE %(owner_table)s (
                 %(col_projection)s
-            )%(partition_clause)s"""
-            )
+            )%(partition_clause)s""")
             % {
                 "owner_table": self.enclose_object_reference(schema, table_name),
                 "col_projection": col_projection,
@@ -559,8 +555,7 @@ class TeradataFrontendApi(FrontendApiInterface):
     def agg_validate_sample_column_names(
         self, schema, table_name, num_required: int = 5
     ) -> list:
-        sql = dedent(
-            """\
+        sql = dedent("""\
         SELECT ColumnName
         FROM  (
                SELECT c.ColumnName
@@ -576,8 +571,7 @@ class TeradataFrontendApi(FrontendApiInterface):
                AND    c.TableName = ?
               ) AS v
         WHERE  ColumnId IN (first_column_id, last_column_id)
-        OR     ndv_rank <= ?"""
-        )
+        OR     ndv_rank <= ?""")
         rows = self.execute_query_fetch_all(
             sql, query_params=[schema, table_name, num_required], log_level=VVERBOSE
         )
@@ -634,8 +628,7 @@ class TeradataFrontendApi(FrontendApiInterface):
         return TERADATA_TYPE_VARCHAR
 
     def get_columns(self, schema, table_name):
-        q = dedent(
-            """\
+        q = dedent("""\
             SELECT ColumnId
             ,      ColumnName
             ,      Nullable
@@ -647,8 +640,7 @@ class TeradataFrontendApi(FrontendApiInterface):
             FROM   DBC.ColumnsV
             WHERE  DatabaseName = ?
             AND    TableName = ?
-            ORDER BY ColumnId ASC"""
-        )
+            ORDER BY ColumnId ASC""")
 
         cols = []
         for row in self.execute_query_fetch_all(q, query_params=[schema, table_name]):
@@ -714,6 +706,7 @@ class TeradataFrontendApi(FrontendApiInterface):
                 return ddl_str
         else:
             return None
+
     def get_command_step_codes(self) -> list:
         raise NotImplementedError("Teradata get_command_step_codes is not implemented.")
 
@@ -762,15 +755,13 @@ class TeradataFrontendApi(FrontendApiInterface):
             return []
 
     def get_primary_key_column_names(self, schema, table_name):
-        q = dedent(
-            """\
+        q = dedent("""\
             SELECT ColumnName
             FROM   DBC.IndicesV
             WHERE  DatabaseName = ?
             AND    TableName = ?
             AND    IndexType = 'K'
-            ORDER BY ColumnPosition"""
-        )
+            ORDER BY ColumnPosition""")
 
         rows = self.execute_query_fetch_all(q, query_params=[schema, table_name])
         return [_[0] for _ in rows] if rows else []
@@ -819,14 +810,12 @@ class TeradataFrontendApi(FrontendApiInterface):
 
     def get_table_size(self, schema, table_name):
         """Return the size of the table in bytes"""
-        sql = dedent(
-            """\
+        sql = dedent("""\
             SELECT SUM(CurrentPerm)
             FROM   DBC.TablesizeV
             WHERE  DatabaseName = ?
             AND    TableName = ?
-        """
-        )
+        """)
         row = self.execute_query_fetch_one(sql, query_params=[schema, table_name])
         return row[0] if row else row
 
@@ -852,13 +841,11 @@ class TeradataFrontendApi(FrontendApiInterface):
         return None
 
     def schema_exists(self, schema) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
             SELECT DatabaseName
             FROM   DBC.Databases2V
             WHERE  DatabaseName = ?
-        """
-        )
+        """)
         return bool(self.execute_query_fetch_one(sql, query_params=[schema]))
 
     def split_partition_high_value_string(self, hv_string):
@@ -868,15 +855,13 @@ class TeradataFrontendApi(FrontendApiInterface):
         return tokens
 
     def table_exists(self, schema, table_name) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
             SELECT TableName
             FROM   DBC.TablesV
             WHERE  DatabaseName = ?
             AND    TableName = ?
             AND    TableKind = 'T'
-        """
-        )
+        """)
         return bool(
             self.execute_query_fetch_one(sql, query_params=[schema, table_name])
         )
@@ -889,13 +874,11 @@ class TeradataFrontendApi(FrontendApiInterface):
         return new_py_val
 
     def view_exists(self, schema, view_name) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
             SELECT TableName
             FROM   DBC.TablesV
             WHERE  DatabaseName = ?
             AND    TableName = ?
             AND    TableKind = 'V'
-        """
-        )
+        """)
         return bool(self.execute_query_fetch_one(sql, query_params=[schema, view_name]))

@@ -90,6 +90,7 @@ teradata = [
 ]
 dev = [
     "black",
+    "build",
     "nox",
     "pytest",
     "pytest-xdist",

@@ -23,12 +23,11 @@ import logging
 from datetime import datetime
 from sys import getsizeof
 from textwrap import dedent
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 # Third Party Libraries
 import pyodbc
 from numpy import datetime64
-from pydantic import UUID4
 
 # GOE
 from goe.offload.column_metadata import match_table_column
@@ -718,19 +717,19 @@ class TeradataFrontendApi(FrontendApiInterface):
     def get_command_step_codes(self) -> list:
         raise NotImplementedError("Teradata get_command_step_codes is not implemented.")
 
-    def get_command_executions(self) -> List[Dict[str, Union[str, UUID4]]]:
+    def get_command_executions(self) -> List[Dict[str, Union[str, Any]]]:
         raise NotImplementedError("Teradata get_command_executions is not implemented.")
 
     def get_command_execution(
         self, execution_id: ExecutionId
-    ) -> Dict[str, Union[str, UUID4]]:
+    ) -> Dict[str, Union[str, Any]]:
         raise NotImplementedError(
             "Teradata get_command_execution_status is not implemented."
         )
 
     def get_command_execution_steps(
         self, execution_id: ExecutionId
-    ) -> List[Dict[str, Union[str, UUID4]]]:
+    ) -> List[Dict[str, Union[str, Any]]]:
         raise NotImplementedError(
             "Teradata get_command_execution_steps is not implemented."
         )

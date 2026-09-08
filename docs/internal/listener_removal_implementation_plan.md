@@ -234,9 +234,11 @@ Redis in GOE was introduced purely as an event pub/sub bus to stream command pro
 ### Phase 6: Dependencies and Documentation
 1. **`pyproject.toml`**:
    * Remove `fastapi`, `uvicorn`, `redis`, `gunicorn`, `brotli`, `tenacity`, `uvloop`, `httptools`.
-2. **`AGENT.md`**:
+2. **Standard Library `uuid.UUID` / Typing**:
+   * Replace lingering `pydantic.UUID4` type annotations in `src/goe/orchestration/execution_id.py` and `src/goe/offload/teradata/teradata_frontend_api.py` with standard library `uuid.UUID` and `Any`.
+3. **`AGENT.md`**:
    * Update architecture summary removing reference to REST listener.
-3. **`docs/internal/design_docs/connect_design_document.md`**:
+4. **`docs/internal/design_docs/connect_design_document.md`**:
    * Update section 3.5.
 
 ---

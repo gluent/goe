@@ -21,8 +21,6 @@ Unit tests in TestOrchestrationRepoClient.
 import uuid
 from dataclasses import dataclass
 
-# Third Party Libraries
-from pydantic import UUID4
 
 ###########################################################################
 # ExecutionId
@@ -91,7 +89,7 @@ class ExecutionId:
         return ExecutionId(from_bytes=b)
 
     @staticmethod
-    def from_uuid(b: UUID4):
+    def from_uuid(b: uuid.UUID):
         return ExecutionId(from_uuid=b)
 
     def as_str(self):

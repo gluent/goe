@@ -60,7 +60,6 @@ from goe.goe import (
     log_timestamp,
     version,
     OptionValueError,
-    verbose,
 )
 from goe.offload.offload_messages import OffloadMessages
 from goe.offload.offload_transport_functions import ssh_cmd_prefix

@@ -15,14 +15,14 @@
 import os
 import sys
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import logging
 import os.path
 from optparse import OptionParser, Option, OptionValueError, SUPPRESS_HELP
 import re
 import traceback
-from typing import Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from goe.config import option_descriptions, orchestration_defaults
 from goe.config.config_validation_functions import normalise_size_option
@@ -121,7 +121,6 @@ from goe.offload.option_validation import (
 )
 from goe.offload.operation.sort_columns import sort_columns_csv_to_sort_columns
 from goe.orchestration import command_steps
-from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )

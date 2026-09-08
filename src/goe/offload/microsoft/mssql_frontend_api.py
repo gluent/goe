@@ -22,7 +22,7 @@ Implements abstract methods from FrontendApiInterface.
 import logging
 from datetime import datetime
 from textwrap import dedent
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 # Third Party Libraries
 import pymssql
@@ -487,19 +487,17 @@ class MSSQLFrontendApi(FrontendApiInterface):
     def get_command_step_codes(self) -> list:
         raise NotImplementedError("MSSQL get_command_step_codes is not implemented.")
 
-    def get_command_executions(self) -> List[Dict[str, Union[str, Any]]]:
+    def get_command_executions(self) -> List[Dict[str, Any]]:
         raise NotImplementedError("MSSQL get_command_executions is not implemented.")
 
-    def get_command_execution(
-        self, execution_id: ExecutionId
-    ) -> Dict[str, Union[str, Any]]:
+    def get_command_execution(self, execution_id: ExecutionId) -> Dict[str, Any]:
         raise NotImplementedError(
             "MSSQL get_command_execution_status is not implemented."
         )
 
     def get_command_execution_steps(
         self, execution_id: ExecutionId
-    ) -> List[Dict[str, Union[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         raise NotImplementedError(
             "MSSQL get_command_execution_steps is not implemented."
         )

@@ -461,7 +461,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
 
     def get_command_executions(
         self,
-    ) -> List[Dict[str, Union[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         """Gets command execution stats"""
         sql = f"""
             SELECT  CE.UUID                AS EXECUTION_ID,
@@ -487,9 +487,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             log_level=None,
         )
 
-    def get_command_execution(
-        self, execution_id: ExecutionId
-    ) -> Dict[str, Union[str, Any]]:
+    def get_command_execution(self, execution_id: ExecutionId) -> Dict[str, Any]:
         """Gets command execution stats"""
         sql = f"""
             SELECT  CE.UUID                AS EXECUTION_ID,
@@ -520,7 +518,7 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
     def get_command_execution_steps(
         self,
         execution_id: Optional[ExecutionId],
-    ) -> List[Dict[str, Union[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         """Gets command execution stats"""
         query_params = {}
         sql = f"""

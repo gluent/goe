@@ -93,7 +93,7 @@ class OffloadMessages(object):
         command_type=None,
     ):
         """
-        Client for Offload logging that also provides step instrumentation, repo logging and Console updates.
+        Client for Offload logging that also provides step instrumentation and repo logging.
 
         log_fh: Allows init of the log using an existing file handle for integration with existing tools, e.g.: Offload.
                 For stand-alone use the init_log method makes more sense.

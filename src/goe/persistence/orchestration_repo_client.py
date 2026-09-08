@@ -392,20 +392,18 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
     #
     @abstractmethod
     def get_command_step_codes(self) -> list:
-        """Return a list of codes from REPO.COMMEND_STEP table"""
+        """Return a list of codes from REPO.COMMAND_STEP table"""
 
     @abstractmethod
-    def get_command_execution(
-        self, execution_id: ExecutionId
-    ) -> Dict[str, Union[str, Any]]:
-        """Return a list of command executions"""
+    def get_command_execution(self, execution_id: ExecutionId) -> Dict[str, Any]:
+        """Return a single command execution"""
 
     @abstractmethod
-    def get_command_executions(self) -> List[Dict[str, Union[str, Any]]]:
+    def get_command_executions(self) -> List[Dict[str, Any]]:
         """Return a list of command executions"""
 
     @abstractmethod
     def get_command_execution_steps(
         self, execution_id: Optional[ExecutionId]
-    ) -> List[Dict[str, Union[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         """Return a list of steps for a given execution id"""

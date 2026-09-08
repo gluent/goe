@@ -307,9 +307,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
         # rows = self._frontend_api.execute_query_fetch_all(sql, log_level=VVERBOSE)
         # return [_[0] for _ in rows] if rows else rows
 
-    def get_command_execution(
-        self, execution_id: ExecutionId
-    ) -> Dict[str, Union[str, Any]]:
+    def get_command_execution(self, execution_id: ExecutionId) -> Dict[str, Any]:
         raise NotImplementedError(
             "Teradata get_command_execution pending implementation"
         )
@@ -317,14 +315,14 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
     def get_command_execution_steps(
         self,
         execution_id: Optional[ExecutionId],
-    ) -> List[Dict[str, Union[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         raise NotImplementedError(
             "Teradata get_command_execution_steps pending implementation"
         )
 
     def get_command_executions(
         self,
-    ) -> List[Dict[str, Union[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         raise NotImplementedError(
             "Teradata get_command_executions pending implementation"
         )

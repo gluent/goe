@@ -30,7 +30,6 @@ from goe.config.config_validation_functions import (
     normalise_backend_options,
     normalise_db_prefix_and_paths,
     normalise_filesystem_options,
-    normalise_listener_options,
     normalise_offload_transport_config,
     normalise_rdbms_options,
     normalise_rdbms_wallet_options,
@@ -103,17 +102,6 @@ EXPECTED_CONFIG_ARGS = [
     "ldap_password_file",
     "ldap_user",
     "load_db_name_pattern",
-    "listener_host",
-    "listener_port",
-    "listener_heartbeat_interval",
-    "listener_shared_token",
-    "listener_redis_host",
-    "listener_redis_port",
-    "listener_redis_db",
-    "listener_redis_username",
-    "listener_redis_password",
-    "listener_redis_ssl_cert",
-    "listener_redis_use_ssl",
     "log_path",
     "log_level",
     "kerberos_principal",
@@ -261,17 +249,6 @@ class OrchestrationConfig:
     hdfs_host: Optional[str]
     hdfs_load: Optional[str]
     hdfs_db_path_suffix: Optional[str]
-    listener_host: Optional[str]
-    listener_port: Optional[int]
-    listener_heartbeat_interval: int
-    listener_shared_token: Optional[str]
-    listener_redis_db: int
-    listener_redis_host: Optional[str]
-    listener_redis_port: Optional[int]
-    listener_redis_username: Optional[str]
-    listener_redis_password: Optional[str]
-    listener_redis_ssl_cert: Optional[str]
-    listener_redis_use_ssl: Optional[bool]
     log_level: Optional[str]
     log_path: str
     not_null_propagation: Optional[str]
@@ -313,7 +290,6 @@ class OrchestrationConfig:
                 else None
             )
             normalise_rdbms_wallet_options(self, frontend_api=frontend_api)
-            normalise_listener_options(self)
         except PasswordToolsException as exc:
             raise OrchestrationConfigException(
                 "PASSWORD_KEY_FILE enabled, ensure passwords/secrets are encrypted in environment"
@@ -499,47 +475,6 @@ class OrchestrationConfig:
             offload_staging_format=config_dict.get(
                 "offload_staging_format",
                 orchestration_defaults.offload_staging_format_default(),
-            ),
-            listener_host=config_dict.get(
-                "listener_host", orchestration_defaults.listener_host_default()
-            ),
-            listener_port=config_dict.get(
-                "listener_port", orchestration_defaults.listener_port_default()
-            ),
-            listener_heartbeat_interval=config_dict.get(
-                "listener_heartbeat_interval",
-                orchestration_defaults.listener_heartbeat_interval_default(),
-            ),
-            listener_shared_token=config_dict.get(
-                "listener_shared_token",
-                orchestration_defaults.listener_shared_token_default(),
-            ),
-            listener_redis_db=config_dict.get(
-                "listener_redis_db", orchestration_defaults.listener_redis_db_default()
-            ),
-            listener_redis_host=config_dict.get(
-                "listener_redis_host",
-                orchestration_defaults.listener_redis_host_default(),
-            ),
-            listener_redis_port=config_dict.get(
-                "listener_redis_port",
-                orchestration_defaults.listener_redis_port_default(),
-            ),
-            listener_redis_username=config_dict.get(
-                "listener_redis_username",
-                orchestration_defaults.listener_redis_username_default(),
-            ),
-            listener_redis_password=config_dict.get(
-                "listener_redis_password",
-                orchestration_defaults.listener_redis_password_default(),
-            ),
-            listener_redis_ssl_cert=config_dict.get(
-                "listener_redis_ssl_cert",
-                orchestration_defaults.listener_redis_ssl_cert_default(),
-            ),
-            listener_redis_use_ssl=config_dict.get(
-                "listener_redis_use_ssl",
-                orchestration_defaults.listener_redis_use_ssl_default(),
             ),
             log_level=config_dict.get(
                 "log_level", orchestration_defaults.log_level_default()

@@ -82,9 +82,9 @@ Data transport validation tests that the data processing cluster can fetch data 
 
 ### 3.5. Local Checks
 * **OS Distribution & Kernel Check**: Reads `/etc/redhat-release`, `/etc/SuSE-release`, or `/etc/os-release` and executes `uname -r`. Fails if the operating system distribution is unrecognized.
-* **GEL Listener & Redis Cache (Disabled)**:
-  * > [!IMPORTANT]
-  * > The Gluent Event Listener (GEL) and Redis cache status checks are currently hard-disabled in the codebase pending **GitHub Issue #109**.
+* **GEL Listener & Redis Cache (Removed)**:
+  * > [!NOTE]
+  * > The Gluent Event Listener (GEL) and Redis cache checks have been completely removed as part of **GitHub Issue #109**.
 
 ---
 

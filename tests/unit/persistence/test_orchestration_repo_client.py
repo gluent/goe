@@ -26,7 +26,6 @@ from goe.persistence.orchestration_repo_client import type_safe_json_dumps
 from goe.offload.predicate_offload import GenericPredicate
 from goe.orchestration.execution_id import ExecutionId
 
-
 GB = 1024**3
 
 
@@ -49,6 +48,15 @@ class TestOrchestrationRepoClient(TestCase):
 
         i2 = ExecutionId.from_bytes(bytes(i))
         self.assertEqual(i, i2)
+
+        i2 = ExecutionId.from_uuid(i.id)
+        self.assertEqual(i, i2)
+
+    def test_orchestration_execution_id_from_uuid_invalid(self):
+        with self.assertRaises(AssertionError):
+            ExecutionId.from_uuid("not-a-uuid")
+        with self.assertRaises(AssertionError):
+            ExecutionId(from_uuid=12345)
 
     def test_type_safe_json_dumps(self):
         """Ensure we can serialize any types we might find in an options object to JSON"""

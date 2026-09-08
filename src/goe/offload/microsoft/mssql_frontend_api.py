@@ -22,7 +22,7 @@ Implements abstract methods from FrontendApiInterface.
 import logging
 from datetime import datetime
 from textwrap import dedent
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 # Third Party Libraries
 import pymssql
@@ -186,12 +186,10 @@ class MSSQLFrontendApi(FrontendApiInterface):
             )
 
         sql = (
-            dedent(
-                """\
+            dedent("""\
             CREATE TABLE %(owner_table)s (
             %(col_projection)s
-            )"""
-            )
+            )""")
             % {
                 "owner_table": self.enclose_object_reference(schema, table_name),
                 "col_projection": col_projection,
@@ -486,25 +484,20 @@ class MSSQLFrontendApi(FrontendApiInterface):
     ):
         raise NotImplementedError("MSSQL get_object_ddl not implemented.")
 
-    def get_offloadable_schemas(self):
-        raise NotImplementedError("MSSQL get_offloadable_schemas is not implemented.")
-
     def get_command_step_codes(self) -> list:
         raise NotImplementedError("MSSQL get_command_step_codes is not implemented.")
 
-    def get_command_executions(self) -> List[Dict[str, Union[str, Any]]]:
+    def get_command_executions(self) -> List[Dict[str, Any]]:
         raise NotImplementedError("MSSQL get_command_executions is not implemented.")
 
-    def get_command_execution(
-        self, execution_id: ExecutionId
-    ) -> Dict[str, Union[str, Any]]:
+    def get_command_execution(self, execution_id: ExecutionId) -> Dict[str, Any]:
         raise NotImplementedError(
             "MSSQL get_command_execution_status is not implemented."
         )
 
     def get_command_execution_steps(
         self, execution_id: ExecutionId
-    ) -> List[Dict[str, Union[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         raise NotImplementedError(
             "MSSQL get_command_execution_steps is not implemented."
         )
@@ -537,9 +530,6 @@ class MSSQLFrontendApi(FrontendApiInterface):
 
         rows = self.execute_query_fetch_all(q, query_params=(schema, table_name))
         return [_[0] for _ in rows] if rows else []
-
-    def get_schema_tables(self, schema_name):
-        raise NotImplementedError("MSSQL get_schema_tables is not implemented.")
 
     def get_session_option(self, option_name):
         raise NotImplementedError("MSSQL get_session_option not implemented.")
@@ -608,26 +598,22 @@ class MSSQLFrontendApi(FrontendApiInterface):
         )
 
     def schema_exists(self, schema) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
                      SELECT schema_name
                      FROM information_schema.schemata
-                     WHERE schema_name = '%s'"""
-        )
+                     WHERE schema_name = '%s'""")
         row = self.execute_query_fetch_one(
             sql, query_params=(schema,), log_level=VVERBOSE
         )
         return bool(row)
 
     def table_exists(self, schema, table_name) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
                      SELECT table_name
                      FROM information_schema.tables
                      WHERE table_type = 'BASE TABLE'
                      AND table_schema = '%s'
-                     AND table_name = '%s'"""
-        )
+                     AND table_name = '%s'""")
         row = self.execute_query_fetch_one(
             sql, query_params=(schema, table_name), log_level=VVERBOSE
         )
@@ -641,14 +627,12 @@ class MSSQLFrontendApi(FrontendApiInterface):
         return new_py_val
 
     def view_exists(self, schema, view_name) -> bool:
-        sql = dedent(
-            """\
+        sql = dedent("""\
                      SELECT table_name
                      FROM information_schema.tables
                      WHERE table_type = 'VIEW'
                      AND table_schema = '%s'
-                     AND table_name = '%s'"""
-        )
+                     AND table_name = '%s'""")
         row = self.execute_query_fetch_one(
             sql, query_params=(schema, view_name), log_level=VVERBOSE
         )

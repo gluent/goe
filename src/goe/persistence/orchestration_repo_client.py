@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" OrchestrationRepoClientInterface: Base interface of API to interact with orchestration metadata repository.
-    Each frontend/metadata system will have its own implementation.
+"""OrchestrationRepoClientInterface: Base interface of API to interact with orchestration metadata repository.
+Each frontend/metadata system will have its own implementation.
 """
 
 # Standard Library
@@ -388,49 +388,22 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         chunk_id: The identifier returned from start_offload_chunk.
         """
 
-    #
-    # OFFLOAD LISTENER API METHODS
-    #
-    @abstractmethod
-    def get_offloadable_schemas(self):
-        """Returns a dict of all schemas in the database (excluding GOE-created ones)
-        and whether they currently have a hybrid schema created.
-        """
-
-    @abstractmethod
-    def get_schema_tables(self, schema_name: str):
-        """Returns a dict of all tables for a schema"""
-
-    @abstractmethod
-    def get_table_columns(self, schema_name: str, table_name: str):
-        """Returns a dict of all columns for a schema's table"""
-
-    @abstractmethod
-    def get_table_partitions(self, schema_name: str, table_name: str):
-        """Returns a dict of all partitions for a schema's table"""
-
-    @abstractmethod
-    def get_table_subpartitions(self, schema_name: str, table_name: str):
-        """Returns a dict of all subpartitions for a schema's table"""
-
     # GENERAL REPO INTROSPECTION
     #
     @abstractmethod
     def get_command_step_codes(self) -> list:
-        """Return a list of codes from REPO.COMMEND_STEP table"""
+        """Return a list of codes from REPO.COMMAND_STEP table"""
 
     @abstractmethod
-    def get_command_execution(
-        self, execution_id: ExecutionId
-    ) -> Dict[str, Union[str, Any]]:
-        """Return a list of command executions"""
+    def get_command_execution(self, execution_id: ExecutionId) -> Dict[str, Any]:
+        """Return a single command execution"""
 
     @abstractmethod
-    def get_command_executions(self) -> List[Dict[str, Union[str, Any]]]:
+    def get_command_executions(self) -> List[Dict[str, Any]]:
         """Return a list of command executions"""
 
     @abstractmethod
     def get_command_execution_steps(
         self, execution_id: Optional[ExecutionId]
-    ) -> List[Dict[str, Union[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         """Return a list of steps for a given execution id"""

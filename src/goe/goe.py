@@ -15,16 +15,14 @@
 import os
 import sys
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import logging
 import os.path
 from optparse import OptionParser, Option, OptionValueError, SUPPRESS_HELP
 import re
 import traceback
-from typing import Union, TYPE_CHECKING
-
-import orjson
+from typing import TYPE_CHECKING
 
 from goe.config import option_descriptions, orchestration_defaults
 from goe.config.config_validation_functions import normalise_size_option
@@ -123,7 +121,6 @@ from goe.offload.option_validation import (
 )
 from goe.offload.operation.sort_columns import sort_columns_csv_to_sort_columns
 from goe.orchestration import command_steps
-from goe.orchestration.execution_id import ExecutionId
 from goe.persistence.factory.orchestration_repo_client_factory import (
     orchestration_repo_client_factory,
 )
@@ -144,7 +141,6 @@ from goe.util.misc_functions import (
     standard_log_name,
 )
 from goe.util.ora_query import get_oracle_connection
-from goe.util.redis_tools import RedisClient
 
 if TYPE_CHECKING:
     from goe.config.orchestration_config import OrchestrationConfig
@@ -265,30 +261,13 @@ log_fh = None
 suppress_stdout_override = False
 execution_id = ""
 
-redis_execution_id = None
-redis_in_error = False
-
 
 def ansi(line, ansi_code):
     return OffloadMessages.ansi_wrap(line, ansi_code, options.ansi)
 
 
-def serialize_object(obj) -> str:
-    """
-    Encodes json with the optimized ORJSON package
-
-    orjson.dumps returns bytearray, so you can't pass it directly as json_serializer
-    """
-    return orjson.dumps(
-        obj,
-        option=orjson.OPT_NAIVE_UTC | orjson.OPT_SERIALIZE_NUMPY,
-    ).decode()
-
-
-def log(line, detail=normal, ansi_code=None, redis_publish=True):
+def log(line, detail=normal, ansi_code=None):
     global log_fh
-    global redis_in_error
-    global redis_execution_id
 
     def fh_log(line):
         log_fh.write((line or "") + "\n")
@@ -297,26 +276,6 @@ def log(line, detail=normal, ansi_code=None, redis_publish=True):
     def stdout_log(line):
         sys.stdout.write((line or "") + "\n")
         sys.stdout.flush()
-
-    if (
-        redis_publish
-        and orchestration_defaults.cache_enabled()
-        and not redis_in_error
-        and redis_execution_id
-    ):
-        try:
-            cache = RedisClient.connect()
-            msg = {
-                "message": line,
-            }
-            cache.rpush(
-                f"goe:run:{redis_execution_id}",
-                serialize_object(msg),
-                ttl=timedelta(hours=48),
-            )
-        except Exception as exc:
-            fh_log("Disabling Redis integration due to: {}".format(str(exc)))
-            redis_in_error = True
 
     if not log_fh:
         log_fh = sys.stderr
@@ -340,9 +299,9 @@ def get_log_fh():
 
 
 def log_command_line(detail=vverbose):
-    log("Command line:", detail=detail, redis_publish=False)
-    log(" ".join(sys.argv), detail=detail, redis_publish=False)
-    log("", detail=detail, redis_publish=False)
+    log("Command line:", detail=detail)
+    log(" ".join(sys.argv), detail=detail)
+    log("", detail=detail)
 
 
 def log_close():
@@ -1166,10 +1125,6 @@ def strict_version_ready(version_string):
 
 def init_log(log_name):
     global log_fh
-    global redis_in_error
-
-    # Reset Redis status so we attempt to publish messages.
-    redis_in_error = False
 
     current_log_name = standard_log_name(log_name)
     log_path = os.path.join(options.log_path, current_log_name)
@@ -1200,11 +1155,6 @@ def init(options_i):
     if options.version:
         print(version())
         sys.exit(0)
-
-
-def init_redis_execution_id(execution_id: Union[str, ExecutionId]):
-    global redis_execution_id
-    redis_execution_id = str(execution_id)
 
 
 def get_default_location_fs_scheme(offload_target_table):

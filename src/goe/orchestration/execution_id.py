@@ -21,9 +21,6 @@ Unit tests in TestOrchestrationRepoClient.
 import uuid
 from dataclasses import dataclass
 
-# Third Party Libraries
-from pydantic import UUID4
-
 ###########################################################################
 # ExecutionId
 ###########################################################################
@@ -50,7 +47,7 @@ class ExecutionId:
         elif "from_bytes" in kwargs:
             self.id = self._bytes_as_uuid(kwargs["from_bytes"])
         elif "from_uuid" in kwargs:
-            self.id = kwargs["from_uuid"]
+            self.id = self._uuid_as_uuid(kwargs["from_uuid"])
         else:
             self.id = self._new_id()
 
@@ -79,6 +76,14 @@ class ExecutionId:
             return uuid.UUID(s)
 
     @staticmethod
+    def _uuid_as_uuid(u):
+        if u is None:
+            return None
+        else:
+            assert isinstance(u, uuid.UUID)
+            return u
+
+    @staticmethod
     def _new_id():
         return uuid.uuid4()
 
@@ -91,8 +96,8 @@ class ExecutionId:
         return ExecutionId(from_bytes=b)
 
     @staticmethod
-    def from_uuid(b: UUID4):
-        return ExecutionId(from_uuid=b)
+    def from_uuid(u: uuid.UUID):
+        return ExecutionId(from_uuid=u)
 
     def as_str(self):
         return str(self.id)

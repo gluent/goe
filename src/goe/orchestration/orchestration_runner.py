@@ -14,7 +14,6 @@
 
 """
 OrchestrationRunner: Library providing simple entry point for orchestration commands.
-                     Utilized by both CLI and Orchestration Listener.
 """
 
 # Standard Library
@@ -29,11 +28,9 @@ from goe.goe import (
     get_log_fh,
     get_offload_target_table,
     init,
-    init_redis_execution_id,
     init_log,
     offload_table,
 )
-from goe.config import orchestration_defaults
 from goe.config.orchestration_config import OrchestrationConfig
 from goe.offload.factory.frontend_api_factory import frontend_api_factory
 from goe.offload.factory.offload_source_table_factory import OffloadSourceTable
@@ -243,7 +240,6 @@ class OrchestrationRunner:
             self._config,
             log_fh=get_log_fh(),
             execution_id=execution_id,
-            cache_enabled=orchestration_defaults.cache_enabled(),
             command_type=command_type,
         )
 
@@ -345,7 +341,6 @@ class OrchestrationRunner:
                 ),
                 detail=VVERBOSE,
             )
-            init_redis_execution_id(self._execution_id)
             return self._build_repo_client(
                 self._messages, dry_run=(not self._execute_from_params(params))
             )
@@ -531,8 +526,7 @@ class OrchestrationRunner:
             messages_override=messages_override,
         )
 
-        # TODO schema_sync() currently only supports params of type Opt/Argparse, not a dict. When we
-        #      add Schema Sync to Listener we'll need to change this.
+        # TODO schema_sync() currently only supports params of type Opt/Argparse, not a dict.
         command_id = self._command_begin(
             orchestration_constants.COMMAND_SCHEMA_SYNC, params, repo_client
         )

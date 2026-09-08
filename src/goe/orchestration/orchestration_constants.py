@@ -19,7 +19,6 @@ Constants used across multiple Orchestration commands.
 # Try not to import any modules in here, this module is widely imported and we've previously had subtle side effects
 
 PRODUCT_NAME_GOE = "GOE"
-PRODUCT_NAME_GEL = "GOE Listener"
 
 # Command type codes, matches up with data in GOE_REPO.COMMAND_TYPES table.
 COMMAND_OFFLOAD = "OFFLOAD"

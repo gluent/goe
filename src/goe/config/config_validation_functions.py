@@ -245,32 +245,6 @@ def normalise_filesystem_options(options, exc_cls=OrchestrationConfigException):
             )
 
 
-def normalise_listener_options(options):
-    # Listener options
-    if options.listener_port:
-        options.listener_port = orchestration_defaults.posint_option_from_string(
-            "OFFLOAD_LISTENER_PORT", options.listener_port
-        )
-    if options.listener_heartbeat_interval:
-        options.listener_heartbeat_interval = (
-            orchestration_defaults.posint_option_from_string(
-                "OFFLOAD_LISTENER_HEARTBEAT_INTERVAL",
-                options.listener_heartbeat_interval,
-            )
-        )
-    if options.password_key_file:
-        pass_tool = PasswordTools()
-        goe_key = pass_tool.get_password_key_from_key_file(options.password_key_file)
-        if options.listener_shared_token:
-            options.listener_shared_token = pass_tool.b64decrypt(
-                options.listener_shared_token, goe_key
-            )
-        if options.listener_redis_password:
-            options.listener_redis_password = pass_tool.b64decrypt(
-                options.listener_redis_password, goe_key
-            )
-
-
 def normalise_offload_transport_config(options, exc_cls=OrchestrationConfigException):
     def simple_file_csv(var_val, var_name):
         """Check for invalid characters that could be a shell injection risk."""

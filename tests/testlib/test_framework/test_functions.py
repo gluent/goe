@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Functions used in both "test --setup", "test_runner" and "test_setup".
-    Allows us to share code but also keep scripts trim and healthy.
+"""Functions used in both "test --setup", "test_runner" and "test_setup".
+Allows us to share code but also keep scripts trim and healthy.
 """
 
 from contextlib import contextmanager
@@ -129,8 +129,7 @@ def goe_wide_max_columns(frontend_api, backend_api_or_count):
 
 
 def log(line: str, detail: int = normal, ansi_code=None):
-    """Write log entry but without Redis interaction."""
-    offload_log(line, detail=detail, ansi_code=ansi_code, redis_publish=False)
+    offload_log(line, detail=detail, ansi_code=ansi_code)
 
 
 def text_in_events(messages, message_token):

@@ -30,8 +30,7 @@ class FatalTestFailure(Exception):
 
 
 def log(line: str, detail: int = normal, ansi_code=None):
-    """Write log entry but without Redis interaction."""
-    offload_log(line, detail=detail, ansi_code=ansi_code, redis_publish=False)
+    offload_log(line, detail=detail, ansi_code=ansi_code)
 
 
 def section_header(h):

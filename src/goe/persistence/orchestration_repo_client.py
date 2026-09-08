@@ -387,32 +387,6 @@ class OrchestrationRepoClientInterface(metaclass=ABCMeta):
         Record the completion of offload transport for an offload chunk.
         chunk_id: The identifier returned from start_offload_chunk.
         """
-
-    #
-    # OFFLOAD LISTENER API METHODS
-    #
-    @abstractmethod
-    def get_offloadable_schemas(self):
-        """Returns a dict of all schemas in the database (excluding GOE-created ones)
-        and whether they currently have a hybrid schema created.
-        """
-
-    @abstractmethod
-    def get_schema_tables(self, schema_name: str):
-        """Returns a dict of all tables for a schema"""
-
-    @abstractmethod
-    def get_table_columns(self, schema_name: str, table_name: str):
-        """Returns a dict of all columns for a schema's table"""
-
-    @abstractmethod
-    def get_table_partitions(self, schema_name: str, table_name: str):
-        """Returns a dict of all partitions for a schema's table"""
-
-    @abstractmethod
-    def get_table_subpartitions(self, schema_name: str, table_name: str):
-        """Returns a dict of all subpartitions for a schema's table"""
-
     # GENERAL REPO INTROSPECTION
     #
     @abstractmethod

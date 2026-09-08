@@ -24,15 +24,11 @@ from datetime import datetime, timedelta
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
-# Third Party Libraries
-import orjson
-
 # GOE
 from goe.orchestration import orchestration_constants
 from goe.orchestration.command_steps import STEP_TITLES, step_title
 from goe.util.goe_log_fh import GOELogFileHandle
 from goe.util.misc_functions import standard_log_name
-from goe.util.redis_tools import cache
 from goe.orchestration import command_steps
 
 if TYPE_CHECKING:
@@ -82,18 +78,6 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def serialize_object(obj) -> str:
-    """
-    Encodes json with the optimized ORJSON package
-
-    orjson.dumps returns bytearray, so you can't pass it directly as json_serializer
-    """
-    return orjson.dumps(
-        obj,
-        option=orjson.OPT_NAIVE_UTC | orjson.OPT_SERIALIZE_NUMPY,
-    ).decode()
-
-
 class OffloadMessages(object):
     """Class for logging, storing & reporting messages in Offload & Present"""
 
@@ -108,7 +92,6 @@ class OffloadMessages(object):
         execution_id=None,
         repo_client=None,
         command_type=None,
-        cache_enabled: bool = False,
     ):
         """
         Client for Offload logging that also provides step instrumentation, repo logging and Console updates.
@@ -133,10 +116,8 @@ class OffloadMessages(object):
         self._error_before_step = error_before_step
         self._error_after_step = error_after_step
         self.execution_id = execution_id
-        self.cache_enabled = cache_enabled
         self._repo_client = repo_client
         self._command_type = command_type
-        self._redis_in_error = False
         self._stdout_in_error = False
 
     ###########################################################################
@@ -154,7 +135,6 @@ class OffloadMessages(object):
         execution_id=None,
         repo_client=None,
         command_type=None,
-        cache_enabled: bool = False,
     ):
         assert hasattr(opts, "quiet")
         assert hasattr(opts, "verbose")
@@ -170,8 +150,6 @@ class OffloadMessages(object):
             detail = SUPPRESS_STDOUT
         else:
             detail = NORMAL
-        if cache_enabled:
-            cache.get_client()
         return OffloadMessages(
             detail=detail,
             log_fh=log_fh,
@@ -182,7 +160,6 @@ class OffloadMessages(object):
             execution_id=execution_id,
             repo_client=repo_client,
             command_type=command_type,
-            cache_enabled=cache_enabled,
         )
 
     @staticmethod
@@ -192,7 +169,6 @@ class OffloadMessages(object):
         execution_id=None,
         repo_client=None,
         command_type=None,
-        cache_enabled: bool = False,
     ):
         if opts_dict.get("quiet"):
             detail = QUIET
@@ -204,8 +180,6 @@ class OffloadMessages(object):
             detail = SUPPRESS_STDOUT
         else:
             detail = NORMAL
-        if cache_enabled:
-            cache.get_client()
         return OffloadMessages(
             detail=detail,
             log_fh=log_fh,
@@ -216,7 +190,6 @@ class OffloadMessages(object):
             execution_id=execution_id,
             repo_client=repo_client,
             command_type=command_type,
-            cache_enabled=cache_enabled,
         )
 
     @staticmethod
@@ -347,20 +320,6 @@ class OffloadMessages(object):
         ):
             line = self.ansi_wrap(line, ansi_code, self._ansi)
             stdout_log(line)
-        if self.cache_enabled and not self._redis_in_error:
-            try:
-                cache.rpush(
-                    f"goe:run:{self.execution_id}",
-                    serialize_object(
-                        {
-                            "message": line,
-                        }
-                    ),
-                    ttl=timedelta(hours=48),
-                )
-            except Exception as exc:
-                fh_log("Disabling Redis integration due to: {}".format(str(exc)))
-                self._redis_in_error = True
 
     def info(self, line, detail=NORMAL, ansi_code=None):
         if self._detail >= NORMAL:

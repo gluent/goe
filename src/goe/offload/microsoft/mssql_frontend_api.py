@@ -485,10 +485,6 @@ class MSSQLFrontendApi(FrontendApiInterface):
         remap_schema=None,
     ):
         raise NotImplementedError("MSSQL get_object_ddl not implemented.")
-
-    def get_offloadable_schemas(self):
-        raise NotImplementedError("MSSQL get_offloadable_schemas is not implemented.")
-
     def get_command_step_codes(self) -> list:
         raise NotImplementedError("MSSQL get_command_step_codes is not implemented.")
 
@@ -537,9 +533,6 @@ class MSSQLFrontendApi(FrontendApiInterface):
 
         rows = self.execute_query_fetch_all(q, query_params=(schema, table_name))
         return [_[0] for _ in rows] if rows else []
-
-    def get_schema_tables(self, schema_name):
-        raise NotImplementedError("MSSQL get_schema_tables is not implemented.")
 
     def get_session_option(self, option_name):
         raise NotImplementedError("MSSQL get_session_option not implemented.")

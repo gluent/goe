@@ -38,7 +38,7 @@ You are an AI coding assistant helping develop the GOE framework repository. Alw
 - **Formatting**: Follow structured markdown conventions (Executive Summary, Architecture/Analysis, Step-by-Step Plan, Verification, Risks/Mitigation) as demonstrated in existing design documents.
 
 ## 6. Repository Structure
-- `src/goe/`: Core Python framework package containing orchestration, offloading logic, transport functions, and REST listener.
+- `src/goe/`: Core Python framework package containing orchestration, offloading logic, and transport functions.
 - `tests/`: Unit, integration, and test library infrastructure.
 - `docs/`: Public and internal documentation.
 - `bin/`: Executable CLI entrypoints (e.g., `offload`, `connect`).

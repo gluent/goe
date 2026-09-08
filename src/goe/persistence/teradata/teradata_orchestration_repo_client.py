@@ -303,7 +303,7 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
         # TODO For MVP this method is a pass-thru
 
     #
-    # ORACLE LISTENER API METHODS
+    # GENERAL REPO INTROSPECTION
     #
 
     def get_command_step_codes(self) -> list:
@@ -336,23 +336,3 @@ class TeradataOrchestrationRepoClient(OrchestrationRepoClientInterface):
             "Teradata get_command_executions pending implementation"
         )
 
-    def get_offloadable_schemas(self):
-        raise NotImplementedError(
-            "Teradata get_offloadable_schemas pending implementation"
-        )
-
-    def get_schema_tables(self, schema_name):
-        raise NotImplementedError("Teradata get_schema_tables pending implementation")
-
-    def get_table_columns(self, schema_name, table_name):
-        raise NotImplementedError("Teradata get_table_columns pending implementation")
-
-    def get_table_partitions(self, schema_name, table_name):
-        raise NotImplementedError(
-            "Teradata get_table_partitions pending implementation"
-        )
-
-    def get_table_subpartitions(self, schema_name, table_name):
-        raise NotImplementedError(
-            "Teradata get_table_subpartitions pending implementation"
-        )

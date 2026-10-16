@@ -17,11 +17,16 @@
     Because there is no connection we can fake any backend and test basic functionality.
 """
 import logging
-from unittest import TestCase, main
+from unittest import TestCase, main, mock
 
-from tests.unit.test_functions import optional_hadoop_dependency_exception
+from tests.unit.test_functions import (
+    build_mock_options,
+    optional_hadoop_dependency_exception,
+    FAKE_ORACLE_BQ_ENV,
+)
 from goe.filesystem.cli_hdfs import CliHdfs
 from goe.filesystem.goe_azure import GOEAzure
+from goe.filesystem.goe_dfs_factory import get_dfs_from_options
 from goe.filesystem.goe_gcs import GOEGcs
 from goe.filesystem.goe_s3 import GOES3
 
@@ -355,6 +360,32 @@ class TestGOEGcs(TestGOEDfs):
 
     def test_all(self):
         self._run_all_tests()
+
+    def test_custom_storage_api_endpoint(self):
+        endpoint = "https://storage-myep.p.googleapis.com"
+        with mock.patch("goe.filesystem.goe_gcs.storage.Client") as mock_client:
+            GOEGcs(OffloadMessages(), dry_run=True, storage_api_endpoint=endpoint)
+        mock_client.assert_called_once()
+        self.assertEqual(
+            mock_client.call_args.kwargs["client_options"].api_endpoint, endpoint
+        )
+
+    def test_default_storage_api_endpoint(self):
+        """Backward compatibility: no client_options when no endpoint is configured."""
+        for endpoint in (None, ""):
+            with mock.patch("goe.filesystem.goe_gcs.storage.Client") as mock_client:
+                GOEGcs(OffloadMessages(), dry_run=True, storage_api_endpoint=endpoint)
+            mock_client.assert_called_once_with()
+
+    def test_dfs_factory_storage_api_endpoint(self):
+        config = build_mock_options(FAKE_ORACLE_BQ_ENV)
+        with mock.patch("goe.filesystem.goe_gcs.storage.Client") as mock_client:
+            dfs = get_dfs_from_options(config, OffloadMessages(), dry_run=True)
+        self.assertIsInstance(dfs, GOEGcs)
+        self.assertEqual(
+            mock_client.call_args.kwargs["client_options"].api_endpoint,
+            "https://storage-myep.p.googleapis.com",
+        )
 
 
 ###############################################################################

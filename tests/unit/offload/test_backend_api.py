@@ -20,7 +20,7 @@
 """
 
 from datetime import datetime
-from unittest import TestCase, main
+from unittest import TestCase, main, mock
 import re
 import pytest
 
@@ -1370,6 +1370,74 @@ class TestBigQueryBackendApi(TestBackendApi):
 
     def test_all_non_connecting_bigquery_tests(self):
         self._run_all_tests()
+
+
+###############################################################################
+# BigQuery custom Google API endpoints
+###############################################################################
+
+
+def _bigquery_api(config):
+    return backend_api_factory(
+        DBTYPE_BIGQUERY, config, OffloadMessages(), dry_run=True, do_not_connect=True
+    )
+
+
+def _config_without_endpoints():
+    env = dict(FAKE_ORACLE_BQ_ENV)
+    env.update(
+        {
+            "BIGQUERY_API_ENDPOINT": "",
+            "GOOGLE_KMS_API_ENDPOINT": "",
+            "GOOGLE_STORAGE_API_ENDPOINT": "",
+        }
+    )
+    return build_mock_options(env)
+
+
+def test_bigquery_client_custom_endpoint():
+    config = build_mock_options(FAKE_ORACLE_BQ_ENV)
+    api = _bigquery_api(config)
+    with mock.patch(
+        "goe.offload.bigquery.bigquery_backend_api.bigquery.Client"
+    ) as mock_client:
+        api._get_bq_client()
+    mock_client.assert_called_once()
+    client_options = mock_client.call_args.kwargs["client_options"]
+    assert client_options.api_endpoint == "https://bigquery-myep.p.googleapis.com"
+
+
+def test_bigquery_client_default_endpoint():
+    """Backward compatibility: no client_options when no endpoint is configured."""
+    api = _bigquery_api(_config_without_endpoints())
+    with mock.patch(
+        "goe.offload.bigquery.bigquery_backend_api.bigquery.Client"
+    ) as mock_client:
+        api._get_bq_client()
+    mock_client.assert_called_once()
+    assert "client_options" not in mock_client.call_args.kwargs
+
+
+def test_kms_client_custom_endpoint():
+    config = build_mock_options(FAKE_ORACLE_BQ_ENV)
+    api = _bigquery_api(config)
+    with mock.patch(
+        "goe.offload.bigquery.bigquery_backend_api.kms.KeyManagementServiceClient"
+    ) as mock_client:
+        api._get_kms_client()
+    mock_client.assert_called_once()
+    client_options = mock_client.call_args.kwargs["client_options"]
+    assert client_options.api_endpoint == "cloudkms-myep.p.googleapis.com"
+
+
+def test_kms_client_default_endpoint():
+    """Backward compatibility: no client_options when no endpoint is configured."""
+    api = _bigquery_api(_config_without_endpoints())
+    with mock.patch(
+        "goe.offload.bigquery.bigquery_backend_api.kms.KeyManagementServiceClient"
+    ) as mock_client:
+        api._get_kms_client()
+    mock_client.assert_called_once_with()
 
 
 class TestSparkThriftBackendApi(TestBackendApi):

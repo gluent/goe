@@ -104,3 +104,61 @@ def test_config_file_env_key_value_pair(
         k, v = output
         assert k == expected_key
         assert v == expected_value
+
+
+def test_google_api_endpoints_from_env():
+    """Custom Google API endpoints are picked up from the environment and normalised."""
+    with mock.patch.dict(os.environ, FAKE_ORACLE_BQ_ENV):
+        config = OrchestrationConfig.from_dict({})
+    # FAKE_ORACLE_BQ_ENV deliberately contains values requiring normalisation.
+    assert config.bigquery_api_endpoint == "https://bigquery-myep.p.googleapis.com"
+    assert config.google_storage_api_endpoint == "https://storage-myep.p.googleapis.com"
+    assert config.google_kms_api_endpoint == "cloudkms-myep.p.googleapis.com"
+
+
+def test_google_api_endpoints_from_dict():
+    with mock.patch.dict(os.environ, FAKE_ORACLE_BQ_ENV):
+        config = OrchestrationConfig.from_dict(
+            {
+                "bigquery_api_endpoint": "https://bq-proxy.internal.corp:8443/",
+                "google_storage_api_endpoint": "gcs-proxy.internal.corp",
+                "google_kms_api_endpoint": "kms-proxy.internal.corp:8443",
+            }
+        )
+    assert config.bigquery_api_endpoint == "https://bq-proxy.internal.corp:8443"
+    assert config.google_storage_api_endpoint == "https://gcs-proxy.internal.corp"
+    assert config.google_kms_api_endpoint == "kms-proxy.internal.corp:8443"
+
+
+@pytest.mark.parametrize("value", ["", "  "])
+def test_google_api_endpoints_empty_are_none(value: str):
+    """Empty values, e.g. from "BIGQUERY_API_ENDPOINT=" in offload.env, mean use the default endpoint."""
+    env = dict(FAKE_ORACLE_BQ_ENV)
+    env.update(
+        {
+            "BIGQUERY_API_ENDPOINT": value,
+            "GOOGLE_STORAGE_API_ENDPOINT": value,
+            "GOOGLE_KMS_API_ENDPOINT": value,
+        }
+    )
+    with mock.patch.dict(os.environ, env):
+        config = OrchestrationConfig.from_dict({})
+    assert config.bigquery_api_endpoint is None
+    assert config.google_storage_api_endpoint is None
+    assert config.google_kms_api_endpoint is None
+
+
+@pytest.mark.parametrize(
+    "env_var,value",
+    [
+        ("BIGQUERY_API_ENDPOINT", "https://host/bigquery/v2"),
+        ("GOOGLE_STORAGE_API_ENDPOINT", "ftp://host"),
+        ("GOOGLE_KMS_API_ENDPOINT", "http://host"),
+    ],
+)
+def test_google_api_endpoints_invalid(env_var: str, value: str):
+    env = dict(FAKE_ORACLE_BQ_ENV)
+    env[env_var] = value
+    with mock.patch.dict(os.environ, env):
+        with pytest.raises(OrchestrationConfigException, match=env_var):
+            OrchestrationConfig.from_dict({})

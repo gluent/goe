@@ -22,6 +22,7 @@ from os.path import basename, exists as file_exists
 from requests import ConnectionError
 
 from google.api_core import retry, exceptions as google_exceptions
+from google.api_core.client_options import ClientOptions
 from google.cloud import storage
 
 from goe.filesystem.goe_dfs import (
@@ -63,10 +64,17 @@ class GOEGcs(GOEDfs):
     https://googleapis.dev/python/storage/latest/client.html
     dry_run: Do not make changes.
     do_not_connect: Do not even connect, used for unit testing.
+    storage_api_endpoint: Optional custom (normalised) Cloud Storage API endpoint,
+                          e.g. https://storage-myep.p.googleapis.com.
     """
 
     def __init__(
-        self, messages, dry_run=False, do_not_connect=False, db_path_suffix=None
+        self,
+        messages,
+        dry_run=False,
+        do_not_connect=False,
+        db_path_suffix=None,
+        storage_api_endpoint=None,
     ):
         assert messages
 
@@ -76,10 +84,20 @@ class GOEGcs(GOEDfs):
             messages, dry_run=dry_run, do_not_connect=do_not_connect
         )
 
+        self._storage_api_endpoint = storage_api_endpoint or None
         if do_not_connect:
             self._client = None
         else:
-            self._client = storage.Client()
+            client_kwargs = {}
+            if self._storage_api_endpoint:
+                logger.info(
+                    "Using custom Cloud Storage API endpoint: %s",
+                    self._storage_api_endpoint,
+                )
+                client_kwargs["client_options"] = ClientOptions(
+                    api_endpoint=self._storage_api_endpoint
+                )
+            self._client = storage.Client(**client_kwargs)
         self._db_path_suffix = db_path_suffix
         self.dfs_mechanism = GOE_DFS_GCS
         self.backend_dfs = "GCS"

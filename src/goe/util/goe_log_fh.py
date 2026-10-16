@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 import fsspec
 from gcsfs.core import GCS_MIN_BLOCK_SIZE
+
+from goe.util.google_api_endpoints import normalise_rest_api_endpoint
+
+GOOGLE_STORAGE_API_ENDPOINT_ENV = "GOOGLE_STORAGE_API_ENDPOINT"
 
 
 def is_gcs_path(path: str):
@@ -22,6 +28,21 @@ def is_gcs_path(path: str):
 
 def is_valid_path_for_logs(path: str):
     return bool(path and (path.startswith("/") or is_gcs_path(path)))
+
+
+def get_gcs_endpoint_url():
+    """Return the normalised custom Cloud Storage endpoint from the environment, or None.
+
+    Logging can be initialised before OrchestrationConfig therefore we read the environment
+    directly but must still normalise because gcsfs requires scheme://host[:port].
+    """
+    raw_endpoint = os.environ.get(GOOGLE_STORAGE_API_ENDPOINT_ENV)
+    try:
+        return normalise_rest_api_endpoint(raw_endpoint)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid value for {GOOGLE_STORAGE_API_ENDPOINT_ENV}: {raw_endpoint}: {exc}"
+        ) from exc
 
 
 class GOELogFileHandle:
@@ -46,7 +67,11 @@ class GOELogFileHandle:
             if it cannot authenticate with GCS.
             https://gcsfs.readthedocs.io/en/latest/api.html#gcsfs.core.GCSFileSystem
             """
-            fs = fsspec.filesystem("gs", block_size=GCS_MIN_BLOCK_SIZE)
+            fs_kwargs = {"block_size": GCS_MIN_BLOCK_SIZE}
+            endpoint_url = get_gcs_endpoint_url()
+            if endpoint_url:
+                fs_kwargs["endpoint_url"] = endpoint_url
+            fs = fsspec.filesystem("gs", **fs_kwargs)
         else:
             fs = fsspec.filesystem("file")
         return fs

@@ -80,10 +80,27 @@ def get_backend_api(options, orchestration_config, messages=None, dry_run=False)
     )
 
 
+def log_custom_google_api_endpoints(orchestration_config):
+    """Log any custom Google API endpoints used to connect to BigQuery and Cloud KMS."""
+    if orchestration_config.backend_distribution != BACKEND_DISTRO_GCP:
+        return
+    if orchestration_config.bigquery_api_endpoint:
+        detail(
+            "Using custom BigQuery API endpoint: %s"
+            % orchestration_config.bigquery_api_endpoint
+        )
+    if orchestration_config.google_kms_api_endpoint:
+        detail(
+            "Using custom Cloud KMS API endpoint: %s"
+            % orchestration_config.google_kms_api_endpoint
+        )
+
+
 def test_backend_db_connectivity(options, orchestration_config, messages):
     test_name = "%s connectivity" % static_backend_name(orchestration_config)
     try:
         test_header(test_name)
+        log_custom_google_api_endpoints(orchestration_config)
         backend_api = get_backend_api(options, orchestration_config, messages=messages)
         success(test_name)
         return backend_api

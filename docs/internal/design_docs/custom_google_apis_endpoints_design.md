@@ -178,7 +178,7 @@ sequenceDiagram
 
     Env->>Def: Read environment variables
     Def->>Cfg: OrchestrationConfig.from_dict()
-    Cfg->>Val: normalise_bigquery_options()
+    Cfg->>Val: normalise_filesystem_options() / normalise_bigquery_options()
     Val->>Util: normalise_rest_api_endpoint() / normalise_grpc_api_endpoint()
     Note over Util: Empty -> None, validate, add https:// for REST, strip https:// for gRPC
 
@@ -272,10 +272,12 @@ sequenceDiagram
 ### 5.5. Validation & Normalization
 * **File**: `src/goe/config/config_validation_functions.py`
   * Import helpers from `goe.util.google_api_endpoints`.
+  * Add `normalise_google_api_endpoint(endpoint, option_name, normalise_fn, exc_cls)` which calls the helper and re-raises `ValueError` as `exc_cls(f"Invalid value for <ENV_VAR_NAME>: {value}: {error}")`.
   * In `normalise_bigquery_options(options, exc_cls)` (only runs for `BACKEND_DISTRO_GCP`):
-    * Apply `normalise_rest_api_endpoint` to `options.bigquery_api_endpoint` and `options.google_storage_api_endpoint`.
+    * Apply `normalise_rest_api_endpoint` to `options.bigquery_api_endpoint`.
     * Apply `normalise_grpc_api_endpoint` to `options.google_kms_api_endpoint`.
-    * Catch `ValueError` and re-raise as `exc_cls(f"Invalid value for <ENV_VAR_NAME>: {value}: {error}")`.
+  * In `normalise_filesystem_options(options, exc_cls)` (runs for all backends):
+    * Apply `normalise_rest_api_endpoint` to `options.google_storage_api_endpoint`. This is deliberately not BigQuery specific because `OFFLOAD_FS_SCHEME=gs` (and therefore `GOEGcs`) can also be used with other backends, e.g. Snowflake, and for `gs://` log locations.
 
 ### 5.6. BigQuery & KMS Client Setup
 * **File**: `src/goe/offload/bigquery/bigquery_backend_api.py`
@@ -310,9 +312,8 @@ sequenceDiagram
 
 Changes are therefore limited to reporting which endpoints are in use:
 * **File**: `src/goe/connect/connect_backend.py`
-  * In `run_backend_tests()`:
-    * When `orchestration_config.bigquery_api_endpoint` is set, log `detail("Using custom BigQuery API endpoint: %s" % orchestration_config.bigquery_api_endpoint)`.
-    * When `orchestration_config.google_kms_api_endpoint` is set, log the corresponding KMS message.
+  * Add `log_custom_google_api_endpoints(orchestration_config)` (GCP only) which logs, via `detail()`, `Using custom BigQuery API endpoint: ...` and `Using custom Cloud KMS API endpoint: ...` when set.
+  * Call it from `test_backend_db_connectivity()` directly after `test_header()`, so the details appear under the connectivity test which constructs both the BigQuery and KMS clients.
 * **File**: `src/goe/connect/connect.py`
   * In `test_offload_fs_container()`:
     * When `orchestration_config.google_storage_api_endpoint` is set, log `detail("Using custom Cloud Storage API endpoint: %s" % ...)`.
@@ -349,7 +350,8 @@ Changes are therefore limited to reporting which endpoints are in use:
    * Test that empty-string env values (`BIGQUERY_API_ENDPOINT=""`) result in `None` attributes.
 3. **Validation Wrapper Tests** (`tests/unit/config/test_config_validation_functions.py`):
    * Verify `normalise_bigquery_options` raises `OrchestrationConfigException` with the variable name in the message for invalid input.
-   * Verify endpoints are left untouched for non-GCP backend distributions.
+   * Verify BigQuery/KMS endpoints are left untouched for non-GCP backend distributions.
+   * Verify `normalise_filesystem_options` normalises/validates `GOOGLE_STORAGE_API_ENDPOINT` for both GCP and non-GCP backends.
 4. **Backend API Client Tests** (`tests/unit/offload/test_backend_api.py`):
    * Unit tests construct the API with `do_not_connect=True`, so call `_get_bq_client()` / `_get_kms_client()` directly with `bigquery.Client` / `kms.KeyManagementServiceClient` patched.
    * Verify `client_options.api_endpoint` receives the configured BigQuery and KMS endpoints.

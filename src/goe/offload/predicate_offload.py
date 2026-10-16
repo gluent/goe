@@ -665,7 +665,7 @@ class InsertSyntheticPartitionClauses(lark.Transformer):
 
 def get_parser(top_level_node="offload_predicate"):
     return lark.Lark(
-        """
+        r"""
 %import common.ESCAPED_STRING
 %import common.INT
 %import common.DECIMAL

@@ -40,7 +40,7 @@ class SchemaSyncCommandFile(object):
         try:
             with open(self._command_file, "w") as cmd_file:
                 cmd_file.write("\n%s" % divider)
-                cmd_file.write("\Schema Sync v%s Command File" % version())
+                cmd_file.write("\nSchema Sync v%s Command File" % version())
                 cmd_file.write(
                     "\nCopyright % The GOE Authors. All rights reserved.}');"
                     % datetime.now().strftime("%Y")

@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" hive_table_stats: Grab, collect or set hive (mostly impala) table and column statistics
-"""
+"""hive_table_stats: Grab, collect or set hive (mostly impala) table and column statistics"""
 
 import logging
 import random
@@ -59,7 +58,7 @@ class HiveTableStatsException(Exception):
 ###############################################################################
 
 # Regex to parse DECIMAL data type
-REGEX_DECIMAL = re.compile("(DECIMAL\()([\\d]+)", re.I)
+REGEX_DECIMAL = re.compile(r"(DECIMAL\()([\d]+)", re.I)
 
 # Column statistics (headers)
 COL_STATS = ("ndv", "num_nulls", "avg_col_len", "low_val", "high_val", "max_col_len")

@@ -17,7 +17,7 @@ You are an AI coding assistant helping develop the GOE framework repository. Alw
 - **Formatter**: Python files must be formatted using `black`. Always format modified files before declaring a task complete.
 - **Conventions**:
   - Write clean, modular, and well-documented Python code.
-  - Maintain compatibility with Python 3.8+.
+  - Maintain compatibility with Python 3.9+.
   - Always place all imports at the top of the file, rather than within function scopes.
   - Ensure all newly added functions and methods have clear docstrings explaining their purpose, following PEP 257 standard conventions (i.e., a one-line summary, a blank line, and a detailed description for multi-line docstrings).
 

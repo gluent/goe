@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" BackendSnowflakeTable: Library for logic/interaction with a table that will
-    be either:
-      1) The target of an offload
-      2) The source of a present
+"""BackendSnowflakeTable: Library for logic/interaction with a table that will
+be either:
+  1) The target of an offload
+  2) The source of a present
 """
 
 import logging
@@ -48,7 +48,6 @@ from goe.filesystem.goe_dfs import (
 )
 from goe.filesystem.goe_azure import azure_fq_container_name
 from goe.util.misc_functions import add_suffix_in_same_case
-
 
 ###############################################################################
 # CONSTANTS
@@ -177,7 +176,7 @@ class BackendSnowflakeTable(BackendTableInterface):
 
     def _format_staging_object_name(self):
         return (
-            "'@%(stage)s/%(table)s/' (FILE_FORMAT=>%(file_format)s, PATTERN=>'.*\.%(file_ext)s')"
+            r"'@%(stage)s/%(table)s/' (FILE_FORMAT=>%(file_format)s, PATTERN=>'.*\.%(file_ext)s')"
             % {
                 "stage": self._db_api.enclose_object_reference(
                     self._load_db_name, self._snowflake_stage
@@ -214,12 +213,10 @@ class BackendSnowflakeTable(BackendTableInterface):
             container_override=self._offload_fs_container_override(),
         )
         sql = (
-            dedent(
-                """\
+            dedent("""\
                       CREATE STAGE %s
                       URL = '%s/'
-                      STORAGE_INTEGRATION = %s"""
-            )
+                      STORAGE_INTEGRATION = %s""")
             % (
                 self._db_api.enclose_object_reference(
                     self.db_name, self._snowflake_stage

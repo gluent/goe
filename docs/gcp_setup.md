@@ -4,6 +4,7 @@
 - [Example Commands](#example-commands)
 - [Managed Spark version implications](#managed-spark-version-implications)
 - [Compute Engine Virtual Machine](#compute-engine-virtual-machine)
+- [Private Google API Endpoints](#private-google-api-endpoints)
 - [Generating Dataset DDL](#generating-dataset-ddl)
 
 ## Overview
@@ -352,6 +353,48 @@ gcloud compute instances create ${INSTANCE_NAME} \
   --service-account=${SVC_ACCOUNT}@${PROJECT}.iam.gserviceaccount.com \
   --scopes=https://www.googleapis.com/auth/cloud-platform
 ```
+
+## Private Google API Endpoints
+
+In environments where the default public Google API endpoints (`*.googleapis.com`) are blocked, GOE can be configured to use custom endpoints, for example [Private Service Connect for Google APIs](https://cloud.google.com/vpc/docs/configure-private-service-connect-apis#supported-apis) endpoints, which take the form `SERVICE-ENDPOINTNAME.p.googleapis.com`.
+
+Note that Private Google Access using the `private.googleapis.com` or `restricted.googleapis.com` VIPs is normally implemented with DNS overrides of the default hostnames and does not require any of the settings below.
+
+The following optional settings can be added to `offload.env`. Leave them blank to use the default public endpoints:
+
+| Setting | Service | Example values |
+| :------ | :------ | :------------- |
+| `BIGQUERY_API_ENDPOINT` | BigQuery | `bigquery-myendpoint.p.googleapis.com`<br />`https://bigquery-myendpoint.p.googleapis.com` |
+| `GOOGLE_STORAGE_API_ENDPOINT` | Cloud Storage, including `gs://` log locations (`OFFLOAD_LOGDIR`) | `storage-myendpoint.p.googleapis.com`<br />`https://storage-myendpoint.p.googleapis.com:8443` |
+| `GOOGLE_KMS_API_ENDPOINT` | Cloud KMS | `cloudkms-myendpoint.p.googleapis.com`<br />`https://cloudkms-myendpoint.p.googleapis.com` |
+
+Values may be supplied with or without a scheme (`https://` is assumed if omitted) and with an optional port. Paths, query strings and user information are not permitted. `http://` is accepted for BigQuery and Cloud Storage but will log a warning because credentials would be sent in cleartext; it is not accepted for Cloud KMS.
+
+`GOOGLE_KMS_API_ENDPOINT` is only used by `connect` to validate the customer-managed encryption key (CMEK). BigQuery applies CMEK server-side, therefore Offload does not contact Cloud KMS directly.
+
+Run `connect` after changing these settings, custom endpoints in use are reported in the output.
+
+### Managed Spark (gcloud)
+
+Spark transports using Managed Service for Apache Spark invoke `gcloud dataproc` commands from the GOE host. `gcloud` endpoints are not controlled by GOE settings but `gcloud` supports its own endpoint overrides, which can be set in `offload.env` using the `export` form:
+
+```shell
+export CLOUDSDK_API_ENDPOINT_OVERRIDES_DATAPROC=https://dataproc-myendpoint.p.googleapis.com/
+```
+
+Or via `gcloud` configuration:
+
+```shell
+gcloud config set api_endpoint_overrides/dataproc https://dataproc-myendpoint.p.googleapis.com/
+```
+
+***
+
+__NOTE:__ The value must start with `https://` and end with a trailing `/`. Do not set `CLOUDSDK_API_ENDPOINT_OVERRIDES_DATAPROC` to an empty value, `gcloud` rejects empty values and all Managed Spark commands will fail.
+
+***
+
+Network access from Managed Spark workers, for example to Cloud Storage, is governed by your VPC configuration (e.g. Private Google Access) and not by GOE.
 
 ## Generating Dataset DDL
 

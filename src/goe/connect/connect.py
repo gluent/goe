@@ -382,6 +382,11 @@ def check_environment(options, orchestration_config):
 def test_offload_fs_container(orchestration_config, messages):
     test_name = "Offload filesystem container"
     test_header(test_name)
+    if orchestration_config.google_storage_api_endpoint:
+        detail(
+            "Using custom Cloud Storage API endpoint: %s"
+            % orchestration_config.google_storage_api_endpoint
+        )
     dfs_client = get_dfs_from_options(orchestration_config, messages, dry_run=False)
     display_uri = dfs_client.gen_uri(
         orchestration_config.offload_fs_scheme,

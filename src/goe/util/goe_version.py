@@ -12,7 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try:
-    from packaging.version import Version as GOEVersion
-except ModuleNotFoundError:
-    from distutils.version import LooseVersion as GOEVersion
+from packaging.version import Version as GOEVersion

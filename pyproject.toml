@@ -40,6 +40,7 @@ dependencies = [
     "lark-parser",
     "numpy",
     "orjson",
+    "packaging",
     "python-dateutil",
     "PyYAML",
     "requests",

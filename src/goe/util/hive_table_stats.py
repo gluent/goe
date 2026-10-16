@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" hive_table_stats: Grab, collect or set hive (mostly impala) table and column statistics
-"""
+"""hive_table_stats: Grab, collect or set hive (mostly impala) table and column statistics"""
 
 import logging
 import random

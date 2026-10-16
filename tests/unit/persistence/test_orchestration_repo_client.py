@@ -156,6 +156,18 @@ class TestOrchestrationRepoClient(TestCase):
             ("LOB", oracledb.DB_TYPE_CLOB, "2020-02-01"),
         )
 
+    def test_oracle_str_to_clob_empty_is_null(self):
+        """Ensure None and empty string map to NULL rather than an empty CLOB."""
+        client = OracleOrchestrationRepoClient.__new__(OracleOrchestrationRepoClient)
+        mock_conn = mock.MagicMock()
+        mock_frontend_api = mock.MagicMock()
+        mock_frontend_api.get_oracle_connection_object.return_value = mock_conn
+        client._frontend_client = mock_frontend_api
+
+        self.assertIsNone(client._str_to_clob(None))
+        self.assertIsNone(client._str_to_clob(""))
+        mock_conn.createlob.assert_not_called()
+
 
 if __name__ == "__main__":
     main()

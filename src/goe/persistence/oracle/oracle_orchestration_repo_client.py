@@ -151,8 +151,15 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             (owner_override or self._repo_user).upper(), repo_type_name.upper()
         )
 
-    def _str_to_clob(self, val: Optional[str]):
-        if val is None:
+    def _str_to_clob(self, val: Optional[str]) -> Optional[oracledb.LOB]:
+        """Convert a Python str to a temporary Oracle CLOB for assignment to a UDT attribute.
+
+        python-oracledb cannot assign a Python str directly to a CLOB attribute of a DbObject,
+        so we create a temporary LOB via the connection instead.
+        None and "" both return None, preserving Oracle's empty-string-is-NULL semantics
+        (an empty CLOB is not NULL).
+        """
+        if not val:
             return None
         conn_obj = self._frontend_api.get_oracle_connection_object()
         return conn_obj.createlob(oracledb.DB_TYPE_CLOB, val)

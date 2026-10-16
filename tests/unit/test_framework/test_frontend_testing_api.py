@@ -145,6 +145,10 @@ class TestOracleFrontendTestingApi(TestFrontendTestingApi):
         self._run_all_tests()
 
     def test_oracle_gen_column_data_binary_types(self):
+        """Ensure generated BLOB/RAW test data is bytes, not str.
+
+        python-oracledb binds str as character data which fails with ORA-01465 on binary columns.
+        """
         blob_col = OracleColumn("COL_BLOB", ORACLE_TYPE_BLOB)
         raw_col = OracleColumn("COL_RAW", ORACLE_TYPE_RAW, data_length=30)
         for col in (blob_col, raw_col):

@@ -26,6 +26,11 @@ from unittest import TestCase, main
 from goe.offload.column_metadata import ALL_CANONICAL_TYPES
 from goe.offload.offload_constants import DBTYPE_ORACLE, DBTYPE_MSSQL, DBTYPE_TERADATA
 from goe.offload.offload_messages import OffloadMessages
+from goe.offload.oracle.oracle_column import (
+    OracleColumn,
+    ORACLE_TYPE_BLOB,
+    ORACLE_TYPE_RAW,
+)
 from tests.unit.test_functions import (
     build_mock_options,
     optional_sql_server_dependency_exception,
@@ -138,6 +143,16 @@ class TestOracleFrontendTestingApi(TestFrontendTestingApi):
 
     def test_all_non_connecting_oracle_tests(self):
         self._run_all_tests()
+
+    def test_oracle_gen_column_data_binary_types(self):
+        blob_col = OracleColumn("COL_BLOB", ORACLE_TYPE_BLOB)
+        raw_col = OracleColumn("COL_RAW", ORACLE_TYPE_RAW, data_length=30)
+        for col in (blob_col, raw_col):
+            values = [self.test_api._gen_column_data(col, i) for i in range(25)]
+            non_null_values = [v for v in values if v is not None]
+            self.assertTrue(non_null_values)
+            for v in non_null_values:
+                self.assertIsInstance(v, bytes)
 
 
 class TestTeradataFrontendTestingApi(TestFrontendTestingApi):

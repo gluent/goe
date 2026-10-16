@@ -177,7 +177,7 @@ class BackendSnowflakeTable(BackendTableInterface):
 
     def _format_staging_object_name(self):
         return (
-            "'@%(stage)s/%(table)s/' (FILE_FORMAT=>%(file_format)s, PATTERN=>'.*\.%(file_ext)s')"
+            r"'@%(stage)s/%(table)s/' (FILE_FORMAT=>%(file_format)s, PATTERN=>'.*\.%(file_ext)s')"
             % {
                 "stage": self._db_api.enclose_object_reference(
                     self._load_db_name, self._snowflake_stage

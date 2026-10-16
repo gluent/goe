@@ -57,9 +57,8 @@ class PollingThread(threading.Thread):
                 # Store thread exception as a property to be checked by the caller
                 self._exception = traceback.format_exc()
                 break
-            finally:
-                if self.event.is_set():
-                    break
+            if self.event.is_set():
+                break
 
     def stop(self):
         """Stop the polling thread and let it finish any in-flight run function by joining,

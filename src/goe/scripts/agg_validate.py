@@ -71,7 +71,7 @@ class AggValidateException(Exception):
 
 PROG_BANNER = "Validate (agg_validate) v%s" % version()
 
-REGEX_FILTER = re.compile("(\S+)\s+(%s)\s+(\S+)" % "|".join(SUPPORTED_OPERATIONS), re.I)
+REGEX_FILTER = re.compile(r"(\S+)\s+(%s)\s+(\S+)" % "|".join(SUPPORTED_OPERATIONS), re.I)
 
 # GOE.py options "imported" by this tool
 GOE_OPTIONS = (

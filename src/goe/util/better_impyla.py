@@ -111,7 +111,7 @@ REGEX_JOIN = re.compile(
     re.I,
 )
 # Parse out table and alias
-REGEX_DB_TABLE = re.compile("^(\S+)\s*(\S+)?\s*(ON\s+)?.*$", re.I)
+REGEX_DB_TABLE = re.compile(r"^(\S+)\s*(\S+)?\s*(ON\s+)?.*$", re.I)
 # Drop 'create view ... as' from view ddl
 REGEX_CREATE_VIEW = re.compile(r"CREATE\s+VIEW\s+.*?\s+AS\s+", re.I)
 # The constant used by HDFS for NULL partition keys

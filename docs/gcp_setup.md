@@ -356,7 +356,7 @@ gcloud compute instances create ${INSTANCE_NAME} \
 
 ## Private Google API Endpoints
 
-In environments where the default public Google API endpoints (`*.googleapis.com`) are blocked, GOE can be configured to use custom endpoints, for example [Private Service Connect for Google APIs](https://cloud.google.com/vpc/docs/private-service-connect#supported-apis) endpoints, which take the form `SERVICE-ENDPOINTNAME.p.googleapis.com`.
+In environments where the default public Google API endpoints (`*.googleapis.com`) are blocked, GOE can be configured to use custom endpoints, for example [Private Service Connect for Google APIs](https://cloud.google.com/vpc/docs/configure-private-service-connect-apis#supported-apis) endpoints, which take the form `SERVICE-ENDPOINTNAME.p.googleapis.com`.
 
 Note that Private Google Access using the `private.googleapis.com` or `restricted.googleapis.com` VIPs is normally implemented with DNS overrides of the default hostnames and does not require any of the settings below.
 

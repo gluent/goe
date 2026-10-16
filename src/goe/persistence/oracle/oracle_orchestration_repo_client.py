@@ -151,6 +151,19 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
             (owner_override or self._repo_user).upper(), repo_type_name.upper()
         )
 
+    def _str_to_clob(self, val: Optional[str]) -> Optional[oracledb.LOB]:
+        """Convert a Python str to a temporary Oracle CLOB for assignment to a UDT attribute.
+
+        python-oracledb cannot assign a Python str directly to a CLOB attribute of a DbObject,
+        so we create a temporary LOB via the connection instead.
+        None and "" both return None, preserving Oracle's empty-string-is-NULL semantics
+        (an empty CLOB is not NULL).
+        """
+        if not val:
+            return None
+        conn_obj = self._frontend_api.get_oracle_connection_object()
+        return conn_obj.createlob(oracledb.DB_TYPE_CLOB, val)
+
     def _metadata_dict_to_ora_object(self, metadata_dict):
         """
         Used to convert a Python dict of metadata to an Oracle object type ready for saving to the database.
@@ -164,15 +177,17 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         metadata_obj.OFFLOAD_TYPE = metadata_dict[OFFLOAD_TYPE]
         metadata_obj.OFFLOAD_RANGE_TYPE = metadata_dict[INCREMENTAL_RANGE]
         metadata_obj.OFFLOAD_KEY = metadata_dict[INCREMENTAL_KEY]
-        metadata_obj.OFFLOAD_HIGH_VALUE = metadata_dict[INCREMENTAL_HIGH_VALUE]
+        metadata_obj.OFFLOAD_HIGH_VALUE = self._str_to_clob(
+            metadata_dict[INCREMENTAL_HIGH_VALUE]
+        )
         metadata_obj.OFFLOAD_PREDICATE_TYPE = metadata_dict[INCREMENTAL_PREDICATE_TYPE]
         if metadata_dict[INCREMENTAL_PREDICATE_VALUE] is None:
-            metadata_obj.OFFLOAD_PREDICATE_VALUE = metadata_dict[
-                INCREMENTAL_PREDICATE_VALUE
-            ]
+            metadata_obj.OFFLOAD_PREDICATE_VALUE = None
         else:
-            metadata_obj.OFFLOAD_PREDICATE_VALUE = self._metadata_dict_to_json_string(
-                metadata_dict[INCREMENTAL_PREDICATE_VALUE]
+            metadata_obj.OFFLOAD_PREDICATE_VALUE = self._str_to_clob(
+                self._metadata_dict_to_json_string(
+                    metadata_dict[INCREMENTAL_PREDICATE_VALUE]
+                )
             )
         metadata_obj.OFFLOAD_SNAPSHOT = metadata_dict[OFFLOAD_SNAPSHOT]
         metadata_obj.OFFLOAD_HASH_COLUMN = metadata_dict[OFFLOAD_BUCKET_COLUMN]
@@ -227,14 +242,16 @@ class OracleOrchestrationRepoClient(OrchestrationRepoClientInterface):
         partitions_ntt = self._get_ora_type_object(OFFLOAD_PARTITIONS_ORA_TYPE_NAME)
         if not offload_partitions:
             return partitions_ntt
-        partition_obj = self._get_ora_type_object(OFFLOAD_PARTITION_ORA_TYPE_NAME)
         for partition in offload_partitions:
+            partition_obj = self._get_ora_type_object(OFFLOAD_PARTITION_ORA_TYPE_NAME)
             partition_obj.TABLE_OWNER = frontend_schema
             partition_obj.TABLE_NAME = frontend_table_name
             partition_obj.PARTITION_NAME = partition.partition_name
             partition_obj.PARTITION_LEVEL = offload_partition_level
             partition_obj.PARTITION_BYTES = partition.size_in_bytes
-            partition_obj.PARTITION_BOUNDARY = partition.partition_literal
+            partition_obj.PARTITION_BOUNDARY = self._str_to_clob(
+                partition.partition_literal
+            )
             partitions_ntt.append(partition_obj)
         return partitions_ntt
 

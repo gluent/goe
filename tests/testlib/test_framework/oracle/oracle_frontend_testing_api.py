@@ -261,9 +261,10 @@ class OracleFrontendTestingApi(FrontendTestingApiInterface):
                 row_index, 32767, from_list=from_list, no_newlines=no_newlines
             )
         elif column.data_type == ORACLE_TYPE_BLOB:
-            return gen_test_data.gen_varchar(
+            val = gen_test_data.gen_varchar(
                 row_index, 32767, from_list=from_list, no_newlines=no_newlines
             )
+            return val.encode() if isinstance(val, str) else val
         elif column.data_type == ORACLE_TYPE_RAW:
             if column.data_length == 16:
                 return gen_test_data.gen_uuid(row_index)

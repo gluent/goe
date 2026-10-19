@@ -85,3 +85,85 @@ def test_normalise_bigquery_options_google_dataproc_batches_ttl(
             module_under_test.normalise_bigquery_options(
                 bq_config
             ), f"For input: {input}"
+
+
+@pytest.mark.parametrize(
+    "attribute,env_var,value,expected",
+    [
+        (
+            "bigquery_api_endpoint",
+            "BIGQUERY_API_ENDPOINT",
+            "bigquery-myep.p.googleapis.com",
+            "https://bigquery-myep.p.googleapis.com",
+        ),
+        ("bigquery_api_endpoint", "BIGQUERY_API_ENDPOINT", "", None),
+        (
+            "bigquery_api_endpoint",
+            "BIGQUERY_API_ENDPOINT",
+            "https://host/bigquery/v2",
+            module_under_test.OrchestrationConfigException,
+        ),
+        (
+            "google_kms_api_endpoint",
+            "GOOGLE_KMS_API_ENDPOINT",
+            "https://cloudkms-myep.p.googleapis.com",
+            "cloudkms-myep.p.googleapis.com",
+        ),
+        ("google_kms_api_endpoint", "GOOGLE_KMS_API_ENDPOINT", None, None),
+        (
+            "google_kms_api_endpoint",
+            "GOOGLE_KMS_API_ENDPOINT",
+            "http://cloudkms-myep.p.googleapis.com",
+            module_under_test.OrchestrationConfigException,
+        ),
+    ],
+)
+def test_normalise_bigquery_options_api_endpoints(
+    bq_config, attribute: str, env_var: str, value, expected
+):
+    bq_config.backend_distribution = offload_constants.BACKEND_DISTRO_GCP
+    setattr(bq_config, attribute, value)
+    if isinstance(expected, type) and issubclass(expected, Exception):
+        with pytest.raises(expected, match=env_var):
+            module_under_test.normalise_bigquery_options(bq_config)
+    else:
+        module_under_test.normalise_bigquery_options(bq_config)
+        assert getattr(bq_config, attribute) == expected
+
+
+def test_normalise_bigquery_options_api_endpoints_non_gcp(bq_config):
+    """BigQuery/KMS endpoints are not touched for non-GCP backends."""
+    bq_config.backend_distribution = offload_constants.BACKEND_DISTRO_SNOWFLAKE
+    bq_config.bigquery_api_endpoint = "not-normalised"
+    bq_config.google_kms_api_endpoint = "http://not-validated"
+    module_under_test.normalise_bigquery_options(bq_config)
+    assert bq_config.bigquery_api_endpoint == "not-normalised"
+    assert bq_config.google_kms_api_endpoint == "http://not-validated"
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (
+            "storage-myep.p.googleapis.com",
+            "https://storage-myep.p.googleapis.com",
+        ),
+        ("", None),
+        (None, None),
+        ("https://host/a/path", module_under_test.OrchestrationConfigException),
+    ],
+)
+def test_normalise_filesystem_options_storage_api_endpoint(bq_config, value, expected):
+    """GOOGLE_STORAGE_API_ENDPOINT is normalised for all backends because GCS is not BigQuery specific."""
+    for backend_distribution in (
+        offload_constants.BACKEND_DISTRO_GCP,
+        offload_constants.BACKEND_DISTRO_SNOWFLAKE,
+    ):
+        bq_config.backend_distribution = backend_distribution
+        bq_config.google_storage_api_endpoint = value
+        if isinstance(expected, type) and issubclass(expected, Exception):
+            with pytest.raises(expected, match="GOOGLE_STORAGE_API_ENDPOINT"):
+                module_under_test.normalise_filesystem_options(bq_config)
+        else:
+            module_under_test.normalise_filesystem_options(bq_config)
+            assert bq_config.google_storage_api_endpoint == expected

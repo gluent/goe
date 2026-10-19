@@ -136,6 +136,10 @@ def backend_session_parameters_default() -> Optional[str]:
     return os.environ.get("OFFLOAD_BACKEND_SESSION_PARAMETERS")
 
 
+def bigquery_api_endpoint_default() -> Optional[str]:
+    return os.environ.get("BIGQUERY_API_ENDPOINT")
+
+
 def bigquery_dataset_location_default() -> Optional[str]:
     return os.environ.get("BIGQUERY_DATASET_LOCATION")
 
@@ -235,6 +239,10 @@ def google_dataproc_service_account_default() -> Optional[str]:
     return os.environ.get("GOOGLE_DATAPROC_SERVICE_ACCOUNT")
 
 
+def google_kms_api_endpoint_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_KMS_API_ENDPOINT")
+
+
 def google_kms_key_name_default() -> Optional[str]:
     return os.environ.get("GOOGLE_KMS_KEY_NAME")
 
@@ -249,6 +257,10 @@ def google_kms_key_ring_name_default() -> Optional[str]:
 
 def google_kms_key_ring_project_default() -> Optional[str]:
     return os.environ.get("GOOGLE_KMS_KEY_RING_PROJECT")
+
+
+def google_storage_api_endpoint_default() -> Optional[str]:
+    return os.environ.get("GOOGLE_STORAGE_API_ENDPOINT")
 
 
 def hdfs_data_default() -> Optional[str]:

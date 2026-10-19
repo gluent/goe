@@ -27,6 +27,7 @@ import re
 from textwrap import dedent
 import traceback
 
+from google.api_core.client_options import ClientOptions
 from google.cloud import bigquery, kms
 from google.cloud.exceptions import NotFound
 from numpy import datetime64
@@ -158,6 +159,7 @@ class BackendBigQueryApi(BackendApiInterface):
             logger.info("* Dry run *")
 
         self._client = None
+        self._bigquery_api_endpoint = connection_options.bigquery_api_endpoint or None
         self._bigquery_dataset_location = (
             connection_options.bigquery_dataset_location or None
         )
@@ -175,6 +177,9 @@ class BackendBigQueryApi(BackendApiInterface):
             connection_options.google_kms_key_ring_project or None
         )
         self._google_kms_key_name = connection_options.google_kms_key_name or None
+        self._google_kms_api_endpoint = (
+            connection_options.google_kms_api_endpoint or None
+        )
 
         self._sql_engine_name = "BigQuery"
         self._log_query_id_tag = "BigQuery Job ID"
@@ -506,13 +511,30 @@ OPTIONS (format ='{format}',
 
     def _get_bq_client(self):
         # Whenever we make a new connection we should set global session parameters
+        client_kwargs = {}
+        if self._bigquery_api_endpoint:
+            logger.info(
+                "Using custom BigQuery API endpoint: %s", self._bigquery_api_endpoint
+            )
+            client_kwargs["client_options"] = ClientOptions(
+                api_endpoint=self._bigquery_api_endpoint
+            )
         return bigquery.Client(
             default_query_job_config=self._execute_global_session_parameters(),
             location=self._bigquery_dataset_location,
+            **client_kwargs,
         )
 
     def _get_kms_client(self):
-        return kms.KeyManagementServiceClient()
+        client_kwargs = {}
+        if self._google_kms_api_endpoint:
+            logger.info(
+                "Using custom Cloud KMS API endpoint: %s", self._google_kms_api_endpoint
+            )
+            client_kwargs["client_options"] = ClientOptions(
+                api_endpoint=self._google_kms_api_endpoint
+            )
+        return kms.KeyManagementServiceClient(**client_kwargs)
 
     def _gen_sample_stats_sql_sample_clause(
         self, db_name, table_name, sample_perc=None

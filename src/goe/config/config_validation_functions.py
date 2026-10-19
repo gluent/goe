@@ -52,6 +52,10 @@ from goe.offload.offload_transport import (
     VALID_SPARK_SUBMIT_EXECUTABLES,
 )
 from goe.util.goe_log_fh import is_valid_path_for_logs
+from goe.util.google_api_endpoints import (
+    normalise_grpc_api_endpoint,
+    normalise_rest_api_endpoint,
+)
 from goe.util.misc_functions import human_size_to_bytes
 from goe.util.password_tools import PasswordTools
 
@@ -114,6 +118,16 @@ def normalise_backend_options(options):
         )
 
 
+def normalise_google_api_endpoint(
+    endpoint, option_name, normalise_fn, exc_cls=OrchestrationConfigException
+):
+    """Normalise a custom Google API endpoint using normalise_fn, raising exc_cls on invalid input."""
+    try:
+        return normalise_fn(endpoint)
+    except ValueError as exc:
+        raise exc_cls(f"Invalid value for {option_name}: {endpoint}: {exc}") from exc
+
+
 def normalise_db_prefix_and_paths(options, frontend_api=None):
     if options.db_name_prefix is None:
         assert frontend_api
@@ -136,6 +150,18 @@ def normalise_db_prefix_and_paths(options, frontend_api=None):
 def normalise_bigquery_options(options, exc_cls=OrchestrationConfigException):
     if options.backend_distribution != BACKEND_DISTRO_GCP:
         return
+    options.bigquery_api_endpoint = normalise_google_api_endpoint(
+        options.bigquery_api_endpoint,
+        "BIGQUERY_API_ENDPOINT",
+        normalise_rest_api_endpoint,
+        exc_cls=exc_cls,
+    )
+    options.google_kms_api_endpoint = normalise_google_api_endpoint(
+        options.google_kms_api_endpoint,
+        "GOOGLE_KMS_API_ENDPOINT",
+        normalise_grpc_api_endpoint,
+        exc_cls=exc_cls,
+    )
     if options.google_dataproc_batches_version:
         if not re.match(
             r"^[1-9]\.[0-9](\.[0-9])?$", options.google_dataproc_batches_version
@@ -211,6 +237,15 @@ def normalise_filesystem_options(options, exc_cls=OrchestrationConfigException):
             "OFFLOAD_FS_SCHEME/--offload-fs-scheme %s not valid for this backend system"
             % options.offload_fs_scheme
         )
+
+    # Normalised for all backends because GCS can be used as offload storage outside of BigQuery
+    # and also for gs:// log locations.
+    options.google_storage_api_endpoint = normalise_google_api_endpoint(
+        options.google_storage_api_endpoint,
+        "GOOGLE_STORAGE_API_ENDPOINT",
+        normalise_rest_api_endpoint,
+        exc_cls=exc_cls,
+    )
 
     if options.backend_distribution in HADOOP_BASED_BACKEND_DISTRIBUTIONS:
         if not options.hdfs_data:

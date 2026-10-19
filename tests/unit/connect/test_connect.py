@@ -12,15 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
+
 import pytest
 
 from goe.connect.connect import (
     _os_release_file_exists,
     _os_version_from_file_content,
+    dict_from_environment_file,
     OS_RELEASE_FILE_DEBIAN,
     OS_RELEASE_FILE_REDHAT,
     OS_RELEASE_FILE_SUSE,
     upgrade_environment_file,
+)
+
+BIGQUERY_TEMPLATE_FILE = (
+    Path(__file__).resolve().parents[3]
+    / "templates"
+    / "conf"
+    / "offload.env.template.bigquery"
 )
 
 
@@ -100,3 +110,38 @@ def test_upgrade_environment_file(tmpdir):
 
     content = env_file.read()
     assert "DATA_SAMPLE_PARALLELISM=0\n" in content
+
+
+def test_bigquery_template_google_api_endpoints():
+    """Check custom Google API endpoint keys in the BigQuery template as seen by connect.
+
+    CLOUDSDK_API_ENDPOINT_OVERRIDES_DATAPROC must NOT be detected as a template key, otherwise
+    connect --upgrade-environment-file would append it with an empty value which breaks gcloud.
+    """
+    template = dict_from_environment_file(str(BIGQUERY_TEMPLATE_FILE))
+    for key in (
+        "BIGQUERY_API_ENDPOINT",
+        "GOOGLE_STORAGE_API_ENDPOINT",
+        "GOOGLE_KMS_API_ENDPOINT",
+    ):
+        assert key in template, f"{key} missing from {BIGQUERY_TEMPLATE_FILE.name}"
+        assert template[key] == "", f"{key} should have an empty default value"
+    assert "CLOUDSDK_API_ENDPOINT_OVERRIDES_DATAPROC" not in template
+    # The guidance must still be present in the template as a comment.
+    assert "# export CLOUDSDK_API_ENDPOINT_OVERRIDES_DATAPROC=" in (
+        BIGQUERY_TEMPLATE_FILE.read_text()
+    )
+
+
+def test_upgrade_environment_file_google_api_endpoints(tmpdir):
+    """upgrade_environment_file appends the new endpoint keys but not the gcloud Dataproc override."""
+    env_file = tmpdir.join("offload.env")
+    env_file.write("BACKEND_DISTRIBUTION=GCP\n")
+
+    upgrade_environment_file(str(env_file), str(BIGQUERY_TEMPLATE_FILE))
+
+    content = env_file.read()
+    assert "BIGQUERY_API_ENDPOINT=\n" in content
+    assert "GOOGLE_STORAGE_API_ENDPOINT=\n" in content
+    assert "GOOGLE_KMS_API_ENDPOINT=\n" in content
+    assert "CLOUDSDK_API_ENDPOINT_OVERRIDES_DATAPROC" not in content

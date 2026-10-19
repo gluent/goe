@@ -85,6 +85,7 @@ FAKE_ORACLE_BQ_ENV = dict(FAKE_ORACLE_ENV)
 FAKE_ORACLE_BQ_ENV.update(
     {
         "BACKEND_DISTRIBUTION": "GCP",
+        "BIGQUERY_API_ENDPOINT": "bigquery-myep.p.googleapis.com",
         "BIGQUERY_DATASET_PROJECT": "bq-project",
         "GOOGLE_DATAPROC_CLUSTER": "cluster-name",
         "GOOGLE_DATAPROC_PROJECT": "dp-project",
@@ -93,10 +94,12 @@ FAKE_ORACLE_BQ_ENV.update(
         "GOOGLE_DATAPROC_BATCHES_SUBNET": "my-subnet1",
         "GOOGLE_DATAPROC_BATCHES_VERSION": "1.1",
         "GOOGLE_DATAPROC_BATCHES_TTL": "1d",
+        "GOOGLE_KMS_API_ENDPOINT": "https://cloudkms-myep.p.googleapis.com",
         "GOOGLE_KMS_KEY_RING_PROJECT": "kms-project",
         "GOOGLE_KMS_KEY_RING_LOCATION": "US",
         "GOOGLE_KMS_KEY_RING_NAME": "ring-name",
         "GOOGLE_KMS_KEY_NAME": "key-name",
+        "GOOGLE_STORAGE_API_ENDPOINT": "https://storage-myep.p.googleapis.com/",
         "OFFLOAD_FS_SCHEME": "gs",
         "QUERY_ENGINE": "BIGQUERY",
     }

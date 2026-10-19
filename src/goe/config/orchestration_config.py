@@ -61,6 +61,7 @@ EXPECTED_CONFIG_ARGS = [
     "backend_identifier_case",
     "backend_odbc_driver_name",
     "backend_session_parameters",
+    "bigquery_api_endpoint",
     "bigquery_dataset_location",
     "bigquery_dataset_project",
     "ca_cert",
@@ -77,10 +78,12 @@ EXPECTED_CONFIG_ARGS = [
     "google_dataproc_project",
     "google_dataproc_region",
     "google_dataproc_service_account",
+    "google_kms_api_endpoint",
     "google_kms_key_ring_location",
     "google_kms_key_ring_name",
     "google_kms_key_ring_project",
     "google_kms_key_name",
+    "google_storage_api_endpoint",
     "hadoop_host",
     "hadoop_port",
     "hadoop_ssh_user",
@@ -218,6 +221,7 @@ class OrchestrationConfig:
     backend_identifier_case: str
     backend_odbc_driver_name: Optional[str]
     backend_session_parameters: Optional[str]
+    bigquery_api_endpoint: Optional[str]
     bigquery_dataset_location: Optional[str]
     bigquery_dataset_project: Optional[str]
     ca_cert: Optional[str]
@@ -234,10 +238,12 @@ class OrchestrationConfig:
     google_dataproc_project: Optional[str]
     google_dataproc_region: Optional[str]
     google_dataproc_service_account: Optional[str]
+    google_kms_api_endpoint: Optional[str]
     google_kms_key_ring_project: Optional[str]
     google_kms_key_ring_location: Optional[str]
     google_kms_key_ring_name: Optional[str]
     google_kms_key_name: Optional[str]
+    google_storage_api_endpoint: Optional[str]
     hadoop_host: Optional[str]
     hadoop_port: Optional[int]
     hadoop_ssh_user: Optional[str]
@@ -338,6 +344,10 @@ class OrchestrationConfig:
                 "backend_session_parameters",
                 orchestration_defaults.backend_session_parameters_default(),
             ),
+            bigquery_api_endpoint=config_dict.get(
+                "bigquery_api_endpoint",
+                orchestration_defaults.bigquery_api_endpoint_default(),
+            ),
             bigquery_dataset_location=config_dict.get(
                 "bigquery_dataset_location",
                 orchestration_defaults.bigquery_dataset_location_default(),
@@ -394,6 +404,10 @@ class OrchestrationConfig:
                 "google_dataproc_service_account",
                 orchestration_defaults.google_dataproc_service_account_default(),
             ),
+            google_kms_api_endpoint=config_dict.get(
+                "google_kms_api_endpoint",
+                orchestration_defaults.google_kms_api_endpoint_default(),
+            ),
             google_kms_key_ring_location=config_dict.get(
                 "google_kms_key_ring_location",
                 orchestration_defaults.google_kms_key_ring_location_default(),
@@ -409,6 +423,10 @@ class OrchestrationConfig:
             google_kms_key_name=config_dict.get(
                 "google_kms_key_name",
                 orchestration_defaults.google_kms_key_name_default(),
+            ),
+            google_storage_api_endpoint=config_dict.get(
+                "google_storage_api_endpoint",
+                orchestration_defaults.google_storage_api_endpoint_default(),
             ),
             hadoop_host=config_dict.get(
                 "hadoop_host", orchestration_defaults.hadoop_host_default()
